@@ -23,12 +23,13 @@ bool WorldStateMgrModule::configure(ResourceFinder &rf)
     outFixationPortName = "/" + moduleName + "/fixation:o";
     outFixationPort.open(outFixationPortName.c_str());
 
-    //outStatePortName = "/" + moduleName + "/state:o";
-    //outStatePort.open(outStatePortName.c_str());
+    opcPortName = "/" + moduleName + "/opc:io";
+    opcPort.open(opcPortName.c_str());
 
     inAff = NULL;
     inTargets = NULL;
     state = STATE_WAIT_BLOBS;
+    populated = false; // TODO: robustly check whether OPC has been populated
 
     return true;
 }
@@ -38,7 +39,7 @@ bool WorldStateMgrModule::interruptModule()
     inTargetsPort.interrupt();
     inAffPort.interrupt();
     outFixationPort.interrupt();
-    //outStatePort.interrupt();
+    opcPort.interrupt();
 
     return true;
 }
@@ -48,19 +49,21 @@ bool WorldStateMgrModule::close()
     inTargetsPort.close();
     inAffPort.close();
     outFixationPort.close();
-    //outStatePort.close();
+    opcPort.close();
 
     return true;
 }
 
 bool WorldStateMgrModule::updateModule()
 {
+    //yDebug("state=%d", state);
+
     switch(state)
     {
         case STATE_WAIT_BLOBS:
         {
             // wait for blobs data to arrive
-            updateBlobs();
+            refreshBlobs();
 
             // when something arrives, proceed
             if (inAff != NULL)
@@ -93,7 +96,7 @@ bool WorldStateMgrModule::updateModule()
         case STATE_WAIT_TRACKER:
         {
             // wait for tracker data to arrive
-            updateTracker();
+            refreshTracker();
 
             // when something arrives, proceed
             if (inTargets != NULL)
@@ -115,7 +118,25 @@ bool WorldStateMgrModule::updateModule()
 
         case STATE_POPULATE_DB:
         {
-            // TODO: populate OPC and keep it updated with current perception data
+            // read new data and ensure validity
+            refreshAllAndValidate();
+
+            // try populating database
+            populated = doPopulateDB();
+
+            // if database was successfully populated proceed, else stay in same state
+            if (populated)
+                state = STATE_UPDATE_DB;
+
+            break;
+        }
+
+        case STATE_UPDATE_DB:
+        {
+            // read new data and ensure validity
+            refreshAll();
+
+            // TODO: keep database updated with current perception data
 
             break;
         }
@@ -131,6 +152,12 @@ double WorldStateMgrModule::getPeriod()
 
 void WorldStateMgrModule::doInitTracker()
 {
+    if (outFixationPort.getOutputCount()<1)
+    {
+        yWarning("fixation:o not connected to tracker input, exiting doInitTracker()");
+        return;
+    }
+
     yInfo("initializing multi-object tracking of %d objects:", sizeAff);
 
     Bottle fixation;
@@ -144,7 +171,7 @@ void WorldStateMgrModule::doInitTracker()
         fixation.clear();
         fixation.addDouble(x);
         fixation.addDouble(y);
-		Time::delay(1.0); // fixes activeParticleTrack crash
+        Time::delay(1.0); // fixes activeParticleTrack crash
         outFixationPort.write(fixation);
 
         yInfo("id %d: %f %f", a, x, y);
@@ -153,48 +180,95 @@ void WorldStateMgrModule::doInitTracker()
     yInfo("done initializing tracker");
 }
 
-/*
-void ShortTermMemModule::doWriteState()
+bool WorldStateMgrModule::doPopulateDB()
 {
-    // read new data, ensure validity
-    updateBlobs();
-    updateTracker();
-    if (inAff==NULL || inTargets==NULL)
-    {
-        yWarning("no data");
-        return;
-    }
-    if (sizeAff != sizeTargets)
-    {
-        //yWarning("sizeAff=%d differs from sizeTargets=%d", sizeAff, sizeTargets);
-        return;
-    }
-
-    Bottle &state = outStatePort.prepare();
-    state.clear();
     for(int a=0; a<sizeAff; a++)
     {
-        Bottle &obj = state.addList();
-        obj.clear();
+        // prepare position property
+        Bottle bPos;
+        Bottle &pos_list = bPos.addList();
+        pos_list.addString("pos");
+        Bottle &pos_list_c = pos_list.addList();
+        // from blobs
+        //pos_list_c.addDouble(inAff->get(a+1).asList()->get(0).asDouble());
+        //pos_list_c.addDouble(inAff->get(a+1).asList()->get(1).asDouble());
+        // from tracker
+        pos_list_c.addDouble(inTargets->get(a).asList()->get(1).asDouble());
+        pos_list_c.addDouble(inTargets->get(a).asList()->get(2).asDouble());
 
-        // add ID of object from tracker
-        obj.addInt(inTargets->get(a).asList()->get(0).asInt());
+        // prepare name property
+        Bottle bName;
+        Bottle &name_list = bName.addList();
+        name_list.addString("name");
+        std::stringstream fakename;
+        fakename << "myLabel" << a;
+        name_list.addString( fakename.str() ); // TODO: real name from object recognition
 
-        // add other fields from tracker
-        //obj.addDouble(inTargets->get(a).asList()->get(1).asDouble());
-        //obj.addDouble(inTargets->get(a).asList()->get(2).asDouble());
+        // prepare shape descriptors property
+        Bottle bDesc;
+        Bottle &desc_list = bDesc.addList();
+        desc_list.addString("desc");
+        Bottle &desc_list_c = desc_list.addList();
+        desc_list_c.addDouble(inAff->get(a+1).asList()->get(23).asDouble()); // area
+        desc_list_c.addDouble(inAff->get(a+1).asList()->get(24).asDouble());
+        desc_list_c.addDouble(inAff->get(a+1).asList()->get(25).asDouble());
+        desc_list_c.addDouble(inAff->get(a+1).asList()->get(26).asDouble());
+        desc_list_c.addDouble(inAff->get(a+1).asList()->get(27).asDouble());
+        desc_list_c.addDouble(inAff->get(a+1).asList()->get(28).asDouble());
 
-        // add other fields from blobs
-        obj.addDouble(inAff->get(a+1).asList()->get(0).asDouble());
-        obj.addDouble(inAff->get(a+1).asList()->get(1).asDouble());
+        // prepare is_hand property (true/false)
+        bool isHandFlag = false; // TODO: real value from perception
+        Bottle bIsHand;
+        Bottle &is_hand_list = bIsHand.addList();
+        is_hand_list.addString("is_h");
+        is_hand_list.addInt(isHandFlag); // 1=true, 0=false
+
+        // prepare in_hand property (none/left/right)
+        Bottle bInHand;
+        Bottle &in_hand_list = bInHand.addList();
+        in_hand_list.addString("in_h");
+        in_hand_list.addVocab(Vocab::encode("none")); // TODO: real value
+
+        // prepare on_top_of property
+        Bottle bOnTopOf;
+        Bottle &oto_list = bOnTopOf.addList();
+        oto_list.addString("on_t");
+        Bottle &oto_list_c = oto_list.addList();
+        oto_list_c.addInt(0); // TODO: real list
+
+        // prepare reachable_with property
+        Bottle bReachW;
+        Bottle &reaw_list = bReachW.addList();
+        reaw_list.addString("re_w");
+        Bottle &reaw_list_c = reaw_list.addList();
+        reaw_list_c.addInt(0); // TODO: real list
+
+        // prepare pullable_with property
+        Bottle bPullW;
+        Bottle &pullw_list = bPullW.addList();
+        pullw_list.addString("pu_w");
+        Bottle &pullw_list_c = pullw_list.addList();
+        pullw_list_c.addInt(0); // TODO: real list
+
+        // populate
+        Bottle opcCmd, opcReply;
+        opcCmd.addVocab(Vocab::encode("add"));
+        opcCmd.addList() = bPos;
+        opcCmd.addList() = bName;
+        opcCmd.addList() = bDesc;
+        opcCmd.addList() = bIsHand;
+        opcCmd.addList() = bInHand;
+        opcCmd.addList() = bOnTopOf;
+        opcCmd.addList() = bReachW;
+        opcCmd.addList() = bPullW;
+        yDebug("%d, populating OPC with: %s", a, opcCmd.toString().c_str());
     }
-    outStatePort.write();
+    // now we have populated the database with all objects
 
-    //yInfo("sent state of %d objects", sizeAff);
+    return true;
 }
-*/
 
-void WorldStateMgrModule::updateBlobs()
+void WorldStateMgrModule::refreshBlobs()
 {
     inAff = inAffPort.read();
 
@@ -205,7 +279,7 @@ void WorldStateMgrModule::updateBlobs()
     }
 }
 
-void WorldStateMgrModule::updateTracker()
+void WorldStateMgrModule::refreshTracker()
 {
     inTargets = inTargetsPort.read();
 
@@ -214,4 +288,29 @@ void WorldStateMgrModule::updateTracker()
         // number of tracked objects
         sizeTargets = inTargets->size();
     }
+}
+
+void WorldStateMgrModule::refreshAll()
+{
+    refreshBlobs();
+    refreshTracker();
+}
+
+bool WorldStateMgrModule::refreshAllAndValidate()
+{
+    refreshAll();
+
+    if (inAff==NULL || inTargets==NULL)
+    {
+        yWarning("no data");
+        return false;
+    }
+
+    if (sizeAff != sizeTargets)
+    {
+        yWarning("sizeAff=%d differs from sizeTargets=%d", sizeAff, sizeTargets);
+        return false;
+    }
+
+    return true;
 }
