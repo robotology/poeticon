@@ -13,7 +13,9 @@
 #include <yarp/os/BufferedPort.h>
 #include <yarp/os/Log.h>
 #include <yarp/os/RFModule.h>
+#include <yarp/os/RpcClient.h>
 #include <yarp/os/Time.h>
+#include <yarp/os/Vocab.h>
 
 #define STATE_WAIT_BLOBS   0
 #define STATE_READ_BLOBS   1
@@ -34,11 +36,13 @@ class WorldStateMgrModule : public RFModule
         string inAffPortName;
         string outFixationPortName;
         string outStatePortName;
+        string opcPortName;
 
         BufferedPort<Bottle> inTargetsPort;
         BufferedPort<Bottle> inAffPort;
         Port outFixationPort;
         //BufferedPort<Bottle> outStatePort;
+        RpcClient opcPort;
 
         Bottle *inAff;
         Bottle *inTargets;
