@@ -25,6 +25,9 @@ bool WorldStateMgrModule::configure(ResourceFinder &rf)
 
     //outStatePortName = "/" + moduleName + "/state:o";
     //outStatePort.open(outStatePortName.c_str());
+    
+    opcPortName = "/" + moduleName + "/opc:io";
+    opcPort.open(opcPortName.c_str());
 
     inAff = NULL;
     inTargets = NULL;
@@ -39,6 +42,7 @@ bool WorldStateMgrModule::interruptModule()
     inAffPort.interrupt();
     outFixationPort.interrupt();
     //outStatePort.interrupt();
+    opcPort.interrupt();
 
     return true;
 }
@@ -49,6 +53,7 @@ bool WorldStateMgrModule::close()
     inAffPort.close();
     outFixationPort.close();
     //outStatePort.close();
+    opcPort.close();
 
     return true;
 }
@@ -115,7 +120,99 @@ bool WorldStateMgrModule::updateModule()
 
         case STATE_POPULATE_DB:
         {
-            // TODO: populate OPC and keep it updated with current perception data
+            // read new data, ensure validity
+            updateBlobs();
+            updateTracker();
+            if (inAff==NULL || inTargets==NULL)
+            {
+                yWarning("no data");
+                return false;
+            }
+            if (sizeAff != sizeTargets)
+            {
+                //yWarning("sizeAff=%d differs from sizeTargets=%d", sizeAff, sizeTargets);
+                return false;
+            }
+            
+            // prepare position property
+            int a = 0; // TODO: cycle
+            Bottle bPos;
+            Bottle &pos_list = bPos.addList();
+            pos_list.addString("pos");
+            Bottle &pos_list_c = pos_list.addList();
+            //pos_list_c.addDouble(inAff->get(a+1).asList()->get(0).asDouble()); // from blobs
+            //pos_list_c.addDouble(inAff->get(a+1).asList()->get(1).asDouble());
+            pos_list_c.addDouble(inTargets->get(a).asList()->get(1).asDouble()); // from tracker
+            pos_list_c.addDouble(inTargets->get(a).asList()->get(2).asDouble());
+
+            // prepare name property
+            Bottle bName;
+            Bottle &name_list = bName.addList();
+            name_list.addString("name");
+            name_list.addString("myObject"); // TODO: real name
+           
+            // prepare shape descriptors property
+            Bottle bDesc;
+            Bottle &desc_list = bDesc.addList();
+            desc_list.addString("desc");
+            Bottle &desc_list_c = desc_list.addList();
+            desc_list_c.addDouble(inAff->get(a+1).asList()->get(23).asDouble()); // area
+            desc_list_c.addDouble(inAff->get(a+1).asList()->get(24).asDouble());
+            desc_list_c.addDouble(inAff->get(a+1).asList()->get(25).asDouble());
+            desc_list_c.addDouble(inAff->get(a+1).asList()->get(26).asDouble());           
+            desc_list_c.addDouble(inAff->get(a+1).asList()->get(27).asDouble());
+            desc_list_c.addDouble(inAff->get(a+1).asList()->get(28).asDouble());
+
+            // prepare is_hand property (true/false)
+            bool isHandFlag = false; // TODO: real value
+            Bottle bIsHand;
+            Bottle &is_hand_list = bIsHand.addList();
+            is_hand_list.addString("is_h");
+            is_hand_list.addInt(isHandFlag); // 1=true, 0=false
+
+            // prepare in_hand property (none/left/right)
+            Bottle bInHand;
+            Bottle &in_hand_list = bInHand.addList();
+            in_hand_list.addString("in_h");
+            in_hand_list.addVocab(Vocab::encode("none")); // TODO: real value
+
+            // prepare on_top_of property
+            Bottle bOnTopOf;
+            Bottle &oto_list = bOnTopOf.addList();
+            oto_list.addString("on_t");
+            Bottle &oto_list_c = oto_list.addList();
+            oto_list_c.addInt(0); // TODO: real list
+
+            // prepare reachable_with property
+            Bottle bReachW;
+            Bottle &reaw_list = bReachW.addList();
+            reaw_list.addString("re_w");
+            Bottle &reaw_list_c = reaw_list.addList();
+            reaw_list_c.addInt(0); // TODO: real list
+
+            // prepare pullable_with property
+            Bottle bPullW;
+            Bottle &pullw_list = bPullW.addList();
+            pullw_list.addString("pu_w");
+            Bottle &pullw_list_c = pullw_list.addList();
+            pullw_list_c.addInt(0); // TODO: real list
+
+            // populate
+            Bottle opcCmd, opcReply;
+            opcCmd.addVocab(Vocab::encode("add"));
+            opcCmd.addList() = bPos;
+            opcCmd.addList() = bName;
+            opcCmd.addList() = bDesc;
+            opcCmd.addList() = bIsHand;
+            opcCmd.addList() = bInHand;
+            opcCmd.addList() = bOnTopOf;
+            opcCmd.addList() = bReachW;
+            opcCmd.addList() = bPullW;
+            yDebug("Bottle opcCmd is: %s", opcCmd.toString().c_str());
+            
+            // keep database updated with current perception data
+            
+            
 
             break;
         }

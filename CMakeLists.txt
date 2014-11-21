@@ -10,6 +10,7 @@ find_package(ICUBcontrib)
 list(APPEND CMAKE_MODULE_PATH ${ICUBCONTRIB_MODULE_PATH})
 include(ICUBcontribHelpers)
 
+add_subdirectory(app)
 add_subdirectory(src)
 
 icubcontrib_add_uninstall_target()
