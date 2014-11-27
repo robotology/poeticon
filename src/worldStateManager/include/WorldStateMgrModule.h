@@ -10,6 +10,7 @@
 #ifndef	__WSM_MODULE_H__
 #define __WSM_MODULE_H__
 
+#include <sstream>
 #include <yarp/os/BufferedPort.h>
 #include <yarp/os/Log.h>
 #include <yarp/os/RFModule.h>
@@ -23,6 +24,7 @@
 #define STATE_WAIT_TRACKER 3
 #define STATE_READ_TRACKER 4
 #define STATE_POPULATE_DB  5
+#define STATE_UPDATE_DB    6
 
 using namespace std;
 using namespace yarp::os;
@@ -41,7 +43,6 @@ class WorldStateMgrModule : public RFModule
         BufferedPort<Bottle> inTargetsPort;
         BufferedPort<Bottle> inAffPort;
         Port outFixationPort;
-        //BufferedPort<Bottle> outStatePort;
         RpcClient opcPort;
 
         Bottle *inAff;
@@ -50,6 +51,8 @@ class WorldStateMgrModule : public RFModule
 
         int sizeTargets, sizeAff;
 
+        bool populated;
+
     public:
         virtual bool configure(ResourceFinder &rf);
         virtual bool interruptModule();
@@ -57,10 +60,13 @@ class WorldStateMgrModule : public RFModule
         virtual bool updateModule();
         virtual double getPeriod();
 
+        // TODO: bool functions (with success checks) instead of void
         void doInitTracker();
-        //void doWriteState();
-        void updateBlobs();
-        void updateTracker();
+        bool doPopulateDB();
+        void refreshBlobs();
+        void refreshTracker();
+        void refreshAll();
+        bool refreshAllAndValidate();
 };
 
 #endif
