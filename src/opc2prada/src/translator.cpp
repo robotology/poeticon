@@ -18,7 +18,17 @@ using namespace std;
 double TranslatorModule::getPeriod() {
     return 0;
 }
-
+TranslatorModule::switchCase TranslatorModule::hashtable(string command){
+	if(command=="name")  return name;
+	if(command=="desc")  return desc;
+	if(command=="is_h")  return is_h;
+	if(command=="in_h")  return in_h;
+	if(command=="on_t")  return on_t;
+	if(command=="free")  return free;	
+	if(command=="re_w")	 return re_w;
+	if(command=="pu_w")  return pu_w;
+	if(command=="touch") return touch;
+}
 bool TranslatorModule::interruptModule() {
 
     cout << "Interrupting your module, for port cleanup" << endl;
@@ -68,20 +78,21 @@ bool   TranslatorModule::updateModule() {
 			for(int j=0;j<objecto->size();j++) { // for each properties
 				Bottle *propriedade = objecto->get(j).asList();
 				cout << "switch"<< propriedade->get(0).asString().c_str() << endl;
-				switch(propriedade->get(0).asVocab())	{
-					case CMD_NAME:{
+				switchCase r = hashtable(propriedade->get(0).asString());
+				switch(r)	{
+					case name:{
 						//cout << "name:" << propriedade->get(1).asString().c_str() << endl;
 						break;
 					}
-					case CMD_DESC: {
+					case desc: {
 						//cout << "desc:" << endl;//propriedade->get(1).asString().c_str() << endl;
 						break;
 					}
-					case CMD_POS: {
+					case pos: {
 						//cout << "pos:" << endl;//propriedade->get(1).asString().c_str() << endl;
 						break;
 					}
-					case CMD_ON_T: {
+					case on_t: {
 						cout << "on_t:" << endl;//propriedade->get(1).asString().c_str() << endl;
 						Bottle *ontop = propriedade->get(1).asList();
 						for(int k=0; k < ontop->size(); k++){
@@ -90,7 +101,7 @@ bool   TranslatorModule::updateModule() {
 						}
 						break;
 					}
-					case CMD_REAW: {
+					case re_w: {
 						cout << "reaw:" << endl;//propriedade->get(1).asString().c_str() << endl;
 						Bottle *reachable = propriedade->get(1).asList();
 						for(int k=0; k < reachable->size(); k++){
@@ -99,7 +110,7 @@ bool   TranslatorModule::updateModule() {
 						}
 						break;
 					}
-					case CMD_PULW: {
+					case pu_w: {
 						cout << "pulw:" << endl;//propriedade->get(1).asString().c_str() << endl;
 						Bottle *pullable = propriedade->get(1).asList();
 						for(int k=0; k < pullable->size(); k++){
@@ -108,7 +119,7 @@ bool   TranslatorModule::updateModule() {
 						}
 						break;
 					}
-					case CMD_TOUC: {
+					case touch: {
 						cout << "touc:" << endl;//propriedade->get(1).asString().c_str() << endl;
 						Bottle *touch = propriedade->get(1).asList();
 						for(int k=0; k < touch->size(); k++){
@@ -117,7 +128,7 @@ bool   TranslatorModule::updateModule() {
 						}
 						break;
 					}
-					case CMD_ISH: {
+					case is_h: {
 						cout << "ish:" << endl;//propriedade->get(1).asString().c_str() << endl;
 						if(propriedade->get(1).asString() == "true") {
 							myfile << idsp->get((i-1)).asInt() <<"_ishand" << " 0 primitive binary " << endl;
@@ -125,7 +136,7 @@ bool   TranslatorModule::updateModule() {
 						}
 						break;
 					}
-					case CMD_FREE: {
+					case free: {
 						cout << "Free:" << endl;//propriedade->get(1).asString().c_str() << endl;
 						if(propriedade->get(1).asString() == "true") {
 							myfile << idsp->get((i-1)).asInt() <<"_clearhand" << " 0 primitive binary " <<endl;
@@ -133,7 +144,7 @@ bool   TranslatorModule::updateModule() {
 						}
 						break;
 					}
-					case CMD_IN_H: {
+					case in_h: {
 						cout << "in_h:" << endl;//propriedade->get(1).asString().c_str() << endl;
 						if(propriedade->get(1).asString() == "right") {
 							myfile << idsp->get((i-1)).asInt() <<"_inhand_" << " 0 primitive binary " <<endl;
