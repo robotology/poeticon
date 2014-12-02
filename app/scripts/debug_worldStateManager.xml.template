@@ -25,6 +25,10 @@
     <name>worldStateManager</name>
     <node>console</node>
 </module>
+<module>
+    <name>objectsPropertiesCollector</name>
+    <node>console</node>
+</module>
 
 <module>
     <name>yarpview</name>
@@ -117,6 +121,11 @@
 <connection>
     <from>/blobDescriptor/affDescriptor:o</from>
     <to>/wsm/affDescriptor:i</to>
+    <protocol>tcp</protocol>
+</connection>
+<connection>
+    <from>/wsm/opc:io</from>
+    <to>objectsPropertiesCollector</to>
     <protocol>tcp</protocol>
 </connection>
 

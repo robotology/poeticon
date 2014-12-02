@@ -53,6 +53,9 @@ class WorldStateMgrModule : public RFModule
 
         bool populated;
 
+        bool playbackMode;
+        string playbackFile;
+
     public:
         virtual bool configure(ResourceFinder &rf);
         virtual bool interruptModule();
@@ -67,6 +70,8 @@ class WorldStateMgrModule : public RFModule
         void refreshTracker();
         void refreshAll();
         bool refreshAllAndValidate();
+
+        void playback(string& filename);
 };
 
 #endif

@@ -14,14 +14,27 @@ bool WorldStateMgrModule::configure(ResourceFinder &rf)
     moduleName = rf.check("name", Value("wsm")).asString();
     setName(moduleName.c_str());
 
-    inTargetsPortName = "/" + moduleName + "/target:i";
-    inTargetsPort.open(inTargetsPortName.c_str());
+    if (rf.check("playback") && rf.find("playback")!="")
+    {
+        playbackMode = true;
+        playbackFile = rf.find("playback").asString();
+    }
+    else
+    {
+        playbackMode = false;
+    }
 
-    inAffPortName = "/" + moduleName + "/affDescriptor:i";
-    inAffPort.open(inAffPortName.c_str());
+    if (!playbackMode)
+    {
+        inTargetsPortName = "/" + moduleName + "/target:i";
+        inTargetsPort.open(inTargetsPortName.c_str());
 
-    outFixationPortName = "/" + moduleName + "/fixation:o";
-    outFixationPort.open(outFixationPortName.c_str());
+        inAffPortName = "/" + moduleName + "/affDescriptor:i";
+        inAffPort.open(inAffPortName.c_str());
+
+        outFixationPortName = "/" + moduleName + "/fixation:o";
+        outFixationPort.open(outFixationPortName.c_str());
+    }
 
     opcPortName = "/" + moduleName + "/opc:io";
     opcPort.open(opcPortName.c_str());
@@ -36,9 +49,12 @@ bool WorldStateMgrModule::configure(ResourceFinder &rf)
 
 bool WorldStateMgrModule::interruptModule()
 {
-    inTargetsPort.interrupt();
-    inAffPort.interrupt();
-    outFixationPort.interrupt();
+    if (!playbackMode)
+    {
+        inTargetsPort.interrupt();
+        inAffPort.interrupt();
+        outFixationPort.interrupt();
+    }
     opcPort.interrupt();
 
     return true;
@@ -46,9 +62,12 @@ bool WorldStateMgrModule::interruptModule()
 
 bool WorldStateMgrModule::close()
 {
-    inTargetsPort.close();
-    inAffPort.close();
-    outFixationPort.close();
+    if (!playbackMode)
+    {
+        inTargetsPort.close();
+        inAffPort.close();
+        outFixationPort.close();
+    }
     opcPort.close();
 
     return true;
@@ -56,8 +75,13 @@ bool WorldStateMgrModule::close()
 
 bool WorldStateMgrModule::updateModule()
 {
-    //yDebug("state=%d", state);
+    if (playbackMode && !populated)
+    {
+        playback(playbackFile);
+        return true;
+    }
 
+    //yDebug("state=%d", state);
     switch(state)
     {
         case STATE_WAIT_BLOBS:
@@ -138,6 +162,10 @@ bool WorldStateMgrModule::updateModule()
 
             // TODO: keep database updated with current perception data
 
+            break;
+        }
+        default:
+        {
             break;
         }
     }
@@ -306,4 +334,12 @@ bool WorldStateMgrModule::refreshAllAndValidate()
     }
 
     return true;
+}
+
+void WorldStateMgrModule::playback(string& filename)
+{
+    yInfo("opening file %s for playback", filename.c_str());
+
+
+    populated = true;
 }
