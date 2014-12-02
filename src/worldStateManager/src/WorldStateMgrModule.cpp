@@ -186,7 +186,7 @@ bool WorldStateMgrModule::doPopulateDB()
     {
         // prepare position property
         Bottle bPos;
-        bPos.addVocab(Vocab::encode("pos"));
+        bPos.addString("pos");
         Bottle &bPosValue = bPos.addList();
         // from blobs
         //bPosValue.addDouble(inAff->get(a+1).asList()->get(0).asDouble());
@@ -197,14 +197,14 @@ bool WorldStateMgrModule::doPopulateDB()
 
         // prepare name property
         Bottle bName;
-        bName.addVocab(Vocab::encode("name"));
+        bName.addString("name");
         std::stringstream fakename;
         fakename << "myLabel" << a;
         bName.addString( fakename.str() ); // TODO: real name from object recognition
 
         // prepare shape descriptors property
         Bottle bDesc;
-        bDesc.addVocab(Vocab::encode("desc"));
+        bDesc.addString("desc");
         Bottle &bDescValue = bDesc.addList();
         bDescValue.addDouble(inAff->get(a+1).asList()->get(23).asDouble()); // area
         bDescValue.addDouble(inAff->get(a+1).asList()->get(24).asDouble());
@@ -215,31 +215,31 @@ bool WorldStateMgrModule::doPopulateDB()
 
         // prepare is_hand property (true/false)
         Bottle bIsHand;
-        bIsHand.addVocab(Vocab::encode("is_h"));
+        bIsHand.addString("is_h");
         bool bIsHandValue = false; // TODO: real value from perception
         bIsHand.addInt(bIsHandValue); // 1=true, 0=false
 
         // prepare in_hand property (none/left/right)
         Bottle bInHand;
-        bInHand.addVocab(Vocab::encode("in_h"));
+        bInHand.addString("in_h");
         string bInHandValue = "none"; // TODO: real value
         bInHand.addString(bInHandValue);
 
         // prepare on_top_of property
         Bottle bOnTopOf;
-        bOnTopOf.addVocab(Vocab::encode("on_t"));
+        bOnTopOf.addString("on_t");
         Bottle &bOnTopOfValue = bOnTopOf.addList();
         bOnTopOfValue.addInt(0); // TODO: real list
 
         // prepare reachable_with property
         Bottle bReachW;
-        bReachW.addVocab(Vocab::encode("re_w"));
+        bReachW.addString("re_w");
         Bottle &bReachWValue = bReachW.addList();
         bReachWValue.addInt(0); // TODO: real list
 
         // prepare pullable_with property
         Bottle bPullW;
-        bPullW.addVocab(Vocab::encode("pu_w"));
+        bPullW.addString("pu_w");
         Bottle &bPullWValue = bPullW.addList();
         bPullWValue.addInt(0); // TODO: real list
 
