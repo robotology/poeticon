@@ -125,7 +125,7 @@
 </connection>
 <connection>
     <from>/wsm/opc:io</from>
-    <to>objectsPropertiesCollector</to>
+    <to>/objectsPropertiesCollector/rpc</to>
     <protocol>tcp</protocol>
 </connection>
 
