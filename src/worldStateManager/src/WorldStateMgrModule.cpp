@@ -283,6 +283,9 @@ bool WorldStateMgrModule::doPopulateDB()
         opcCmd.addList() = bReachW;
         opcCmd.addList() = bPullW;
         yDebug("%d, populating OPC with: %s", a, opcCmd.toString().c_str());
+        opcPort.write(opcCmd, opcReply);
+
+        
     }
     // now we have populated the database with all objects
 
