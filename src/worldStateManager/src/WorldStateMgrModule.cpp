@@ -81,6 +81,10 @@ bool WorldStateMgrModule::updateModule()
         return true;
     }
 
+    // currently this state machine applies only when playbackMode is false,
+    // TODO: write a more general state machine handling all values of
+    //       playbackMode and populated
+    
     //yDebug("state=%d", state);
     switch(state)
     {
@@ -230,9 +234,9 @@ bool WorldStateMgrModule::doPopulateDB()
         fakename << "myLabel" << a;
         bName.addString( fakename.str() ); // TODO: real name from object recognition
 
-        // prepare shape descriptors property
+        // prepare 2D shape descriptors property
         Bottle bDesc;
-        bDesc.addString("desc");
+        bDesc.addString("desc2d");
         Bottle &bDescValue = bDesc.addList();
         bDescValue.addDouble(inAff->get(a+1).asList()->get(23).asDouble()); // area
         bDescValue.addDouble(inAff->get(a+1).asList()->get(24).asDouble());
@@ -243,31 +247,31 @@ bool WorldStateMgrModule::doPopulateDB()
 
         // prepare is_hand property (true/false)
         Bottle bIsHand;
-        bIsHand.addString("is_h");
+        bIsHand.addString("is_hand");
         bool bIsHandValue = false; // TODO: real value from perception
         bIsHand.addInt(bIsHandValue); // 1=true, 0=false
 
         // prepare in_hand property (none/left/right)
         Bottle bInHand;
-        bInHand.addString("in_h");
+        bInHand.addString("in_hand");
         string bInHandValue = "none"; // TODO: real value
         bInHand.addString(bInHandValue);
 
         // prepare on_top_of property
         Bottle bOnTopOf;
-        bOnTopOf.addString("on_t");
+        bOnTopOf.addString("on_top_of");
         Bottle &bOnTopOfValue = bOnTopOf.addList();
         bOnTopOfValue.addInt(0); // TODO: real list
 
         // prepare reachable_with property
         Bottle bReachW;
-        bReachW.addString("re_w");
+        bReachW.addString("reachable_with");
         Bottle &bReachWValue = bReachW.addList();
         bReachWValue.addInt(0); // TODO: real list
 
         // prepare pullable_with property
         Bottle bPullW;
-        bPullW.addString("pu_w");
+        bPullW.addString("pullable_with");
         Bottle &bPullWValue = bPullW.addList();
         bPullWValue.addInt(0); // TODO: real list
 
@@ -284,8 +288,15 @@ bool WorldStateMgrModule::doPopulateDB()
         opcCmd.addList() = bPullW;
         yDebug("%d, populating OPC with: %s", a, opcCmd.toString().c_str());
         opcPort.write(opcCmd, opcReply);
-
         
+        // process OPC response
+        if (opcReply.size() > 1)
+        {
+            if (opcReply.get(0).asVocab()==Vocab::encode("ack"))
+                yDebug("received ack from OPC");
+            else
+                yDebug("did not receive ack from OPC");
+        }
     }
     // now we have populated the database with all objects
 
@@ -342,7 +353,6 @@ bool WorldStateMgrModule::refreshAllAndValidate()
 void WorldStateMgrModule::playback(string& filename)
 {
     yInfo("opening file %s for playback", filename.c_str());
-
 
     populated = true;
 }
