@@ -24,10 +24,10 @@ TranslatorModule::switchCase TranslatorModule::hashtable(string command){
 	if(command=="is_hand")  return is_h;
 	if(command=="in_hand")  return in_h;
 	if(command=="on_top_of")  return on_t;
-	if(command=="free")  return free;	
+	if(command=="is_free")  return free;	
 	if(command=="reachable_with")	 return re_w;
 	if(command=="pullable_with")  return pu_w;
-	if(command=="touch") return touch;
+	if(command=="is_touching") return touch;
 }
 bool TranslatorModule::interruptModule() {
 
