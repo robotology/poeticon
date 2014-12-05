@@ -245,11 +245,17 @@ bool WorldStateMgrModule::doPopulateDB()
         bDescValue.addDouble(inAff->get(a+1).asList()->get(27).asDouble());
         bDescValue.addDouble(inAff->get(a+1).asList()->get(28).asDouble());
 
-        // prepare is_hand property (true/false)
+        // prepare is_hand property
         Bottle bIsHand;
         bIsHand.addString("is_hand");
         bool bIsHandValue = false; // TODO: real value from perception
         bIsHand.addInt(bIsHandValue); // 1=true, 0=false
+        
+        // prepare is_free property
+        Bottle bIsFree;
+        bIsFree.addString("is_free");
+        bool bIsFreeValue = true; // TODO: real value from perception
+        bIsFree.addInt(bIsFreeValue); // 1=true, 0=false
 
         // prepare in_hand property (none/left/right)
         Bottle bInHand;
@@ -274,6 +280,12 @@ bool WorldStateMgrModule::doPopulateDB()
         bPullW.addString("pullable_with");
         Bottle &bPullWValue = bPullW.addList();
         bPullWValue.addInt(0); // TODO: real list
+
+        // prepare is_touching property
+        Bottle bIsTouching;
+        bIsTouching.addString("is_touching");
+        Bottle &bIsTouchingValue = bIsTouching.addList();
+        bIsTouchingValue.addInt(0); // TODO: real list
 
         // populate
         Bottle opcCmd, opcReply;
