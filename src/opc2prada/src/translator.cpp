@@ -20,13 +20,13 @@ double TranslatorModule::getPeriod() {
 }
 TranslatorModule::switchCase TranslatorModule::hashtable(string command){
 	if(command=="name")  return name;
-	if(command=="desc")  return desc;
-	if(command=="is_h")  return is_h;
-	if(command=="in_h")  return in_h;
-	if(command=="on_t")  return on_t;
+	if(command=="desc2d")  return desc2d;
+	if(command=="is_hand")  return is_h;
+	if(command=="in_hand")  return in_h;
+	if(command=="on_top_of")  return on_t;
 	if(command=="free")  return free;	
-	if(command=="re_w")	 return re_w;
-	if(command=="pu_w")  return pu_w;
+	if(command=="reachable_with")	 return re_w;
+	if(command=="pullable_with")  return pu_w;
 	if(command=="touch") return touch;
 }
 bool TranslatorModule::interruptModule() {
@@ -84,7 +84,7 @@ bool   TranslatorModule::updateModule() {
 						//cout << "name:" << propriedade->get(1).asString().c_str() << endl;
 						break;
 					}
-					case desc: {
+					case desc2d: {
 						//cout << "desc:" << endl;//propriedade->get(1).asString().c_str() << endl;
 						break;
 					}
@@ -183,13 +183,13 @@ bool   TranslatorModule::updateModule() {
 bool   TranslatorModule::configure(yarp::os::ResourceFinder &rf) {
 
     /* module name */
-    moduleName = rf.check("name", Value("translator"),
+    moduleName = rf.check("name", Value("opc2prada"),
                           "Module name (string)").asString();
 
     setName(moduleName.c_str());
 
     /* port names */
-	translatorPortName  = "/" + moduleName + "/port:io";
+	translatorPortName  = "/" + moduleName + "/cmd:io";
 	
     /* open ports */
     if (!translatorPort.open(

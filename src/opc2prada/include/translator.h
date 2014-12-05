@@ -63,7 +63,7 @@ private:
 
 class TranslatorModule: public RFModule {
     string moduleName;
-	enum switchCase {name,pos,desc,is_h,free,in_h,on_t,re_w,pu_w,touch};
+	enum switchCase {name,pos,desc2d,is_h,free,in_h,on_t,re_w,pu_w,touch};
     string translatorPortName;
     BufferedPort<Bottle> translatorPort;
 
