@@ -17,6 +17,7 @@
 #include <yarp/os/RpcClient.h>
 #include <yarp/os/Time.h>
 #include <yarp/os/Vocab.h>
+#include "WorldStateMgr_IDL.h"
 
 #define STATE_WAIT_BLOBS   0
 #define STATE_READ_BLOBS   1
@@ -29,7 +30,7 @@
 using namespace std;
 using namespace yarp::os;
 
-class WorldStateMgrModule : public RFModule
+class WorldStateMgrModule : public RFModule, public WorldStateMgr_IDL
 {
     private:
         string moduleName;
@@ -43,7 +44,7 @@ class WorldStateMgrModule : public RFModule
         BufferedPort<Bottle> inTargetsPort;
         BufferedPort<Bottle> inAffPort;
         Port outFixationPort;
-        RpcClient opcPort;
+        RpcServer opcPort;
 
         Bottle *inAff;
         Bottle *inTargets;
@@ -72,6 +73,11 @@ class WorldStateMgrModule : public RFModule
         bool refreshAllAndValidate();
 
         void playback(string& filename);
+        bool attach(yarp::os::RpcServer &source);
+
+        // IDL
+        bool step();
+        bool quit();
 };
 
 #endif

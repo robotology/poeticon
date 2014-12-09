@@ -43,6 +43,8 @@ bool WorldStateMgrModule::configure(ResourceFinder &rf)
     inTargets = NULL;
     state = STATE_WAIT_BLOBS;
     populated = false; // TODO: robustly check whether OPC has been populated
+    
+    attach(opcPort);
 
     return true;
 }
@@ -367,4 +369,23 @@ void WorldStateMgrModule::playback(string& filename)
     yInfo("opening file %s for playback", filename.c_str());
 
     populated = true;
+}
+
+bool WorldStateMgrModule::attach(RpcServer &source)
+{
+    return this->yarp().attachAsServer(source);
+}
+
+bool WorldStateMgrModule::step()
+{
+    yInfo("stepping into next time instant...");
+    // TODO
+    return true;
+}
+
+bool WorldStateMgrModule::quit()
+{
+    yInfo("quitting...");
+    // TODO
+    return true;
 }
