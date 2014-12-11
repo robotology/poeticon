@@ -9,7 +9,13 @@
 service WorldStateMgr_IDL
 {
   /**
-  * Steps playback once. 
+  * Update the world state database.
+  * @return true/false on success/failure
+  */
+  bool update();
+
+  /**
+  * Step playback once. 
   * @return true/false on success/failure
   */
   bool step();

@@ -1,5 +1,5 @@
 <application>
-<name>POETICON++: World State Manager</name>
+<name>POETICON++ World State Manager</name>
 
 <dependencies>
     <port>/icub/camcalib/left/out</port>
