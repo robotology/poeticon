@@ -7,7 +7,7 @@
  *
  */
 
-#ifndef	__WSM_THREAD_H__
+#ifndef __WSM_THREAD_H__
 #define __WSM_THREAD_H__
 
 #include <sstream>

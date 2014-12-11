@@ -7,7 +7,7 @@
  *
  */
 
-#ifndef	__WSM_MODULE_H__
+#ifndef __WSM_MODULE_H__
 #define __WSM_MODULE_H__
 
 #include <yarp/os/RFModule.h>
