@@ -320,11 +320,35 @@ bool WorldStateMgrThread::refreshAllAndValidate()
 
 bool WorldStateMgrThread::doPopulateDB()
 {
-    // TODO: make this function compatible with playback mode, too
+    // TODO: make this function compatible with playback mode, too,
+    //       by iterating over number of lines/entries of current time instant
     for(int a=0; a<sizeAff; a++)
     {
-        // prepare position property
+        // common properties
+        Bottle bName;
         Bottle bPos;
+        Bottle bIsHand;
+        
+        // object properties
+        Bottle bOffset;
+        Bottle bDesc;
+        Bottle bInHand;
+        Bottle bOnTopOf;
+        Bottle bReachW;
+        Bottle bPullW;
+        Bottle bIsTouching;
+        
+        // hand properties
+        Bottle bIsFree;
+    
+        // prepare name property
+        bName.addString("name");
+        std::stringstream fakename;
+        fakename << "myLabel" << a;
+        bName.addString( fakename.str() ); // TODO: real name from IOL
+
+        // prepare position property
+        // TODO: transform to 3D ref frame with iKinGazeCtrl
         bPos.addString("pos");
         Bottle &bPosValue = bPos.addList();
         // from blobs
@@ -334,77 +358,86 @@ bool WorldStateMgrThread::doPopulateDB()
         bPosValue.addDouble(inTargets->get(a).asList()->get(1).asDouble());
         bPosValue.addDouble(inTargets->get(a).asList()->get(2).asDouble());
 
-        // prepare name property
-        Bottle bName;
-        bName.addString("name");
-        std::stringstream fakename;
-        fakename << "myLabel" << a;
-        bName.addString( fakename.str() ); // TODO: real name from object recognition
-
-        // prepare 2D shape descriptors property
-        Bottle bDesc;
-        bDesc.addString("desc2d");
-        Bottle &bDescValue = bDesc.addList();
-        bDescValue.addDouble(inAff->get(a+1).asList()->get(23).asDouble()); // area
-        bDescValue.addDouble(inAff->get(a+1).asList()->get(24).asDouble());
-        bDescValue.addDouble(inAff->get(a+1).asList()->get(25).asDouble());
-        bDescValue.addDouble(inAff->get(a+1).asList()->get(26).asDouble());
-        bDescValue.addDouble(inAff->get(a+1).asList()->get(27).asDouble());
-        bDescValue.addDouble(inAff->get(a+1).asList()->get(28).asDouble());
-
         // prepare is_hand property
-        Bottle bIsHand;
         bIsHand.addString("is_hand");
         bool bIsHandValue = false; // TODO: real value from perception
         bIsHand.addInt(bIsHandValue); // 1=true, 0=false
         
-        // prepare is_free property
-        Bottle bIsFree;
-        bIsFree.addString("is_free");
-        bool bIsFreeValue = true; // TODO: real value from perception
-        bIsFree.addInt(bIsFreeValue); // 1=true, 0=false
+        if (!bIsHandValue)
+        {
+            // object properties
 
-        // prepare in_hand property (none/left/right)
-        Bottle bInHand;
-        bInHand.addString("in_hand");
-        string bInHandValue = "none"; // TODO: real value
-        bInHand.addString(bInHandValue);
+            // prepare offset property (end-effector transform when grasping tools)
+            bOffset.addString("offset");
+            Bottle &bOffsetValue = bOffset.addList();
+            //bOffsetValue.addDouble(); // TODO: real values from tool exploration
 
-        // prepare on_top_of property
-        Bottle bOnTopOf;
-        bOnTopOf.addString("on_top_of");
-        Bottle &bOnTopOfValue = bOnTopOf.addList();
-        bOnTopOfValue.addInt(0); // TODO: real list
+            // prepare 2D shape descriptors property
+            bDesc.addString("desc2d");
+            Bottle &bDescValue = bDesc.addList();
+            bDescValue.addDouble(inAff->get(a+1).asList()->get(23).asDouble()); // area
+            bDescValue.addDouble(inAff->get(a+1).asList()->get(24).asDouble());
+            bDescValue.addDouble(inAff->get(a+1).asList()->get(25).asDouble());
+            bDescValue.addDouble(inAff->get(a+1).asList()->get(26).asDouble());
+            bDescValue.addDouble(inAff->get(a+1).asList()->get(27).asDouble());
+            bDescValue.addDouble(inAff->get(a+1).asList()->get(28).asDouble());
 
-        // prepare reachable_with property
-        Bottle bReachW;
-        bReachW.addString("reachable_with");
-        Bottle &bReachWValue = bReachW.addList();
-        bReachWValue.addInt(0); // TODO: real list
+            // prepare in_hand property (none/left/right)
+            bInHand.addString("in_hand");
+            string bInHandValue = "none"; // TODO: real value
+            bInHand.addString(bInHandValue);
+            
+            // prepare on_top_of property
+            bOnTopOf.addString("on_top_of");
+            Bottle &bOnTopOfValue = bOnTopOf.addList();
+            bOnTopOfValue.addInt(0); // TODO: real list
 
-        // prepare pullable_with property
-        Bottle bPullW;
-        bPullW.addString("pullable_with");
-        Bottle &bPullWValue = bPullW.addList();
-        bPullWValue.addInt(0); // TODO: real list
+            // prepare reachable_with property
+            bReachW.addString("reachable_with");
+            Bottle &bReachWValue = bReachW.addList();
+            bReachWValue.addInt(0); // TODO: real list
 
-        // prepare is_touching property
-        Bottle bIsTouching;
-        bIsTouching.addString("is_touching");
-        Bottle &bIsTouchingValue = bIsTouching.addList();
-        bIsTouchingValue.addInt(0); // TODO: real list
+            // prepare pullable_with property
+            bPullW.addString("pullable_with");
+            Bottle &bPullWValue = bPullW.addList();
+            bPullWValue.addInt(0); // TODO: real list
+
+            // prepare is_touching property
+            bIsTouching.addString("is_touching");
+            Bottle &bIsTouchingValue = bIsTouching.addList();
+            bIsTouchingValue.addInt(0); // TODO: real list
+        }
+        else
+        {
+            // hand properties
+
+            // prepare is_free property
+            bIsFree.addString("is_free");
+            bool bIsFreeValue = true; // TODO: real value from ARE
+            bIsFree.addInt(bIsFreeValue); // 1=true, 0=false
+        }
 
         // populate
         Bottle opcCmd, opcReply;
         opcCmd.addVocab(Vocab::encode("add"));
-        opcCmd.addList() = bPos;
         opcCmd.addList() = bName;
-        opcCmd.addList() = bDesc;
+        opcCmd.addList() = bPos;
         opcCmd.addList() = bIsHand;
-        opcCmd.addList() = bInHand;
-        opcCmd.addList() = bOnTopOf;
-        opcCmd.addList() = bReachW;
-        opcCmd.addList() = bPullW;
+        if (!bIsHandValue)
+        {
+            opcCmd.addList() = bOffset;
+            opcCmd.addList() = bDesc;        
+            opcCmd.addList() = bInHand;
+            opcCmd.addList() = bOnTopOf;
+            opcCmd.addList() = bReachW;
+            opcCmd.addList() = bPullW;
+            opcCmd.addList() = bIsTouching;            
+        }
+        else
+        {
+            opcCmd.addList() = bIsFree;        
+        }
+
         yDebug("%d, populating OPC with: %s", a, opcCmd.toString().c_str());
         opcPort.write(opcCmd, opcReply);
         
