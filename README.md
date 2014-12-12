@@ -17,3 +17,5 @@ This is the repository of the [POETICON++ EU project](http://www.poeticon.eu).
 ## Articles
 
 ## License
+
+Released under the terms of the GPL v2.0 or later. See the file LICENSE for details.

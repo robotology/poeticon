@@ -36,6 +36,7 @@ int main(int argc, char *argv[])
     {
         yInfo("Available options:");
         yInfo("--name prefix (default wsm)");
+        yInfo("--playback (to read data from a text file)");
         return 0; // EXIT_SUCCESS
     }
 

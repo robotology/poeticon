@@ -10,12 +10,14 @@ set(PROJECTNAME worldStateManager)
 project(${PROJECTNAME})
 
 find_package(YARP)
-find_package(ICUB)
 find_package(ICUBcontrib)
 
 list(APPEND CMAKE_MODULE_PATH ${YARP_MODULE_PATH})
-list(APPEND CMAKE_MODULE_PATH ${ICUB_MODULE_PATH})
 list(APPEND CMAKE_MODULE_PATH ${ICUBCONTRIB_MODULE_PATH})
+
+include(YarpIDL)
+set(IDL_GENERATED_CODE_DIR "${CMAKE_CURRENT_SOURCE_DIR}") #?
+yarp_idl_to_dir(${PROJECTNAME}.thrift ${IDL_GENERATED_CODE_DIR})
 
 include(YarpInstallationHelpers)
 include(ICUBcontribHelpers)
@@ -30,7 +32,8 @@ source_group("Header Files" FILES ${header})
 
 include_directories(${PROJECT_SOURCE_DIR}/include
                     ${YARP_INCLUDE_DIRS}
-                    ${ICUB_INCLUDE_DIRS})
+                    ${IDL_GENERATED_CODE_DIR}/include
+                   )
 
 add_executable(${PROJECTNAME} ${source} ${header})
 

@@ -1,5 +1,5 @@
 <application>
-<name>POETICON++: World State Manager</name>
+<name>POETICON++ World State Manager</name>
 
 <dependencies>
     <port>/icub/camcalib/left/out</port>
@@ -23,6 +23,10 @@
 </module>
 <module>
     <name>worldStateManager</name>
+    <node>console</node>
+</module>
+<module>
+    <name>objectsPropertiesCollector</name>
     <node>console</node>
 </module>
 
@@ -117,6 +121,11 @@
 <connection>
     <from>/blobDescriptor/affDescriptor:o</from>
     <to>/wsm/affDescriptor:i</to>
+    <protocol>tcp</protocol>
+</connection>
+<connection>
+    <from>/wsm/opc:io</from>
+    <to>/objectsPropertiesCollector/rpc</to>
     <protocol>tcp</protocol>
 </connection>
 

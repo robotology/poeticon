@@ -7,51 +7,32 @@
  *
  */
 
-#ifndef	__WSM_MODULE_H__
+#ifndef __WSM_MODULE_H__
 #define __WSM_MODULE_H__
 
-#include <sstream>
-#include <yarp/os/BufferedPort.h>
-#include <yarp/os/Log.h>
 #include <yarp/os/RFModule.h>
-#include <yarp/os/RpcClient.h>
-#include <yarp/os/Time.h>
-#include <yarp/os/Vocab.h>
-
-#define STATE_WAIT_BLOBS   0
-#define STATE_READ_BLOBS   1
-#define STATE_INIT_TRACKER 2
-#define STATE_WAIT_TRACKER 3
-#define STATE_READ_TRACKER 4
-#define STATE_POPULATE_DB  5
-#define STATE_UPDATE_DB    6
+#include "WorldStateMgr_IDL.h"
+#include "WorldStateMgrThread.h"
 
 using namespace std;
 using namespace yarp::os;
 
-class WorldStateMgrModule : public RFModule
+class WorldStateMgrModule : public RFModule, public WorldStateMgr_IDL
 {
     private:
+        // module parameters
         string moduleName;
+        string handlerPortName;
+        RpcServer handlerPort;
+        bool closing;
 
-        string inTargetsPortName;
-        string inAffPortName;
-        string outFixationPortName;
-        string outStatePortName;
-        string opcPortName;
+        // pointer to a new thread
+        WorldStateMgrThread *thread;
 
-        BufferedPort<Bottle> inTargetsPort;
-        BufferedPort<Bottle> inAffPort;
-        Port outFixationPort;
-        RpcClient opcPort;
-
-        Bottle *inAff;
-        Bottle *inTargets;
-        int state;
-
-        int sizeTargets, sizeAff;
-
-        bool populated;
+        // thread stuff
+        double threadPeriod;
+        bool playbackMode;
+        string playbackFile;
 
     public:
         virtual bool configure(ResourceFinder &rf);
@@ -60,13 +41,11 @@ class WorldStateMgrModule : public RFModule
         virtual bool updateModule();
         virtual double getPeriod();
 
-        // TODO: bool functions (with success checks) instead of void
-        void doInitTracker();
-        bool doPopulateDB();
-        void refreshBlobs();
-        void refreshTracker();
-        void refreshAll();
-        bool refreshAllAndValidate();
+        // IDL functions
+        bool attach(yarp::os::RpcServer &source);
+        bool step();
+        bool update();
+        bool quit();
 };
 
 #endif
