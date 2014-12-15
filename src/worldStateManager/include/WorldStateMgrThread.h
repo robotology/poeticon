@@ -40,15 +40,17 @@ class WorldStateMgrThread : public RateThread
         string inAffPortName;
         string outFixationPortName;
         string opcPortName;
+        string arePortName;
         BufferedPort<Bottle> inTargetsPort;
         BufferedPort<Bottle> inAffPort;
         Port outFixationPort;
         RpcClient opcPort;
+        RpcClient arePort;
         bool closing;
 
         bool playbackMode;
         bool populated;
-        int state;
+        int perceptionState;
         Bottle *inAff;
         Bottle *inTargets;
         int sizeTargets, sizeAff;
@@ -65,20 +67,23 @@ class WorldStateMgrThread : public RateThread
         void interrupt();
         bool threadInit();
         void run();
-
-        bool initVariables();
-        bool initTracker();
+        
+        // perception and playback modes
         bool updateWorldState();
+        bool doPopulateDB();
+        
+        // perception mode
+        bool initPerceptionVars();
+        bool initTracker();
         void fsmPerception();
         void refreshBlobs();
         void refreshTracker();
-        void refreshAll();
-        bool refreshAllAndValidate();
-        bool doPopulateDB();
+        void refreshPerception();
+        bool refreshPerceptionAndValidate();
+        bool isHandFree(const string &handName);
 
         // playback mode
         bool setPlaybackFile(const string &_file);
-        bool stepOnce();
         void fsmPlayback();
 };
 

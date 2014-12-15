@@ -25,7 +25,7 @@ bool WorldStateMgrThread::openPorts()
     // perception and playback modes
     opcPortName = "/" + moduleName + "/opc:io";
     opcPort.open(opcPortName.c_str());
-
+    
     if (playbackMode) return true;
 
     // perception mode only
@@ -37,6 +37,9 @@ bool WorldStateMgrThread::openPorts()
 
     outFixationPortName = "/" + moduleName + "/fixation:o";
     outFixationPort.open(outFixationPortName.c_str());
+
+    arePortName = "/" + moduleName + "/are:rpc";
+    arePort.open(arePortName.c_str());
 
     return true;
 }
@@ -53,6 +56,7 @@ void WorldStateMgrThread::close()
     inTargetsPort.close();
     inAffPort.close();
     outFixationPort.close();
+    arePort.close();
 }
 
 void WorldStateMgrThread::interrupt()
@@ -68,6 +72,7 @@ void WorldStateMgrThread::interrupt()
     inTargetsPort.interrupt();
     inAffPort.interrupt();
     outFixationPort.interrupt();
+    arePort.interrupt();
 }
 
 bool WorldStateMgrThread::threadInit()
@@ -82,63 +87,10 @@ bool WorldStateMgrThread::threadInit()
         return false;
     }
 
-    // playback mode only
     if (playbackMode) return true;
 
     // perception mode only
-    return initVariables();
-}
-
-bool WorldStateMgrThread::initVariables()
-{
-    if (playbackMode)
-    {
-        yWarning("initVariables called when it was not supposed to");
-        return false;
-    }
-
-    inAff = NULL;
-    inTargets = NULL;
-    state = STATE_WAIT_BLOBS;
-
-    return true;
-}
-
-bool WorldStateMgrThread::initTracker()
-{
-    if (playbackMode)
-    {
-        yWarning("initTracker called when it was not supposed to");
-        return false;
-    }
-
-    if (outFixationPort.getOutputCount()<1)
-    {
-        yWarning("fixation:o not connected to tracker input, exiting initTracker");
-        return false;
-    }
-
-    yInfo("initializing multi-object tracking of %d objects:", sizeAff);
-
-    Bottle fixation;
-    double x=0.0, y=0.0;
-
-    for(int a=0; a<sizeAff; a++)
-    {
-        x = inAff->get(a+1).asList()->get(0).asDouble();
-        y = inAff->get(a+1).asList()->get(1).asDouble();
-
-        fixation.clear();
-        fixation.addDouble(x);
-        fixation.addDouble(y);
-        Time::delay(1.0); // prevents activeParticleTrack crash
-        outFixationPort.write(fixation);
-
-        yInfo("id %d: %f %f", a, x, y);
-    }
-
-    yInfo("done initializing tracker");
-    return true;
+    return initPerceptionVars();
 }
 
 void WorldStateMgrThread::run()
@@ -158,164 +110,20 @@ void WorldStateMgrThread::run()
     }
 }
 
-void WorldStateMgrThread::fsmPerception()
-{
-    yDebug("perception state=%d", state);
-    switch(state)
-    {
-        case STATE_WAIT_BLOBS:
-        {
-            // wait for blobs data to arrive
-            refreshBlobs();
-            // when something arrives, proceed
-            if (inAff != NULL)
-                state = STATE_READ_BLOBS;
-
-            break;
-        }
-
-        case STATE_READ_BLOBS:
-        {
-            // if size>0 proceed, else go back one state
-            if (sizeAff > 0)
-                state = STATE_INIT_TRACKER;
-            else
-                state = STATE_WAIT_BLOBS;
-
-            break;
-        }
-
-        case STATE_INIT_TRACKER:
-        {
-            initTracker();
-
-            // proceed
-            state = STATE_WAIT_TRACKER;
-
-            break;
-        }
-
-        case STATE_WAIT_TRACKER:
-        {
-            // wait for tracker data to arrive
-            refreshTracker();
-
-            // when something arrives, proceed
-            if (inTargets != NULL)
-                state = STATE_READ_TRACKER;
-
-            break;
-        }
-
-        case STATE_READ_TRACKER:
-        {
-            // if size>0 proceed, else go back one state
-            if (sizeTargets > 0)
-                state = STATE_POPULATE_DB;
-            else
-                state = STATE_WAIT_TRACKER;
-
-            break;
-        }
-
-        case STATE_POPULATE_DB:
-        {
-            // read new data and ensure validity
-            refreshAllAndValidate();
-
-            // try populating database
-            populated = doPopulateDB();
-
-            // if database was successfully populated proceed, else stay in same state
-            if (populated)
-                state = STATE_UPDATE_DB;
-
-            break;
-        }
-
-        case STATE_UPDATE_DB:
-        {
-            // read new data and ensure validity
-            refreshAll();
-
-            // update opc
-            updateWorldState();
-
-            break;
-        }
-        default:
-        {
-            break;
-        }
-    }
-}
+/* ************************************************************************** */
+/* perception and playback modes                                              */
 
 bool WorldStateMgrThread::updateWorldState()
 {
-     if (!playbackMode) refreshAllAndValidate();
+     // perception mode
+     if (!playbackMode) refreshPerceptionAndValidate();
+     
      // TODO: playbackMode
+     
      // TODO: write to opc
+     
      yDebug("updated world state");
      return true;
-}
-
-void WorldStateMgrThread::refreshBlobs()
-{
-    if (playbackMode)
-    {
-        yWarning("refreshBlobs called when it was not supposed to");
-        return;
-    }
-
-    inAff = inAffPort.read();
-
-    if (inAff != NULL)
-    {
-        // number of blobs
-        sizeAff = static_cast<int>( inAff->get(0).asDouble() );
-    }
-}
-
-void WorldStateMgrThread::refreshTracker()
-{
-    if (playbackMode)
-    {
-        yWarning("refreshTracker called when it was not supposed to");
-        return;
-    }
-
-    inTargets = inTargetsPort.read();
-
-    if (inTargets != NULL)
-    {
-        // number of tracked objects
-        sizeTargets = inTargets->size();
-    }
-}
-
-void WorldStateMgrThread::refreshAll()
-{
-    refreshBlobs();
-    refreshTracker();
-}
-
-bool WorldStateMgrThread::refreshAllAndValidate()
-{
-    refreshAll();
-
-    if (inAff==NULL || inTargets==NULL)
-    {
-        yWarning("no data");
-        return false;
-    }
-
-    if (sizeAff != sizeTargets)
-    {
-        yWarning("sizeAff=%d differs from sizeTargets=%d", sizeAff, sizeTargets);
-        return false;
-    }
-
-    return true;
 }
 
 bool WorldStateMgrThread::doPopulateDB()
@@ -343,9 +151,9 @@ bool WorldStateMgrThread::doPopulateDB()
     
         // prepare name property
         bName.addString("name");
-        std::stringstream fakename;
-        fakename << "myLabel" << a;
-        bName.addString( fakename.str() ); // TODO: real name from IOL
+        std::stringstream bNameValue; // TODO: real name from IOL
+        bNameValue << "myLabel" << a;
+        bName.addString( bNameValue.str() );
 
         // prepare position property
         // TODO: transform to 3D ref frame with iKinGazeCtrl
@@ -413,7 +221,8 @@ bool WorldStateMgrThread::doPopulateDB()
 
             // prepare is_free property
             bIsFree.addString("is_free");
-            bool bIsFreeValue = true; // TODO: real value from ARE
+            //bool bIsFreeValue;
+            bool bIsFreeValue = isHandFree(bNameValue.str());
             bIsFree.addInt(bIsFreeValue); // 1=true, 0=false
         }
 
@@ -455,11 +264,243 @@ bool WorldStateMgrThread::doPopulateDB()
     return true;
 }
 
-// playback mode
+/* ************************************************************************** */
+/* perception mode                                                            */
+
+bool WorldStateMgrThread::initPerceptionVars()
+{
+    inAff = NULL;
+    inTargets = NULL;
+    perceptionState = STATE_WAIT_BLOBS;
+
+    return true;
+}
+
+bool WorldStateMgrThread::initTracker()
+{
+    if (playbackMode)
+    {
+        yWarning("initTracker called when it was not supposed to");
+        return false;
+    }
+
+    if (outFixationPort.getOutputCount() < 1)
+    {
+        yWarning("fixation:o not connected to tracker input, exiting initTracker");
+        return false;
+    }
+
+    yInfo("initializing multi-object tracking of %d objects:", sizeAff);
+
+    Bottle fixation;
+    double x=0.0, y=0.0;
+
+    for(int a=0; a<sizeAff; a++)
+    {
+        x = inAff->get(a+1).asList()->get(0).asDouble();
+        y = inAff->get(a+1).asList()->get(1).asDouble();
+
+        fixation.clear();
+        fixation.addDouble(x);
+        fixation.addDouble(y);
+        Time::delay(1.0); // prevents activeParticleTrack crash
+        outFixationPort.write(fixation);
+
+        yInfo("id %d: %f %f", a, x, y);
+    }
+
+    yInfo("done initializing tracker");
+    return true;
+}
+
+void WorldStateMgrThread::fsmPerception()
+{
+    yDebug("perception state=%d", perceptionState);
+    switch(perceptionState)
+    {
+        case STATE_WAIT_BLOBS:
+        {
+            // wait for blobs data to arrive
+            refreshBlobs();
+            // when something arrives, proceed
+            if (inAff != NULL)
+                perceptionState = STATE_READ_BLOBS;
+
+            break;
+        }
+
+        case STATE_READ_BLOBS:
+        {
+            // if size>0 proceed, else go back one state
+            if (sizeAff > 0)
+                perceptionState = STATE_INIT_TRACKER;
+            else
+                perceptionState = STATE_WAIT_BLOBS;
+
+            break;
+        }
+
+        case STATE_INIT_TRACKER:
+        {
+            // initialize multi-object active particle tracker
+            initTracker();
+
+            // proceed
+            perceptionState = STATE_WAIT_TRACKER;
+
+            break;
+        }
+
+        case STATE_WAIT_TRACKER:
+        {
+            // wait for tracker data to arrive
+            refreshTracker();
+
+            // when something arrives, proceed
+            if (inTargets != NULL)
+                perceptionState = STATE_READ_TRACKER;
+
+            break;
+        }
+
+        case STATE_READ_TRACKER:
+        {
+            // if size>0 proceed, else go back one state
+            if (sizeTargets > 0)
+                perceptionState = STATE_POPULATE_DB;
+            else
+                perceptionState = STATE_WAIT_TRACKER;
+
+            break;
+        }
+
+        case STATE_POPULATE_DB:
+        {
+            // read new data and ensure validity
+            refreshPerceptionAndValidate();
+
+            // try populating database
+            populated = doPopulateDB();
+
+            // if database was successfully populated proceed, else stay in same state
+            if (populated)
+                perceptionState = STATE_UPDATE_DB;
+
+            break;
+        }
+
+        case STATE_UPDATE_DB:
+        {
+            // read new data and ensure validity
+            refreshPerceptionAndValidate();
+
+            // update opc
+            updateWorldState();
+
+            break;
+        }
+        default:
+        {
+            break;
+        }
+    }
+}
+
+void WorldStateMgrThread::refreshBlobs()
+{
+    if (playbackMode)
+    {
+        yWarning("refreshBlobs called when it was not supposed to");
+        return;
+    }
+
+    inAff = inAffPort.read();
+
+    if (inAff != NULL)
+    {
+        // number of blobs
+        sizeAff = static_cast<int>( inAff->get(0).asDouble() );
+    }
+}
+
+void WorldStateMgrThread::refreshTracker()
+{
+    if (playbackMode)
+    {
+        yWarning("refreshTracker called when it was not supposed to");
+        return;
+    }
+
+    inTargets = inTargetsPort.read();
+
+    if (inTargets != NULL)
+    {
+        // number of tracked objects
+        sizeTargets = inTargets->size();
+    }
+}
+
+void WorldStateMgrThread::refreshPerception()
+{
+    refreshBlobs();
+    refreshTracker();
+}
+
+bool WorldStateMgrThread::refreshPerceptionAndValidate()
+{
+    refreshPerception();
+
+    if (inAff==NULL || inTargets==NULL)
+    {
+        yWarning("no data");
+        return false;
+    }
+
+    if (sizeAff != sizeTargets)
+    {
+        yWarning("sizeAff=%d differs from sizeTargets=%d", sizeAff, sizeTargets);
+        return false;
+    }
+
+    return true;
+}
+
+bool WorldStateMgrThread::isHandFree(const string &handName)
+{
+    if (arePort.getOutputCount() < 1)
+    {
+        yWarning("not connected to ARE");
+        return false;
+    }
+    
+    if ((handName != "left_hand") && (handName != "right_hand"))
+    {
+        yWarning("isHandFree: argument handName must be left_hand or right_hand");
+    }
+    
+    Bottle areCmd, areReply;
+    areCmd.addVocab(Vocab::encode("get_hand")); // TODO: proper ARE syntax
+    yDebug("sending query to ARE:", areCmd.toString().c_str());
+    arePort.write(areCmd, areReply);
+    
+    // process ARE response
+    if (areReply.size() > 1)
+    {
+        if (areReply.get(0).asVocab()==Vocab::encode("ack"))
+            yDebug("received ack from ARE");
+        else
+            yDebug("did not receive ack from ARE");
+    }
+
+    return (areReply.get(1).asString()=="free"); // TODO: proper ARE syntax
+}
+
+/* ************************************************************************** */
+/* playback mode                                                              */
 
 void WorldStateMgrThread::fsmPlayback()
 {
-    // TODO: validate file, parse new instant and stepOnce
+    // TODO: validate file, parse new instant and update
     yDebug("playback state=");
 }
 
@@ -467,11 +508,4 @@ bool WorldStateMgrThread::setPlaybackFile(const string &file)
 {
     playbackFile = file;
     yDebug("going to read from playback file %s", playbackFile.c_str());
-}
-
-bool WorldStateMgrThread::stepOnce()
-{
-     yDebug("stepping to next state");
-     // TODO
-     return true;
 }
