@@ -10,6 +10,7 @@
 #ifndef __WSM_MODULE_H__
 #define __WSM_MODULE_H__
 
+#include <yarp/os/LogStream.h>
 #include <yarp/os/RFModule.h>
 #include "WorldStateMgr_IDL.h"
 #include "WorldStateMgrThread.h"

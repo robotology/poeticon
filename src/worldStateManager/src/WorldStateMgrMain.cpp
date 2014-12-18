@@ -28,7 +28,7 @@ int main(int argc, char *argv[])
 
     ResourceFinder rf;
     rf.setVerbose(false);
-    rf.setDefaultContext("wsm");    // overridden by --context
+    rf.setDefaultContext("poeticon");    // overridden by --context
     rf.setDefaultConfigFile("wsm.ini");  // overridden by --from
     rf.configure(argc, argv);
 
@@ -36,7 +36,7 @@ int main(int argc, char *argv[])
     {
         yInfo("Available options:");
         yInfo("--name prefix (default wsm)");
-        yInfo("--playback (to read data from a text file)");
+        yInfo("--playback <file> (to read data from a file)");
         return 0; // EXIT_SUCCESS
     }
 

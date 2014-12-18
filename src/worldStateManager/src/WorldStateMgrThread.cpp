@@ -87,10 +87,7 @@ bool WorldStateMgrThread::threadInit()
         return false;
     }
 
-    if (playbackMode) return true;
-
-    // perception mode only
-    return initPerceptionVars();
+    return ( playbackMode ? initPlaybackVars() : initPerceptionVars() );
 }
 
 void WorldStateMgrThread::run()
@@ -115,14 +112,26 @@ void WorldStateMgrThread::run()
 
 bool WorldStateMgrThread::updateWorldState()
 {
-     // perception mode
-     if (!playbackMode) refreshPerceptionAndValidate();
+     if (opcPort.getOutputCount() < 1)
+     {
+         yWarning("not connected to OPC");
+         return false;
+     }
+
+     if (!playbackMode)
+     {
+         // perception mode
+         refreshPerceptionAndValidate();
+     }
+     else
+     {
+         // playback mode
+         playbackPaused = false;
+     }
      
-     // TODO: playbackMode
+     // TODO: opcPort.write() should be here instead of inner functions
      
-     // TODO: write to opc
      
-     yDebug("updated world state");
      return true;
 }
 
@@ -498,10 +507,129 @@ bool WorldStateMgrThread::isHandFree(const string &handName)
 /* ************************************************************************** */
 /* playback mode                                                              */
 
+bool WorldStateMgrThread::initPlaybackVars()
+{
+    playbackPaused = true;
+    playbackState = STATE_PARSE_FILE;
+    sizePlaybackFile = -1;
+    currPlayback = -1;
+
+    return true;
+}
+
 void WorldStateMgrThread::fsmPlayback()
 {
-    // TODO: validate file, parse new instant and update
-    yDebug("playback state=");
+    //yDebug("playback state=%d", playbackState);
+    switch (playbackState)
+    {
+        case STATE_PARSE_FILE:
+        {
+            // acquire Bottle with whole file content
+            Property findProperty;
+            findProperty.fromConfigFile(playbackFile.c_str());
+            findBottle.read(findProperty);
+            sizePlaybackFile = findBottle.size();
+            if (sizePlaybackFile < 1)
+            {
+                yError("file empty or not parsable");
+                playbackState = STATE_END_FILE;
+            }
+            
+            // proceed to "[state00]"
+            currPlayback = 0;
+            playbackState = STATE_STEP_FILE;
+            break;
+        }
+        
+        case STATE_STEP_FILE:
+        {
+            if (!playbackPaused)
+            {
+                // parse group "[state##]" of file
+                // TODO: make it work for "[state##]" with ##>9 and simplify
+                ostringstream tag;
+                tag << "state" << std::setw(2) << std::setfill('0') << currPlayback << "";
+                Bottle &bCurr = findBottle.findGroup(tag.str().c_str());
+                if (bCurr.size() < 1)
+                {
+                    yWarning() << tag.str().c_str() << "not found";
+                    playbackPaused = true;
+                    playbackState = STATE_END_FILE;
+                    break;
+                }
+                yDebug("loaded group %s, has size %d incl. group tag", tag.str().c_str(), bCurr.size());
+
+                Bottle opcCmd, content, opcReply;
+                Bottle *obj_j;
+
+                // parse each entry/line of current group "[state##]"
+                for (int j=1; j<bCurr.size(); j++)
+                {
+                    // check if entry already exists in OPC
+                    opcCmd.clear();
+                    content.clear();
+                    opcCmd.addVocab(Vocab::encode("get"));
+                    obj_j = bCurr.get(j).asList();
+                    opcCmd.addList() = *obj_j->get(0).asList();
+                    opcPort.write(opcCmd, opcReply);
+                    
+                    if (opcReply.get(0).asVocab() == Vocab::encode("ack"))
+                    {
+                        // yes -> just update entry's properties
+                        yDebug("modifying existing entry in database");
+                        opcCmd.clear();
+                        opcCmd.addVocab(Vocab::encode("set"));
+                        obj_j = bCurr.get(j).asList();
+                        content.addList() = *obj_j->get(0).asList(); // ID
+                        content.append(*obj_j->get(1).asList());     // propSet
+                        opcCmd.addList() = content;
+                        opcPort.write(opcCmd, opcReply);
+                    }
+                    else
+                    {
+                        // no -> add entry
+                        yDebug("adding new entry to database");
+                        opcCmd.clear();
+                        opcCmd.addVocab(Vocab::encode("add"));
+                        obj_j = bCurr.get(j).asList();
+                        content.append(*obj_j->get(1).asList()); // propSet
+                        opcCmd.addList() = content;
+                        opcPort.write(opcCmd, opcReply);
+
+                        // handle problems and inconsistencies
+                        if (opcReply.get(1).asList()->get(1).asInt() !=
+                            obj_j->get(0).asList()->get(1).asInt())
+                        {
+                            yWarning() << "ID problem:" <<
+                            opcReply.get(1).asList()->get(1).asInt() <<
+                            "in OPC database, but" <<
+                            obj_j->get(0).asList()->get(1).asInt() <<
+                            "in playback file";
+
+                            //break;
+                        }
+                    }
+                }
+                
+                ++currPlayback;
+                playbackPaused = true;
+            }
+            
+            // stay in same state, wait for next update instruction over rpc
+            
+            break;
+        }
+        
+        case STATE_END_FILE:
+        {
+            yInfo("finished reading from playback file");
+            closing = true;
+            break;        
+        }
+        
+        default:
+            break;
+    }
 }
 
 bool WorldStateMgrThread::setPlaybackFile(const string &file)

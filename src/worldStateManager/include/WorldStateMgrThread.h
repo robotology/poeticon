@@ -10,11 +10,14 @@
 #ifndef __WSM_THREAD_H__
 #define __WSM_THREAD_H__
 
+#include <iomanip>
 #include <sstream>
 #include <yarp/os/Bottle.h>
 #include <yarp/os/BufferedPort.h>
 #include <yarp/os/Log.h>
+#include <yarp/os/LogStream.h>
 #include <yarp/os/Port.h>
+#include <yarp/os/Property.h>
 #include <yarp/os/RateThread.h>
 #include <yarp/os/RpcClient.h>
 #include <yarp/os/Time.h>
@@ -28,6 +31,11 @@
 #define STATE_READ_TRACKER 4
 #define STATE_POPULATE_DB  5
 #define STATE_UPDATE_DB    6
+
+// playback states
+#define STATE_PARSE_FILE 100
+#define STATE_STEP_FILE  101
+#define STATE_END_FILE   102
 
 using namespace std;
 using namespace yarp::os;
@@ -48,15 +56,23 @@ class WorldStateMgrThread : public RateThread
         RpcClient arePort;
         bool closing;
 
+        // perception and playback modes
         bool playbackMode;
         bool populated;
+
+        // perception mode
         int perceptionState;
         Bottle *inAff;
         Bottle *inTargets;
         int sizeTargets, sizeAff;
 
         // playback mode
+        int playbackState; // TODO: rename to avoid confusion with file "state##"
         string playbackFile;
+        bool playbackPaused;
+        Bottle findBottle;
+        int sizePlaybackFile;
+        int currPlayback;
 
     public:
         WorldStateMgrThread(const string &_moduleName,
@@ -83,6 +99,7 @@ class WorldStateMgrThread : public RateThread
         bool isHandFree(const string &handName);
 
         // playback mode
+        bool initPlaybackVars();
         bool setPlaybackFile(const string &_file);
         void fsmPlayback();
 };

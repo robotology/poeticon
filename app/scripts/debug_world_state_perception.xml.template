@@ -1,5 +1,5 @@
 <application>
-<name>POETICON++ World State Manager</name>
+<name>POETICON++ World State from Perception</name>
 
 <dependencies>
     <port>/icub/camcalib/left/out</port>
@@ -31,6 +31,7 @@
 </module>
 <module>
     <name>objectsPropertiesCollector</name>
+    <parameters>--name memory --context poeticon --db dbhands.ini</parameters>
     <node>console</node>
 </module>
 
@@ -122,7 +123,7 @@
 </connection>
 <connection>
     <from>/wsm/opc:io</from>
-    <to>/objectsPropertiesCollector/rpc</to>
+    <to>/memory/rpc</to>
     <protocol>tcp</protocol>
 </connection>
 <connection>

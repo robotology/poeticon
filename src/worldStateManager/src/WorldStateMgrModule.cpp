@@ -19,8 +19,15 @@ bool WorldStateMgrModule::configure(ResourceFinder &rf)
     playbackMode = rf.check("playback");
     if (playbackMode)
     {
-        playbackFile = rf.find("playback").asString();
-        yInfo("module started in playback mode");
+        yDebug("module started in playback mode");
+        playbackFile = rf.findFile("playback").c_str();
+        if (playbackFile.empty())
+        {
+            yError("playback file not found");
+            return false;
+        }
+        else
+            yInfo("playback file loaded successfully");
     }
 
     handlerPortName = "/" + moduleName + "/rpc:i";
