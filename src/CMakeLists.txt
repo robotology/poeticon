@@ -7,10 +7,8 @@ set(PROJECTNAME poeticon)
 project(${PROJECTNAME})
 
 find_package(YARP)
-find_package(ICUB)
 find_package(ICUBcontrib)
 list(APPEND CMAKE_MODULE_PATH ${YARP_MODULE_PATH}
-                              ${ICUB_MODULE_PATH}
                               ${ICUBCONTRIB_MODULE_PATH})
 
 include(YarpInstallationHelpers)
@@ -23,9 +21,13 @@ add_subdirectory(opc2prada)
 add_subdirectory(worldStateManager)
 
 # modules that need OpenCV
-add_subdirectory(activeSegmentation)
-add_subdirectory(blobSpotter)
-add_subdirectory(blobDescriptor)
-#add_subdirectory(objectDescriptor)
-add_subdirectory(sequentialLabeller)
-#add_subdirectory(slic)
+if(ICUB_USE_OpenCV)
+    add_subdirectory(activeSegmentation)
+    add_subdirectory(blobSpotter)
+    add_subdirectory(blobDescriptor)
+    #add_subdirectory(objectDescriptor)
+    add_subdirectory(sequentialLabeller)
+    #add_subdirectory(slic)
+else(ICUB_USE_OpenCV)
+    message(STATUS "OpenCV not found or selected, skipping vision modules")
+endif(ICUB_USE_OpenCV)
