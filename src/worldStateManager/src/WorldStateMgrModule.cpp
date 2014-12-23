@@ -18,7 +18,17 @@ bool WorldStateMgrModule::configure(ResourceFinder &rf)
 
     playbackMode = rf.check("playback");
     if (playbackMode)
-        playbackFile = rf.find("playback").asString();
+    {
+        yDebug("module started in playback mode");
+        playbackFile = rf.findFile("playback").c_str();
+        if (playbackFile.empty())
+        {
+            yError("playback file not found");
+            return false;
+        }
+        else
+            yInfo("playback file loaded successfully");
+    }
 
     handlerPortName = "/" + moduleName + "/rpc:i";
     handlerPort.open(handlerPortName.c_str());
@@ -79,21 +89,13 @@ bool WorldStateMgrModule::attach(RpcServer &source)
     return this->yarp().attachAsServer(source);
 }
 
-bool WorldStateMgrModule::step()
-{
-    if (!playbackMode)
-    {
-        yWarning("step command requires playback mode");
-        return true;
-    }
-
-    yDebug("stepping into next time instant");
-    return thread->stepOnce();
-}
-
 bool WorldStateMgrModule::update()
 {
-    yDebug("updating world state database");
+    if (playbackMode)
+        yDebug("updating world state from playback file");
+    else
+        yDebug("updating world state from robot perception");
+
     return thread->updateWorldState();
 }
 

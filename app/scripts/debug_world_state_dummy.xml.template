@@ -1,0 +1,21 @@
+<application>
+<name>POETICON++ World State from Dummy File</name>
+
+<module>
+    <name>worldStateManager</name>
+    <parameters>--playback dbdummy.ini</parameters>
+    <node>console</node>
+</module>
+<module>
+    <name>objectsPropertiesCollector</name>
+    <parameters>--name memory --context poeticon --db dbhands.ini --nosave</parameters>
+    <node>console</node>
+</module>
+
+<connection>
+    <from>/wsm/opc:io</from>
+    <to>/memory/rpc</to>
+    <protocol>tcp</protocol>
+</connection>
+
+</application>

@@ -10,16 +10,14 @@ service WorldStateMgr_IDL
 {
   /**
   * Update the world state database.
+  * If the module was started in perception mode (default), the new state will
+  * be created from robot perception. If the module was started in playback
+  * mode, the new state will be created from the next time instant in the
+  * world state text file.
   * @return true/false on success/failure
   */
   bool update();
 
-  /**
-  * Step playback once. 
-  * @return true/false on success/failure
-  */
-  bool step();
-  
   /**
   * Quit the module.
   * @return true/false on success/failure

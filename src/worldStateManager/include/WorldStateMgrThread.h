@@ -10,11 +10,14 @@
 #ifndef __WSM_THREAD_H__
 #define __WSM_THREAD_H__
 
+#include <iomanip>
 #include <sstream>
 #include <yarp/os/Bottle.h>
 #include <yarp/os/BufferedPort.h>
 #include <yarp/os/Log.h>
+#include <yarp/os/LogStream.h>
 #include <yarp/os/Port.h>
+#include <yarp/os/Property.h>
 #include <yarp/os/RateThread.h>
 #include <yarp/os/RpcClient.h>
 #include <yarp/os/Time.h>
@@ -29,6 +32,11 @@
 #define STATE_POPULATE_DB  5
 #define STATE_UPDATE_DB    6
 
+// playback states
+#define STATE_PARSE_FILE 100
+#define STATE_STEP_FILE  101
+#define STATE_END_FILE   102
+
 using namespace std;
 using namespace yarp::os;
 
@@ -40,21 +48,31 @@ class WorldStateMgrThread : public RateThread
         string inAffPortName;
         string outFixationPortName;
         string opcPortName;
+        string arePortName;
         BufferedPort<Bottle> inTargetsPort;
         BufferedPort<Bottle> inAffPort;
         Port outFixationPort;
         RpcClient opcPort;
+        RpcClient arePort;
         bool closing;
 
+        // perception and playback modes
         bool playbackMode;
         bool populated;
-        int state;
+
+        // perception mode
+        int perceptionState;
         Bottle *inAff;
         Bottle *inTargets;
         int sizeTargets, sizeAff;
 
         // playback mode
+        int playbackState; // TODO: rename to avoid confusion with file "state##"
         string playbackFile;
+        bool playbackPaused;
+        Bottle findBottle;
+        int sizePlaybackFile;
+        int currPlayback;
 
     public:
         WorldStateMgrThread(const string &_moduleName,
@@ -65,20 +83,24 @@ class WorldStateMgrThread : public RateThread
         void interrupt();
         bool threadInit();
         void run();
-
-        bool initVariables();
-        bool initTracker();
+        
+        // perception and playback modes
         bool updateWorldState();
+        bool doPopulateDB();
+        
+        // perception mode
+        bool initPerceptionVars();
+        bool initTracker();
         void fsmPerception();
         void refreshBlobs();
         void refreshTracker();
-        void refreshAll();
-        bool refreshAllAndValidate();
-        bool doPopulateDB();
+        void refreshPerception();
+        bool refreshPerceptionAndValidate();
+        bool isHandFree(const string &handName);
 
         // playback mode
+        bool initPlaybackVars();
         bool setPlaybackFile(const string &_file);
-        bool stepOnce();
         void fsmPlayback();
 };
 

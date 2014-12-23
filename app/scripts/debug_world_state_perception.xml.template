@@ -1,10 +1,14 @@
 <application>
-<name>POETICON++ World State Manager</name>
+<name>POETICON++ World State from Perception</name>
 
 <dependencies>
     <port>/icub/camcalib/left/out</port>
 </dependencies>
 
+<module>
+    <name>actionsRenderingEngine</name>
+    <node>pwrNode</node>
+</module>
 <module>
     <name>blobSpotter</name>
     <node>pwrNode</node>
@@ -27,6 +31,7 @@
 </module>
 <module>
     <name>objectsPropertiesCollector</name>
+    <parameters>--name memory --context poeticon --db dbhands.ini</parameters>
     <node>console</node>
 </module>
 
@@ -42,7 +47,7 @@
 </module>
 <module>
     <name>yarpview</name>
-    <parameters>--name /view/track --x 660 --y 0 <!-- - -out /view/coords:o --></parameters>
+    <parameters>--name /view/track --x 660 --y 0</parameters>
     <node>console</node>
 </module>
 
@@ -101,13 +106,6 @@
     <to>/activeParticleTrack/image:i</to>
     <protocol>tcp</protocol>
 </connection>
-<!--
-<connection>
-      <from>/view/coords:o</from>
-      <to>/activeParticleTrack/fixation:i</to>
-      <protocol>tcp</protocol>
-</connection>
--->
 <connection>
     <from>/wsm/fixation:o</from>
     <to>/activeParticleTrack/fixation:i</to>
@@ -125,7 +123,12 @@
 </connection>
 <connection>
     <from>/wsm/opc:io</from>
-    <to>/objectsPropertiesCollector/rpc</to>
+    <to>/memory/rpc</to>
+    <protocol>tcp</protocol>
+</connection>
+<connection>
+    <from>/wsm/are:rpc</from>
+    <to>/actionsRenderingEngine/cmd:io</to>
     <protocol>tcp</protocol>
 </connection>
 
