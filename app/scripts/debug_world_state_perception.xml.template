@@ -131,5 +131,25 @@
     <to>/actionsRenderingEngine/cmd:io</to>
     <protocol>tcp</protocol>
 </connection>
+<connection>
+    <from>/translator/rpcClient</from>
+    <to>/memory/rpc</to>
+    <protocol>tcp</protocol>
+</connection>
+<connection>
+    <from>/memory/broadcast:o</from>
+    <to>/translator/broadcast:i</to>
+    <protocol>tcp</protocol>
+</connection>
+<connection>
+    <from>/translator/port:io</from>
+    <to>/planner/port:io</to>
+    <protocol>tcp</protocol>
+</connection>
+<connection>
+    <from>/planner/port:io</from>
+    <to>/translator/port:io</to>
+    <protocol>tcp</protocol>
+</connection>
 
 </application>
