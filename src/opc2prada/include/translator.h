@@ -39,12 +39,12 @@ using namespace yarp::os;
 using namespace std;
 
 class Thread_read : public RateThread {
-public: 
-	Thread_read(BufferedPort<Bottle> * broad_port,RpcClient * rpcClient,int r);
-	Bottle _data,_ids;
-	Mutex guard;
+public:
+    Thread_read(BufferedPort<Bottle> * broad_port,RpcClient * rpcClient,int r);
+    Bottle _data,_ids;
+    Mutex guard;
     virtual bool threadInit();
-    
+
     //called by start after threadInit, s is true iff the thread started
     //successfully
     virtual void afterStart(bool s);
@@ -52,24 +52,24 @@ public:
     {
         printf("Goodbye from thread1\n");
     }
-	virtual void run();
+    virtual void run();
 
 private:
-	BufferedPort<Bottle> *_port_broad;
-	RpcClient *_rpc_port;
-	bool firstTime;
+    BufferedPort<Bottle> *_port_broad;
+    RpcClient *_rpc_port;
+    bool firstTime;
 };
 
 
 class TranslatorModule: public RFModule {
     string moduleName;
-	enum switchCase {name,pos,desc2d,is_h,free,in_h,on_t,re_w,pu_w,touch};
+    enum switchCase {name,pos,desc,is_h,free,in_h,on_t,re_w,pu_w,touch};
     string translatorPortName;
     BufferedPort<Bottle> translatorPort;
 
-	string opcName;
+    string opcName;
     BufferedPort<Bottle> port_broad;
-	RpcClient rpc_port;
+    RpcClient rpc_port;
 
     double threadPeriod;
 
@@ -81,6 +81,6 @@ public:
     bool updateModule();
     bool interruptModule();
     bool close();
-	switchCase hashtable(string command);
+    switchCase hashtable(string command);
 };
 #endif // TRANSLATOR_H

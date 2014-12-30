@@ -20,14 +20,14 @@ double TranslatorModule::getPeriod() {
 }
 TranslatorModule::switchCase TranslatorModule::hashtable(string command){
 	if(command=="name")  return name;
-	if(command=="desc2d")  return desc2d;
-	if(command=="is_hand")  return is_h;
-	if(command=="in_hand")  return in_h;
-	if(command=="on_top_of")  return on_t;
-	if(command=="is_free")  return free;	
-	if(command=="reachable_with")	 return re_w;
-	if(command=="pullable_with")  return pu_w;
-	if(command=="is_touching") return touch;
+	if(command=="desc")  return desc;
+	if(command=="is_h")  return is_h;
+	if(command=="in_h")  return in_h;
+	if(command=="on_t")  return on_t;
+	if(command=="free")  return free;
+	if(command=="re_w")  return re_w;
+	if(command=="pu_w")  return pu_w;
+	if(command=="touch") return touch;
 }
 bool TranslatorModule::interruptModule() {
 
@@ -35,7 +35,7 @@ bool TranslatorModule::interruptModule() {
 
     rpc_port.interrupt();
     port_broad.interrupt();
-	translatorPort.interrupt();
+    translatorPort.interrupt();
 
     return true;
 }
@@ -49,148 +49,149 @@ bool   TranslatorModule::close() {
     delete readingThread;
     rpc_port.close();
     port_broad.close();
-	translatorPort.close();
+    translatorPort.close();
 
     return true;
 }
 bool   TranslatorModule::updateModule() {
-	Bottle receive,dataBase,ids2,*idsp;
-	receive.clear();
-	receive = * (translatorPort.read());  //block
+    Bottle receive,dataBase,ids2,*idsp;
+    receive.clear();
+    receive = * (translatorPort.read());  //block
 
-	cout << "Write to file the world state" << endl;
-	readingThread->guard.lock();
-	dataBase = readingThread->_data;
-	ids2 = readingThread->_ids;
-	readingThread->guard.unlock();
+    cout << "Write to file the world state" << endl;
+    readingThread->guard.lock();
+    dataBase = readingThread->_data;
+    ids2 = readingThread->_ids;
+    readingThread->guard.unlock();
 
-	cout << "after copy Data Bottle" << endl;
-	if(dataBase.size()>0 && (dataBase.get(1).asString()!="empty")) {
-		ofstream myfile,myfile2;
-		myfile.open ("symbols.dat");
-		myfile2.open ("state.dat");
-		idsp = ids2.get(1).asList();
-		idsp = idsp->get(1).asList();
-		cout << "ids: " << idsp->toString().c_str() << endl;
-		for(int i=1;i<dataBase.size();i++){ // for each object
-			cout <<"Object ID: " << idsp->get((i-1)).asInt() << endl;
-			Bottle *objecto = dataBase.get(i).asList();
-			for(int j=0;j<objecto->size();j++) { // for each properties
-				Bottle *propriedade = objecto->get(j).asList();
-				cout << "switch"<< propriedade->get(0).asString().c_str() << endl;
-				switchCase r = hashtable(propriedade->get(0).asString());
-				switch(r)	{
-					case name:{
-						//cout << "name:" << propriedade->get(1).asString().c_str() << endl;
-						break;
-					}
-					case desc2d: {
-						//cout << "desc:" << endl;//propriedade->get(1).asString().c_str() << endl;
-						break;
-					}
-					case pos: {
-						//cout << "pos:" << endl;//propriedade->get(1).asString().c_str() << endl;
-						break;
-					}
-					case on_t: {
-						cout << "on_t:" << endl;//propriedade->get(1).asString().c_str() << endl;
-						Bottle *ontop = propriedade->get(1).asList();
-						for(int k=0; k < ontop->size(); k++){
-							myfile << idsp->get((i-1)).asInt() <<"_on_" <<ontop->get(k).asInt() << " 0 primitive binary " << endl;
-							myfile2 << idsp->get((i-1)).asInt() <<"_on_" <<ontop->get(k).asInt() <<"() ";
-						}
-						break;
-					}
-					case re_w: {
-						cout << "reaw:" << endl;//propriedade->get(1).asString().c_str() << endl;
-						Bottle *reachable = propriedade->get(1).asList();
-						for(int k=0; k < reachable->size(); k++){
-							myfile << idsp->get((i-1)).asInt() <<"_isreachable_with_" <<reachable->get(k).asInt() << " 0 primitive binary " << endl;
-							myfile2 << idsp->get((i-1)).asInt() <<"_isreachable_with_" <<reachable->get(k).asInt() <<"() ";
-						}
-						break;
-					}
-					case pu_w: {
-						cout << "pulw:" << endl;//propriedade->get(1).asString().c_str() << endl;
-						Bottle *pullable = propriedade->get(1).asList();
-						for(int k=0; k < pullable->size(); k++){
-							myfile  << idsp->get((i-1)).asInt() <<"_ispullable_with_" <<pullable->get(k).asInt() << " 0 primitive binary " << endl;
-							myfile2 << idsp->get((i-1)).asInt() <<"_ispullable_with_" <<pullable->get(k).asInt() <<"() ";
-						}
-						break;
-					}
-					case touch: {
-						cout << "touc:" << endl;//propriedade->get(1).asString().c_str() << endl;
-						Bottle *touch = propriedade->get(1).asList();
-						for(int k=0; k < touch->size(); k++){
-							myfile  << idsp->get((i-1)).asInt() <<"_touch_" <<touch->get(k).asInt() << " 0 primitive binary " << endl;
-							myfile2 << idsp->get((i-1)).asInt() <<"_touch_" <<touch->get(k).asInt() <<"() ";
-						}
-						break;
-					}
-					case is_h: {
-						cout << "ish:" << endl;//propriedade->get(1).asString().c_str() << endl;
-						if(propriedade->get(1).asString() == "true") {
-							myfile << idsp->get((i-1)).asInt() <<"_ishand" << " 0 primitive binary " << endl;
-							myfile2 << idsp->get((i-1)).asInt() <<"_ishand" <<"() ";
-						}
-						break;
-					}
-					case free: {
-						cout << "Free:" << endl;//propriedade->get(1).asString().c_str() << endl;
-						if(propriedade->get(1).asString() == "true") {
-							myfile << idsp->get((i-1)).asInt() <<"_clearhand" << " 0 primitive binary " <<endl;
-							myfile2 << idsp->get((i-1)).asInt() <<"_clearhand" <<"() ";
-						}
-						break;
-					}
-					case in_h: {
-						cout << "in_h:" << endl;//propriedade->get(1).asString().c_str() << endl;
-						if(propriedade->get(1).asString() == "right") {
-							myfile << idsp->get((i-1)).asInt() <<"_inhand_" << " 0 primitive binary " <<endl;
-							myfile2 << idsp->get((i-1)).asInt() <<"_inhand_" <<"() ";
+    cout << "after copy Data Bottle" << endl;
+    if(dataBase.size()>0 && (dataBase.get(1).asString()!="empty")) {
+        ofstream myfile,myfile2;
+        myfile.open ("symbols.dat");
+        myfile2.open ("state.dat");
+        idsp = ids2.get(1).asList();
+        idsp = idsp->get(1).asList();
+        cout << "ids: " << idsp->toString().c_str() << endl;
+        for(int i=1;i<dataBase.size();i++){ // for each object
+            cout <<"Object ID: " << idsp->get((i-1)).asInt() << endl;
+            Bottle *objecto = dataBase.get(i).asList();
+            for(int j=0;j<objecto->size();j++) { // for each properties
+                Bottle *propriedade = objecto->get(j).asList();
+                cout << "switch"<< propriedade->get(0).asString().c_str() << endl;
+                switchCase r = hashtable(propriedade->get(0).asString());
+                switch(r) {
+                    case name:{
+                        //cout << "name:" << propriedade->get(1).asString().c_str() << endl;
+                        break;
+                    }
+                    case desc: {
+                        //cout << "desc:" << endl;//propriedade->get(1).asString().c_str() << endl;
+                        break;
+                    }
+                    case pos: {
+                        //cout << "pos:" << endl;//propriedade->get(1).asString().c_str() << endl;
+                        break;
+                    }
+                    case on_t: {
+                        cout << "on_t:" << endl;//propriedade->get(1).asString().c_str() << endl;
+                        Bottle *ontop = propriedade->get(1).asList();
+                        for(int k=0; k < ontop->size(); k++){
+                            myfile << idsp->get((i-1)).asInt() <<"_on_" <<ontop->get(k).asInt() << " 0 primitive binary " << endl;
+                            myfile2 << idsp->get((i-1)).asInt() <<"_on_" <<ontop->get(k).asInt() <<"() ";
+                        }
+                        break;
+                    }
+                    case re_w: {
+                        cout << "reaw:" << endl;//propriedade->get(1).asString().c_str() << endl;
+                        Bottle *reachable = propriedade->get(1).asList();
+                        for(int k=0; k < reachable->size(); k++){
+                            myfile << idsp->get((i-1)).asInt() <<"_isreachable_with_" <<reachable->get(k).asInt() << " 0 primitive binary " << endl;
+                            myfile2 << idsp->get((i-1)).asInt() <<"_isreachable_with_" <<reachable->get(k).asInt() <<"() ";
+                        }
+                        break;
+                    }
+                    case pu_w: {
+                        cout << "pulw:" << endl;//propriedade->get(1).asString().c_str() << endl;
+                        Bottle *pullable = propriedade->get(1).asList();
+                        for(int k=0; k < pullable->size(); k++){
+                            myfile  << idsp->get((i-1)).asInt() <<"_ispullable_with_" <<pullable->get(k).asInt() << " 0 primitive binary " << endl;
+                            myfile2 << idsp->get((i-1)).asInt() <<"_ispullable_with_" <<pullable->get(k).asInt() <<"() ";
+                        }
+                        break;
+                    }
+                    case touch: {
+                        cout << "touc:" << endl;//propriedade->get(1).asString().c_str() << endl;
+                        Bottle *touch = propriedade->get(1).asList();
+                        for(int k=0; k < touch->size(); k++){
+                            myfile  << idsp->get((i-1)).asInt() <<"_touch_" <<touch->get(k).asInt() << " 0 primitive binary " << endl;
+                            myfile2 << idsp->get((i-1)).asInt() <<"_touch_" <<touch->get(k).asInt() <<"() ";
+                        }
+                        break;
+                    }
+                    case is_h: {
+                        cout << "ish:" << endl;//propriedade->get(1).asString().c_str() << endl;
+                        if(propriedade->get(1).asString() == "true") {
+                            myfile << idsp->get((i-1)).asInt() <<"_ishand" << " 0 primitive binary " << endl;
+                            myfile2 << idsp->get((i-1)).asInt() <<"_ishand" <<"() ";
+                        }
+                        break;
+                    }
+                    case free: {
+                        cout << "Free:" << endl;//propriedade->get(1).asString().c_str() << endl;
+                        if(propriedade->get(1).asString() == "true") {
+                            myfile << idsp->get((i-1)).asInt() <<"_clearhand" << " 0 primitive binary " <<endl;
+                            myfile2 << idsp->get((i-1)).asInt() <<"_clearhand" <<"() ";
+                        }
+                        break;
+                    }
+                    case in_h: {
+                        cout << "in_h:" << endl;//propriedade->get(1).asString().c_str() << endl;
+                        if(propriedade->get(1).asString() == "right") {
+                            myfile << idsp->get((i-1)).asInt() <<"_inhand_" << " 0 primitive binary " <<endl;
+                            myfile2 << idsp->get((i-1)).asInt() <<"_inhand_" <<"() ";
 
-							myfile << idsp->get((i-1)).asInt() <<"_istool" << " 0 primitive binary " <<endl;
-							myfile2 << idsp->get((i-1)).asInt() <<"_istool" <<"() ";
-						}
-						if(propriedade->get(1).asString() == "left") {
-							myfile << idsp->get((i-1)).asInt() <<"_inhand_" << " 0 primitive binary " <<endl;
-							myfile2 << idsp->get((i-1)).asInt() <<"_inhand_" <<"() ";
-							myfile << idsp->get((i-1)).asInt() <<"_istool" << " 0 primitive binary " <<endl;
-							myfile2 << idsp->get((i-1)).asInt() <<"_istool" <<"() ";
-						}
-						break;
-					}
+                            myfile << idsp->get((i-1)).asInt() <<"_istool" << " 0 primitive binary " <<endl;
+                            myfile2 << idsp->get((i-1)).asInt() <<"_istool" <<"() ";
+                        }
+                        if(propriedade->get(1).asString() == "left") {
+                            myfile << idsp->get((i-1)).asInt() <<"_inhand_" << " 0 primitive binary " <<endl;
+                            myfile2 << idsp->get((i-1)).asInt() <<"_inhand_" <<"() ";
+                            myfile << idsp->get((i-1)).asInt() <<"_istool" << " 0 primitive binary " <<endl;
+                            myfile2 << idsp->get((i-1)).asInt() <<"_istool" <<"() ";
+                        }
+                        break;
+                    }
 
-					default: {
-						cout << "not known attribute..." << endl;
-					}
-				}
-			}
-		}
-		myfile.close();
-		myfile2.close();
-		
-	}
-	Bottle &send = translatorPort.prepare();
-	send.clear();
-	send.addString("Done");
-	cout << "DONE" << endl;
-	translatorPort.write();
+                    default: {
+                        cout << "not known attribute..." << endl;
+                        break;
+                    }
+                } // end switch
+            } // end for property
+        } // end for object
+        myfile.close();
+        myfile2.close();
+
+    } // end if
+    Bottle &send = translatorPort.prepare();
+    send.clear();
+    send.addString("Done");
+    cout << "DONE" << endl;
+    translatorPort.write();
     return true;
 }
 
 bool   TranslatorModule::configure(yarp::os::ResourceFinder &rf) {
 
     /* module name */
-    moduleName = rf.check("name", Value("opc2prada"),
+    moduleName = rf.check("name", Value("translator"),
                           "Module name (string)").asString();
 
     setName(moduleName.c_str());
 
     /* port names */
-	translatorPortName  = "/" + moduleName + "/cmd:io";
-	
+	translatorPortName  = "/" + moduleName + "/port:io";
+
     /* open ports */
     if (!translatorPort.open(
             translatorPortName.c_str()))
@@ -200,10 +201,10 @@ bool   TranslatorModule::configure(yarp::os::ResourceFinder &rf) {
         return false;
     }
 
-	/* OPC comunication*/
+    /* OPC comunication*/
 
-	string broadname = "/" + moduleName + "/broadcast:i";
-	/* open broad port */
+    string broadname = "/" + moduleName + "/broadcast:i";
+    /* open broad port */
     if (!port_broad.open(
             broadname.c_str()))
     {
@@ -211,8 +212,8 @@ bool   TranslatorModule::configure(yarp::os::ResourceFinder &rf) {
         << broadname << endl;
         return false;
     }
-	string RpcClientname = "/" + moduleName + "/rpcClient";
-	/* open rpc client port */
+    string RpcClientname = "/" + moduleName + "/rpcClient";
+    /* open rpc client port */
     if (!rpc_port.open(
             RpcClientname.c_str()))
     {
@@ -246,55 +247,55 @@ bool   TranslatorModule::configure(yarp::os::ResourceFinder &rf) {
 
 Thread_read::Thread_read(BufferedPort<Bottle> * broad_port,RpcClient * rpc,int r)
 : RateThread(r) {
-	_port_broad = broad_port;
-	_rpc_port = rpc;
-	firstTime = true;
+    _port_broad = broad_port;
+    _rpc_port = rpc;
+    firstTime = true;
 };
 
 bool Thread_read::threadInit(){
-	bool test=true;
-	printf("Starting reading thread...Waiting for connection...\n");
-		
-	while(test){
-		test = _port_broad->getInputCount()==0 || _rpc_port->getOutputCount()==0 ;
-		Time::delay(0.1);
-	}
-	printf("Connection Done!");
+    bool test=true;
+    printf("Starting reading thread...Waiting for connection...\n");
 
-	Bottle *received,rpc_cmd,rpc_response,aux;
+    while(test){
+        test = _port_broad->getInputCount()==0 || _rpc_port->getOutputCount()==0 ;
+        Time::delay(0.1);
+    }
+    printf("Connection Done!");
+
+    Bottle *received,rpc_cmd,rpc_response,aux;
     Bottle cmd,response;
 
-	// Start syncronous broadcast to initialize _data and _ids
-	cmd.clear();
-	cmd.addVocab(Vocab::encode("sync"));
-	cmd.addVocab(Vocab::encode("start"));
-	cmd.add(0.1);
-	_rpc_port->write(cmd,response);
-	// read database and ask ids
-	rpc_cmd.clear();
-	rpc_cmd.addVocab(Vocab::encode("ask"));
-	aux.addString("all");
-	rpc_cmd.addList() = aux;
-	received = _port_broad->read();
-	// Stop syncronous broadcast
-	cmd.clear();
-	cmd.addVocab(Vocab::encode("sync"));
-	cmd.addVocab(Vocab::encode("stop"));
-	_rpc_port->write(cmd,response);
-	Time::delay(1);
-	// Start asyncronous
-	_rpc_port->write(rpc_cmd,rpc_response);
-	cmd.clear();
-	cmd.addVocab(Vocab::encode("async"));
-	cmd.addVocab(Vocab::encode("on"));
-	_rpc_port->write(cmd,response);
-	Time::delay(1);
+    // Start syncronous broadcast to initialize _data and _ids
+    cmd.clear();
+    cmd.addVocab(Vocab::encode("sync"));
+    cmd.addVocab(Vocab::encode("start"));
+    cmd.add(0.1);
+    _rpc_port->write(cmd,response);
+    // read database and ask ids
+    rpc_cmd.clear();
+    rpc_cmd.addVocab(Vocab::encode("ask"));
+    aux.addString("all");
+    rpc_cmd.addList() = aux;
+    received = _port_broad->read();
+    // Stop synchronous broadcast
+    cmd.clear();
+    cmd.addVocab(Vocab::encode("sync"));
+    cmd.addVocab(Vocab::encode("stop"));
+    _rpc_port->write(cmd,response);
+    Time::delay(1);
+    // Start asynchronous
+    _rpc_port->write(rpc_cmd,rpc_response);
+    cmd.clear();
+    cmd.addVocab(Vocab::encode("async"));
+    cmd.addVocab(Vocab::encode("on"));
+    _rpc_port->write(cmd,response);
+    Time::delay(1);
 
-	guard.lock();
-	_data = *(received);
-	_ids = rpc_response;
-	guard.unlock();
-	cout << "Initial Database - Check" << endl;
+    guard.lock();
+    _data = *(received);
+    _ids = rpc_response;
+    guard.unlock();
+    cout << "Initial Database - Check" << endl;
     return true;
 }
 
