@@ -11,10 +11,34 @@
     <parameters>--name memory --context poeticon --db dbhands.ini --nosave</parameters>
     <node>console</node>
 </module>
+<module>
+    <name>opc2prada</name>
+    <node>console</node>
+</module>
 
 <connection>
     <from>/wsm/opc:io</from>
     <to>/memory/rpc</to>
+    <protocol>tcp</protocol>
+</connection>
+<connection>
+    <from>/translator/rpcClient</from>
+    <to>/memory/rpc</to>
+    <protocol>tcp</protocol>
+</connection>
+<connection>
+    <from>/memory/broadcast:o</from>
+    <to>/translator/broadcast:i</to>
+    <protocol>tcp</protocol>
+</connection>
+<connection>
+    <from>/translator/port:io</from>
+    <to>/planner/port:io</to>
+    <protocol>tcp</protocol>
+</connection>
+<connection>
+    <from>/planner/port:io</from>
+    <to>/translator/port:io</to>
     <protocol>tcp</protocol>
 </connection>
 
