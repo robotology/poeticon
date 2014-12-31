@@ -20,14 +20,14 @@ double TranslatorModule::getPeriod() {
 }
 TranslatorModule::switchCase TranslatorModule::hashtable(string command){
 	if(command=="name")  return name;
-	if(command=="desc")  return desc;
-	if(command=="is_h")  return is_h;
-	if(command=="in_h")  return in_h;
-	if(command=="on_t")  return on_t;
-	if(command=="free")  return free;
-	if(command=="re_w")  return re_w;
-	if(command=="pu_w")  return pu_w;
-	if(command=="touch") return touch;
+	if(command=="desc2d")  return desc;
+	if(command=="is_hand")  return is_h;
+	if(command=="in_hand")  return in_h;
+	if(command=="on_top_of")  return on_t;
+	if(command=="is_free")  return free;
+	if(command=="reachable_with")  return re_w;
+	if(command=="pullable_with")  return pu_w;
+	if(command=="is_touching") return touch;
 }
 bool TranslatorModule::interruptModule() {
 
@@ -67,7 +67,7 @@ bool   TranslatorModule::updateModule() {
     cout << "after copy Data Bottle" << endl;
     if(dataBase.size()>0 && (dataBase.get(1).asString()!="empty")) {
         ofstream myfile,myfile2;
-        myfile.open ("symbols.dat");
+        myfile.open ("Object_names-IDs.dat");
         myfile2.open ("state.dat");
         idsp = ids2.get(1).asList();
         idsp = idsp->get(1).asList();
@@ -81,82 +81,62 @@ bool   TranslatorModule::updateModule() {
                 switchCase r = hashtable(propriedade->get(0).asString());
                 switch(r) {
                     case name:{
-                        //cout << "name:" << propriedade->get(1).asString().c_str() << endl;
+						myfile <<"(" << idsp->get((i-1)).asInt() "," << propriedade->get(1).asString().c_str() << ");";
                         break;
                     }
                     case desc: {
-                        //cout << "desc:" << endl;//propriedade->get(1).asString().c_str() << endl;
                         break;
                     }
                     case pos: {
-                        //cout << "pos:" << endl;//propriedade->get(1).asString().c_str() << endl;
                         break;
                     }
                     case on_t: {
-                        cout << "on_t:" << endl;//propriedade->get(1).asString().c_str() << endl;
                         Bottle *ontop = propriedade->get(1).asList();
                         for(int k=0; k < ontop->size(); k++){
-                            myfile << idsp->get((i-1)).asInt() <<"_on_" <<ontop->get(k).asInt() << " 0 primitive binary " << endl;
                             myfile2 << idsp->get((i-1)).asInt() <<"_on_" <<ontop->get(k).asInt() <<"() ";
                         }
                         break;
                     }
                     case re_w: {
-                        cout << "reaw:" << endl;//propriedade->get(1).asString().c_str() << endl;
                         Bottle *reachable = propriedade->get(1).asList();
                         for(int k=0; k < reachable->size(); k++){
-                            myfile << idsp->get((i-1)).asInt() <<"_isreachable_with_" <<reachable->get(k).asInt() << " 0 primitive binary " << endl;
                             myfile2 << idsp->get((i-1)).asInt() <<"_isreachable_with_" <<reachable->get(k).asInt() <<"() ";
                         }
                         break;
                     }
                     case pu_w: {
-                        cout << "pulw:" << endl;//propriedade->get(1).asString().c_str() << endl;
                         Bottle *pullable = propriedade->get(1).asList();
                         for(int k=0; k < pullable->size(); k++){
-                            myfile  << idsp->get((i-1)).asInt() <<"_ispullable_with_" <<pullable->get(k).asInt() << " 0 primitive binary " << endl;
                             myfile2 << idsp->get((i-1)).asInt() <<"_ispullable_with_" <<pullable->get(k).asInt() <<"() ";
                         }
                         break;
                     }
                     case touch: {
-                        cout << "touc:" << endl;//propriedade->get(1).asString().c_str() << endl;
                         Bottle *touch = propriedade->get(1).asList();
                         for(int k=0; k < touch->size(); k++){
-                            myfile  << idsp->get((i-1)).asInt() <<"_touch_" <<touch->get(k).asInt() << " 0 primitive binary " << endl;
                             myfile2 << idsp->get((i-1)).asInt() <<"_touch_" <<touch->get(k).asInt() <<"() ";
                         }
                         break;
                     }
                     case is_h: {
-                        cout << "ish:" << endl;//propriedade->get(1).asString().c_str() << endl;
                         if(propriedade->get(1).asString() == "true") {
-                            myfile << idsp->get((i-1)).asInt() <<"_ishand" << " 0 primitive binary " << endl;
                             myfile2 << idsp->get((i-1)).asInt() <<"_ishand" <<"() ";
                         }
                         break;
                     }
                     case free: {
-                        cout << "Free:" << endl;//propriedade->get(1).asString().c_str() << endl;
                         if(propriedade->get(1).asString() == "true") {
-                            myfile << idsp->get((i-1)).asInt() <<"_clearhand" << " 0 primitive binary " <<endl;
                             myfile2 << idsp->get((i-1)).asInt() <<"_clearhand" <<"() ";
                         }
                         break;
                     }
                     case in_h: {
-                        cout << "in_h:" << endl;//propriedade->get(1).asString().c_str() << endl;
                         if(propriedade->get(1).asString() == "right") {
-                            myfile << idsp->get((i-1)).asInt() <<"_inhand_" << " 0 primitive binary " <<endl;
                             myfile2 << idsp->get((i-1)).asInt() <<"_inhand_" <<"() ";
-
-                            myfile << idsp->get((i-1)).asInt() <<"_istool" << " 0 primitive binary " <<endl;
                             myfile2 << idsp->get((i-1)).asInt() <<"_istool" <<"() ";
                         }
                         if(propriedade->get(1).asString() == "left") {
-                            myfile << idsp->get((i-1)).asInt() <<"_inhand_" << " 0 primitive binary " <<endl;
                             myfile2 << idsp->get((i-1)).asInt() <<"_inhand_" <<"() ";
-                            myfile << idsp->get((i-1)).asInt() <<"_istool" << " 0 primitive binary " <<endl;
                             myfile2 << idsp->get((i-1)).asInt() <<"_istool" <<"() ";
                         }
                         break;
@@ -190,7 +170,7 @@ bool   TranslatorModule::configure(yarp::os::ResourceFinder &rf) {
     setName(moduleName.c_str());
 
     /* port names */
-	translatorPortName  = "/" + moduleName + "/port:io";
+	translatorPortName  = "/" + moduleName + "/cmd:io";
 
     /* open ports */
     if (!translatorPort.open(
