@@ -37,7 +37,7 @@
     <protocol>tcp</protocol>
 </connection>
 <connection>
-    <from>/planner/port:io</from>
+    <from>/planner/cmd:io</from>
     <to>/opc2prada/cmd:io</to>
     <protocol>tcp</protocol>
 </connection>

@@ -81,7 +81,7 @@ bool   TranslatorModule::updateModule() {
                 switchCase r = hashtable(propriedade->get(0).asString());
                 switch(r) {
                     case name:{
-						myfile <<"(" << idsp->get((i-1)).asInt() "," << propriedade->get(1).asString().c_str() << ");";
+						myfile <<"(" << idsp->get((i-1)).asInt() << "," << propriedade->get(1).asString().c_str() << ");";
                         break;
                     }
                     case desc: {
@@ -164,7 +164,7 @@ bool   TranslatorModule::updateModule() {
 bool   TranslatorModule::configure(yarp::os::ResourceFinder &rf) {
 
     /* module name */
-    moduleName = rf.check("name", Value("translator"),
+    moduleName = rf.check("name", Value("opc2prada"),
                           "Module name (string)").asString();
 
     setName(moduleName.c_str());
