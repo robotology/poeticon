@@ -32,11 +32,12 @@ TranslatorModule::switchCase TranslatorModule::hashtable(string command){
 bool TranslatorModule::interruptModule() {
 
     cout << "Interrupting your module, for port cleanup" << endl;
-
-    rpc_port.interrupt();
-    port_broad.interrupt();
-    translatorPort.interrupt();
-
+	rpc_port.interrupt();
+    cout << "1" << endl;
+	port_broad.interrupt();
+    cout << "2" << endl;
+	translatorPort.interrupt();
+	cout << "3" << endl;
     return true;
 }
 
@@ -66,9 +67,12 @@ bool   TranslatorModule::updateModule() {
 
     cout << "after copy Data Bottle" << endl;
     if(dataBase.size()>0 && (dataBase.get(1).asString()!="empty")) {
-        ofstream myfile,myfile2;
-        myfile.open ("Object_names-IDs.dat");
-        myfile2.open ("state.dat");
+		cout <<"file1 " << findFile.findFileByName("Object_names-IDs.dat") << endl;
+        myfile.open( findFile.findFileByName("Object_names-IDs.dat"));
+		cout <<"file2 " << findFile.findFileByName("state.dat") << endl;
+        myfile2.open ( findFile.findFileByName("state.dat") );
+		//myfile.open ("Object_names-IDs.dat");
+        //myfile2.open ("state.dat");
         idsp = ids2.get(1).asList();
         idsp = idsp->get(1).asList();
         cout << "ids: " << idsp->toString().c_str() << endl;
@@ -212,6 +216,7 @@ bool   TranslatorModule::configure(yarp::os::ResourceFinder &rf) {
                                 threadPeriod);
 
     /* Starts the thread */
+	cout << "heere" << endl;
     if (!readingThread->start()) {
         delete readingThread;
         return false;
