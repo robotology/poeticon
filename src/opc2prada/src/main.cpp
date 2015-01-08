@@ -30,8 +30,8 @@ int main(int argc, char *argv[]) {
 
     ResourceFinder rf;
     rf.setVerbose(true);
-    rf.setDefaultContext("translatormodule");
-    rf.setDefaultConfigFile("translatormodule.ini");
+    rf.setDefaultContext("poeticon");
+    rf.setDefaultConfigFile("opc2prada.ini");
     rf.configure(argc, argv);
     module.runModule(rf);
 

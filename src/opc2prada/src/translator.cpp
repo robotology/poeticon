@@ -32,11 +32,12 @@ TranslatorModule::switchCase TranslatorModule::hashtable(string command){
 bool TranslatorModule::interruptModule() {
 
     cout << "Interrupting your module, for port cleanup" << endl;
-
-    rpc_port.interrupt();
-    port_broad.interrupt();
-    translatorPort.interrupt();
-
+	rpc_port.interrupt();
+    cout << "1" << endl;
+	port_broad.interrupt();
+    cout << "2" << endl;
+	translatorPort.interrupt();
+	cout << "3" << endl;
     return true;
 }
 
@@ -66,8 +67,11 @@ bool   TranslatorModule::updateModule() {
 
     cout << "after copy Data Bottle" << endl;
     if(dataBase.size()>0 && (dataBase.get(1).asString()!="empty")) {
-        ofstream myfile,myfile2;
-        myfile.open ("Object_names-IDs.dat");
+		//cout <<"file1 " << findFile.findFileByName("Object_names-IDs.dat") << endl;
+        //myfile.open( findFile.findFileByName("Object_names-IDs.dat"));
+		//cout <<"file2 " << findFile.findFileByName("state.dat") << endl;
+        //myfile2.open ( findFile.findFileByName("state.dat") );
+		myfile.open ("Object names-IDs.dat");
         myfile2.open ("state.dat");
         idsp = ids2.get(1).asList();
         idsp = idsp->get(1).asList();
@@ -111,13 +115,13 @@ bool   TranslatorModule::updateModule() {
                         }
                         break;
                     }
-                    case touch: {
+                   /* case touch: {
                         Bottle *touch = propriedade->get(1).asList();
                         for(int k=0; k < touch->size(); k++){
                             myfile2 << idsp->get((i-1)).asInt() <<"_touch_" <<touch->get(k).asInt() <<"() ";
                         }
                         break;
-                    }
+                    }*/
                     case is_h: {
                         if(propriedade->get(1).asString() == "true") {
                             myfile2 << idsp->get((i-1)).asInt() <<"_ishand" <<"() ";
@@ -127,16 +131,17 @@ bool   TranslatorModule::updateModule() {
                     case free: {
                         if(propriedade->get(1).asString() == "true") {
                             myfile2 << idsp->get((i-1)).asInt() <<"_clearhand" <<"() ";
+                            myfile2 << idsp->get((i-1)).asInt() <<"_istool" <<"() ";
                         }
                         break;
                     }
                     case in_h: {
                         if(propriedade->get(1).asString() == "right") {
-                            myfile2 << idsp->get((i-1)).asInt() <<"_inhand_" <<"() ";
+                            myfile2 << idsp->get((i-1)).asInt() <<"_inhand_" << "12" << "() "; //according to dbhands.ini - id 12 corresponds to the right hand
                             myfile2 << idsp->get((i-1)).asInt() <<"_istool" <<"() ";
                         }
                         if(propriedade->get(1).asString() == "left") {
-                            myfile2 << idsp->get((i-1)).asInt() <<"_inhand_" <<"() ";
+                            myfile2 << idsp->get((i-1)).asInt() <<"_inhand_" << "11" << "() "; //according to dbhands.ini - id 12 corresponds to the right hand
                             myfile2 << idsp->get((i-1)).asInt() <<"_istool" <<"() ";
                         }
                         break;
@@ -212,6 +217,7 @@ bool   TranslatorModule::configure(yarp::os::ResourceFinder &rf) {
                                 threadPeriod);
 
     /* Starts the thread */
+	cout << "heere" << endl;
     if (!readingThread->start()) {
         delete readingThread;
         return false;

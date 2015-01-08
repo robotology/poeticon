@@ -74,7 +74,8 @@ class TranslatorModule: public RFModule {
     double threadPeriod;
 
     Thread_read *readingThread;
-
+	ResourceFinder findFile;
+	ofstream myfile,myfile2;
 public:
     double getPeriod();
     bool configure(yarp::os::ResourceFinder &rf);

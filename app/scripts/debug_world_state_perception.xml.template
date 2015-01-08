@@ -136,23 +136,23 @@
     <protocol>tcp</protocol>
 </connection>
 <connection>
-    <from>/translator/rpcClient</from>
+    <from>/opc2prada/rpcClient</from>
     <to>/memory/rpc</to>
     <protocol>tcp</protocol>
 </connection>
 <connection>
     <from>/memory/broadcast:o</from>
-    <to>/translator/broadcast:i</to>
+    <to>/opc2prada/broadcast:i</to>
     <protocol>tcp</protocol>
 </connection>
 <connection>
-    <from>/translator/port:io</from>
-    <to>/planner/port:io</to>
+    <from>/opc2prada/cmd:io</from>
+    <to>/planner/cmd:io</to>
     <protocol>tcp</protocol>
 </connection>
 <connection>
-    <from>/planner/port:io</from>
-    <to>/translator/port:io</to>
+    <from>/planner/cmd:io</from>
+    <to>/opc2prada/cmd:io</to>
     <protocol>tcp</protocol>
 </connection>
 
