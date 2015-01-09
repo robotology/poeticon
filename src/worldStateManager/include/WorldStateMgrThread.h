@@ -61,13 +61,13 @@ class WorldStateMgrThread : public RateThread
         bool populated;
 
         // perception mode
-        int perceptionState;
+        int perceptionFSMState;
         Bottle *inAff;
         Bottle *inTargets;
         int sizeTargets, sizeAff;
 
         // playback mode
-        int playbackState; // TODO: rename to avoid confusion with file "state##"
+        int playbackFSMState;
         string playbackFile;
         bool playbackPaused;
         Bottle findBottle;

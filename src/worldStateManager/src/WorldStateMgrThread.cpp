@@ -80,7 +80,7 @@ bool WorldStateMgrThread::threadInit()
     // perception and playback modes
     yDebug("thread initialization");
     closing = false;
-    populated = false; // TODO: really check if opc was populated before
+    populated = false; // TODO: really check if opc was populated before this module started
     if ( !openPorts() )
     {
         yError("problem opening ports");
@@ -109,6 +109,7 @@ void WorldStateMgrThread::run()
 
 /* ************************************************************************** */
 /* perception and playback modes                                              */
+/* ************************************************************************** */
 
 bool WorldStateMgrThread::updateWorldState()
 {
@@ -268,12 +269,13 @@ bool WorldStateMgrThread::doPopulateDB()
 
 /* ************************************************************************** */
 /* perception mode                                                            */
+/* ************************************************************************** */
 
 bool WorldStateMgrThread::initPerceptionVars()
 {
     inAff = NULL;
     inTargets = NULL;
-    perceptionState = STATE_WAIT_BLOBS;
+    perceptionFSMState = STATE_WAIT_BLOBS;
 
     return true;
 }
@@ -317,8 +319,8 @@ bool WorldStateMgrThread::initTracker()
 
 void WorldStateMgrThread::fsmPerception()
 {
-    yDebug("perception state=%d", perceptionState);
-    switch(perceptionState)
+    yDebug("perception state=%d", perceptionFSMState);
+    switch(perceptionFSMState)
     {
         case STATE_WAIT_BLOBS:
         {
@@ -326,7 +328,7 @@ void WorldStateMgrThread::fsmPerception()
             refreshBlobs();
             // when something arrives, proceed
             if (inAff != NULL)
-                perceptionState = STATE_READ_BLOBS;
+                perceptionFSMState = STATE_READ_BLOBS;
 
             break;
         }
@@ -335,9 +337,9 @@ void WorldStateMgrThread::fsmPerception()
         {
             // if size>0 proceed, else go back one state
             if (sizeAff > 0)
-                perceptionState = STATE_INIT_TRACKER;
+                perceptionFSMState = STATE_INIT_TRACKER;
             else
-                perceptionState = STATE_WAIT_BLOBS;
+                perceptionFSMState = STATE_WAIT_BLOBS;
 
             break;
         }
@@ -348,7 +350,7 @@ void WorldStateMgrThread::fsmPerception()
             initTracker();
 
             // proceed
-            perceptionState = STATE_WAIT_TRACKER;
+            perceptionFSMState = STATE_WAIT_TRACKER;
 
             break;
         }
@@ -360,7 +362,7 @@ void WorldStateMgrThread::fsmPerception()
 
             // when something arrives, proceed
             if (inTargets != NULL)
-                perceptionState = STATE_READ_TRACKER;
+                perceptionFSMState = STATE_READ_TRACKER;
 
             break;
         }
@@ -369,9 +371,9 @@ void WorldStateMgrThread::fsmPerception()
         {
             // if size>0 proceed, else go back one state
             if (sizeTargets > 0)
-                perceptionState = STATE_POPULATE_DB;
+                perceptionFSMState = STATE_POPULATE_DB;
             else
-                perceptionState = STATE_WAIT_TRACKER;
+                perceptionFSMState = STATE_WAIT_TRACKER;
 
             break;
         }
@@ -386,7 +388,7 @@ void WorldStateMgrThread::fsmPerception()
 
             // if database was successfully populated proceed, else stay in same state
             if (populated)
-                perceptionState = STATE_UPDATE_DB;
+                perceptionFSMState = STATE_UPDATE_DB;
 
             break;
         }
@@ -499,11 +501,12 @@ bool WorldStateMgrThread::isHandFree(const string &handName)
 
 /* ************************************************************************** */
 /* playback mode                                                              */
+/* ************************************************************************** */
 
 bool WorldStateMgrThread::initPlaybackVars()
 {
     playbackPaused = true;
-    playbackState = STATE_PARSE_FILE;
+    playbackFSMState = STATE_PARSE_FILE;
     sizePlaybackFile = -1;
     currPlayback = -1;
 
@@ -512,8 +515,8 @@ bool WorldStateMgrThread::initPlaybackVars()
 
 void WorldStateMgrThread::fsmPlayback()
 {
-    //yDebug("playback state=%d", playbackState);
-    switch (playbackState)
+    //yDebug("playback state=%d", playbackFSMState);
+    switch (playbackFSMState)
     {
         case STATE_PARSE_FILE:
         {
@@ -525,12 +528,12 @@ void WorldStateMgrThread::fsmPlayback()
             if (sizePlaybackFile < 1)
             {
                 yError("file empty or not parsable");
-                playbackState = STATE_END_FILE;
+                playbackFSMState = STATE_END_FILE;
             }
             
             // proceed to "[state00]"
             currPlayback = 0;
-            playbackState = STATE_STEP_FILE;
+            playbackFSMState = STATE_STEP_FILE;
             break;
         }
         
@@ -539,7 +542,7 @@ void WorldStateMgrThread::fsmPlayback()
             if (!playbackPaused)
             {
                 // parse group "[state##]" of file
-                // TODO: make it work for "[state##]" with ##>9 and simplify
+                // TODO: make it work for "[state##]" with ##>9, simplify
                 ostringstream tag;
                 tag << "state" << std::setw(2) << std::setfill('0') << currPlayback << "";
                 Bottle &bCurr = findBottle.findGroup(tag.str().c_str());
@@ -547,7 +550,7 @@ void WorldStateMgrThread::fsmPlayback()
                 {
                     yWarning() << tag.str().c_str() << "not found";
                     playbackPaused = true;
-                    playbackState = STATE_END_FILE;
+                    playbackFSMState = STATE_END_FILE;
                     break;
                 }
                 yDebug("loaded group %s, has size %d incl. group tag", tag.str().c_str(), bCurr.size());
