@@ -153,7 +153,6 @@ bool WorldStateMgrThread::doPopulateDB()
         Bottle bOnTopOf;
         Bottle bReachW;
         Bottle bPullW;
-        Bottle bIsTouching;
         
         // hand properties
         Bottle bIsFree;
@@ -218,11 +217,6 @@ bool WorldStateMgrThread::doPopulateDB()
             bPullW.addString("pullable_with");
             Bottle &bPullWValue = bPullW.addList();
             bPullWValue.addInt(0); // TODO: real list
-
-            // prepare is_touching property
-            bIsTouching.addString("is_touching");
-            Bottle &bIsTouchingValue = bIsTouching.addList();
-            bIsTouchingValue.addInt(0); // TODO: real list
         }
         else
         {
@@ -249,7 +243,6 @@ bool WorldStateMgrThread::doPopulateDB()
             opcCmd.addList() = bOnTopOf;
             opcCmd.addList() = bReachW;
             opcCmd.addList() = bPullW;
-            opcCmd.addList() = bIsTouching;            
         }
         else
         {
