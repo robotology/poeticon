@@ -1,0 +1,40 @@
+[general]
+
+randSeed 1234
+
+file_symbols symbols.dat
+file_rules rules.dat
+file_state state.dat
+file_reward reward.dat
+
+// 1 PRADA,  2 A_PRADA  3 UCT,  4 SST
+plan_type 2
+
+
+[SHARED PARAMETERS]
+
+discountFactor 0.95
+
+# shared by SST and UCT
+noise_scaling_factor 0.75
+
+
+[PRADA]
+
+PRADA_horizon 5
+PRADA_num_samples 2000
+PRADA_noise_softener 0.2
+
+
+[UCT]
+
+UCT_horizon 4
+UCT_c 1.0
+UCT_numEpisodes 2000
+
+
+[SST]
+
+SST_horizon 2
+SST_branch 3
+

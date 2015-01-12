@@ -1,0 +1,281 @@
+#!/usr/bin/python
+##                              Geometric Grouding.py                               ##
+######################################################################################
+##                      Bottles to be received - only on Affordance_comm!!          ##
+##                                                                                  ##
+##      - Creates a rule for all the objects present on the world                   ##
+##      - Creates symbols for all the objects in the world                          ##
+##                                                                                  ##
+##      - Requires pre_rules and pre_symbols (files)                                ##
+##      - Creates a Rules file, and a Symbols file                                  ##
+##                                                                                  ##
+##                                                                                  ##
+##      IDs:                                                                        ##
+##          11 - left hand                                                          ##
+##          12 - right hand                                                         ##
+######################################################################################
+
+
+import re
+import string
+import yarp
+import time, sys, os
+from multiprocessing import Pipe, Process
+
+
+def create_rules(objects, pre_rules):
+    pre_rules = pre_rules.split('\n')
+    new_rule = []
+    hands = []
+    if '11' in objects:
+        hands = hands + ['11']
+    if '12' in objects:
+        hands = hands + ['12']
+    if len(pre_rules) >=2:
+        k=0
+        if pre_rules[3].find('_tool') != -1 or pre_rules[3].find('_obj') != -1:
+            if pre_rules[3].find('_hand') != -1:
+                for t in range(len(hands)):
+                    for j in range(len(objects)):                        
+                        for c in range(len(objects)):
+                            if c != j and objects[c] not in hands and objects[j] not in hands:
+                                new_rule = new_rule + pre_rules
+                                for i in range(len(pre_rules)):
+                                    new_rule[k] = new_rule[k].replace('_obj', str(objects[c]))
+                                    new_rule[k] = new_rule[k].replace('_tool', str(objects[j]))
+                                    new_rule[k] = new_rule[k].replace('_hand', str(hands[t]))
+                                    k = k+1
+            else:
+                for j in range(len(objects)):
+                    for c in range(len(objects)):
+                        if c != j:
+                            new_rule = new_rule + pre_rules
+                            for i in range(len(pre_rules)):
+                                new_rule[k] = new_rule[k].replace('_obj', str(objects[c]))
+                                new_rule[k] = new_rule[k].replace('_tool', str(objects[j]))
+                                k = k+1          
+        else:
+            new_rule = new_rule + pre_rules            
+    aux_rule = []
+    
+    for j in range(len(new_rule)):
+        if new_rule[j].find('_ALL') != -1:
+            aux_rule = new_rule[j].split(' ')
+            for u in range(len(aux_rule)):
+                if aux_rule[u].find('_ALL') != -1:
+                    temp_rule = new_rule[j].split(' ')
+                    for k in range(len(objects)):
+                        if aux_rule[u].find(str(objects[k])) == -1:
+                            temp_rule = temp_rule+[(aux_rule[u].replace('_ALL', str(objects[k])))]
+                    new_temp_rule = ['']
+                    for w in range(len(temp_rule)):
+                        flag_not_add = 0
+                        if temp_rule[w].find('-') == -1:
+                            var_find = temp_rule[w]
+                        if temp_rule[w].find('-') != -1:
+                            var_find = temp_rule[w].replace('-','')
+                        for v in range(len(new_temp_rule)):
+                            if new_temp_rule[v].find(var_find) != -1:
+                                flag_not_add = 1
+                                break
+                        if flag_not_add != 1:
+                            new_temp_rule = new_temp_rule + [temp_rule[w]]
+                    new_rule[j] = ' '.join(new_temp_rule)
+            for h in range(len(new_temp_rule)-1,-1,-1):
+                if new_temp_rule[h].find('_ALL') != -1:
+                    new_temp_rule.pop(h)
+            new_rule[j] = ''.join([' '] +[' '.join(new_temp_rule)])
+                    
+            aux_rule = []           
+    return new_rule
+
+##################################################################################
+
+def create_symbols(objects, symbols):
+    symbols = symbols.split('\n')
+    new_symbol = []
+    hands = []
+    if '11' in objects:
+        hands = hands + ['11']
+    if '12' in objects:
+        hands = hands + ['12']
+    if symbols[0].find('_tool') != -1:
+        if symbols[0].find('_hand') != -1:
+            i=0
+            for g in range(len(hands)):
+                for j in range(len(objects)):
+                    for k in range(len(objects)):
+                        if k!=j and objects[k] not in hands and objects[j] not in hands:
+                            new_symbol = new_symbol + symbols
+                            new_symbol[i] = new_symbol[i].replace('_tool', str(objects[j]))
+                            new_symbol[i] = new_symbol[i].replace('_obj', str(objects[k]))
+                            new_symbol[i] = new_symbol[i].replace('_hand', str(hands[g]))
+                            i = i+1
+        else:
+            i=0
+            for j in range(len(objects)):
+                for k in range(len(objects)):
+                    if k!=j:
+                        new_symbol = new_symbol + symbols
+                        new_symbol[i] = new_symbol[i].replace('_tool', str(objects[j]))
+                        new_symbol[i] = new_symbol[i].replace('_obj', str(objects[k]))
+                        i = i+1
+    else:
+        for j in range(len(objects)):
+            new_symbol = new_symbol + symbols
+            new_symbol[j] = new_symbol[j].replace('_obj', str(objects[j]))
+    return new_symbol
+
+#############################################################################
+
+def geometric_grounding():
+        yarp.Network.init()
+        p = yarp.BufferedPortBottle()
+        p.open("/grounding:io")
+        Affor_yarp = yarp.BufferedPortBottle()
+        Affor_yarp.open("/ground_Aff:io")
+        right_hand = 11
+        left_hand= 12
+        prerule_file = open("pre_rules.dat")
+        presymbol_file = open("pre_symbols.dat")
+
+
+## wait until he receives an instruction:
+        while 1:
+            bottle_in = p.read(True)
+            command = ''
+            command = bottle_in.toString()
+            print command
+            if command == 'update':
+
+## opens files that might have been updated
+                world_file = open("state.dat")
+                rule_file = open("rules.dat",'w')
+                symbol_file = open("symbols.dat",'w')
+                newrule_file = open("new_rules.dat",'w')
+                
+## reads objects in world
+                lines = world_file.read()
+                world_file.close()
+                objects = re.findall(r'\d+',lines)
+                temp_obj = []
+                for i in range(len(objects)):
+                    if objects[i] not in temp_obj:
+                        temp_obj = temp_obj + [objects[i]]
+                objects = temp_obj
+                        
+## reads pre_rules
+                rules = []
+                prerules = prerule_file.read().split('\n\n')
+                for i in range(len(prerules)):
+                    rules = rules + create_rules(objects, prerules[i])                    
+
+## grounding geometrico
+                l = 0
+                num_act = rules.count('ACTION:')
+                Context_flag = 0
+                cumu_prob = 0
+                new_rules = []
+                print 'creating rules...'
+                for i in range(len(rules)):
+                    proba = 0
+                    ran = rules[i].find('Rule')
+                    if ran != -1:
+                        
+## Sends instruction to start updating this rule
+                        Affor_bottle_out = Affor_yarp.prepare()
+                        Affor_bottle_out.clear()
+                        Affor_bottle_out.addString('update')
+                        Affor_yarp.write()
+                        yarp.Time.delay(0.2)
+                        Affor_bottle_out.clear()
+                        
+## Sends info about the rule being updated
+                        Affor_bottle_out = Affor_yarp.prepare()
+                        rules[i] = rules[i].replace(rules[i][ran:ran+21], 'Rule #%d  (%d out of %d)' % (l,(l+1),num_act))
+                        new_rules = new_rules + [rules[i]]+[rules[i+1]]+[rules[i+2]]+[rules[i+3]]+[rules[i+4]]+[rules[i+5]]
+                        Affor_bottle_out.addString(rules[i+2])
+                        Affor_bottle_out.addString(rules[i+4])
+                        Affor_bottle_out.addString(rules[i+6])
+                        Affor_bottle_out.addString(rules[i+7])
+                        Affor_bottle_out.addString(rules[i+8])
+                        Affor_yarp.write()
+                        yarp.Time.delay(0.2)
+                        Affor_bottle_out.clear()
+                        
+                        while 1:
+                            Affor_bottle_in = Affor_yarp.read()
+                            if Affor_bottle_in:
+                                bottle_decode_aux = Affor_bottle_in.toString()
+                                break
+                            
+                        bottle_decode_aux = bottle_decode_aux.split(' "')
+                        
+                        for y in range(len(bottle_decode_aux)):
+                            bottle_decode_aux[y] = bottle_decode_aux[y].replace('"','')
+                        aux_rules = bottle_decode_aux
+                        
+                        for b in range(len(aux_rules)):
+                            if aux_rules[b] != '':
+                                new_rules = new_rules + [aux_rules[b]]
+                        new_rules = new_rules + [''] + ['']
+                        
+## symbol creation
+                print 'creating symbols...'
+                symbols = presymbol_file.read().split('\n')
+                tempsymbols = []
+                newsymbols = []
+                for i in range(len(symbols)-1):
+                        tempsymbols = tempsymbols+create_symbols(objects,symbols[i])
+                for i in range(len(tempsymbols)):
+                    if tempsymbols[i] not in newsymbols:
+                        newsymbols = newsymbols + [tempsymbols[i]]
+## writes output files
+                print 'writing files...'
+                for i in range(len(rules)):
+                    newrule_file.write(rules[i])
+                    newrule_file.write('\n')
+                for i in range(len(new_rules)):
+                    rule_file.write(new_rules[i])
+                    rule_file.write('\n')
+                for i in range(len(newsymbols)):
+                    print 'symbol:', newsymbols[i]
+                    symbol_file.write(newsymbols[i])
+                    symbol_file.write(' ')
+                    symbol_file.write('\n')
+                rule_file.close()
+                newrule_file.close()
+                symbol_file.close()
+                bout = p.prepare()
+                bout.clear()
+                bout.addString('ready')
+                print 'sending'
+                p.write()
+            if command == 'kill':
+                prerule_file.close()
+                presymbol_file.close()
+                Affor_bottle_out = Affor_yarp.prepare()
+                Affor_bottle_out.addString("kill")
+                Affor_yarp.write()
+                break
+
+        return objects;
+
+geometric_grounding()
+
+## test function here, geo_grounding will be called from main program later
+                                                   
+##if __name__ == '__main__':
+##    parent_conn, child_conn = Pipe()
+##    p = Process(target=geometric_grounding, args = (child_conn,))
+##    p.start()
+##    parent_conn.send(['update'])
+##    while 1:
+##        if parent_conn.poll()==True:
+##            data = parent_conn.recv()
+##            if data == ['finished']:
+##                parent_conn.send(['kill'])
+##                break
+##            else:
+##                print data
+##    print parent_conn.recv()
