@@ -1,0 +1,932 @@
+# Rule #0  (1 out of 92)
+ACTION:
+  push_12_with_11()
+CONTEXT:
+  -12_ishand() 11_istool() 12_isreachable_with_11()
+OUTCOMES:
+  0.85 -12_isreachable_with_11() -12_isreachable_with_13() -12_isreachable_with_14() -12_isreachable_with_15()
+  0.15 <noise>
+
+
+# Rule #0  (1 out of 92)
+ACTION:
+  push_13_with_11()
+CONTEXT:
+  -13_ishand() 11_istool() 13_isreachable_with_11()
+OUTCOMES:
+  0.85 -13_isreachable_with_11() -13_isreachable_with_12() -13_isreachable_with_14() -13_isreachable_with_15()
+  0.15 <noise>
+
+
+# Rule #0  (1 out of 92)
+ACTION:
+  push_14_with_11()
+CONTEXT:
+  -14_ishand() 11_istool() 14_isreachable_with_11()
+OUTCOMES:
+  0.85 -14_isreachable_with_11() -14_isreachable_with_12() -14_isreachable_with_13() -14_isreachable_with_15()
+  0.15 <noise>
+
+
+# Rule #0  (1 out of 92)
+ACTION:
+  push_15_with_11()
+CONTEXT:
+  -15_ishand() 11_istool() 15_isreachable_with_11()
+OUTCOMES:
+  0.85 -15_isreachable_with_11() -15_isreachable_with_12() -15_isreachable_with_13() -15_isreachable_with_14()
+  0.15 <noise>
+
+
+# Rule #0  (1 out of 92)
+ACTION:
+  push_11_with_12()
+CONTEXT:
+  -11_ishand() 12_istool() 11_isreachable_with_12()
+OUTCOMES:
+  0.85 -11_isreachable_with_12() -11_isreachable_with_13() -11_isreachable_with_14() -11_isreachable_with_15()
+  0.15 <noise>
+
+
+# Rule #0  (1 out of 92)
+ACTION:
+  push_13_with_12()
+CONTEXT:
+  -13_ishand() 12_istool() 13_isreachable_with_12()
+OUTCOMES:
+  0.85 -13_isreachable_with_11() -13_isreachable_with_12() -13_isreachable_with_14() -13_isreachable_with_15()
+  0.15 <noise>
+
+
+# Rule #0  (1 out of 92)
+ACTION:
+  push_14_with_12()
+CONTEXT:
+  -14_ishand() 12_istool() 14_isreachable_with_12()
+OUTCOMES:
+  0.85 -14_isreachable_with_11() -14_isreachable_with_12() -14_isreachable_with_13() -14_isreachable_with_15()
+  0.15 <noise>
+
+
+# Rule #0  (1 out of 92)
+ACTION:
+  push_15_with_12()
+CONTEXT:
+  -15_ishand() 12_istool() 15_isreachable_with_12()
+OUTCOMES:
+  0.85 -15_isreachable_with_11() -15_isreachable_with_12() -15_isreachable_with_13() -15_isreachable_with_14()
+  0.15 <noise>
+
+
+# Rule #0  (1 out of 92)
+ACTION:
+  push_11_with_13()
+CONTEXT:
+  -11_ishand() 13_istool() 11_isreachable_with_13()
+OUTCOMES:
+  0.85 -11_isreachable_with_12() -11_isreachable_with_13() -11_isreachable_with_14() -11_isreachable_with_15()
+  0.15 <noise>
+
+
+# Rule #0  (1 out of 92)
+ACTION:
+  push_12_with_13()
+CONTEXT:
+  -12_ishand() 13_istool() 12_isreachable_with_13()
+OUTCOMES:
+  0.85 -12_isreachable_with_11() -12_isreachable_with_13() -12_isreachable_with_14() -12_isreachable_with_15()
+  0.15 <noise>
+
+
+# Rule #0  (1 out of 92)
+ACTION:
+  push_14_with_13()
+CONTEXT:
+  -14_ishand() 13_istool() 14_isreachable_with_13()
+OUTCOMES:
+  0.85 -14_isreachable_with_11() -14_isreachable_with_12() -14_isreachable_with_13() -14_isreachable_with_15()
+  0.15 <noise>
+
+
+# Rule #0  (1 out of 92)
+ACTION:
+  push_15_with_13()
+CONTEXT:
+  -15_ishand() 13_istool() 15_isreachable_with_13()
+OUTCOMES:
+  0.85 -15_isreachable_with_11() -15_isreachable_with_12() -15_isreachable_with_13() -15_isreachable_with_14()
+  0.15 <noise>
+
+
+# Rule #0  (1 out of 92)
+ACTION:
+  push_11_with_14()
+CONTEXT:
+  -11_ishand() 14_istool() 11_isreachable_with_14()
+OUTCOMES:
+  0.85 -11_isreachable_with_12() -11_isreachable_with_13() -11_isreachable_with_14() -11_isreachable_with_15()
+  0.15 <noise>
+
+
+# Rule #0  (1 out of 92)
+ACTION:
+  push_12_with_14()
+CONTEXT:
+  -12_ishand() 14_istool() 12_isreachable_with_14()
+OUTCOMES:
+  0.85 -12_isreachable_with_11() -12_isreachable_with_13() -12_isreachable_with_14() -12_isreachable_with_15()
+  0.15 <noise>
+
+
+# Rule #0  (1 out of 92)
+ACTION:
+  push_13_with_14()
+CONTEXT:
+  -13_ishand() 14_istool() 13_isreachable_with_14()
+OUTCOMES:
+  0.85 -13_isreachable_with_11() -13_isreachable_with_12() -13_isreachable_with_14() -13_isreachable_with_15()
+  0.15 <noise>
+
+
+# Rule #0  (1 out of 92)
+ACTION:
+  push_15_with_14()
+CONTEXT:
+  -15_ishand() 14_istool() 15_isreachable_with_14()
+OUTCOMES:
+  0.85 -15_isreachable_with_11() -15_isreachable_with_12() -15_isreachable_with_13() -15_isreachable_with_14()
+  0.15 <noise>
+
+
+# Rule #0  (1 out of 92)
+ACTION:
+  push_11_with_15()
+CONTEXT:
+  -11_ishand() 15_istool() 11_isreachable_with_15()
+OUTCOMES:
+  0.85 -11_isreachable_with_12() -11_isreachable_with_13() -11_isreachable_with_14() -11_isreachable_with_15()
+  0.15 <noise>
+
+
+# Rule #0  (1 out of 92)
+ACTION:
+  push_12_with_15()
+CONTEXT:
+  -12_ishand() 15_istool() 12_isreachable_with_15()
+OUTCOMES:
+  0.85 -12_isreachable_with_11() -12_isreachable_with_13() -12_isreachable_with_14() -12_isreachable_with_15()
+  0.15 <noise>
+
+
+# Rule #0  (1 out of 92)
+ACTION:
+  push_13_with_15()
+CONTEXT:
+  -13_ishand() 15_istool() 13_isreachable_with_15()
+OUTCOMES:
+  0.85 -13_isreachable_with_11() -13_isreachable_with_12() -13_isreachable_with_14() -13_isreachable_with_15()
+  0.15 <noise>
+
+
+# Rule #0  (1 out of 92)
+ACTION:
+  push_14_with_15()
+CONTEXT:
+  -14_ishand() 15_istool() 14_isreachable_with_15()
+OUTCOMES:
+  0.85 -14_isreachable_with_11() -14_isreachable_with_12() -14_isreachable_with_13() -14_isreachable_with_15()
+  0.15 <noise>
+
+
+# Rule #0  (1 out of 92)
+ACTION:
+  pull_12_with_11()
+CONTEXT:
+  -12_ishand() 11_istool() 12_isreachable_with_11() 12_ispullable_with_11()
+OUTCOMES:
+  0.85 12_isreachable_with_11() 12_isreachable_with_13() 12_isreachable_with_14() 12_isreachable_with_15()
+  0.15 <noise>
+
+
+# Rule #0  (1 out of 92)
+ACTION:
+  pull_13_with_11()
+CONTEXT:
+  -13_ishand() 11_istool() 13_isreachable_with_11() 13_ispullable_with_11()
+OUTCOMES:
+  0.85 13_isreachable_with_11() 13_isreachable_with_12() 13_isreachable_with_14() 13_isreachable_with_15()
+  0.15 <noise>
+
+
+# Rule #0  (1 out of 92)
+ACTION:
+  pull_14_with_11()
+CONTEXT:
+  -14_ishand() 11_istool() 14_isreachable_with_11() 14_ispullable_with_11()
+OUTCOMES:
+  0.85 14_isreachable_with_11() 14_isreachable_with_12() 14_isreachable_with_13() 14_isreachable_with_15()
+  0.15 <noise>
+
+
+# Rule #0  (1 out of 92)
+ACTION:
+  pull_15_with_11()
+CONTEXT:
+  -15_ishand() 11_istool() 15_isreachable_with_11() 15_ispullable_with_11()
+OUTCOMES:
+  0.85 15_isreachable_with_11() 15_isreachable_with_12() 15_isreachable_with_13() 15_isreachable_with_14()
+  0.15 <noise>
+
+
+# Rule #0  (1 out of 92)
+ACTION:
+  pull_11_with_12()
+CONTEXT:
+  -11_ishand() 12_istool() 11_isreachable_with_12() 11_ispullable_with_12()
+OUTCOMES:
+  0.85 11_isreachable_with_12() 11_isreachable_with_13() 11_isreachable_with_14() 11_isreachable_with_15()
+  0.15 <noise>
+
+
+# Rule #0  (1 out of 92)
+ACTION:
+  pull_13_with_12()
+CONTEXT:
+  -13_ishand() 12_istool() 13_isreachable_with_12() 13_ispullable_with_12()
+OUTCOMES:
+  0.85 13_isreachable_with_11() 13_isreachable_with_12() 13_isreachable_with_14() 13_isreachable_with_15()
+  0.15 <noise>
+
+
+# Rule #0  (1 out of 92)
+ACTION:
+  pull_14_with_12()
+CONTEXT:
+  -14_ishand() 12_istool() 14_isreachable_with_12() 14_ispullable_with_12()
+OUTCOMES:
+  0.85 14_isreachable_with_11() 14_isreachable_with_12() 14_isreachable_with_13() 14_isreachable_with_15()
+  0.15 <noise>
+
+
+# Rule #0  (1 out of 92)
+ACTION:
+  pull_15_with_12()
+CONTEXT:
+  -15_ishand() 12_istool() 15_isreachable_with_12() 15_ispullable_with_12()
+OUTCOMES:
+  0.85 15_isreachable_with_11() 15_isreachable_with_12() 15_isreachable_with_13() 15_isreachable_with_14()
+  0.15 <noise>
+
+
+# Rule #0  (1 out of 92)
+ACTION:
+  pull_11_with_13()
+CONTEXT:
+  -11_ishand() 13_istool() 11_isreachable_with_13() 11_ispullable_with_13()
+OUTCOMES:
+  0.85 11_isreachable_with_12() 11_isreachable_with_13() 11_isreachable_with_14() 11_isreachable_with_15()
+  0.15 <noise>
+
+
+# Rule #0  (1 out of 92)
+ACTION:
+  pull_12_with_13()
+CONTEXT:
+  -12_ishand() 13_istool() 12_isreachable_with_13() 12_ispullable_with_13()
+OUTCOMES:
+  0.85 12_isreachable_with_11() 12_isreachable_with_13() 12_isreachable_with_14() 12_isreachable_with_15()
+  0.15 <noise>
+
+
+# Rule #0  (1 out of 92)
+ACTION:
+  pull_14_with_13()
+CONTEXT:
+  -14_ishand() 13_istool() 14_isreachable_with_13() 14_ispullable_with_13()
+OUTCOMES:
+  0.85 14_isreachable_with_11() 14_isreachable_with_12() 14_isreachable_with_13() 14_isreachable_with_15()
+  0.15 <noise>
+
+
+# Rule #0  (1 out of 92)
+ACTION:
+  pull_15_with_13()
+CONTEXT:
+  -15_ishand() 13_istool() 15_isreachable_with_13() 15_ispullable_with_13()
+OUTCOMES:
+  0.85 15_isreachable_with_11() 15_isreachable_with_12() 15_isreachable_with_13() 15_isreachable_with_14()
+  0.15 <noise>
+
+
+# Rule #0  (1 out of 92)
+ACTION:
+  pull_11_with_14()
+CONTEXT:
+  -11_ishand() 14_istool() 11_isreachable_with_14() 11_ispullable_with_14()
+OUTCOMES:
+  0.85 11_isreachable_with_12() 11_isreachable_with_13() 11_isreachable_with_14() 11_isreachable_with_15()
+  0.15 <noise>
+
+
+# Rule #0  (1 out of 92)
+ACTION:
+  pull_12_with_14()
+CONTEXT:
+  -12_ishand() 14_istool() 12_isreachable_with_14() 12_ispullable_with_14()
+OUTCOMES:
+  0.85 12_isreachable_with_11() 12_isreachable_with_13() 12_isreachable_with_14() 12_isreachable_with_15()
+  0.15 <noise>
+
+
+# Rule #0  (1 out of 92)
+ACTION:
+  pull_13_with_14()
+CONTEXT:
+  -13_ishand() 14_istool() 13_isreachable_with_14() 13_ispullable_with_14()
+OUTCOMES:
+  0.85 13_isreachable_with_11() 13_isreachable_with_12() 13_isreachable_with_14() 13_isreachable_with_15()
+  0.15 <noise>
+
+
+# Rule #0  (1 out of 92)
+ACTION:
+  pull_15_with_14()
+CONTEXT:
+  -15_ishand() 14_istool() 15_isreachable_with_14() 15_ispullable_with_14()
+OUTCOMES:
+  0.85 15_isreachable_with_11() 15_isreachable_with_12() 15_isreachable_with_13() 15_isreachable_with_14()
+  0.15 <noise>
+
+
+# Rule #0  (1 out of 92)
+ACTION:
+  pull_11_with_15()
+CONTEXT:
+  -11_ishand() 15_istool() 11_isreachable_with_15() 11_ispullable_with_15()
+OUTCOMES:
+  0.85 11_isreachable_with_12() 11_isreachable_with_13() 11_isreachable_with_14() 11_isreachable_with_15()
+  0.15 <noise>
+
+
+# Rule #0  (1 out of 92)
+ACTION:
+  pull_12_with_15()
+CONTEXT:
+  -12_ishand() 15_istool() 12_isreachable_with_15() 12_ispullable_with_15()
+OUTCOMES:
+  0.85 12_isreachable_with_11() 12_isreachable_with_13() 12_isreachable_with_14() 12_isreachable_with_15()
+  0.15 <noise>
+
+
+# Rule #0  (1 out of 92)
+ACTION:
+  pull_13_with_15()
+CONTEXT:
+  -13_ishand() 15_istool() 13_isreachable_with_15() 13_ispullable_with_15()
+OUTCOMES:
+  0.85 13_isreachable_with_11() 13_isreachable_with_12() 13_isreachable_with_14() 13_isreachable_with_15()
+  0.15 <noise>
+
+
+# Rule #0  (1 out of 92)
+ACTION:
+  pull_14_with_15()
+CONTEXT:
+  -14_ishand() 15_istool() 14_isreachable_with_15() 14_ispullable_with_15()
+OUTCOMES:
+  0.85 14_isreachable_with_11() 14_isreachable_with_12() 14_isreachable_with_13() 14_isreachable_with_15()
+  0.15 <noise>
+
+
+# Rule #0  (1 out of 92)
+ACTION:
+  grasp_12_with_11()
+CONTEXT:
+  -12_ishand() 11_clearhand() 11_istool() 11_ishand() 12_isreachable_with_11()
+OUTCOMES:
+  0.95 12_inhand_11() 12_istool() -11_clearhand() -11_istool()
+  0.05 <noise>
+
+
+# Rule #0  (1 out of 92)
+ACTION:
+  grasp_13_with_11()
+CONTEXT:
+  -13_ishand() 11_clearhand() 11_istool() 11_ishand() 13_isreachable_with_11()
+OUTCOMES:
+  0.95 13_inhand_11() 13_istool() -11_clearhand() -11_istool()
+  0.05 <noise>
+
+
+# Rule #0  (1 out of 92)
+ACTION:
+  grasp_14_with_11()
+CONTEXT:
+  -14_ishand() 11_clearhand() 11_istool() 11_ishand() 14_isreachable_with_11()
+OUTCOMES:
+  0.95 14_inhand_11() 14_istool() -11_clearhand() -11_istool()
+  0.05 <noise>
+
+
+# Rule #0  (1 out of 92)
+ACTION:
+  grasp_15_with_11()
+CONTEXT:
+  -15_ishand() 11_clearhand() 11_istool() 11_ishand() 15_isreachable_with_11()
+OUTCOMES:
+  0.95 15_inhand_11() 15_istool() -11_clearhand() -11_istool()
+  0.05 <noise>
+
+
+# Rule #0  (1 out of 92)
+ACTION:
+  grasp_11_with_12()
+CONTEXT:
+  -11_ishand() 12_clearhand() 12_istool() 12_ishand() 11_isreachable_with_12()
+OUTCOMES:
+  0.95 11_inhand_12() 11_istool() -12_clearhand() -12_istool()
+  0.05 <noise>
+
+
+# Rule #0  (1 out of 92)
+ACTION:
+  grasp_13_with_12()
+CONTEXT:
+  -13_ishand() 12_clearhand() 12_istool() 12_ishand() 13_isreachable_with_12()
+OUTCOMES:
+  0.95 13_inhand_12() 13_istool() -12_clearhand() -12_istool()
+  0.05 <noise>
+
+
+# Rule #0  (1 out of 92)
+ACTION:
+  grasp_14_with_12()
+CONTEXT:
+  -14_ishand() 12_clearhand() 12_istool() 12_ishand() 14_isreachable_with_12()
+OUTCOMES:
+  0.95 14_inhand_12() 14_istool() -12_clearhand() -12_istool()
+  0.05 <noise>
+
+
+# Rule #0  (1 out of 92)
+ACTION:
+  grasp_15_with_12()
+CONTEXT:
+  -15_ishand() 12_clearhand() 12_istool() 12_ishand() 15_isreachable_with_12()
+OUTCOMES:
+  0.95 15_inhand_12() 15_istool() -12_clearhand() -12_istool()
+  0.05 <noise>
+
+
+# Rule #0  (1 out of 92)
+ACTION:
+  grasp_11_with_13()
+CONTEXT:
+  -11_ishand() 13_clearhand() 13_istool() 13_ishand() 11_isreachable_with_13()
+OUTCOMES:
+  0.95 11_inhand_13() 11_istool() -13_clearhand() -13_istool()
+  0.05 <noise>
+
+
+# Rule #0  (1 out of 92)
+ACTION:
+  grasp_12_with_13()
+CONTEXT:
+  -12_ishand() 13_clearhand() 13_istool() 13_ishand() 12_isreachable_with_13()
+OUTCOMES:
+  0.95 12_inhand_13() 12_istool() -13_clearhand() -13_istool()
+  0.05 <noise>
+
+
+# Rule #0  (1 out of 92)
+ACTION:
+  grasp_14_with_13()
+CONTEXT:
+  -14_ishand() 13_clearhand() 13_istool() 13_ishand() 14_isreachable_with_13()
+OUTCOMES:
+  0.95 14_inhand_13() 14_istool() -13_clearhand() -13_istool()
+  0.05 <noise>
+
+
+# Rule #0  (1 out of 92)
+ACTION:
+  grasp_15_with_13()
+CONTEXT:
+  -15_ishand() 13_clearhand() 13_istool() 13_ishand() 15_isreachable_with_13()
+OUTCOMES:
+  0.95 15_inhand_13() 15_istool() -13_clearhand() -13_istool()
+  0.05 <noise>
+
+
+# Rule #0  (1 out of 92)
+ACTION:
+  grasp_11_with_14()
+CONTEXT:
+  -11_ishand() 14_clearhand() 14_istool() 14_ishand() 11_isreachable_with_14()
+OUTCOMES:
+  0.95 11_inhand_14() 11_istool() -14_clearhand() -14_istool()
+  0.05 <noise>
+
+
+# Rule #0  (1 out of 92)
+ACTION:
+  grasp_12_with_14()
+CONTEXT:
+  -12_ishand() 14_clearhand() 14_istool() 14_ishand() 12_isreachable_with_14()
+OUTCOMES:
+  0.95 12_inhand_14() 12_istool() -14_clearhand() -14_istool()
+  0.05 <noise>
+
+
+# Rule #0  (1 out of 92)
+ACTION:
+  grasp_13_with_14()
+CONTEXT:
+  -13_ishand() 14_clearhand() 14_istool() 14_ishand() 13_isreachable_with_14()
+OUTCOMES:
+  0.95 13_inhand_14() 13_istool() -14_clearhand() -14_istool()
+  0.05 <noise>
+
+
+# Rule #0  (1 out of 92)
+ACTION:
+  grasp_15_with_14()
+CONTEXT:
+  -15_ishand() 14_clearhand() 14_istool() 14_ishand() 15_isreachable_with_14()
+OUTCOMES:
+  0.95 15_inhand_14() 15_istool() -14_clearhand() -14_istool()
+  0.05 <noise>
+
+
+# Rule #0  (1 out of 92)
+ACTION:
+  grasp_11_with_15()
+CONTEXT:
+  -11_ishand() 15_clearhand() 15_istool() 15_ishand() 11_isreachable_with_15()
+OUTCOMES:
+  0.95 11_inhand_15() 11_istool() -15_clearhand() -15_istool()
+  0.05 <noise>
+
+
+# Rule #0  (1 out of 92)
+ACTION:
+  grasp_12_with_15()
+CONTEXT:
+  -12_ishand() 15_clearhand() 15_istool() 15_ishand() 12_isreachable_with_15()
+OUTCOMES:
+  0.95 12_inhand_15() 12_istool() -15_clearhand() -15_istool()
+  0.05 <noise>
+
+
+# Rule #0  (1 out of 92)
+ACTION:
+  grasp_13_with_15()
+CONTEXT:
+  -13_ishand() 15_clearhand() 15_istool() 15_ishand() 13_isreachable_with_15()
+OUTCOMES:
+  0.95 13_inhand_15() 13_istool() -15_clearhand() -15_istool()
+  0.05 <noise>
+
+
+# Rule #0  (1 out of 92)
+ACTION:
+  grasp_14_with_15()
+CONTEXT:
+  -14_ishand() 15_clearhand() 15_istool() 15_ishand() 14_isreachable_with_15()
+OUTCOMES:
+  0.95 14_inhand_15() 14_istool() -15_clearhand() -15_istool()
+  0.05 <noise>
+
+
+# Rule #0  (1 out of 92)
+ACTION:
+  drop_12_with_11()
+CONTEXT:
+  -12_ishand() 12_inhand_11() 11_ishand() 12_istool()
+OUTCOMES:
+  0.95 -12_inhand_11() 11_clearhand() -12_istool() 11_istool()
+  0.05 <noise>
+
+
+# Rule #0  (1 out of 92)
+ACTION:
+  drop_13_with_11()
+CONTEXT:
+  -13_ishand() 13_inhand_11() 11_ishand() 13_istool()
+OUTCOMES:
+  0.95 -13_inhand_11() 11_clearhand() -13_istool() 11_istool()
+  0.05 <noise>
+
+
+# Rule #0  (1 out of 92)
+ACTION:
+  drop_14_with_11()
+CONTEXT:
+  -14_ishand() 14_inhand_11() 11_ishand() 14_istool()
+OUTCOMES:
+  0.95 -14_inhand_11() 11_clearhand() -14_istool() 11_istool()
+  0.05 <noise>
+
+
+# Rule #0  (1 out of 92)
+ACTION:
+  drop_15_with_11()
+CONTEXT:
+  -15_ishand() 15_inhand_11() 11_ishand() 15_istool()
+OUTCOMES:
+  0.95 -15_inhand_11() 11_clearhand() -15_istool() 11_istool()
+  0.05 <noise>
+
+
+# Rule #0  (1 out of 92)
+ACTION:
+  drop_11_with_12()
+CONTEXT:
+  -11_ishand() 11_inhand_12() 12_ishand() 11_istool()
+OUTCOMES:
+  0.95 -11_inhand_12() 12_clearhand() -11_istool() 12_istool()
+  0.05 <noise>
+
+
+# Rule #0  (1 out of 92)
+ACTION:
+  drop_13_with_12()
+CONTEXT:
+  -13_ishand() 13_inhand_12() 12_ishand() 13_istool()
+OUTCOMES:
+  0.95 -13_inhand_12() 12_clearhand() -13_istool() 12_istool()
+  0.05 <noise>
+
+
+# Rule #0  (1 out of 92)
+ACTION:
+  drop_14_with_12()
+CONTEXT:
+  -14_ishand() 14_inhand_12() 12_ishand() 14_istool()
+OUTCOMES:
+  0.95 -14_inhand_12() 12_clearhand() -14_istool() 12_istool()
+  0.05 <noise>
+
+
+# Rule #0  (1 out of 92)
+ACTION:
+  drop_15_with_12()
+CONTEXT:
+  -15_ishand() 15_inhand_12() 12_ishand() 15_istool()
+OUTCOMES:
+  0.95 -15_inhand_12() 12_clearhand() -15_istool() 12_istool()
+  0.05 <noise>
+
+
+# Rule #0  (1 out of 92)
+ACTION:
+  drop_11_with_13()
+CONTEXT:
+  -11_ishand() 11_inhand_13() 13_ishand() 11_istool()
+OUTCOMES:
+  0.95 -11_inhand_13() 13_clearhand() -11_istool() 13_istool()
+  0.05 <noise>
+
+
+# Rule #0  (1 out of 92)
+ACTION:
+  drop_12_with_13()
+CONTEXT:
+  -12_ishand() 12_inhand_13() 13_ishand() 12_istool()
+OUTCOMES:
+  0.95 -12_inhand_13() 13_clearhand() -12_istool() 13_istool()
+  0.05 <noise>
+
+
+# Rule #0  (1 out of 92)
+ACTION:
+  drop_14_with_13()
+CONTEXT:
+  -14_ishand() 14_inhand_13() 13_ishand() 14_istool()
+OUTCOMES:
+  0.95 -14_inhand_13() 13_clearhand() -14_istool() 13_istool()
+  0.05 <noise>
+
+
+# Rule #0  (1 out of 92)
+ACTION:
+  drop_15_with_13()
+CONTEXT:
+  -15_ishand() 15_inhand_13() 13_ishand() 15_istool()
+OUTCOMES:
+  0.95 -15_inhand_13() 13_clearhand() -15_istool() 13_istool()
+  0.05 <noise>
+
+
+# Rule #0  (1 out of 92)
+ACTION:
+  drop_11_with_14()
+CONTEXT:
+  -11_ishand() 11_inhand_14() 14_ishand() 11_istool()
+OUTCOMES:
+  0.95 -11_inhand_14() 14_clearhand() -11_istool() 14_istool()
+  0.05 <noise>
+
+
+# Rule #0  (1 out of 92)
+ACTION:
+  drop_12_with_14()
+CONTEXT:
+  -12_ishand() 12_inhand_14() 14_ishand() 12_istool()
+OUTCOMES:
+  0.95 -12_inhand_14() 14_clearhand() -12_istool() 14_istool()
+  0.05 <noise>
+
+
+# Rule #0  (1 out of 92)
+ACTION:
+  drop_13_with_14()
+CONTEXT:
+  -13_ishand() 13_inhand_14() 14_ishand() 13_istool()
+OUTCOMES:
+  0.95 -13_inhand_14() 14_clearhand() -13_istool() 14_istool()
+  0.05 <noise>
+
+
+# Rule #0  (1 out of 92)
+ACTION:
+  drop_15_with_14()
+CONTEXT:
+  -15_ishand() 15_inhand_14() 14_ishand() 15_istool()
+OUTCOMES:
+  0.95 -15_inhand_14() 14_clearhand() -15_istool() 14_istool()
+  0.05 <noise>
+
+
+# Rule #0  (1 out of 92)
+ACTION:
+  drop_11_with_15()
+CONTEXT:
+  -11_ishand() 11_inhand_15() 15_ishand() 11_istool()
+OUTCOMES:
+  0.95 -11_inhand_15() 15_clearhand() -11_istool() 15_istool()
+  0.05 <noise>
+
+
+# Rule #0  (1 out of 92)
+ACTION:
+  drop_12_with_15()
+CONTEXT:
+  -12_ishand() 12_inhand_15() 15_ishand() 12_istool()
+OUTCOMES:
+  0.95 -12_inhand_15() 15_clearhand() -12_istool() 15_istool()
+  0.05 <noise>
+
+
+# Rule #0  (1 out of 92)
+ACTION:
+  drop_13_with_15()
+CONTEXT:
+  -13_ishand() 13_inhand_15() 15_ishand() 13_istool()
+OUTCOMES:
+  0.95 -13_inhand_15() 15_clearhand() -13_istool() 15_istool()
+  0.05 <noise>
+
+
+# Rule #0  (1 out of 92)
+ACTION:
+  drop_14_with_15()
+CONTEXT:
+  -14_ishand() 14_inhand_15() 15_ishand() 14_istool()
+OUTCOMES:
+  0.95 -14_inhand_15() 15_clearhand() -14_istool() 15_istool()
+  0.05 <noise>
+
+
+# Rule #0  (1 out of 92)
+ACTION:
+  put_13_on_14_with_11()
+CONTEXT:
+  -13_ishand() 14_isreachable_with_11() -14_ishand() 13_istool() -14_istool() 13_inhand_11()
+OUTCOMES:
+  0.7 -13_istool() 13_on_14() -13_inhand_11() 11_clearhand() 11_istool()
+  0.15 -13_istool() -13_inhand_11() 11_clearhand() 11_istool()
+  0.15 <noise>
+
+
+# Rule #0  (1 out of 92)
+ACTION:
+  put_13_on_15_with_11()
+CONTEXT:
+  -13_ishand() 15_isreachable_with_11() -15_ishand() 13_istool() -15_istool() 13_inhand_11()
+OUTCOMES:
+  0.7 -13_istool() 13_on_15() -13_inhand_11() 11_clearhand() 11_istool()
+  0.15 -13_istool() -13_inhand_11() 11_clearhand() 11_istool()
+  0.15 <noise>
+
+
+# Rule #0  (1 out of 92)
+ACTION:
+  put_14_on_13_with_11()
+CONTEXT:
+  -14_ishand() 13_isreachable_with_11() -13_ishand() 14_istool() -13_istool() 14_inhand_11()
+OUTCOMES:
+  0.7 -14_istool() 14_on_13() -14_inhand_11() 11_clearhand() 11_istool()
+  0.15 -14_istool() -14_inhand_11() 11_clearhand() 11_istool()
+  0.15 <noise>
+
+
+# Rule #0  (1 out of 92)
+ACTION:
+  put_14_on_15_with_11()
+CONTEXT:
+  -14_ishand() 15_isreachable_with_11() -15_ishand() 14_istool() -15_istool() 14_inhand_11()
+OUTCOMES:
+  0.7 -14_istool() 14_on_15() -14_inhand_11() 11_clearhand() 11_istool()
+  0.15 -14_istool() -14_inhand_11() 11_clearhand() 11_istool()
+  0.15 <noise>
+
+
+# Rule #0  (1 out of 92)
+ACTION:
+  put_15_on_13_with_11()
+CONTEXT:
+  -15_ishand() 13_isreachable_with_11() -13_ishand() 15_istool() -13_istool() 15_inhand_11()
+OUTCOMES:
+  0.7 -15_istool() 15_on_13() -15_inhand_11() 11_clearhand() 11_istool()
+  0.15 -15_istool() -15_inhand_11() 11_clearhand() 11_istool()
+  0.15 <noise>
+
+
+# Rule #0  (1 out of 92)
+ACTION:
+  put_15_on_14_with_11()
+CONTEXT:
+  -15_ishand() 14_isreachable_with_11() -14_ishand() 15_istool() -14_istool() 15_inhand_11()
+OUTCOMES:
+  0.7 -15_istool() 15_on_14() -15_inhand_11() 11_clearhand() 11_istool()
+  0.15 -15_istool() -15_inhand_11() 11_clearhand() 11_istool()
+  0.15 <noise>
+
+
+# Rule #0  (1 out of 92)
+ACTION:
+  put_13_on_14_with_12()
+CONTEXT:
+  -13_ishand() 14_isreachable_with_12() -14_ishand() 13_istool() -14_istool() 13_inhand_12()
+OUTCOMES:
+  0.7 -13_istool() 13_on_14() -13_inhand_12() 12_clearhand() 12_istool()
+  0.15 -13_istool() -13_inhand_12() 12_clearhand() 12_istool()
+  0.15 <noise>
+
+
+# Rule #0  (1 out of 92)
+ACTION:
+  put_13_on_15_with_12()
+CONTEXT:
+  -13_ishand() 15_isreachable_with_12() -15_ishand() 13_istool() -15_istool() 13_inhand_12()
+OUTCOMES:
+  0.7 -13_istool() 13_on_15() -13_inhand_12() 12_clearhand() 12_istool()
+  0.15 -13_istool() -13_inhand_12() 12_clearhand() 12_istool()
+  0.15 <noise>
+
+
+# Rule #0  (1 out of 92)
+ACTION:
+  put_14_on_13_with_12()
+CONTEXT:
+  -14_ishand() 13_isreachable_with_12() -13_ishand() 14_istool() -13_istool() 14_inhand_12()
+OUTCOMES:
+  0.7 -14_istool() 14_on_13() -14_inhand_12() 12_clearhand() 12_istool()
+  0.15 -14_istool() -14_inhand_12() 12_clearhand() 12_istool()
+  0.15 <noise>
+
+
+# Rule #0  (1 out of 92)
+ACTION:
+  put_14_on_15_with_12()
+CONTEXT:
+  -14_ishand() 15_isreachable_with_12() -15_ishand() 14_istool() -15_istool() 14_inhand_12()
+OUTCOMES:
+  0.7 -14_istool() 14_on_15() -14_inhand_12() 12_clearhand() 12_istool()
+  0.15 -14_istool() -14_inhand_12() 12_clearhand() 12_istool()
+  0.15 <noise>
+
+
+# Rule #0  (1 out of 92)
+ACTION:
+  put_15_on_13_with_12()
+CONTEXT:
+  -15_ishand() 13_isreachable_with_12() -13_ishand() 15_istool() -13_istool() 15_inhand_12()
+OUTCOMES:
+  0.7 -15_istool() 15_on_13() -15_inhand_12() 12_clearhand() 12_istool()
+  0.15 -15_istool() -15_inhand_12() 12_clearhand() 12_istool()
+  0.15 <noise>
+
+
+# Rule #0  (1 out of 92)
+ACTION:
+  put_15_on_14_with_12()
+CONTEXT:
+  -15_ishand() 14_isreachable_with_12() -14_ishand() 15_istool() -14_istool() 15_inhand_12()
+OUTCOMES:
+  0.7 -15_istool() 15_on_14() -15_inhand_12() 12_clearhand() 12_istool()
+  0.15 -15_istool() -15_inhand_12() 12_clearhand() 12_istool()
+  0.15 <noise>
+
+

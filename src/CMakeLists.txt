@@ -18,6 +18,7 @@ icubcontrib_set_default_prefix()
 
 # modules that do not need OpenCV
 add_subdirectory(opc2prada)
+add_subdirectory(pradaPlanner)
 add_subdirectory(worldStateManager)
 
 # modules that need OpenCV

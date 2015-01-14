@@ -1,5 +1,5 @@
 <application>
-<name>POETICON++ World State from Perception</name>
+<name>POETICON++ from Perception</name>
 
 <dependencies>
     <port>/icub/camcalib/left/out</port>
@@ -38,6 +38,22 @@
     <name>opc2prada</name>
     <node>console</node>
 </module>
+<module>
+    <name>planning_cycle.py</name>
+    <node>console</node>
+</module>
+<module>
+    <name>geometric_grounding.py</name>
+    <node>console</node>
+</module>
+<module>
+    <name>goal_imaginer.py</name>
+    <node>console</node>
+</module>
+<module>
+    <name>affordance_communication.py</name>
+    <node>console</node>
+</module>
 
 <module>
     <name>yarpview</name>
@@ -73,7 +89,6 @@
 <connection>
     <from>/desiredRoi</from>
     <to>/blobSpotter/fixRoi:i</to>
-    <protocol>tcp</protocol>
 </connection>
 <connection>
     <from>/blobSpotter/propagated:o</from>
@@ -108,52 +123,78 @@
 <connection>
     <from>/icub/camcalib/left/out</from>
     <to>/activeParticleTrack/image:i</to>
-    <protocol>tcp</protocol>
 </connection>
 <connection>
     <from>/wsm/fixation:o</from>
     <to>/activeParticleTrack/fixation:i</to>
-    <protocol>tcp</protocol>
 </connection>
 <connection>
     <from>/activeParticleTrack/target:o</from>
     <to>/wsm/target:i</to>
-    <protocol>tcp</protocol>
 </connection>
 <connection>
     <from>/blobDescriptor/affDescriptor:o</from>
     <to>/wsm/affDescriptor:i</to>
-    <protocol>tcp</protocol>
 </connection>
 <connection>
     <from>/wsm/opc:io</from>
     <to>/memory/rpc</to>
-    <protocol>tcp</protocol>
 </connection>
 <connection>
     <from>/wsm/are:rpc</from>
     <to>/actionsRenderingEngine/cmd:io</to>
-    <protocol>tcp</protocol>
 </connection>
 <connection>
     <from>/opc2prada/rpcClient</from>
     <to>/memory/rpc</to>
-    <protocol>tcp</protocol>
 </connection>
 <connection>
     <from>/memory/broadcast:o</from>
     <to>/opc2prada/broadcast:i</to>
-    <protocol>tcp</protocol>
 </connection>
 <connection>
     <from>/opc2prada/cmd:io</from>
     <to>/planner/cmd:io</to>
-    <protocol>tcp</protocol>
 </connection>
 <connection>
     <from>/planner/cmd:io</from>
     <to>/opc2prada/cmd:io</to>
-    <protocol>tcp</protocol>
+</connection>
+<connection>
+    <from>/planner/grounding_cmd:io</from>
+    <to>/grounding:io</to>
+</connection>
+<connection>
+    <from>/planner/goal_cmd:io</from>
+    <to>/goal_imag:io</to>
+</connection>
+<connection>
+    <from>/planner/are_cmd:io</from>
+    <to>/ARM_comm:i</to>
+</connection>
+<connection>
+    <from>/grounding:io</from>
+    <to>/planner/grounding_cmd:io</to>
+</connection>
+<connection>
+    <from>/goal_imag:io</from>
+    <to>/planner/goal_cmd:io</to>
+</connection>
+<connection>
+    <from>/ARM_comm:o</from>
+    <to>/planner/are_cmd:io</to>
+</connection>
+<connection>
+    <from>/Aff_ground:io</from>
+    <to>/ground_Aff:io</to>
+</connection>
+<connection>
+    <from>/ground_Aff:io</from>
+    <to>/Aff_ground:io</to>
+</connection>
+<connection>
+    <from>/opc2prada/cmd:io</from>
+    <to>/planner/cmd:io</to>
 </connection>
 
 </application>

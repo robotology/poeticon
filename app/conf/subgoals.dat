@@ -1,0 +1,5 @@
+-13_ishand() 11_clearhand() 11_istool() 11_ishand() 13_isreachable_with_11()
+-13_ishand() 11_ishand() 13_isreachable_with_11() 13_inhand_11() 13_istool() -11_clearhand() -11_istool()
+-13_ishand() 11_ishand() 13_isreachable_with_11() -13_istool() 13_on_14() -13_inhand_11() 11_clearhand() 11_istool()
+-13_ishand() 11_ishand() 13_isreachable_with_11() -13_istool() 13_on_14() -13_inhand_11() 15_inhand_11() 15_istool() -11_clearhand() -11_istool()
+-13_ishand() 11_ishand() 13_isreachable_with_11() -13_istool() 13_on_14() -13_inhand_11() -15_istool() 15_on_13() -15_inhand_11() 11_clearhand() 11_istool()
