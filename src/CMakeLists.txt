@@ -16,6 +16,10 @@ include(ICUBcontribHelpers)
 include(ICUBcontribOptions)
 icubcontrib_set_default_prefix()
 
+# look for libraries needed by certain modules
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/../conf") # TODO: fix this hack
+find_package(TBB)
+
 # modules that do not need OpenCV
 add_subdirectory(opc2prada)
 add_subdirectory(pradaPlanner)
@@ -28,7 +32,11 @@ if(ICUB_USE_OpenCV)
     add_subdirectory(blobDescriptor)
     #add_subdirectory(objectDescriptor)
     add_subdirectory(sequentialLabeller)
-    add_subdirectory(slic)
+    if(TBB_FOUND)
+        add_subdirectory(slic)
+    else(TBB_FOUND)
+        message(STATUS "TBB not found, skipping SLIC Superpixels")
+    endif(TBB_FOUND)
 else(ICUB_USE_OpenCV)
     message(STATUS "OpenCV not found or selected, skipping vision modules")
 endif(ICUB_USE_OpenCV)

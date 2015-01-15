@@ -21,10 +21,7 @@ list(APPEND CMAKE_MODULE_PATH ${ICUB_MODULE_PATH})
 list(APPEND CMAKE_MODULE_PATH ${ICUBCONTRIB_MODULE_PATH})
 
 find_package(OpenCV)
-
-set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/../../conf") # TODO: fix this hack
-find_package(TBB)
-
+	
 include(YarpInstallationHelpers)
 include(ICUBcontribHelpers)
 include(ICUBcontribOptions)
