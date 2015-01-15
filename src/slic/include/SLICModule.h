@@ -10,7 +10,7 @@
  *
  */
 
-#ifndef	__SLIC_MODULE_H__
+#ifndef __SLIC_MODULE_H__
 #define __SLIC_MODULE_H__
 
 #include <yarp/os/RFModule.h>
