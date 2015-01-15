@@ -10,6 +10,8 @@ PROJECT(${PROJECTNAME})
 #this to be used externally
 #find_package(activeSeg)
 
+find_package(Threads REQUIRED)
+
 file(GLOB folder_source src/*.cpp)
 file(GLOB folder_header include/iCub/*.h)
 
@@ -24,6 +26,6 @@ include_directories(
 
 add_executable( ${PROJECTNAME} ${folder_source} ${folder_header} )
 
-target_link_libraries(${PROJECTNAME} ${YARP_LIBRARIES} activeSegmentation ${OpenCV_LIBRARIES})
+target_link_libraries(${PROJECTNAME} ${YARP_LIBRARIES} activeSegmentation ${OpenCV_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
 
 install(TARGETS ${PROJECTNAME} DESTINATION bin)

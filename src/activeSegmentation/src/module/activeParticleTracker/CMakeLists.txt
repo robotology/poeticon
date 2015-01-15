@@ -11,6 +11,8 @@ find_package(GSL REQUIRED)
 #this is needed externally
 #find_package(activeSegmentation)
 
+find_package(Threads REQUIRED)
+
 include(YarpIDL)
 yarp_idl_to_dir(${PROJECTNAME}.thrift ${CMAKE_CURRENT_SOURCE_DIR})
 
@@ -31,6 +33,6 @@ include_directories(
 
 add_executable( ${PROJECTNAME} ${folder_source} ${folder_header} ${idl} )
 
-target_link_libraries(${PROJECTNAME} ${GSL_LIBRARIES} ${YARP_LIBRARIES} activeSegmentation ${OpenCV_LIBRARIES})
+target_link_libraries(${PROJECTNAME} ${GSL_LIBRARIES} ${YARP_LIBRARIES} activeSegmentation ${OpenCV_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
 
 install(TARGETS ${PROJECTNAME} DESTINATION bin)
