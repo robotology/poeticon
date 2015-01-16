@@ -43,21 +43,18 @@ public:
     Thread_read(BufferedPort<Bottle> * broad_port,RpcClient * rpcClient,int r);
     Bottle _data,_ids;
     Mutex guard;
+    bool _runit;
     virtual bool threadInit();
-
+    
     //called by start after threadInit, s is true iff the thread started
     //successfully
     virtual void afterStart(bool s);
-    virtual void threadRelease()
-    {
-        printf("Goodbye from thread1\n");
-    }
+    virtual void threadRelease();
     virtual void run();
 
 private:
     BufferedPort<Bottle> *_port_broad;
     RpcClient *_rpc_port;
-    bool firstTime;
 };
 
 
