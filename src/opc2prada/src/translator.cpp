@@ -32,12 +32,13 @@ TranslatorModule::switchCase TranslatorModule::hashtable(string command){
 bool TranslatorModule::interruptModule() {
 
     cout << "Interrupting your module, for port cleanup" << endl;
-	rpc_port.interrupt();
-    cout << "1" << endl;
-	port_broad.interrupt();
-    cout << "2" << endl;
-	translatorPort.interrupt();
-	cout << "3" << endl;
+    readingThread->_runit=false; 
+    readingThread->askToStop();   
+	if(!readingThread->_runit) {
+        rpc_port.interrupt();
+    	port_broad.interrupt();
+    }
+    translatorPort.interrupt();
     return true;
 }
 
@@ -46,7 +47,6 @@ bool   TranslatorModule::close() {
     /* optional, close port explicitly */
     cout << "Calling close function\n";
 
-    readingThread->stop();
     delete readingThread;
     rpc_port.close();
     port_broad.close();
@@ -55,114 +55,112 @@ bool   TranslatorModule::close() {
     return true;
 }
 bool   TranslatorModule::updateModule() {
-    Bottle receive,dataBase,ids2,*idsp;
-    receive.clear();
-    receive = * (translatorPort.read());  //block
+    Bottle *receive,dataBase,ids2,*idsp;
+    if(readingThread->_runit) {
+        receive = translatorPort.read(false);  //block       
+        if(receive == NULL)
+            return true;
+        cout << "Writing the world state to file..." << endl;
+        readingThread->guard.lock();
+        dataBase = readingThread->_data;
+        ids2 = readingThread->_ids;
+        readingThread->guard.unlock();
 
-    cout << "Write to file the world state" << endl;
-    readingThread->guard.lock();
-    dataBase = readingThread->_data;
-    ids2 = readingThread->_ids;
-    readingThread->guard.unlock();
+        if(dataBase.size()>0 && (dataBase.get(1).asString()!="empty")) {
+	        //cout <<"file1 " << findFile.findFileByName("Object_names-IDs.dat") << endl;
+            //myfile.open( findFile.findFileByName("Object_names-IDs.dat"));
+	        //cout <<"file2 " << findFile.findFileByName("state.dat") << endl;
+            //myfile2.open ( findFile.findFileByName("state.dat") );
+	        myfile.open ("Object names-IDs.dat");
+            myfile2.open ("state.dat");
+            idsp = ids2.get(1).asList();
+            idsp = idsp->get(1).asList();
+            for(int i=1;i<dataBase.size();i++){ // for each object
+                Bottle *objecto = dataBase.get(i).asList();
+                for(int j=0;j<objecto->size();j++) { // for each properties
+                    Bottle *propriedade = objecto->get(j).asList();
+                    switchCase r = hashtable(propriedade->get(0).asString());
+                    switch(r) {
+                        case name:{
+					        myfile <<"(" << idsp->get((i-1)).asInt() << "," << propriedade->get(1).asString().c_str() << ");";
+                            break;
+                        }
+                        case desc: {
+                            break;
+                        }
+                        case pos: {
+                            break;
+                        }
+                        case on_t: {
+                            Bottle *ontop = propriedade->get(1).asList();
+                            for(int k=0; k < ontop->size(); k++){
+                                myfile2 << idsp->get((i-1)).asInt() <<"_on_" <<ontop->get(k).asInt() <<"() ";
+                            }
+                            break;
+                        }
+                        case re_w: {
+                            Bottle *reachable = propriedade->get(1).asList();
+                            for(int k=0; k < reachable->size(); k++){
+                                myfile2 << idsp->get((i-1)).asInt() <<"_isreachable_with_" <<reachable->get(k).asInt() <<"() ";
+                            }
+                            break;
+                        }
+                        case pu_w: {
+                            Bottle *pullable = propriedade->get(1).asList();
+                            for(int k=0; k < pullable->size(); k++){
+                                myfile2 << idsp->get((i-1)).asInt() <<"_ispullable_with_" <<pullable->get(k).asInt() <<"() ";
+                            }
+                            break;
+                        }
+                       /* case touch: {
+                            Bottle *touch = propriedade->get(1).asList();
+                            for(int k=0; k < touch->size(); k++){
+                                myfile2 << idsp->get((i-1)).asInt() <<"_touch_" <<touch->get(k).asInt() <<"() ";
+                            }
+                            break;
+                        }*/
+                        case is_h: {
+                            if(propriedade->get(1).asString() == "true") {
+                                myfile2 << idsp->get((i-1)).asInt() <<"_ishand" <<"() ";
+                            }
+                            break;
+                        }
+                        case free: {
+                            if(propriedade->get(1).asString() == "true") {
+                                myfile2 << idsp->get((i-1)).asInt() <<"_clearhand" <<"() ";
+                                myfile2 << idsp->get((i-1)).asInt() <<"_istool" <<"() ";
+                            }
+                            break;
+                        }
+                        case in_h: {
+                            if(propriedade->get(1).asString() == "right") {
+                                myfile2 << idsp->get((i-1)).asInt() <<"_inhand_" << "12" << "() "; //according to dbhands.ini - id 12 corresponds to the right hand
+                                myfile2 << idsp->get((i-1)).asInt() <<"_istool" <<"() ";
+                            }
+                            if(propriedade->get(1).asString() == "left") {
+                                myfile2 << idsp->get((i-1)).asInt() <<"_inhand_" << "11" << "() "; //according to dbhands.ini - id 12 corresponds to the right hand
+                                myfile2 << idsp->get((i-1)).asInt() <<"_istool" <<"() ";
+                            }
+                            break;
+                        }
 
-    cout << "after copy Data Bottle" << endl;
-    if(dataBase.size()>0 && (dataBase.get(1).asString()!="empty")) {
-		//cout <<"file1 " << findFile.findFileByName("Object_names-IDs.dat") << endl;
-        //myfile.open( findFile.findFileByName("Object_names-IDs.dat"));
-		//cout <<"file2 " << findFile.findFileByName("state.dat") << endl;
-        //myfile2.open ( findFile.findFileByName("state.dat") );
-		myfile.open ("Object names-IDs.dat");
-        myfile2.open ("state.dat");
-        idsp = ids2.get(1).asList();
-        idsp = idsp->get(1).asList();
-        cout << "ids: " << idsp->toString().c_str() << endl;
-        for(int i=1;i<dataBase.size();i++){ // for each object
-            cout <<"Object ID: " << idsp->get((i-1)).asInt() << endl;
-            Bottle *objecto = dataBase.get(i).asList();
-            for(int j=0;j<objecto->size();j++) { // for each properties
-                Bottle *propriedade = objecto->get(j).asList();
-                cout << "switch"<< propriedade->get(0).asString().c_str() << endl;
-                switchCase r = hashtable(propriedade->get(0).asString());
-                switch(r) {
-                    case name:{
-						myfile <<"(" << idsp->get((i-1)).asInt() << "," << propriedade->get(1).asString().c_str() << ");";
-                        break;
-                    }
-                    case desc: {
-                        break;
-                    }
-                    case pos: {
-                        break;
-                    }
-                    case on_t: {
-                        Bottle *ontop = propriedade->get(1).asList();
-                        for(int k=0; k < ontop->size(); k++){
-                            myfile2 << idsp->get((i-1)).asInt() <<"_on_" <<ontop->get(k).asInt() <<"() ";
+                        default: {
+                            cout << "not known attribute..." << endl;
+                            break;
                         }
-                        break;
-                    }
-                    case re_w: {
-                        Bottle *reachable = propriedade->get(1).asList();
-                        for(int k=0; k < reachable->size(); k++){
-                            myfile2 << idsp->get((i-1)).asInt() <<"_isreachable_with_" <<reachable->get(k).asInt() <<"() ";
-                        }
-                        break;
-                    }
-                    case pu_w: {
-                        Bottle *pullable = propriedade->get(1).asList();
-                        for(int k=0; k < pullable->size(); k++){
-                            myfile2 << idsp->get((i-1)).asInt() <<"_ispullable_with_" <<pullable->get(k).asInt() <<"() ";
-                        }
-                        break;
-                    }
-                   /* case touch: {
-                        Bottle *touch = propriedade->get(1).asList();
-                        for(int k=0; k < touch->size(); k++){
-                            myfile2 << idsp->get((i-1)).asInt() <<"_touch_" <<touch->get(k).asInt() <<"() ";
-                        }
-                        break;
-                    }*/
-                    case is_h: {
-                        if(propriedade->get(1).asString() == "true") {
-                            myfile2 << idsp->get((i-1)).asInt() <<"_ishand" <<"() ";
-                        }
-                        break;
-                    }
-                    case free: {
-                        if(propriedade->get(1).asString() == "true") {
-                            myfile2 << idsp->get((i-1)).asInt() <<"_clearhand" <<"() ";
-                            myfile2 << idsp->get((i-1)).asInt() <<"_istool" <<"() ";
-                        }
-                        break;
-                    }
-                    case in_h: {
-                        if(propriedade->get(1).asString() == "right") {
-                            myfile2 << idsp->get((i-1)).asInt() <<"_inhand_" << "12" << "() "; //according to dbhands.ini - id 12 corresponds to the right hand
-                            myfile2 << idsp->get((i-1)).asInt() <<"_istool" <<"() ";
-                        }
-                        if(propriedade->get(1).asString() == "left") {
-                            myfile2 << idsp->get((i-1)).asInt() <<"_inhand_" << "11" << "() "; //according to dbhands.ini - id 12 corresponds to the right hand
-                            myfile2 << idsp->get((i-1)).asInt() <<"_istool" <<"() ";
-                        }
-                        break;
-                    }
+                    } // end switch
+                } // end for property
+            } // end for object
+            myfile.close();
+            myfile2.close();
 
-                    default: {
-                        cout << "not known attribute..." << endl;
-                        break;
-                    }
-                } // end switch
-            } // end for property
-        } // end for object
-        myfile.close();
-        myfile2.close();
-
-    } // end if
-    Bottle &send = translatorPort.prepare();
-    send.clear();
-    send.addString("Done");
-    cout << "DONE" << endl;
-    translatorPort.write();
+        } // end if
+        Bottle &send = translatorPort.prepare();
+        send.clear();
+        send.addString("ACK");
+        cout << "DONE" << endl;
+        translatorPort.write();
+    }
     return true;
 }
 
@@ -217,7 +215,6 @@ bool   TranslatorModule::configure(yarp::os::ResourceFinder &rf) {
                                 threadPeriod);
 
     /* Starts the thread */
-	cout << "heere" << endl;
     if (!readingThread->start()) {
         delete readingThread;
         return false;
@@ -235,74 +232,91 @@ Thread_read::Thread_read(BufferedPort<Bottle> * broad_port,RpcClient * rpc,int r
 : RateThread(r) {
     _port_broad = broad_port;
     _rpc_port = rpc;
-    firstTime = true;
+    _runit = false;
 };
 
+void Thread_read::threadRelease() {
+        printf("I my God they kill kenny - the thread\n");
+        getchar();
+}
 bool Thread_read::threadInit(){
+    _runit = false;
     bool test=true;
-    printf("Starting reading thread...Waiting for connection...\n");
+        bool test2=true;
+        printf("Starting reading thread...Waiting for connection...\n");
+        _runit = false;
+        while( test && test2){
+            test = _port_broad->getInputCount()==0 || _rpc_port->getOutputCount()==0 ;
+            Time::delay(0.1);
+            if(_port_broad->isClosed())
+                return false;
+           // cout << test2 << endl;
+        }
+        printf("Connection Done!");
+        Bottle *received,rpc_cmd,rpc_response,aux;
+        Bottle cmd,response;
 
-    while(test){
-        test = _port_broad->getInputCount()==0 || _rpc_port->getOutputCount()==0 ;
-        Time::delay(0.1);
-    }
-    printf("Connection Done!");
+        // Start syncronous broadcast to initialize _data and _ids
+        cmd.clear();
+        cmd.addVocab(Vocab::encode("sync"));
+        cmd.addVocab(Vocab::encode("start"));
+        cmd.add(0.1);
+        _rpc_port->write(cmd,response);
+        // read database and ask ids
+        rpc_cmd.clear();
+        rpc_cmd.addVocab(Vocab::encode("ask"));
+        aux.addString("all");
+        rpc_cmd.addList() = aux;
+        received = _port_broad->read();
+        // Stop synchronous broadcast
+        cmd.clear();
+        cmd.addVocab(Vocab::encode("sync"));
+        cmd.addVocab(Vocab::encode("stop"));
+        _rpc_port->write(cmd,response);
+        Time::delay(1);
+        // Start asynchronous
+        _rpc_port->write(rpc_cmd,rpc_response);
+        cmd.clear();
+        cmd.addVocab(Vocab::encode("async"));
+        cmd.addVocab(Vocab::encode("on"));
+        _rpc_port->write(cmd,response);
+        Time::delay(1);
 
-    Bottle *received,rpc_cmd,rpc_response,aux;
-    Bottle cmd,response;
-
-    // Start syncronous broadcast to initialize _data and _ids
-    cmd.clear();
-    cmd.addVocab(Vocab::encode("sync"));
-    cmd.addVocab(Vocab::encode("start"));
-    cmd.add(0.1);
-    _rpc_port->write(cmd,response);
-    // read database and ask ids
-    rpc_cmd.clear();
-    rpc_cmd.addVocab(Vocab::encode("ask"));
-    aux.addString("all");
-    rpc_cmd.addList() = aux;
-    received = _port_broad->read();
-    // Stop synchronous broadcast
-    cmd.clear();
-    cmd.addVocab(Vocab::encode("sync"));
-    cmd.addVocab(Vocab::encode("stop"));
-    _rpc_port->write(cmd,response);
-    Time::delay(1);
-    // Start asynchronous
-    _rpc_port->write(rpc_cmd,rpc_response);
-    cmd.clear();
-    cmd.addVocab(Vocab::encode("async"));
-    cmd.addVocab(Vocab::encode("on"));
-    _rpc_port->write(cmd,response);
-    Time::delay(1);
-
-    guard.lock();
-    _data = *(received);
-    _ids = rpc_response;
-    guard.unlock();
-    cout << "Initial Database - Check" << endl;
-    return true;
+        guard.lock();
+        _data = *(received);
+        _ids = rpc_response;
+        guard.unlock();
+        cout << "Initial Database - Check" << endl;
+        _runit = true;
 }
 
 void Thread_read::afterStart(bool s){
-    if (s)
-        printf("Thread1 started successfully\n");
+    if (s) {
+        printf("Reading Thread start\n");
+    }
     else
-        printf("Thread1 did not start\n");
+        printf("Reading Thread did not start\n");
 }
 
 void Thread_read::run(){
     Bottle *received,rpc_cmd,rpc_response,aux;
-    cout << "Run thread1" << endl;
-    rpc_cmd.addVocab(Vocab::encode("ask"));
-    aux.addString("all");
-    rpc_cmd.addList() = aux;
-    received = _port_broad->read();
-    _rpc_port->write(rpc_cmd,rpc_response);
-    guard.lock();
-    _data = *(received);
-    _ids = rpc_response;
-    guard.unlock();
-    cout << "Run thread1 - after read" << endl;
+    if(_runit) {
+        
+        rpc_cmd.addVocab(Vocab::encode("ask"));
+        aux.addString("all");
+        rpc_cmd.addList() = aux;
+        received = _port_broad->read(false);
+        //cout << received << endl;
+        if(received != NULL) {
+            _rpc_port->write(rpc_cmd,rpc_response);
+            
+            guard.lock();
+            _data = *(received);
+            
+            _ids = rpc_response;
+            guard.unlock();
+            cout << "DATABASE UPDATED" << endl;
+        }
+    }
 }
+
