@@ -1,0 +1,39 @@
+--- /home/gsaponaro/NOBACKUP/libPRADA/test/relational_plan/main.cpp	2012-05-16 19:35:54.000000000 +0100
++++ main.cpp	2014-11-19 17:55:09.000000000 +0000
+@@ -2,6 +2,10 @@
+ 
+ #include <relational/prada.h>
+ #include <relational/robotManipulationSymbols.h>
++#include <string>
++#include <iostream>
++#include <fstream>
++#include <sstream>
+ 
+ 
+ 
+@@ -10,7 +14,7 @@
+ #define PLAN_TYPE__UCT 3
+ #define PLAN_TYPE__SST 4
+ 
+-
++using namespace std;
+ 
+ void test_plan() {
+   cout<<"********************************"<<endl;
+@@ -149,9 +153,15 @@
+ //   relational::Literal* lit = relational::Literal::get(relational::Symbol::get("on"), TUP(66, 67), 1.);
+ //   reward = new relational::LiteralReward(lit);
+   // (1b) LiteralListReward
++  ifstream goalfile;
++  std::string goal_data;
++  goalfile.open("goal.dat");
++  getline(goalfile, goal_data);
++  std::istringstream iss(goal_data);
+   relational::LitL lits_reward;
+-  relational::Literal::get(lits_reward, MT::String("on(66 69) on(69 67)"));
++  relational::Literal::get(lits_reward, MT::String( iss.str().c_str() ));
+   reward = new relational::LiteralListReward(lits_reward);
++  goalfile.close();
+ 
+   // (2) STACKING REWARD 
+   //     Use specification in robotManipulationInterface

@@ -28,8 +28,8 @@ Instructions to install libPRADA, required by the probabilistic planner:
     cd poeticon
     wget http://www.informatik.uni-hamburg.de/ML/contents/people/lang/private/prada/libPRADA.tgz
     tar xzvf libPRADA.tgz && cd libPRADA
-    # this patch adds the <unistd.h> header to libPRADA/src/MT/util.h
     patch src/MT/util.h < ../extern/libPRADA/prada_unistd.patch
+    patch test/relational_plan/main.cpp < ../extern/libPRADA/prada_readgoalfromfile.patch
     make
     cp test/relational_plan/x.exe ../app/conf/planner.exe
 
