@@ -1,3 +1,5 @@
+#!/usr/bin/python
+
 # -*- coding: cp1252 -*-
 
 ##                                   Goal Imaginer.py                               ##
