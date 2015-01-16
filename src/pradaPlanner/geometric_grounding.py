@@ -218,8 +218,8 @@ def geometric_grounding():
                         for b in range(len(aux_rules)):
                             if aux_rules[b] != '':
                                 new_rules = new_rules + [aux_rules[b]]
-                        new_rules = new_rules + [''] + ['']
-                        
+                        new_rules = new_rules + ['']
+                        l = l + 1
 ## symbol creation
                 print 'creating symbols...'
                 symbols = presymbol_file.read().split('\n')
