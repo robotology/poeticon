@@ -34,7 +34,7 @@ def Affordance_comm():
     geo_yarp.open("/Aff_ground:io")
 ##    Aff_yarp = yarp.BufferedPortBottle()
 ##    Aff_yarp.open("/Aff_query:io")
-    translation_file = open("Action_Affordance Translation.dat")
+    translation_file = open("Action_Affordance_Translation.dat")
     aux_translation = translation_file.read().split('\n')
     translation = []
     for i in range(len(aux_translation)):

@@ -41,7 +41,7 @@ def goal_imaginer():
             actions_file = open("pre_rules.dat")
 
             ## this file will be replaced by a call to World+Robot State module
-            Object_file = open("Object names-IDs.dat")
+            Object_file = open("Object_names-IDs.dat")
             Objects = Object_file.read()
             translat = []
             object_list = re.findall(r'\d+',Objects) ## list of objects IDs
@@ -54,14 +54,14 @@ def goal_imaginer():
 
             subgoals = [[]]
 
-            ## instructions = bottle from yarp, já defino isso
-            ## Assumo que as instruções vêm na forma: ((objecto, acção, objecto),(objecto, acção, objecto))
-            ## ou seja, uma lista de listas, cada uma destas a ser uma acção
+            ## instructions = bottle from yarp, ja defino isso
+            ## Assumo que as instrucoes vem na forma: ((objecto, accao, objecto),(objecto, accao, objecto))
+            ## ou seja, uma lista de listas, cada uma destas a ser uma accao
             ## 
             ## instructions = '((hand,grasp,cheese),(cheese,reach,bun-bottom),(hand,put,cheese),(hand,grasp,salami),(salami,reach,cheese),(hand,put,salami),(hand,grasp,bun-top),(bun-top,reach,salami),(hand,put,bun-top))'
             instructions = '((hand,grasp,cheese),(cheese,reach,bun-bottom),(hand,put,cheese),(hand,grasp,bun-top),(bun-top,reach,cheese),(hand,put,bun-top))'
             instructions = instructions.replace('hand','lefthand')
-            ## state = verificar mãos (query hand clearance), verificar objectos (query world state)
+            ## state = verificar maos (query hand clearance), verificar objectos (query world state)
             ## objects = object name list
             ## we can create a state from here (replacing _obj with the name)
             instructions = instructions.split('),(')
@@ -81,8 +81,8 @@ def goal_imaginer():
                         if actions[j].find("%s_" %prax_action[1]) != -1:
                             if actions[j+4].find('_ALL') != -1:
                                 
-                                tool = prax_action[0] ## no final, isto não vai ser o nome mas o ID
-                                obj = prax_action[2] ## no final, isto não vai ser o nome mas o ID
+                                tool = prax_action[0] ## no final, isto nao vai ser o nome mas o ID
+                                obj = prax_action[2] ## no final, isto nao vai ser o nome mas o ID
                                     
                                 new_action = deepcopy(actions)
                                 aux_subgoal = actions[j+4].split(' ')
@@ -144,8 +144,8 @@ def goal_imaginer():
                                 subgoals = subgoals + [subgoals[-1]+aux_subgoal]
             ##                    print subgoals[-1], '\nput\n'
                             elif actions[j].find('_obj') and actions[j].find('_tool'):
-                                tool = prax_action[0] ## no final, isto não vai ser o nome mas o ID
-                                obj = prax_action[2] ## no final, isto não vai ser o nome mas o ID
+                                tool = prax_action[0] ## no final, isto nao vai ser o nome mas o ID
+                                obj = prax_action[2] ## no final, isto nao vai ser o nome mas o ID
                                 aux_subgoal = actions[j+4].replace('_obj','%s' %obj).replace('_tool','%s' %tool)
                                 if actions[j].find('_hand'):
                                     aux_subgoal = aux_subgoal.replace('_hand','lefthand')
