@@ -38,8 +38,8 @@ bool WorldStateMgrThread::openPorts()
     outFixationPortName = "/" + moduleName + "/fixation:o";
     outFixationPort.open(outFixationPortName.c_str());
 
-    arePortName = "/" + moduleName + "/are:rpc";
-    arePort.open(arePortName.c_str());
+    geomIFPortName = "/" + moduleName + "/geomIF:rpc";
+    geomIFPort.open(geomIFPortName.c_str());
 
     return true;
 }
@@ -56,7 +56,7 @@ void WorldStateMgrThread::close()
     inTargetsPort.close();
     inAffPort.close();
     outFixationPort.close();
-    arePort.close();
+    geomIFPort.close();
 }
 
 void WorldStateMgrThread::interrupt()
@@ -72,7 +72,7 @@ void WorldStateMgrThread::interrupt()
     inTargetsPort.interrupt();
     inAffPort.interrupt();
     outFixationPort.interrupt();
-    arePort.interrupt();
+    geomIFPort.interrupt();
 }
 
 bool WorldStateMgrThread::threadInit()
@@ -134,137 +134,6 @@ bool WorldStateMgrThread::updateWorldState()
      
      
      return true;
-}
-
-bool WorldStateMgrThread::doPopulateDB()
-{
-    // TODO: make this function compatible with playback mode, too,
-    //       by iterating over number of lines/entries of current time instant
-    for(int a=0; a<sizeAff; a++)
-    {
-        // common properties
-        Bottle bName;
-        Bottle bPos;
-        Bottle bIsHand;
-        
-        // object properties
-        Bottle bOffset;
-        Bottle bDesc;
-        Bottle bInHand;
-        Bottle bOnTopOf;
-        Bottle bReachW;
-        Bottle bPullW;
-        
-        // hand properties
-        Bottle bIsFree;
-    
-        // prepare name property
-        bName.addString("name");
-        std::stringstream bNameValue; // TODO: real name from IOL
-        bNameValue << "myLabel" << a;
-        bName.addString( bNameValue.str() );
-
-        // prepare position property
-        // TODO: transform to 3D ref frame with iKinGazeCtrl
-        bPos.addString("pos");
-        Bottle &bPosValue = bPos.addList();
-        // from blobs
-        //bPosValue.addDouble(inAff->get(a+1).asList()->get(0).asDouble());
-        //bPosValue.addDouble(inAff->get(a+1).asList()->get(1).asDouble());
-        // from tracker
-        bPosValue.addDouble(inTargets->get(a).asList()->get(1).asDouble());
-        bPosValue.addDouble(inTargets->get(a).asList()->get(2).asDouble());
-
-        // prepare is_hand property
-        bIsHand.addString("is_hand");
-        bool bIsHandValue = false; // TODO: real value from perception
-        bIsHand.addInt(bIsHandValue); // 1=true, 0=false
-        
-        if (!bIsHandValue)
-        {
-            // object properties
-
-            // prepare offset property (end-effector transform when grasping tools)
-            bOffset.addString("offset");
-            Bottle &bOffsetValue = bOffset.addList();
-            //bOffsetValue.addDouble(); // TODO: real values from tool exploration
-
-            // prepare 2D shape descriptors property
-            bDesc.addString("desc2d");
-            Bottle &bDescValue = bDesc.addList();
-            bDescValue.addDouble(inAff->get(a+1).asList()->get(23).asDouble()); // area
-            bDescValue.addDouble(inAff->get(a+1).asList()->get(24).asDouble());
-            bDescValue.addDouble(inAff->get(a+1).asList()->get(25).asDouble());
-            bDescValue.addDouble(inAff->get(a+1).asList()->get(26).asDouble());
-            bDescValue.addDouble(inAff->get(a+1).asList()->get(27).asDouble());
-            bDescValue.addDouble(inAff->get(a+1).asList()->get(28).asDouble());
-
-            // prepare in_hand property (none/left/right)
-            bInHand.addString("in_hand");
-            string bInHandValue = "none"; // TODO: real value
-            bInHand.addString(bInHandValue);
-            
-            // prepare on_top_of property
-            bOnTopOf.addString("on_top_of");
-            Bottle &bOnTopOfValue = bOnTopOf.addList();
-            bOnTopOfValue.addInt(0); // TODO: real list
-
-            // prepare reachable_with property
-            bReachW.addString("reachable_with");
-            Bottle &bReachWValue = bReachW.addList();
-            bReachWValue.addInt(0); // TODO: real list
-
-            // prepare pullable_with property
-            bPullW.addString("pullable_with");
-            Bottle &bPullWValue = bPullW.addList();
-            bPullWValue.addInt(0); // TODO: real list
-        }
-        else
-        {
-            // hand properties
-
-            // prepare is_free property
-            bIsFree.addString("is_free");
-            //bool bIsFreeValue;
-            bool bIsFreeValue = isHandFree(bNameValue.str());
-            bIsFree.addInt(bIsFreeValue); // 1=true, 0=false
-        }
-
-        // populate
-        Bottle opcCmd, opcReply;
-        opcCmd.addVocab(Vocab::encode("add"));
-        opcCmd.addList() = bName;
-        opcCmd.addList() = bPos;
-        opcCmd.addList() = bIsHand;
-        if (!bIsHandValue)
-        {
-            opcCmd.addList() = bOffset;
-            opcCmd.addList() = bDesc;        
-            opcCmd.addList() = bInHand;
-            opcCmd.addList() = bOnTopOf;
-            opcCmd.addList() = bReachW;
-            opcCmd.addList() = bPullW;
-        }
-        else
-        {
-            opcCmd.addList() = bIsFree;        
-        }
-
-        yDebug("%d, populating OPC with: %s", a, opcCmd.toString().c_str());
-        opcPort.write(opcCmd, opcReply);
-        
-        // process OPC response
-        if (opcReply.size() > 1)
-        {
-            if (opcReply.get(0).asVocab()==Vocab::encode("ack"))
-                yDebug("received ack from OPC");
-            else
-                yDebug("did not receive ack from OPC");
-        }
-    }
-    // now we have populated the database with all objects
-
-    return true;
 }
 
 /* ************************************************************************** */
@@ -469,34 +338,201 @@ bool WorldStateMgrThread::refreshPerceptionAndValidate()
     return true;
 }
 
+bool WorldStateMgrThread::doPopulateDB()
+{
+    for(int a=0; a<sizeAff; a++)
+    {
+        // common properties
+        Bottle bName;
+        Bottle bPos;
+        Bottle bIsHand;
+        
+        // object properties
+        Bottle bOffset;
+        Bottle bDesc;
+        Bottle bInHand;
+        Bottle bOnTopOf;
+        Bottle bReachW;
+        Bottle bPullW;
+        
+        // hand properties
+        Bottle bIsFree;
+    
+        // prepare name property
+        bName.addString("name");
+        std::stringstream bNameValue; // TODO: real name from IOL
+        bNameValue << "myLabel" << a;
+        bName.addString( bNameValue.str() );
+
+        // prepare position property
+        // TODO: transform to 3D ref frame with iKinGazeCtrl
+        bPos.addString("pos");
+        Bottle &bPosValue = bPos.addList();
+        // from blobs
+        //bPosValue.addDouble(inAff->get(a+1).asList()->get(0).asDouble());
+        //bPosValue.addDouble(inAff->get(a+1).asList()->get(1).asDouble());
+        // from tracker
+        bPosValue.addDouble(inTargets->get(a).asList()->get(1).asDouble());
+        bPosValue.addDouble(inTargets->get(a).asList()->get(2).asDouble());
+
+        // prepare is_hand property
+        bIsHand.addString("is_hand");
+        bool bIsHandValue = false; // except for special entries in dbhands.ini
+        bIsHand.addInt(bIsHandValue); // 1=true, 0=false
+        
+        if (!bIsHandValue)
+        {
+            // object properties
+
+            // prepare offset property (end-effector transform when grasping tools)
+            bOffset.addString("offset");
+            Bottle &bOffsetValue = bOffset.addList();
+            //bOffsetValue.addDouble(); // TODO: real values from tool exploration
+
+            // prepare 2D shape descriptors property
+            bDesc.addString("desc2d");
+            Bottle &bDescValue = bDesc.addList();
+            bDescValue.addDouble(inAff->get(a+1).asList()->get(23).asDouble()); // area
+            bDescValue.addDouble(inAff->get(a+1).asList()->get(24).asDouble());
+            bDescValue.addDouble(inAff->get(a+1).asList()->get(25).asDouble());
+            bDescValue.addDouble(inAff->get(a+1).asList()->get(26).asDouble());
+            bDescValue.addDouble(inAff->get(a+1).asList()->get(27).asDouble());
+            bDescValue.addDouble(inAff->get(a+1).asList()->get(28).asDouble());
+
+            // prepare in_hand property (none/left/right)
+            bInHand.addString("in_hand");
+            string bInHandValue = inWhichHand(bNameValue.str());
+            bInHand.addString(bInHandValue);
+            
+            // prepare on_top_of property
+            bOnTopOf.addString("on_top_of");
+            Bottle &bOnTopOfValue = bOnTopOf.addList();
+            bOnTopOfValue.addInt(0); // TODO: real list
+
+            // prepare reachable_with property
+            bReachW.addString("reachable_with");
+            Bottle &bReachWValue = bReachW.addList();
+            bReachWValue.addInt(0); // TODO: real list
+
+            // prepare pullable_with property
+            bPullW.addString("pullable_with");
+            Bottle &bPullWValue = bPullW.addList();
+            bPullWValue.addInt(0); // TODO: real list
+        }
+        else
+        {
+            // hand properties
+
+            // prepare is_free property
+            bIsFree.addString("is_free");
+            //bool bIsFreeValue;
+            bool bIsFreeValue = isHandFree(bNameValue.str());
+            bIsFree.addInt(bIsFreeValue); // 1=true, 0=false
+        }
+
+        // populate
+        Bottle opcCmd, opcReply;
+        opcCmd.addVocab(Vocab::encode("add"));
+        opcCmd.addList() = bName;
+        opcCmd.addList() = bPos;
+        opcCmd.addList() = bIsHand;
+        if (!bIsHandValue)
+        {
+            opcCmd.addList() = bOffset;
+            opcCmd.addList() = bDesc;        
+            opcCmd.addList() = bInHand;
+            opcCmd.addList() = bOnTopOf;
+            opcCmd.addList() = bReachW;
+            opcCmd.addList() = bPullW;
+        }
+        else
+        {
+            opcCmd.addList() = bIsFree;        
+        }
+
+        yDebug("%d, populating OPC with: %s", a, opcCmd.toString().c_str());
+        opcPort.write(opcCmd, opcReply);
+        
+        // process OPC response
+        if (opcReply.size() > 1)
+        {
+            if (opcReply.get(0).asVocab()==Vocab::encode("ack"))
+                yDebug("received ack from OPC");
+            else
+                yDebug("did not receive ack from OPC");
+        }
+    }
+    // now we have populated the database with all objects
+
+    return true;
+}
+
 bool WorldStateMgrThread::isHandFree(const string &handName)
 {
-    if (arePort.getOutputCount() < 1)
+    if (geomIFPort.getOutputCount() < 1)
     {
-        yWarning("not connected to ARE");
+        yWarning("not connected to GeometricIF");
         return false;
     }
-    
+
+    // TODO: use consistent names everywhere (incl. RPC): left or left_hand or lefthand
     if ((handName != "left_hand") && (handName != "right_hand"))
     {
         yWarning("isHandFree: argument handName must be left_hand or right_hand");
     }
     
-    Bottle areCmd, areReply;
-    areCmd.addVocab(Vocab::encode("get_hand")); // TODO: proper ARE syntax
-    yDebug("sending query to ARE:", areCmd.toString().c_str());
-    arePort.write(areCmd, areReply);
+    Bottle geomIFCmd, geomIFReply;
+    geomIFCmd.addVocab(Vocab::encode("isfree"));
+    geomIFCmd.addString(handName.c_str());
+    yDebug("sending query to GeometricIF:", geomIFCmd.toString().c_str());
+    geomIFPort.write(geomIFCmd, geomIFReply);
     
-    // process ARE response
-    if (areReply.size() > 1)
+    bool validResponse = false;
+    validResponse = ( (geomIFReply.size()>1) &&
+                      (geomIFReply.get(0).asVocab()==Vocab::encode("ack")) );
+
+    return (validResponse && (geomIFReply.get(1).asBool()==true));
+}
+
+string WorldStateMgrThread::inWhichHand(const string &objName)
+{
+    if (geomIFPort.getOutputCount() < 1)
     {
-        if (areReply.get(0).asVocab()==Vocab::encode("ack"))
-            yDebug("received ack from ARE");
-        else
-            yDebug("did not receive ack from ARE");
+        yWarning("not connected to GeometricIF");
     }
 
-    return (areReply.get(1).asString()=="free"); // TODO: proper ARE syntax
+    // TODO: use consistent names everywhere (incl. RPC): left or left_hand or lefthand
+    if ((objName == "left_hand") || (objName == "right_hand"))
+    {
+        yWarning("inWhichHand: argument objName must be an object name, not a hand name");
+    }
+
+    Bottle geomIFCmd, geomIFReply;
+    geomIFCmd.addVocab(Vocab::encode("inhand"));
+    geomIFCmd.addString(objName.c_str());
+    yDebug("sending query to GeometricIF:", geomIFCmd.toString().c_str());
+    geomIFPort.write(geomIFCmd, geomIFReply);
+    
+    bool validResponse = false;
+    validResponse = ( (geomIFReply.size()>1) &&
+                      (geomIFReply.get(0).asVocab()==Vocab::encode("ack")) );
+
+    // TODO: use consistent names everywhere (incl. RPC): left or left_hand or lefthand
+    if (validResponse)
+    {
+        if ((geomIFReply.get(1).asString()=="left") || (geomIFReply.get(1).asString()=="right"))
+        {
+            // successful case, return "left" or "right"
+            return geomIFReply.get(1).asString();
+        }
+        else
+            yWarning("inWhichHand: obtained valid but unknown response from GeometricIF");
+    }
+    else
+        yWarning("inWhichHand: obtained invalid response from GeometricIF");
+
+    // default
+    return "none";
 }
 
 /* ************************************************************************** */

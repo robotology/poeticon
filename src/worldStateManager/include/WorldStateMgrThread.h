@@ -48,12 +48,12 @@ class WorldStateMgrThread : public RateThread
         string inAffPortName;
         string outFixationPortName;
         string opcPortName;
-        string arePortName;
+        string geomIFPortName;
         BufferedPort<Bottle> inTargetsPort;
         BufferedPort<Bottle> inAffPort;
         Port outFixationPort;
         RpcClient opcPort;
-        RpcClient arePort;
+        RpcClient geomIFPort;
         bool closing;
 
         // perception and playback modes
@@ -86,7 +86,6 @@ class WorldStateMgrThread : public RateThread
         
         // perception and playback modes
         bool updateWorldState();
-        bool doPopulateDB();
         
         // perception mode
         bool initPerceptionVars();
@@ -96,7 +95,9 @@ class WorldStateMgrThread : public RateThread
         void refreshTracker();
         void refreshPerception();
         bool refreshPerceptionAndValidate();
+        bool doPopulateDB();
         bool isHandFree(const string &handName);
+        string inWhichHand(const string &objName);
 
         // playback mode
         bool initPlaybackVars();
