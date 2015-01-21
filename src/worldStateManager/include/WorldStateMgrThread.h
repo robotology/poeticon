@@ -49,11 +49,13 @@ class WorldStateMgrThread : public RateThread
         string outFixationPortName;
         string opcPortName;
         string geomIFPortName;
+        string iolPortName;
         BufferedPort<Bottle> inTargetsPort;
         BufferedPort<Bottle> inAffPort;
         Port outFixationPort;
         RpcClient opcPort;
         RpcClient geomIFPort;
+        RpcClient iolPort;
         bool closing;
 
         // perception and playback modes
@@ -96,6 +98,11 @@ class WorldStateMgrThread : public RateThread
         void refreshPerception();
         bool refreshPerceptionAndValidate();
         bool doPopulateDB();
+        string getName(const int &id);
+        vector<double> getTooltipOffset(const int &id);
+        vector<int> isOnTopOf(const int &id);
+        vector<int> getIdsToReach(const int &id);
+        vector<int> getIdsToPull(const int &id);
         bool isHandFree(const string &handName);
         string inWhichHand(const string &objName);
 

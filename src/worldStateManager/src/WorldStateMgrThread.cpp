@@ -41,6 +41,9 @@ bool WorldStateMgrThread::openPorts()
     geomIFPortName = "/" + moduleName + "/geomIF:rpc";
     geomIFPort.open(geomIFPortName.c_str());
 
+    iolPortName = "/" + moduleName + "/iol:rpc";
+    iolPort.open(iolPortName.c_str());
+
     return true;
 }
 
@@ -57,6 +60,7 @@ void WorldStateMgrThread::close()
     inAffPort.close();
     outFixationPort.close();
     geomIFPort.close();
+    iolPort.close();
 }
 
 void WorldStateMgrThread::interrupt()
@@ -73,6 +77,7 @@ void WorldStateMgrThread::interrupt()
     inAffPort.interrupt();
     outFixationPort.interrupt();
     geomIFPort.interrupt();
+    iolPort.interrupt();
 }
 
 bool WorldStateMgrThread::threadInit()
@@ -360,9 +365,8 @@ bool WorldStateMgrThread::doPopulateDB()
     
         // prepare name property
         bName.addString("name");
-        std::stringstream bNameValue; // TODO: real name from IOL
-        bNameValue << "myLabel" << a;
-        bName.addString( bNameValue.str() );
+        string bNameValue = getName(a); // TODO: use robust id instead of a
+        bName.addString(bNameValue.c_str());
 
         // prepare position property
         // TODO: transform to 3D ref frame with iKinGazeCtrl
@@ -387,7 +391,11 @@ bool WorldStateMgrThread::doPopulateDB()
             // prepare offset property (end-effector transform when grasping tools)
             bOffset.addString("offset");
             Bottle &bOffsetValue = bOffset.addList();
-            //bOffsetValue.addDouble(); // TODO: real values from tool exploration
+            vector<double> offset = getTooltipOffset(a); // TODO: use robust id instead of a
+            for (int o=0; o<offset.size(); o++)
+            {
+                bOffsetValue.addDouble(offset[o]);
+            }
 
             // prepare 2D shape descriptors property
             bDesc.addString("desc2d");
@@ -401,23 +409,35 @@ bool WorldStateMgrThread::doPopulateDB()
 
             // prepare in_hand property (none/left/right)
             bInHand.addString("in_hand");
-            string bInHandValue = inWhichHand(bNameValue.str());
+            string bInHandValue = inWhichHand(bNameValue.c_str());
             bInHand.addString(bInHandValue);
             
             // prepare on_top_of property
             bOnTopOf.addString("on_top_of");
             Bottle &bOnTopOfValue = bOnTopOf.addList();
-            bOnTopOfValue.addInt(0); // TODO: real list
+            vector<int> idsBelow = isOnTopOf(a); // TODO: use robust id instead of a
+            for (int o=0; o<idsBelow.size(); o++)
+            {
+                bOnTopOfValue.addInt(idsBelow[o]);
+            }
 
             // prepare reachable_with property
             bReachW.addString("reachable_with");
             Bottle &bReachWValue = bReachW.addList();
-            bReachWValue.addInt(0); // TODO: real list
+            vector<int> idsToReach = getIdsToReach(a); // TODO: use robust id instead of a
+            for (int o=0; o<idsToReach.size(); o++)
+            {
+                bReachWValue.addInt(idsBelow[o]);
+            }
 
             // prepare pullable_with property
             bPullW.addString("pullable_with");
             Bottle &bPullWValue = bPullW.addList();
-            bPullWValue.addInt(0); // TODO: real list
+            vector<int> idsToPull = getIdsToPull(a); // TODO: use robust id instead of a
+            for (int o=0; o<idsToPull.size(); o++)
+            {
+                bPullWValue.addInt(idsToPull[o]);
+            }
         }
         else
         {
@@ -425,8 +445,7 @@ bool WorldStateMgrThread::doPopulateDB()
 
             // prepare is_free property
             bIsFree.addString("is_free");
-            //bool bIsFreeValue;
-            bool bIsFreeValue = isHandFree(bNameValue.str());
+            bool bIsFreeValue = isHandFree(bNameValue.c_str());
             bIsFree.addInt(bIsFreeValue); // 1=true, 0=false
         }
 
@@ -465,6 +484,168 @@ bool WorldStateMgrThread::doPopulateDB()
     // now we have populated the database with all objects
 
     return true;
+}
+
+string WorldStateMgrThread::getName(const int &id)
+{
+    if (iolPort.getOutputCount() < 1)
+    {
+        yWarning("not connected to IOL");
+    }
+
+    Bottle iolCmd, iolReply;
+    iolCmd.addVocab(Vocab::encode("name"));
+    iolCmd.addInt(id);
+    yDebug("sending query to IOL:", iolCmd.toString().c_str());
+    iolPort.write(iolCmd, iolReply);
+
+    bool validResponse = false;
+    validResponse = ( (iolReply.size()>1) &&
+                      (iolReply.get(0).asVocab()==Vocab::encode("ack")) );
+
+    if (validResponse)
+        return iolReply.get(1).asString();
+    else
+    {
+        yWarning("getName: obtained invalid response from IOL");
+        //return error
+    }
+}
+
+vector<double> WorldStateMgrThread::getTooltipOffset(const int &id)
+{
+    if (geomIFPort.getOutputCount() < 1)
+    {
+        yWarning("not connected to GeometricIF");
+    }
+
+    Bottle geomIFCmd, geomIFReply;
+    geomIFCmd.addVocab(Vocab::encode("offset"));
+    geomIFCmd.addInt(id);
+    yDebug("sending query to GeometricIF:", geomIFCmd.toString().c_str());
+    geomIFPort.write(geomIFCmd, geomIFReply);
+
+    bool validResponse = false;
+    validResponse = ( (geomIFReply.size()>1) &&
+                      (geomIFReply.get(0).asVocab()==Vocab::encode("ack")) );
+
+    if (validResponse)
+    {
+        Bottle *bOffset = geomIFReply.get(1).asList();
+        vector<double> offset; // TODO: pre-allocate size
+        for (int t=0; t<bOffset->size(); t++)
+        {
+            offset.push_back( bOffset->get(t).asDouble() );
+        }
+        return offset;
+    }
+    else
+    {
+        yWarning("getTooltipOffset: obtained invalid response from GeometricIF");
+        //return error
+    }
+}
+
+vector<int> WorldStateMgrThread::isOnTopOf(const int &id)
+{
+    if (geomIFPort.getOutputCount() < 1)
+    {
+        yWarning("not connected to GeometricIF");
+    }
+
+    Bottle geomIFCmd, geomIFReply;
+    geomIFCmd.addVocab(Vocab::encode("oto"));
+    geomIFCmd.addInt(id);
+    yDebug("sending query to GeometricIF:", geomIFCmd.toString().c_str());
+    geomIFPort.write(geomIFCmd, geomIFReply);
+
+    bool validResponse = false;
+    validResponse = ( (geomIFReply.size()>1) &&
+                      (geomIFReply.get(0).asVocab()==Vocab::encode("ack")) );
+
+    if (validResponse)
+    {
+        Bottle *bIds = geomIFReply.get(1).asList();
+        vector<int> ids; // TODO: pre-allocate size
+        for (int o=0; o<bIds->size(); o++)
+        {
+            ids.push_back( bIds->get(o).asInt() );
+        }
+        return ids;
+    }
+    else
+    {
+        yWarning("isOnTopOf: obtained invalid response from GeometricIF");
+        //return error
+    }
+}
+
+vector<int> WorldStateMgrThread::getIdsToReach(const int &id)
+{
+    if (geomIFPort.getOutputCount() < 1)
+    {
+        yWarning("not connected to GeometricIF");
+    }
+
+    Bottle geomIFCmd, geomIFReply;
+    geomIFCmd.addVocab(Vocab::encode("reaw"));
+    geomIFCmd.addInt(id);
+    yDebug("sending query to GeometricIF:", geomIFCmd.toString().c_str());
+    geomIFPort.write(geomIFCmd, geomIFReply);
+
+    bool validResponse = false;
+    validResponse = ( (geomIFReply.size()>1) &&
+                      (geomIFReply.get(0).asVocab()==Vocab::encode("ack")) );
+
+    if (validResponse)
+    {
+        Bottle *bIds = geomIFReply.get(1).asList();
+        vector<int> ids; // TODO: pre-allocate size
+        for (int o=0; o<bIds->size(); o++)
+        {
+            ids.push_back( bIds->get(o).asInt() );
+        }
+        return ids;
+    }
+    else
+    {
+        yWarning("getIdsToReach: obtained invalid response from GeometricIF");
+        //return error
+    }
+}
+
+vector<int> WorldStateMgrThread::getIdsToPull(const int &id)
+{
+    if (geomIFPort.getOutputCount() < 1)
+    {
+        yWarning("not connected to GeometricIF");
+    }
+
+    Bottle geomIFCmd, geomIFReply;
+    geomIFCmd.addVocab(Vocab::encode("pulw"));
+    geomIFCmd.addInt(id);
+    yDebug("sending query to GeometricIF:", geomIFCmd.toString().c_str());
+    geomIFPort.write(geomIFCmd, geomIFReply);
+
+    bool validResponse = false;
+    validResponse = ( (geomIFReply.size()>1) &&
+                      (geomIFReply.get(0).asVocab()==Vocab::encode("ack")) );
+
+    if (validResponse)
+    {
+        Bottle *bIds = geomIFReply.get(1).asList();
+        vector<int> ids; // TODO: pre-allocate size
+        for (int o=0; o<bIds->size(); o++)
+        {
+            ids.push_back( bIds->get(o).asInt() );
+        }
+        return ids;
+    }
+    else
+    {
+        yWarning("getIdsToPull: obtained invalid response from GeometricIF");
+        //return error
+    }
 }
 
 bool WorldStateMgrThread::isHandFree(const string &handName)
@@ -522,7 +703,7 @@ string WorldStateMgrThread::inWhichHand(const string &objName)
     {
         if ((geomIFReply.get(1).asString()=="left") || (geomIFReply.get(1).asString()=="right"))
         {
-            // successful case, return "left" or "right"
+            // success, return "left" or "right" as received from GeomIF
             return geomIFReply.get(1).asString();
         }
         else
