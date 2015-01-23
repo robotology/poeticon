@@ -256,6 +256,7 @@ bool TRACKERManager::stopTrackers()
 /**********************************************************/
 int TRACKERManager::processFixationPoint(Bottle &b)
 {
+    mutexPoints.lock();
     int id = -1;
 
     if (b.get(0).asString()=="again")
@@ -310,7 +311,9 @@ int TRACKERManager::processFixationPoint(Bottle &b)
             }
         }
     }
+    mutexPoints.unlock();
     return id;
+    
 }
 
 /**********************************************************/

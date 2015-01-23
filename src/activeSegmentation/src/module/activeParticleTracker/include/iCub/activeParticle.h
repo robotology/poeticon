@@ -73,6 +73,7 @@ private:
 
     yarp::sig::Vector       toDel;
 
+    yarp::os::Mutex         mutexPoints;
     yarp::os::Semaphore     mutex;
     IplImage                *orig;
 
