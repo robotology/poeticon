@@ -129,6 +129,7 @@ public:
     void update(IplImage * img );
     void onStop();
     yarp::sig::ImageOf<yarp::sig::PixelRgb> getTemplate ();
+    void isInitialized();
 
     TemplateStruct getBestTemplate();
     yarp::os::Event event;
@@ -136,6 +137,8 @@ public:
     particle                *particles;
 
 private:
+    
+    yarp::os::Semaphore     sema;
 
     SegInfo                 info;
     int                     group;
@@ -146,6 +149,8 @@ private:
     TargetObjectRecord      &container;
     ActiveSeg               activeSeg;
     TargetObject            *object;
+    
+    yarp::os::Mutex         mutexThread;
 
     int                     num_objects;
     int                     num_particles;

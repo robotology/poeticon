@@ -47,6 +47,8 @@ void FixationPoint::onRead(Bottle &target)
 /**********************************************************/
 ParticleThread::ParticleThread ( unsigned int id, ResourceFinder &rf, SegInfo info, int group, CvScalar *colour) : container(TargetObjectRecord::getInstance())
 {
+    
+    mutexThread.lock();
     if (colour)
         ParticleThread::colour = *colour;
     else
@@ -110,6 +112,13 @@ bool ParticleThread::threadInit()
 }
 
 /**********************************************************/
+void ParticleThread::isInitialized()
+{
+    mutexThread.lock();
+    mutexThread.unlock();
+}
+
+/**********************************************************/
 void ParticleThread::run()
 {
     while (isStopping() != true)
@@ -130,8 +139,9 @@ void ParticleThread::run()
             object->colour = ParticleThread::colour;
 
             activeSeg.getSegWithFixation(image, object->seg, info);
+            
             activeSeg.getTemplateFromSeg(image, object->seg, object->tpl, info);
-
+            
             container.lock();
             container.add(object);
             container.unlock();
@@ -152,6 +162,8 @@ void ParticleThread::run()
                 free (particles);
 
             particles= init_distribution( *regions, ref_histos, num_objects, num_particles );
+            
+            mutexThread.unlock();
         }
         else
         {
@@ -185,6 +197,7 @@ void ParticleThread::run()
 void ParticleThread::onStop()
 {
     shouldStop = true;
+    mutexThread.unlock();
     event.signal();
 }
 
@@ -193,6 +206,7 @@ void ParticleThread::threadRelease()
 {
     if (image)
         cvReleaseImage(&image);
+
 }
 
 /**********************************************************/

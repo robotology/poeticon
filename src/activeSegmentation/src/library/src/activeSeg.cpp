@@ -60,7 +60,7 @@ ActiveSeg::Error ActiveSeg::getSegWithFixation( const IplImage *img, IplImage* &
         fprintf(stdout, "Invalid right size for x position,reducing crop to: %d \n", info.cropWidth);
 #endif
     }
-
+    fprintf(stdout, "ACTIVE SEG: dbg 3\n");
     //check if y and crop are within width range
     if ( (info.fix_y - info.cropHeight/2) < 0 )
     {
@@ -79,7 +79,6 @@ ActiveSeg::Error ActiveSeg::getSegWithFixation( const IplImage *img, IplImage* &
 #ifdef ACTIVESEG_DEBUG
     double start = Time::now();
 #endif
-
     IplImage* tmp = cvCloneImage(img);
     cvCvtColor(tmp, tmp, CV_BGR2RGB);
     cvSetImageROI(tmp, cvRect(info.fix_x-info.cropWidth/2, info.fix_y-info.cropHeight/2, info.cropWidth, info.cropHeight));
@@ -96,7 +95,7 @@ ActiveSeg::Error ActiveSeg::getSegWithFixation( const IplImage *img, IplImage* &
 #endif
 
     cvReleaseImage(&tmp);
-
+    //mutex.post();
     return ActiveSeg::OK;
 }
 

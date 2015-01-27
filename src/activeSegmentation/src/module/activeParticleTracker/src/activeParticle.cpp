@@ -304,9 +304,13 @@ int TRACKERManager::processFixationPoint(Bottle &b)
                 SegInfo info (fix_x, fix_y, cropSizeWidth,  cropSizeHeight);
                 id = iter;
                 fprintf(stdout, "OK SHOULD START THREAD %d\n", id);
+                
                 workerThreads[id] = new ParticleThread(id, rf, info);
                 workerThreads[id]->start();
                 workerThreads[id]->update(orig);
+                
+                workerThreads[id]->isInitialized();
+                
                 iter++;
             }
         }

@@ -37,6 +37,7 @@
 #ifndef ACTIVESEG_H
 #define ACTIVESEG_H
 
+#include <yarp/os/Semaphore.h>
 #include <yarp/os/Log.h>
 #include <yarp/os/Time.h>
 #include <yarp/os/ResourceFinder.h>
