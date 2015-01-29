@@ -181,7 +181,6 @@ bool WorldStateMgrThread::initTracker()
         fixation.clear();
         fixation.addDouble(x);
         fixation.addDouble(y);
-        Time::delay(1.0); // prevents activeParticleTrack crash
         outFixationPort.write(fixation);
 
         yInfo("id %d: %f %f", a, x, y);
