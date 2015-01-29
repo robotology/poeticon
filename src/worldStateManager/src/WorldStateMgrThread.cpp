@@ -192,7 +192,7 @@ bool WorldStateMgrThread::initTracker()
 
 void WorldStateMgrThread::fsmPerception()
 {
-    yDebug("perception state=%d", perceptionFSMState);
+    //yDebug("perception state=%d", perceptionFSMState);
     switch(perceptionFSMState)
     {
         case STATE_WAIT_BLOBS:
@@ -346,6 +346,8 @@ bool WorldStateMgrThread::doPopulateDB()
 {
     for(int a=0; a<sizeAff; a++)
     {
+        yDebug("doPopulateDB, a=%d", a);
+
         // common properties
         Bottle bName;
         Bottle bPos;
@@ -391,9 +393,14 @@ bool WorldStateMgrThread::doPopulateDB()
             bOffset.addString("offset");
             Bottle &bOffsetValue = bOffset.addList();
             vector<double> offset = getTooltipOffset(a); // TODO: use robust id instead of a
-            for (int o=0; o<offset.size(); o++)
+
+            if (offset.size()>1)
             {
-                bOffsetValue.addDouble(offset[o]);
+                cout << offset.size() << endl;
+                for (int o=0; o<offset.size(); o++)
+                {
+                    bOffsetValue.addDouble(offset[o]);
+                }
             }
 
             // prepare 2D shape descriptors property
@@ -490,6 +497,7 @@ string WorldStateMgrThread::getName(const int &id)
     if (iolPort.getOutputCount() < 1)
     {
         yWarning("not connected to IOL");
+        return string();
     }
 
     Bottle iolCmd, iolReply;
@@ -507,7 +515,7 @@ string WorldStateMgrThread::getName(const int &id)
     else
     {
         yWarning("getName: obtained invalid response from IOL");
-        //return error
+        return string();
     }
 }
 
@@ -516,6 +524,7 @@ vector<double> WorldStateMgrThread::getTooltipOffset(const int &id)
     if (geomIFPort.getOutputCount() < 1)
     {
         yWarning("not connected to GeometricIF");
+        return vector<double>();
     }
 
     Bottle geomIFCmd, geomIFReply;
@@ -541,7 +550,7 @@ vector<double> WorldStateMgrThread::getTooltipOffset(const int &id)
     else
     {
         yWarning("getTooltipOffset: obtained invalid response from GeometricIF");
-        //return error
+        return vector<double>();
     }
 }
 
@@ -550,6 +559,7 @@ vector<int> WorldStateMgrThread::isOnTopOf(const int &id)
     if (geomIFPort.getOutputCount() < 1)
     {
         yWarning("not connected to GeometricIF");
+        return vector<int>();
     }
 
     Bottle geomIFCmd, geomIFReply;
@@ -575,7 +585,7 @@ vector<int> WorldStateMgrThread::isOnTopOf(const int &id)
     else
     {
         yWarning("isOnTopOf: obtained invalid response from GeometricIF");
-        //return error
+        return vector<int>();
     }
 }
 
@@ -584,6 +594,7 @@ vector<int> WorldStateMgrThread::getIdsToReach(const int &id)
     if (geomIFPort.getOutputCount() < 1)
     {
         yWarning("not connected to GeometricIF");
+        return vector<int>();
     }
 
     Bottle geomIFCmd, geomIFReply;
@@ -609,7 +620,7 @@ vector<int> WorldStateMgrThread::getIdsToReach(const int &id)
     else
     {
         yWarning("getIdsToReach: obtained invalid response from GeometricIF");
-        //return error
+        return vector<int>();
     }
 }
 
@@ -618,6 +629,7 @@ vector<int> WorldStateMgrThread::getIdsToPull(const int &id)
     if (geomIFPort.getOutputCount() < 1)
     {
         yWarning("not connected to GeometricIF");
+        return vector<int>();
     }
 
     Bottle geomIFCmd, geomIFReply;
@@ -643,7 +655,7 @@ vector<int> WorldStateMgrThread::getIdsToPull(const int &id)
     else
     {
         yWarning("getIdsToPull: obtained invalid response from GeometricIF");
-        //return error
+        return vector<int>();
     }
 }
 
