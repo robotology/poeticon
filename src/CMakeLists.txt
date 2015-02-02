@@ -8,6 +8,7 @@ project(${PROJECTNAME})
 
 find_package(YARP)
 find_package(ICUBcontrib)
+find_package(OpenCV)
 list(APPEND CMAKE_MODULE_PATH ${YARP_MODULE_PATH}
                               ${ICUBCONTRIB_MODULE_PATH})
 
@@ -26,7 +27,7 @@ add_subdirectory(pradaPlanner)
 add_subdirectory(worldStateManager)
 
 # modules that need OpenCV
-if(ICUB_USE_OpenCV)
+if(OpenCV_FOUND)
     add_subdirectory(activeSegmentation)
     add_subdirectory(blobSpotter)
     add_subdirectory(blobDescriptor)
@@ -39,4 +40,4 @@ if(ICUB_USE_OpenCV)
     endif(TBB_FOUND)
 else(ICUB_USE_OpenCV)
     message(STATUS "OpenCV not found or selected, skipping vision modules")
-endif(ICUB_USE_OpenCV)
+endif(OpenCV_FOUND)
