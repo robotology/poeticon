@@ -17,7 +17,7 @@ WorldStateMgrThread::WorldStateMgrThread(
       RateThread(int(_period*1000.0)),
       playbackMode(_playbackMode)
 {
-    yDebug("constructed thread");
+    //yDebug("constructed thread");
 }
 
 bool WorldStateMgrThread::openPorts()
@@ -83,7 +83,7 @@ void WorldStateMgrThread::interrupt()
 bool WorldStateMgrThread::threadInit()
 {
     // perception and playback modes
-    yDebug("thread initialization");
+    //yDebug("thread initialization");
     closing = false;
     populated = false; // TODO: really check if opc was populated before this module started
     if ( !openPorts() )
@@ -120,7 +120,7 @@ bool WorldStateMgrThread::updateWorldState()
 {
      if (opcPort.getOutputCount() < 1)
      {
-         yWarning("not connected to OPC");
+         yWarning() << __func__ << "not connected to GeometricIF";
          return false;
      }
 
@@ -482,9 +482,9 @@ bool WorldStateMgrThread::doPopulateDB()
         if (opcReply.size() > 1)
         {
             if (opcReply.get(0).asVocab()==Vocab::encode("ack"))
-                yDebug("received ack from OPC");
+                yDebug() << __func__ << "received ack from OPC";
             else
-                yDebug("did not receive ack from OPC");
+                yDebug() << __func__ << "did not receive ack from OPC";
         }
     }
     // now we have populated the database with all objects
@@ -496,14 +496,14 @@ string WorldStateMgrThread::getName(const int &id)
 {
     if (iolPort.getOutputCount() < 1)
     {
-        yWarning("not connected to IOL");
+        yWarning() << __func__ << "not connected to GeometricIF";
         return string();
     }
 
     Bottle iolCmd, iolReply;
     iolCmd.addVocab(Vocab::encode("name"));
     iolCmd.addInt(id);
-    yDebug("sending query to IOL:", iolCmd.toString().c_str());
+    yDebug() << __func__ <<  "sending query to IOL:" << iolCmd.toString().c_str();
     iolPort.write(iolCmd, iolReply);
 
     bool validResponse = false;
@@ -523,14 +523,14 @@ vector<double> WorldStateMgrThread::getTooltipOffset(const int &id)
 {
     if (geomIFPort.getOutputCount() < 1)
     {
-        yWarning("not connected to GeometricIF");
+        yWarning() << __func__ << "not connected to GeometricIF";
         return vector<double>();
     }
 
     Bottle geomIFCmd, geomIFReply;
     geomIFCmd.addVocab(Vocab::encode("offset"));
     geomIFCmd.addInt(id);
-    yDebug("sending query to GeometricIF:", geomIFCmd.toString().c_str());
+    yDebug() << __func__ << "sending query to GeometricIF:" << geomIFCmd.toString().c_str();
     geomIFPort.write(geomIFCmd, geomIFReply);
 
     bool validResponse = false;
@@ -558,14 +558,14 @@ vector<int> WorldStateMgrThread::isOnTopOf(const int &id)
 {
     if (geomIFPort.getOutputCount() < 1)
     {
-        yWarning("not connected to GeometricIF");
+        yWarning() << __func__ << "not connected to GeometricIF";
         return vector<int>();
     }
 
     Bottle geomIFCmd, geomIFReply;
     geomIFCmd.addVocab(Vocab::encode("oto"));
     geomIFCmd.addInt(id);
-    yDebug("sending query to GeometricIF:", geomIFCmd.toString().c_str());
+    yDebug() << __func__ << "sending query to GeometricIF:" << geomIFCmd.toString().c_str();
     geomIFPort.write(geomIFCmd, geomIFReply);
 
     bool validResponse = false;
@@ -593,14 +593,14 @@ vector<int> WorldStateMgrThread::getIdsToReach(const int &id)
 {
     if (geomIFPort.getOutputCount() < 1)
     {
-        yWarning("not connected to GeometricIF");
+        yWarning() << __func__ << "not connected to GeometricIF";
         return vector<int>();
     }
 
     Bottle geomIFCmd, geomIFReply;
     geomIFCmd.addVocab(Vocab::encode("reaw"));
     geomIFCmd.addInt(id);
-    yDebug("sending query to GeometricIF:", geomIFCmd.toString().c_str());
+    yDebug() << "sending query to GeometricIF:" << geomIFCmd.toString().c_str();
     geomIFPort.write(geomIFCmd, geomIFReply);
 
     bool validResponse = false;
@@ -628,14 +628,14 @@ vector<int> WorldStateMgrThread::getIdsToPull(const int &id)
 {
     if (geomIFPort.getOutputCount() < 1)
     {
-        yWarning("not connected to GeometricIF");
+        yWarning() << __func__ << "not connected to GeometricIF";
         return vector<int>();
     }
 
     Bottle geomIFCmd, geomIFReply;
     geomIFCmd.addVocab(Vocab::encode("pulw"));
     geomIFCmd.addInt(id);
-    yDebug("sending query to GeometricIF:", geomIFCmd.toString().c_str());
+    yDebug() << "sending query to GeometricIF:" << geomIFCmd.toString().c_str();
     geomIFPort.write(geomIFCmd, geomIFReply);
 
     bool validResponse = false;
@@ -663,7 +663,7 @@ bool WorldStateMgrThread::isHandFree(const string &handName)
 {
     if (geomIFPort.getOutputCount() < 1)
     {
-        yWarning("not connected to GeometricIF");
+        yWarning() << __func__ << "not connected to GeometricIF";
         return false;
     }
 
@@ -676,7 +676,7 @@ bool WorldStateMgrThread::isHandFree(const string &handName)
     Bottle geomIFCmd, geomIFReply;
     geomIFCmd.addVocab(Vocab::encode("isfree"));
     geomIFCmd.addString(handName.c_str());
-    yDebug("sending query to GeometricIF:", geomIFCmd.toString().c_str());
+    yDebug() << "sending query to GeometricIF:" << geomIFCmd.toString().c_str();
     geomIFPort.write(geomIFCmd, geomIFReply);
     
     bool validResponse = false;
@@ -690,19 +690,19 @@ string WorldStateMgrThread::inWhichHand(const string &objName)
 {
     if (geomIFPort.getOutputCount() < 1)
     {
-        yWarning("not connected to GeometricIF");
+        yWarning() << __func__ << "not connected to GeometricIF";
     }
 
     // TODO: use consistent names everywhere (incl. RPC): left or left_hand or lefthand
     if ((objName == "left_hand") || (objName == "right_hand"))
     {
-        yWarning("inWhichHand: argument objName must be an object name, not a hand name");
+        yWarning() << __func__ << "argument objName must be an object name, not a hand name";
     }
 
     Bottle geomIFCmd, geomIFReply;
     geomIFCmd.addVocab(Vocab::encode("inhand"));
     geomIFCmd.addString(objName.c_str());
-    yDebug("sending query to GeometricIF:", geomIFCmd.toString().c_str());
+    yDebug() << __func__ << "sending query to GeometricIF:" << geomIFCmd.toString().c_str();
     geomIFPort.write(geomIFCmd, geomIFReply);
     
     bool validResponse = false;

@@ -11,6 +11,7 @@
 #define __WSM_THREAD_H__
 
 #include <iomanip>
+#include <iostream> // __func__
 #include <sstream>
 #include <yarp/os/Bottle.h>
 #include <yarp/os/BufferedPort.h>
@@ -36,6 +37,15 @@
 #define STATE_PARSE_FILE 100
 #define STATE_STEP_FILE  101
 #define STATE_END_FILE   102
+
+// make sure __func__ is set correctly, http://stackoverflow.com/a/17528983
+#if __STDC_VERSION__ < 199901L
+# if __GNUC__ >= 2
+#  define __func__ __FUNCTION__
+# else
+#  define __func__ "<unknown>"
+# endif
+#endif
 
 using namespace std;
 using namespace yarp::os;
