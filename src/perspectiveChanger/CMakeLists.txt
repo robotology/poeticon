@@ -31,7 +31,6 @@ source_group("Header Files" FILES ${folder_header})
 include_directories(${PROJECT_SOURCE_DIR}/include
                     ${OpenCV_INCLUDE_DIRS}
                     ${YARP_INCLUDE_DIRS}
-                    ${ICUB_INCLUDE_DIRS}
                     ${ctrlLib_INCLUDE_DIRS}
                    )
 
