@@ -5,7 +5,7 @@ cmake_minimum_required(VERSION 2.6)
 
 set(APPNAME poeticon)
 
-file(GLOB conf ${CMAKE_CURRENT_SOURCE_DIR}/conf/*.ini)
+file(GLOB conf ${CMAKE_CURRENT_SOURCE_DIR}/conf/*.ini ${CMAKE_CURRENT_SOURCE_DIR}/conf/*.dat ${CMAKE_CURRENT_SOURCE_DIR}/conf/config)
 file(GLOB scripts ${CMAKE_CURRENT_SOURCE_DIR}/scripts/*.template)
 
 find_package(YARP)
