@@ -33,7 +33,11 @@ class worldStateCommunication:
         return ans.size() == 1 and ans.get(0).asVocad == 27503
     
 def update_state():
-    symbol_file = open("symbols.dat")
+    rf = yarp.ResourceFinder()
+    rf.setVerbose(True)
+    rf.setDefaultContext("poeticon")
+    PathName = rf.findPath("contexts/poeticon")
+    symbol_file = open(''.join(PathName +"/symbols.dat"))
     symbols = symbol_file.read()
     symbol_file.close()
     data = symbols.split('\n')
@@ -42,7 +46,7 @@ def update_state():
     for i in range(len(data)):
         aux_data = data[i].split(' ')
         symbols = symbols + [[aux_data[0], aux_data[2]]]
-    state_file = open("state.dat")
+    state_file = open(''.join(PathName +"/state.dat"))
     state = state_file.read()
     state_file.close()
     data = state.replace('-','').replace('()','').replace('\n','')
@@ -52,12 +56,18 @@ def update_state():
         if symbols[j][0] not in data and symbols[j][1] == 'primitive':
             state = '-'.join((state,''.join((symbols[j][0],'() '))))
     state = ''.join((state,'\n'))
-    state_file = open("state.dat",'w')
+    state_file = open(''.join(PathName +"/state.dat"),'w')
     state_file.write(state)
     state_file.close()
         
 
 def planning_cycle():
+
+    rf = yarp.ResourceFinder()
+    rf.setVerbose(True)
+    rf.setDefaultContext("poeticon")
+    PathName = rf.findPath("contexts/poeticon")
+    print(''.join("." +PathName +"/planner.exe"))
     world_rpc = worldStateCommunication()
     geo_yarp = yarp.BufferedPortBottle()
     geo_yarp.open("/planner/grounding_cmd:io")
@@ -103,8 +113,8 @@ def planning_cycle():
             break
     print 'goal is done'
     
-    goal_file = open("final_goal.dat")
-    subgoalsource_file = open("subgoals.dat")
+    goal_file = open(''.join(PathName +"/final_goal.dat"))
+    subgoalsource_file = open(''.join(PathName +"/subgoals.dat"))
     goal = goal_file.read().split(' ')
     goal_file.close()
     plan_level = 0
@@ -136,7 +146,7 @@ def planning_cycle():
     update_state()
     raw_input('press any key')
 
-    config_file = open("config",'r')
+    config_file = open(''.join(PathName +"/config"),'r')
     config_data = config_file.read().split('\n')
     for w in range(len(config_data)):
         if config_data[w].find('[PRADA]') != -1:
@@ -144,7 +154,7 @@ def planning_cycle():
             config_data[w+2] = 'PRADA_horizon %d' %horizon
             break
     config_file.close()
-    config_file = open("config", 'w')
+    config_file = open(''.join(PathName +"/config"), 'w')
     for w in range(len(config_data)):
         config_file.write(config_data[w])
         config_file.write('\n')
@@ -166,12 +176,12 @@ def planning_cycle():
                 print 'state updated'
                 break
         update_state()
-        state_file = open("state.dat",'r')
+        state_file = open(''.join(PathName +"/state.dat"),'r')
         state = state_file.read().split(' ')
         state[-1] = state[-1].replace('\r','').replace('\n','')
         state_file.close()
         not_to_add = []
-        subgoal_file = open("goal.dat",'w')
+        subgoal_file = open(''.join(PathName +"/goal.dat"),'w')
         subgoal_file.write(subgoals[plan_level])
         subgoal_file.close()
         if plan_level >= len(subgoals)-1:
@@ -185,12 +195,14 @@ def planning_cycle():
             goal_bottle_out.addString('kill')
             goal_yarp.write()
             break
-        planner = subprocess.Popen(["./planner.exe"],stdout = subprocess.PIPE, stderr = subprocess.PIPE)
+        #planner = subprocess.Popen(["./planner.exe"],stdout = subprocess.PIPE, stderr = subprocess.PIPE)
+        print("process-planner.exe")
+        planner = subprocess.Popen([''.join("." +PathName +"/planner.exe")],stdout = subprocess.PIPE, stderr = subprocess.PIPE)
         data = planner.communicate()
         
         data = data[0].split('\n')
         next_action = []
-        rules_file = open("rules.dat",'r')
+        rules_file = open(''.join(PathName +"/rules.dat"),'r')
         rules = rules_file.read().split('\n')
         rules_file.close()
         for t in range(len(data)):
@@ -199,7 +211,7 @@ def planning_cycle():
         if next_action == []:
             next_action = data[-2].split(' ')[0]
             if '  %s' %next_action not in rules:
-                config_file = open("config",'r')
+                config_file = open(''.join(PathName +"/config"),'r')
                 config_data = config_file.read().split('\n')
                 for w in range(len(config_data)):
                     if config_data[w].find('[PRADA]') != -1:
@@ -209,7 +221,7 @@ def planning_cycle():
                         config_data[w+2] = 'PRADA_horizon %d' %horizon
                         break
                 config_file.close()
-                config_file = open("config", 'w')
+                config_file = open(''.join(PathName +"/config"), 'w')
                 for w in range(len(config_data)):
                     config_file.write(config_data[w])
                     config_file.write('\n')
@@ -224,7 +236,7 @@ def planning_cycle():
         ## next state = outcome do PRADA
         ## copia este outcome para o ficheiro de world state
         
-        subgoal_file = open("goal.dat",'r')
+        subgoal_file = open(''.join(PathName +"/goal.dat"),'r')
         goal = subgoal_file.read().split(' ')
         subgoal_file.close()
         for t in range(len(goal)):
@@ -250,7 +262,7 @@ def planning_cycle():
         raw_input('press enter to continue')
         if cont == -1:
             plan_level = plan_level-1
-            config_file = open("config",'r')
+            config_file = open(''.join(PathName +"/config"),'r')
             config_data = config_file.read().split('\n')
             for w in range(len(config_data)):
                 if config_data[w].find('[PRADA]') != -1:
@@ -258,14 +270,14 @@ def planning_cycle():
                     config_data[w+2] = 'PRADA_horizon %d' %horizon
                     break
             config_file.close()
-            config_file = open("config", 'w')
+            config_file = open(''.join(PathName +"/config"), 'w')
             for w in range(len(config_data)):
                 config_file.write(config_data[w])
                 config_file.write('\n')
             config_file.close()
         if cont == 0:
             plan_level = plan_level+1
-            config_file = open("config",'r')
+            config_file = open(''.join(PathName +"/config"),'r')
             config_data = config_file.read().split('\n')
             for w in range(len(config_data)):
                 if config_data[w].find('[PRADA]') != -1:
@@ -273,7 +285,7 @@ def planning_cycle():
                     config_data[w+2] = 'PRADA_horizon %d' %horizon
                     break
             config_file.close()
-            config_file = open("config", 'w')
+            config_file = open(''.join(PathName +"/config"), 'w')
             for w in range(len(config_data)):
                 config_file.write(config_data[w])
                 config_file.write('\n')
