@@ -28,6 +28,7 @@ TranslatorModule::switchCase TranslatorModule::hashtable(string command){
 	if(command=="reachable_with")  return re_w;
 	if(command=="pullable_with")  return pu_w;
 	if(command=="is_touching") return touch;
+	if(command=="pos") return pos;
 }
 bool TranslatorModule::interruptModule() {
 
@@ -57,7 +58,7 @@ bool   TranslatorModule::close() {
 bool   TranslatorModule::updateModule() {
     Bottle *receive,dataBase,ids2,*idsp;
     if(readingThread->_runit) {
-        receive = translatorPort.read(false);  //block       
+        receive = translatorPort.read(false);  //non-block       
         if(receive == NULL)
             return true;
         cout << "Writing the world state to file..." << endl;
@@ -67,12 +68,15 @@ bool   TranslatorModule::updateModule() {
         readingThread->guard.unlock();
 
         if(dataBase.size()>0 && (dataBase.get(1).asString()!="empty")) {
-	        //cout <<"file1 " << findFile.findFileByName("Object_names-IDs.dat") << endl;
-            //myfile.open( findFile.findFileByName("Object_names-IDs.dat"));
-	        //cout <<"file2 " << findFile.findFileByName("state.dat") << endl;
-            //myfile2.open ( findFile.findFileByName("state.dat") );
-	        myfile.open ("Object names-IDs.dat");
-            myfile2.open ("state.dat");
+	        //cout << "f1: " << objIDsFileName << "f2: " << stateFileName << endl;
+            //myfile.open( objIDsFileName);
+            //myfile2.open ( stateFileName);
+
+            myfile.open( objIDsFileName.c_str());
+            myfile2.open ( stateFileName.c_str());
+
+	        //myfile.open ("Object names-IDs.dat");
+            //myfile2.open ("state.dat");
             idsp = ids2.get(1).asList();
             idsp = idsp->get(1).asList();
             for(int i=1;i<dataBase.size();i++){ // for each object
@@ -208,12 +212,46 @@ bool   TranslatorModule::configure(yarp::os::ResourceFinder &rf) {
     /* Rate thread period */
     threadPeriod = rf.check("threadPeriod", Value(0.033),
         "Control rate thread period key value(double) in seconds ").asDouble();
+    int dummy;
+    string objIdsName ="/Object_names-IDs.dat";
+    string stateName ="/state.dat";
+    string path = rf.findPath("contexts/"+rf.getContext());
+    if (path==""){
+        cout << "path to contexts/"+rf.getContext() << " not found" << endl;
+        return false;    
+    }
+    else {
+        cout << "Context FOUND!" << endl;
+        //objIdsName=path+objIdsName;
+        objIDsFileName=path+objIdsName;//objIdsName.c_str();
+        //stateName = path+stateName;
+        stateFileName = path+stateName;//stateName.c_str();
+        cout << objIDsFileName << " and " << stateFileName<< endl;
+    }
 
+/*    if(rf.findFileByName("Object_names-IDs.dat") ==""){ // create file
+        cout << "Object_names-IDs.dat -> file not found" << endl;
+        return false;
+    }
+    else{
+        objIDsFileName = rf.findFileByName("Object_names-IDs.dat").c_str();
+    }
+    if(rf.findFileByName("state.dat") == "") { // create file
+        cout << "state.dat -> file not found" << endl;
+        return false;
+    } 
+    else{
+        stateFileName = rf.findFileByName("state.dat").c_str();
+    }
+*/
+
+
+    
     /* Create the reading rate thread */
     readingThread = new Thread_read(&port_broad,
                                 &rpc_port,
                                 threadPeriod);
-
+    
     /* Starts the thread */
     if (!readingThread->start()) {
         delete readingThread;
@@ -237,7 +275,7 @@ Thread_read::Thread_read(BufferedPort<Bottle> * broad_port,RpcClient * rpc,int r
 
 void Thread_read::threadRelease() {
         printf("I my God they kill kenny - the thread\n");
-        getchar();
+        //getchar();
 }
 bool Thread_read::threadInit(){
     _runit = false;

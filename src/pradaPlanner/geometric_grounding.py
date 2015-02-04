@@ -134,10 +134,16 @@ def geometric_grounding():
         p.open("/grounding:io")
         Affor_yarp = yarp.BufferedPortBottle()
         Affor_yarp.open("/ground_Aff:io")
+        rf = yarp.ResourceFinder()
+        rf.setVerbose(True)
+        rf.setDefaultContext("poeticon")
+        PathName = rf.findPath("contexts/poeticon")
+        print(PathName)
         right_hand = 11
         left_hand= 12
-        prerule_file = open("pre_rules.dat")
-        presymbol_file = open("pre_symbols.dat")
+        prerule_file = open(''.join(PathName + "/pre_rules.dat"))
+        presymbol_file = open(''.join(PathName + "/pre_rules.dat"))
+
 
 
 ## wait until he receives an instruction:
@@ -149,10 +155,10 @@ def geometric_grounding():
             if command == 'update':
 
 ## opens files that might have been updated
-                world_file = open("state.dat")
-                rule_file = open("rules.dat",'w')
-                symbol_file = open("symbols.dat",'w')
-                newrule_file = open("new_rules.dat",'w')
+                world_file = open(''.join(PathName + "/state.dat"))
+                rule_file = open(''.join(PathName + "/rules.dat"),'w')
+                symbol_file = open(''.join(PathName + "/symbols.dat"),'w')
+                newrule_file = open(''.join(PathName + "/new_rules.dat"),'w')
                 
 ## reads objects in world
                 lines = world_file.read()
@@ -262,7 +268,7 @@ def geometric_grounding():
         return objects;
 
 geometric_grounding()
-
+Affor_yarp.close()
 ## test function here, geo_grounding will be called from main program later
                                                    
 ##if __name__ == '__main__':

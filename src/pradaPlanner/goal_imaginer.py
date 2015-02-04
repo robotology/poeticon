@@ -31,17 +31,21 @@ def goal_imaginer():
     yarp.Network.init()
     goal_yarp = yarp.BufferedPortBottle()
     goal_yarp.open("/goal_imag:io")
+    rf = yarp.ResourceFinder()
+    rf.setVerbose(True)
+    rf.setDefaultContext("poeticon")
+    PathName = rf.findPath("contexts/poeticon")
     while 1:
         goal_bottle_in = goal_yarp.read(True)
         command = goal_bottle_in.toString()
         if command == 'start':
             print 'starting'
-            goal_file = open("goal.dat",'w')
-            sub_goal_file = open("subgoals.dat",'w')
-            actions_file = open("pre_rules.dat")
+            goal_file = open(''.join(PathName +"/goal.dat"),'w')
+            sub_goal_file = open(''.join(PathName +"/subgoals.dat"),'w')
+            actions_file = open(''.join(PathName +"/pre_rules.dat"))
 
             ## this file will be replaced by a call to World+Robot State module
-            Object_file = open("Object_names-IDs.dat")
+            Object_file = open(''.join(PathName +"/Object_names-IDs.dat"))
             Objects = Object_file.read()
             translat = []
             object_list = re.findall(r'\d+',Objects) ## list of objects IDs
