@@ -67,7 +67,7 @@ def planning_cycle():
     rf.setVerbose(True)
     rf.setDefaultContext("poeticon")
     PathName = rf.findPath("contexts/poeticon")
-    print(''.join("." +PathName +"/planner.exe"))
+    print(''.join("." +PathName +"./planner.exe"))
     world_rpc = worldStateCommunication()
     geo_yarp = yarp.BufferedPortBottle()
     geo_yarp.open("/planner/grounding_cmd:io")
