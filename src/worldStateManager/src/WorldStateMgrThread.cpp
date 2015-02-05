@@ -50,7 +50,7 @@ bool WorldStateMgrThread::openPorts()
 void WorldStateMgrThread::close()
 {
     // perception and playback modes
-    yDebug("closing ports");
+    yInfo("closing ports");
     opcPort.close();
 
     if (playbackMode) return;
@@ -67,7 +67,7 @@ void WorldStateMgrThread::interrupt()
 {
     // perception and playback modes
     closing = true;
-    yDebug("interrupting ports");
+    yInfo("interrupting ports");
     opcPort.interrupt();
 
     if (playbackMode) return;
@@ -119,14 +119,15 @@ void WorldStateMgrThread::run()
 bool WorldStateMgrThread::updateWorldState()
 {
      if (opcPort.getOutputCount() < 1)
-     {
-         yWarning() << __func__ << "not connected to GeometricIF";
-         return false;
-     }
+         yWarning() << __func__ << "not connected to OPC";
 
      if (!playbackMode)
      {
          // perception mode
+         if (geomIFPort.getOutputCount() < 1)
+         {
+             yWarning() << __func__ << "not connected to GeometricIF";
+         }
          refreshPerceptionAndValidate();
      }
      else
@@ -158,13 +159,13 @@ bool WorldStateMgrThread::initTracker()
 {
     if (playbackMode)
     {
-        yWarning("initTracker called when it was not supposed to");
+        yWarning() << __func__ << "called when it was not supposed to";
         return false;
     }
 
     if (outFixationPort.getOutputCount() < 1)
     {
-        yWarning("fixation:o not connected to tracker input, exiting initTracker");
+        yWarning() << __func__ << "exiting, fixation:o not connected to tracker input";
         return false;
     }
 
@@ -287,7 +288,7 @@ void WorldStateMgrThread::refreshBlobs()
 {
     if (playbackMode)
     {
-        yWarning("refreshBlobs called when it was not supposed to");
+        yWarning() << __func__ << "called when it was not supposed to";
         return;
     }
 
@@ -304,7 +305,7 @@ void WorldStateMgrThread::refreshTracker()
 {
     if (playbackMode)
     {
-        yWarning("refreshTracker called when it was not supposed to");
+        yWarning() << __func__ << "called when it was not supposed to";
         return;
     }
 
@@ -789,13 +790,20 @@ void WorldStateMgrThread::fsmPlayback()
                 // parse each entry/line of current group "[state##]"
                 for (int j=1; j<bCurr.size(); j++)
                 {
-                    // check if entry already exists in OPC
+                    // going to ask OPC whether entry already exists
                     opcCmd.clear();
                     content.clear();
                     opcCmd.addVocab(Vocab::encode("get"));
                     obj_j = bCurr.get(j).asList();
                     opcCmd.addList() = *obj_j->get(0).asList();
                     opcPort.write(opcCmd, opcReply);
+
+                    // stop here if no OPC connection
+                    if (opcPort.getOutputCount() < 1)
+                    {
+                        yWarning() << __func__ << "not connected to OPC";
+                        break;
+                    }
                     
                     if (opcReply.get(0).asVocab() == Vocab::encode("ack"))
                     {
@@ -819,7 +827,7 @@ void WorldStateMgrThread::fsmPlayback()
                         content.append(*obj_j->get(1).asList()); // propSet
                         opcCmd.addList() = content;
                         opcPort.write(opcCmd, opcReply);
-
+                        
                         // handle problems and inconsistencies
                         if (opcReply.get(1).asList()->get(1).asInt() !=
                             obj_j->get(0).asList()->get(1).asInt())
@@ -859,5 +867,5 @@ void WorldStateMgrThread::fsmPlayback()
 bool WorldStateMgrThread::setPlaybackFile(const string &file)
 {
     playbackFile = file;
-    yDebug("going to read from playback file %s", playbackFile.c_str());
+    //yDebug("going to read from playback file %s", playbackFile.c_str());
 }
