@@ -18,11 +18,11 @@ bool SequentialLabellerModule::configure(ResourceFinder &rf)
 {
 	/* get the name that will form the prefix of all module port names */
 	_moduleName = rf.check( "name",
-				Value("/sequentialLabeller"),
+				Value("sequentialLabeller"),
 				"Module name (string)" ).asString();
 
 	/* before continuing, set the module name */
-	setName(_moduleName.c_str());
+	setName( ("/"+_moduleName).c_str() );
 
 	/* now, get the remaining parameters */
 	rawImgInputPortName         = getName(

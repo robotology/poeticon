@@ -29,9 +29,9 @@ bool BlobDescriptorModule::configure(ResourceFinder &rf)
 {
 	/* module name that will form the prefix of all module port names */
 	_moduleName = rf.check( "name",
-							Value("/blobDescriptor"),
+							Value("blobDescriptor"),
 							"Module name (string)" ).asString();
-	setName(_moduleName.c_str());
+	setName( ("/"+_moduleName).c_str() );
 
 	_rawImgInputPortName = getName( rf.check("raw_image_input_port",Value("/rawImg:i"),"Raw image input port (string)" ).asString() );
     binaryImgInputPortName = getName( rf.check("binary_image_input_port",Value("/binImg:i"),"Binary image input port (string)" ).asString() );
