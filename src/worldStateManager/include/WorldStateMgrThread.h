@@ -12,6 +12,7 @@
 
 #include <iomanip>
 #include <iostream> // __func__
+#include <map>
 #include <sstream>
 #include <yarp/os/Bottle.h>
 #include <yarp/os/BufferedPort.h>
@@ -24,7 +25,7 @@
 #include <yarp/os/Time.h>
 #include <yarp/os/Vocab.h>
 
-// perception states
+// perception mode states
 #define STATE_WAIT_BLOBS   0
 #define STATE_READ_BLOBS   1
 #define STATE_INIT_TRACKER 2
@@ -33,7 +34,7 @@
 #define STATE_POPULATE_DB  5
 #define STATE_UPDATE_DB    6
 
-// playback states
+// playback mode states
 #define STATE_PARSE_FILE 100
 #define STATE_STEP_FILE  101
 #define STATE_END_FILE   102
@@ -49,6 +50,8 @@
 
 using namespace std;
 using namespace yarp::os;
+
+typedef std::map<int,double> worldMap;
 
 class WorldStateMgrThread : public RateThread
 {
@@ -71,12 +74,14 @@ class WorldStateMgrThread : public RateThread
         // perception and playback modes
         bool playbackMode;
         bool populated;
+        bool gotInitialEntries;
 
         // perception mode
         int perceptionFSMState;
         Bottle *inAff;
         Bottle *inTargets;
         int sizeTargets, sizeAff;
+        worldMap world;
 
         // playback mode
         int playbackFSMState;
@@ -103,6 +108,7 @@ class WorldStateMgrThread : public RateThread
         bool initPerceptionVars();
         bool initTracker();
         void fsmPerception();
+        void getInitialEntries();
         void refreshBlobs();
         void refreshTracker();
         void refreshPerception();

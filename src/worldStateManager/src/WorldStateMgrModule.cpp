@@ -19,15 +19,15 @@ bool WorldStateMgrModule::configure(ResourceFinder &rf)
     playbackMode = rf.check("playback");
     if (playbackMode)
     {
-        yDebug("module started in playback mode");
+        yInfo("module started in playback mode");
         playbackFile = rf.findFile("playback").c_str();
         if (playbackFile.empty())
         {
-            yError("playback file not found");
+            yError() << "playback file not found";
             return false;
         }
         else
-            yInfo("playback file loaded successfully");
+            yInfo() << "playback file" << playbackFile << "loaded successfully";
     }
 
     handlerPortName = "/" + moduleName + "/rpc:i";
@@ -60,15 +60,15 @@ bool WorldStateMgrModule::interruptModule()
 
 bool WorldStateMgrModule::close()
 {
-    yDebug("closing rpc port");
+    yInfo("closing rpc port");
     handlerPort.close();
 
-    yDebug("starting shutdown procedure");
+    yInfo("starting shutdown procedure");
     thread->interrupt();
     thread->close();
-    yDebug("deleting thread");
+    yInfo("deleting thread");
     delete thread;
-    yDebug("done deleting thread");
+    yInfo("done deleting thread");
 
     return true;
 }
@@ -92,16 +92,16 @@ bool WorldStateMgrModule::attach(RpcServer &source)
 bool WorldStateMgrModule::update()
 {
     if (playbackMode)
-        yDebug("updating world state from playback file");
+        yInfo("updating world state from playback file");
     else
-        yDebug("updating world state from robot perception");
+        yInfo("updating world state from robot perception");
 
     return thread->updateWorldState();
 }
 
 bool WorldStateMgrModule::quit()
 {
-    yDebug("quitting");
+    yInfo("quitting");
     closing = true;
 
     return true;

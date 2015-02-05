@@ -34,7 +34,11 @@ def Affordance_comm():
     geo_yarp.open("/Aff_ground:io")
 ##    Aff_yarp = yarp.BufferedPortBottle()
 ##    Aff_yarp.open("/Aff_query:io")
-    translation_file = open("Action_Affordance_Translation.dat")
+    rf = yarp.ResourceFinder()
+    rf.setVerbose(True)
+    rf.setDefaultContext("poeticon")
+    PathName = rf.findPath("contexts/poeticon")
+    translation_file = open(''.join(PathName +"/Action_Affordance_Translation.dat"))
     aux_translation = translation_file.read().split('\n')
     translation = []
     for i in range(len(aux_translation)):
@@ -42,7 +46,8 @@ def Affordance_comm():
     while 1:
         command = ''
         while 1:
-            Affor_bottle_in = geo_yarp.read()
+            Affor_bottle_in = geo_yarp.read(False)
+            yarp.Time.delay(0.2)
             if Affor_bottle_in:
                 command = Affor_bottle_in.toString()
                 break
@@ -53,6 +58,7 @@ def Affordance_comm():
         elif command == 'update':
             while 1:
                 Affor_bottle_in = geo_yarp.read()
+                yarp.Time.delay(0.2)
                 if Affor_bottle_in:
                     data = Affor_bottle_in.toString()
                     break

@@ -50,7 +50,7 @@ bool WorldStateMgrThread::openPorts()
 void WorldStateMgrThread::close()
 {
     // perception and playback modes
-    yDebug("closing ports");
+    yInfo("closing ports");
     opcPort.close();
 
     if (playbackMode) return;
@@ -67,7 +67,7 @@ void WorldStateMgrThread::interrupt()
 {
     // perception and playback modes
     closing = true;
-    yDebug("interrupting ports");
+    yInfo("interrupting ports");
     opcPort.interrupt();
 
     if (playbackMode) return;
@@ -86,6 +86,7 @@ bool WorldStateMgrThread::threadInit()
     //yDebug("thread initialization");
     closing = false;
     populated = false; // TODO: really check if opc was populated before this module started
+    gotInitialEntries = false;
     if ( !openPorts() )
     {
         yError("problem opening ports");
@@ -118,15 +119,17 @@ void WorldStateMgrThread::run()
 
 bool WorldStateMgrThread::updateWorldState()
 {
-     if (opcPort.getOutputCount() < 1)
-     {
-         yWarning() << __func__ << "not connected to GeometricIF";
-         return false;
-     }
+     // TODO: move this check to inner perception func (already done for dummy)
+     //if (opcPort.getOutputCount() < 1)
+     //    yWarning() << __func__ << "not connected to OPC";
 
      if (!playbackMode)
      {
          // perception mode
+         if (geomIFPort.getOutputCount() < 1)
+         {
+             yWarning() << __func__ << "not connected to GeometricIF";
+         }
          refreshPerceptionAndValidate();
      }
      else
@@ -158,13 +161,13 @@ bool WorldStateMgrThread::initTracker()
 {
     if (playbackMode)
     {
-        yWarning("initTracker called when it was not supposed to");
+        yWarning() << __func__ << "called when it was not supposed to";
         return false;
     }
 
     if (outFixationPort.getOutputCount() < 1)
     {
-        yWarning("fixation:o not connected to tracker input, exiting initTracker");
+        yWarning() << __func__ << "exiting, fixation:o not connected to tracker input";
         return false;
     }
 
@@ -197,6 +200,9 @@ void WorldStateMgrThread::fsmPerception()
     {
         case STATE_WAIT_BLOBS:
         {
+            // acquire initial entries (robot hands) from OPC database
+            getInitialEntries();
+
             // wait for blobs data to arrive
             refreshBlobs();
             // when something arrives, proceed
@@ -271,8 +277,14 @@ void WorldStateMgrThread::fsmPerception()
             // read new data and ensure validity
             refreshPerceptionAndValidate();
 
-            // update opc
-            updateWorldState();
+            // update database - TODO: uncomment when IDs and consistency are implemented
+            /*
+            bool updated = doPopulateDB();
+            if (updated)
+                yDebug("database updated successfully");
+            else
+                yWarning("could not update database");
+            */
 
             break;
         }
@@ -283,11 +295,44 @@ void WorldStateMgrThread::fsmPerception()
     }
 }
 
+void WorldStateMgrThread::getInitialEntries()
+{
+    // acquire initial entries (robot hands) from OPC, save them
+    if (opcPort.getOutputCount()>0 && !gotInitialEntries)
+    {
+        yDebug("saving initial OPC entries into world state map");
+        Bottle opcCmd, opcCmdContent, opcReply;
+        opcCmd.addVocab(Vocab::encode("ask"));
+        opcCmdContent.addString("all");
+        opcCmd.addList() = opcCmdContent;
+        opcPort.write(opcCmd, opcReply);
+
+        // process OPC response
+        if (opcReply.size() > 1)
+        {
+            if (opcReply.get(0).asVocab()==Vocab::encode("ack") &&
+                opcReply.get(1).asList()->get(0).asString()=="id")
+            {
+                Bottle *initialIDs = opcReply.get(1).asList()->get(1).asList();
+                yDebug() << "--->" << initialIDs->toString().c_str();
+                // TODO: save to map
+                //std::pair<worldMap::iterator,bool> mapRes =
+                //    world.insert(std::make_pair(  ));
+            }
+            else
+                yDebug() << __func__ << "did not receive ack from OPC";
+        }
+
+        gotInitialEntries = true;        
+        yDebug("saved initial OPC entries");
+    }
+}
+
 void WorldStateMgrThread::refreshBlobs()
 {
     if (playbackMode)
     {
-        yWarning("refreshBlobs called when it was not supposed to");
+        yWarning() << __func__ << "called when it was not supposed to";
         return;
     }
 
@@ -298,13 +343,15 @@ void WorldStateMgrThread::refreshBlobs()
         // number of blobs
         sizeAff = static_cast<int>( inAff->get(0).asDouble() );
     }
+
+    //yDebug("successfully refreshed blob descriptor input");
 }
 
 void WorldStateMgrThread::refreshTracker()
 {
     if (playbackMode)
     {
-        yWarning("refreshTracker called when it was not supposed to");
+        yWarning() << __func__ << "called when it was not supposed to";
         return;
     }
 
@@ -315,12 +362,19 @@ void WorldStateMgrThread::refreshTracker()
         // number of tracked objects
         sizeTargets = inTargets->size();
     }
+    else
+    {
+        yWarning() << __func__ << "did not receive data from tracker, was it initialized?";
+    }
+    
+    //yDebug("successfully refreshed tracker input");
 }
 
 void WorldStateMgrThread::refreshPerception()
 {
     refreshBlobs();
     refreshTracker();
+    //yDebug("successfully refreshed perception");
 }
 
 bool WorldStateMgrThread::refreshPerceptionAndValidate()
@@ -338,16 +392,18 @@ bool WorldStateMgrThread::refreshPerceptionAndValidate()
         yWarning("sizeAff=%d differs from sizeTargets=%d", sizeAff, sizeTargets);
         return false;
     }
-
+    
+    //yDebug("successfully refreshed and validated perception");
     return true;
 }
 
 bool WorldStateMgrThread::doPopulateDB()
 {
+
     for(int a=0; a<sizeAff; a++)
     {
         yDebug("doPopulateDB, a=%d", a);
-
+        
         // common properties
         Bottle bName;
         Bottle bPos;
@@ -456,24 +512,27 @@ bool WorldStateMgrThread::doPopulateDB()
         }
 
         // populate
-        Bottle opcCmd, opcReply;
+        Bottle opcCmd, opcCmdContent, opcReply;
         opcCmd.addVocab(Vocab::encode("add"));
-        opcCmd.addList() = bName;
-        opcCmd.addList() = bPos;
-        opcCmd.addList() = bIsHand;
+
+        opcCmdContent.addList() = bName;
+        opcCmdContent.addList() = bPos;
+        opcCmdContent.addList() = bIsHand;
         if (!bIsHandValue)
         {
-            opcCmd.addList() = bOffset;
-            opcCmd.addList() = bDesc;        
-            opcCmd.addList() = bInHand;
-            opcCmd.addList() = bOnTopOf;
-            opcCmd.addList() = bReachW;
-            opcCmd.addList() = bPullW;
+            opcCmdContent.addList() = bOffset;
+            opcCmdContent.addList() = bDesc;        
+            opcCmdContent.addList() = bInHand;
+            opcCmdContent.addList() = bOnTopOf;
+            opcCmdContent.addList() = bReachW;
+            opcCmdContent.addList() = bPullW;
         }
         else
         {
-            opcCmd.addList() = bIsFree;        
+            opcCmdContent.addList() = bIsFree;        
         }
+
+        opcCmd.addList() = opcCmdContent;
 
         yDebug("%d, populating OPC with: %s", a, opcCmd.toString().c_str());
         opcPort.write(opcCmd, opcReply);
@@ -482,7 +541,10 @@ bool WorldStateMgrThread::doPopulateDB()
         if (opcReply.size() > 1)
         {
             if (opcReply.get(0).asVocab()==Vocab::encode("ack"))
+            {
                 yDebug() << __func__ << "received ack from OPC";
+                // TODO: store opc ID into std::map
+            }
             else
                 yDebug() << __func__ << "did not receive ack from OPC";
         }
@@ -514,7 +576,7 @@ string WorldStateMgrThread::getName(const int &id)
         return iolReply.get(1).asString();
     else
     {
-        yWarning("getName: obtained invalid response from IOL");
+        yWarning() << __func__ << "obtained invalid response from IOL";
         return string();
     }
 }
@@ -549,7 +611,7 @@ vector<double> WorldStateMgrThread::getTooltipOffset(const int &id)
     }
     else
     {
-        yWarning("getTooltipOffset: obtained invalid response from GeometricIF");
+        yWarning() << __func__ << "obtained invalid response from GeometricIF";
         return vector<double>();
     }
 }
@@ -584,7 +646,7 @@ vector<int> WorldStateMgrThread::isOnTopOf(const int &id)
     }
     else
     {
-        yWarning("isOnTopOf: obtained invalid response from GeometricIF");
+        yWarning() << __func__ << "obtained invalid response from GeometricIF";
         return vector<int>();
     }
 }
@@ -619,7 +681,7 @@ vector<int> WorldStateMgrThread::getIdsToReach(const int &id)
     }
     else
     {
-        yWarning("getIdsToReach: obtained invalid response from GeometricIF");
+        yWarning() << __func__ << "obtained invalid response from GeometricIF";
         return vector<int>();
     }
 }
@@ -654,7 +716,7 @@ vector<int> WorldStateMgrThread::getIdsToPull(const int &id)
     }
     else
     {
-        yWarning("getIdsToPull: obtained invalid response from GeometricIF");
+        yWarning() << __func__ << "obtained invalid response from GeometricIF";
         return vector<int>();
     }
 }
@@ -718,10 +780,10 @@ string WorldStateMgrThread::inWhichHand(const string &objName)
             return geomIFReply.get(1).asString();
         }
         else
-            yWarning("inWhichHand: obtained valid but unknown response from GeometricIF");
+            yWarning() << __func__ << "obtained valid but unknown response from GeometricIF";
     }
     else
-        yWarning("inWhichHand: obtained invalid response from GeometricIF");
+        yWarning() << __func__ << "obtained invalid response from GeometricIF";
 
     // default
     return "none";
@@ -789,13 +851,20 @@ void WorldStateMgrThread::fsmPlayback()
                 // parse each entry/line of current group "[state##]"
                 for (int j=1; j<bCurr.size(); j++)
                 {
-                    // check if entry already exists in OPC
+                    // going to ask OPC whether entry already exists
                     opcCmd.clear();
                     content.clear();
                     opcCmd.addVocab(Vocab::encode("get"));
                     obj_j = bCurr.get(j).asList();
                     opcCmd.addList() = *obj_j->get(0).asList();
                     opcPort.write(opcCmd, opcReply);
+
+                    // stop here if no OPC connection
+                    if (opcPort.getOutputCount() < 1)
+                    {
+                        yWarning() << __func__ << "not connected to OPC";
+                        break;
+                    }
                     
                     if (opcReply.get(0).asVocab() == Vocab::encode("ack"))
                     {
@@ -819,7 +888,7 @@ void WorldStateMgrThread::fsmPlayback()
                         content.append(*obj_j->get(1).asList()); // propSet
                         opcCmd.addList() = content;
                         opcPort.write(opcCmd, opcReply);
-
+                        
                         // handle problems and inconsistencies
                         if (opcReply.get(1).asList()->get(1).asInt() !=
                             obj_j->get(0).asList()->get(1).asInt())
@@ -859,5 +928,5 @@ void WorldStateMgrThread::fsmPlayback()
 bool WorldStateMgrThread::setPlaybackFile(const string &file)
 {
     playbackFile = file;
-    yDebug("going to read from playback file %s", playbackFile.c_str());
+    //yDebug("going to read from playback file %s", playbackFile.c_str());
 }

@@ -34,6 +34,7 @@
 //#include <cstdio>
 //#include <iostream>
 #include <fstream>
+#include <string.h>
 
 using namespace yarp::os;
 using namespace std;
@@ -43,6 +44,7 @@ public:
     Thread_read(BufferedPort<Bottle> * broad_port,RpcClient * rpcClient,int r);
     Bottle _data,_ids;
     Mutex guard;
+    Mutex guard_runit;
     bool _runit;
     virtual bool threadInit();
     
@@ -71,9 +73,14 @@ class TranslatorModule: public RFModule {
     double threadPeriod;
 
     Thread_read *readingThread;
-	ResourceFinder findFile;
+    
 	ofstream myfile,myfile2;
+
+private:
+    //const char* objIDsFileName, *stateFileName;
+    string objIDsFileName, stateFileName;
 public:
+    
     double getPeriod();
     bool configure(yarp::os::ResourceFinder &rf);
     bool updateModule();
