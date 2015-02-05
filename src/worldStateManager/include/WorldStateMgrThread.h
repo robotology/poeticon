@@ -12,6 +12,7 @@
 
 #include <iomanip>
 #include <iostream> // __func__
+#include <map>
 #include <sstream>
 #include <yarp/os/Bottle.h>
 #include <yarp/os/BufferedPort.h>
@@ -50,6 +51,8 @@
 using namespace std;
 using namespace yarp::os;
 
+typedef std::map<int,double> worldMap;
+
 class WorldStateMgrThread : public RateThread
 {
     private:
@@ -71,12 +74,14 @@ class WorldStateMgrThread : public RateThread
         // perception and playback modes
         bool playbackMode;
         bool populated;
+        bool gotInitialEntries;
 
         // perception mode
         int perceptionFSMState;
         Bottle *inAff;
         Bottle *inTargets;
         int sizeTargets, sizeAff;
+        worldMap world;
 
         // playback mode
         int playbackFSMState;
@@ -103,6 +108,7 @@ class WorldStateMgrThread : public RateThread
         bool initPerceptionVars();
         bool initTracker();
         void fsmPerception();
+        void getInitialEntries();
         void refreshBlobs();
         void refreshTracker();
         void refreshPerception();

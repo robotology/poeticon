@@ -86,6 +86,7 @@ bool WorldStateMgrThread::threadInit()
     //yDebug("thread initialization");
     closing = false;
     populated = false; // TODO: really check if opc was populated before this module started
+    gotInitialEntries = false;
     if ( !openPorts() )
     {
         yError("problem opening ports");
@@ -199,6 +200,9 @@ void WorldStateMgrThread::fsmPerception()
     {
         case STATE_WAIT_BLOBS:
         {
+            // acquire initial entries (robot hands) from OPC database
+            getInitialEntries();
+
             // wait for blobs data to arrive
             refreshBlobs();
             // when something arrives, proceed
@@ -273,8 +277,14 @@ void WorldStateMgrThread::fsmPerception()
             // read new data and ensure validity
             refreshPerceptionAndValidate();
 
-            // update opc
-            updateWorldState();
+            // update database - TODO: uncomment when IDs and consistency are implemented
+            /*
+            bool updated = doPopulateDB();
+            if (updated)
+                yDebug("database updated successfully");
+            else
+                yWarning("could not update database");
+            */
 
             break;
         }
@@ -282,6 +292,39 @@ void WorldStateMgrThread::fsmPerception()
         {
             break;
         }
+    }
+}
+
+void WorldStateMgrThread::getInitialEntries()
+{
+    // acquire initial entries (robot hands) from OPC, save them
+    if (opcPort.getOutputCount()>0 && !gotInitialEntries)
+    {
+        yDebug("saving initial OPC entries into world state map");
+        Bottle opcCmd, opcCmdContent, opcReply;
+        opcCmd.addVocab(Vocab::encode("ask"));
+        opcCmdContent.addString("all");
+        opcCmd.addList() = opcCmdContent;
+        opcPort.write(opcCmd, opcReply);
+
+        // process OPC response
+        if (opcReply.size() > 1)
+        {
+            if (opcReply.get(0).asVocab()==Vocab::encode("ack") &&
+                opcReply.get(1).asList()->get(0).asString()=="id")
+            {
+                Bottle *initialIDs = opcReply.get(1).asList()->get(1).asList();
+                yDebug() << "--->" << initialIDs->toString().c_str();
+                // TODO: save to map
+                //std::pair<worldMap::iterator,bool> mapRes =
+                //    world.insert(std::make_pair(  ));
+            }
+            else
+                yDebug() << __func__ << "did not receive ack from OPC";
+        }
+
+        gotInitialEntries = true;        
+        yDebug("saved initial OPC entries");
     }
 }
 
@@ -356,10 +399,11 @@ bool WorldStateMgrThread::refreshPerceptionAndValidate()
 
 bool WorldStateMgrThread::doPopulateDB()
 {
+
     for(int a=0; a<sizeAff; a++)
     {
         yDebug("doPopulateDB, a=%d", a);
-
+        
         // common properties
         Bottle bName;
         Bottle bPos;
@@ -497,7 +541,10 @@ bool WorldStateMgrThread::doPopulateDB()
         if (opcReply.size() > 1)
         {
             if (opcReply.get(0).asVocab()==Vocab::encode("ack"))
+            {
                 yDebug() << __func__ << "received ack from OPC";
+                // TODO: store opc ID into std::map
+            }
             else
                 yDebug() << __func__ << "did not receive ack from OPC";
         }
