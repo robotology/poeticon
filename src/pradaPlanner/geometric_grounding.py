@@ -148,9 +148,13 @@ def geometric_grounding():
 
 ## wait until he receives an instruction:
         while 1:
-            bottle_in = p.read(True)
             command = ''
-            command = bottle_in.toString()
+            while 1:
+                bottle_in = p.read(False)
+                yarp.Time.delay(0.2)
+                if bottle_in:
+                    command = bottle_in.toString()
+                    break
             print command
             if command == 'update':
 
@@ -210,7 +214,8 @@ def geometric_grounding():
                         Affor_bottle_out.clear()
                         
                         while 1:
-                            Affor_bottle_in = Affor_yarp.read()
+                            Affor_bottle_in = Affor_yarp.read(False)
+                            yarp.Time.delay(0.2)
                             if Affor_bottle_in:
                                 bottle_decode_aux = Affor_bottle_in.toString()
                                 break
