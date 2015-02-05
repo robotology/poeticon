@@ -314,17 +314,17 @@ void WorldStateMgrThread::getInitialEntries()
                 opcReply.get(1).asList()->get(0).asString()=="id")
             {
                 Bottle *initialIDs = opcReply.get(1).asList()->get(1).asList();
-                yDebug() << "--->" << initialIDs->toString().c_str();
-                // TODO: save to map
-                //std::pair<worldMap::iterator,bool> mapRes =
-                //    world.insert(std::make_pair(  ));
+                for (int o=0; o<initialIDs->size(); o++)
+                {
+                    opcIDs.push_back(initialIDs->get(o).asInt());
+                }
             }
             else
                 yDebug() << __func__ << "did not receive ack from OPC";
         }
 
         gotInitialEntries = true;        
-        yDebug("saved initial OPC entries");
+        //yDebug("saved initial OPC entries into opcIDs");
     }
 }
 

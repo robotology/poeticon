@@ -51,7 +51,7 @@
 using namespace std;
 using namespace yarp::os;
 
-typedef std::map<int,double> worldMap;
+typedef std::map<int,double> idsMap;
 
 class WorldStateMgrThread : public RateThread
 {
@@ -81,7 +81,8 @@ class WorldStateMgrThread : public RateThread
         Bottle *inAff;
         Bottle *inTargets;
         int sizeTargets, sizeAff;
-        worldMap world;
+        std::vector<int> opcIDs;
+        idsMap ids;
 
         // playback mode
         int playbackFSMState;
