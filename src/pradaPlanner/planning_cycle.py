@@ -7,14 +7,7 @@ import os
 import yarp
 
 yarp.Network.init()
-## function imports/includes
-##from geometric_grounding import geometric_grounding, create_rules, create_symbols
-##from Affordance_communication import Affordance_comm
-##from Goal_Imaginer import goal_imaginer
 
-##import geometric_grounding
-##import Affordance_communication
-##import Goal_Imaginer
 
 class worldStateCommunication:
     ## for rpc communication with worldStateManager
@@ -33,10 +26,6 @@ class worldStateCommunication:
         return ans.size() == 1 and ans.get(0).asVocad == 27503
     
 def update_state(PathName):
-    ##rf = yarp.ResourceFinder()
-    ##rf.setVerbose(True)
-    ##rf.setDefaultContext("poeticon")
-    ##PathName = rf.findPath("contexts/poeticon")
     symbol_file = open(''.join(PathName +"/symbols.dat"))
     symbols = symbol_file.read()
     symbol_file.close()
@@ -195,9 +184,7 @@ def planning_cycle():
             goal_bottle_out.addString('kill')
             goal_yarp.write()
             break
-        #planner = subprocess.Popen(["./planner.exe"],stdout = subprocess.PIPE, stderr = subprocess.PIPE)
         print("process-planner.exe")
-        #planner = subprocess.Popen([''.join("." +PathName +"/planner.exe")],stdout = subprocess.PIPE, stderr = subprocess.PIPE)
         print(''.join(PathName + "/planner.exe"))
         planner = subprocess.Popen([''.join(PathName + "/planner.exe")],stdout = subprocess.PIPE, stderr = subprocess.PIPE,cwd = PathName)
         data = planner.communicate()
@@ -233,10 +220,6 @@ def planning_cycle():
         
         ## processes output of planner
         ## executes next action
-
-        ## update ws - Vai ser aldrabado por enquanto:
-        ## next state = outcome do PRADA
-        ## copia este outcome para o ficheiro de world state
         
         subgoal_file = open(''.join(PathName +"/goal.dat"),'r')
         goal = subgoal_file.read().split(' ')
@@ -261,7 +244,6 @@ def planning_cycle():
                     print 'situation changed, receding in plan'
                     break
         print 'continue:',cont
-        raw_input('press enter to continue')
         if cont == -1:
             plan_level = plan_level-1
             config_file = open(''.join(PathName +"/config"),'r')
@@ -295,6 +277,9 @@ def planning_cycle():
         act_check = '  %s' %next_action
         if act_check in rules:
             print 'action to be executed: ', next_action, '\n'
+
+#########################################################################
+##			Communication with action executor
 ##            ARE_yarp_bottle_out = ARE_yarp.prepare()
 ##            ARE_yarp_bottle_out.clear()
 ##            ARE_yarp_bottle_out.addString(next_action)
@@ -311,8 +296,13 @@ def planning_cycle():
 ##                    print 'action not acknowledged, stopping'
 ##                    flag_kill = 1
 ##                    break
+##########################################################################
+
             if flag_kill == 1:
                 break
+
+##########################################################################
+##			DEBUG MODE ONLY					##
 ##            next_state = []
 ##            for t in range(len(rules)):
 ##                if rules[t] == '  %s' %next_action:
@@ -350,8 +340,7 @@ def planning_cycle():
 ##            state_file = open("state.dat",'w')
 ##            state_file.write(state)
 ##            state_file.close()
-
-            raw_input('press any key')
+##########################################################################
             
         print 'planning step: ' ,plan_level
         print 'planning horizon: ',horizon

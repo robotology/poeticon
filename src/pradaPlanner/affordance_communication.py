@@ -46,7 +46,8 @@ def Affordance_comm():
     while 1:
         command = ''
         while 1:
-            Affor_bottle_in = geo_yarp.read()
+            Affor_bottle_in = geo_yarp.read(False)
+            yarp.Time.delay(0.2)
             if Affor_bottle_in:
                 command = Affor_bottle_in.toString()
                 break
@@ -57,6 +58,7 @@ def Affordance_comm():
         elif command == 'update':
             while 1:
                 Affor_bottle_in = geo_yarp.read()
+                yarp.Time.delay(0.2)
                 if Affor_bottle_in:
                     data = Affor_bottle_in.toString()
                     break
