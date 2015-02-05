@@ -468,24 +468,27 @@ bool WorldStateMgrThread::doPopulateDB()
         }
 
         // populate
-        Bottle opcCmd, opcReply;
+        Bottle opcCmd, opcCmdContent, opcReply;
         opcCmd.addVocab(Vocab::encode("add"));
-        opcCmd.addList() = bName;
-        opcCmd.addList() = bPos;
-        opcCmd.addList() = bIsHand;
+
+        opcCmdContent.addList() = bName;
+        opcCmdContent.addList() = bPos;
+        opcCmdContent.addList() = bIsHand;
         if (!bIsHandValue)
         {
-            opcCmd.addList() = bOffset;
-            opcCmd.addList() = bDesc;        
-            opcCmd.addList() = bInHand;
-            opcCmd.addList() = bOnTopOf;
-            opcCmd.addList() = bReachW;
-            opcCmd.addList() = bPullW;
+            opcCmdContent.addList() = bOffset;
+            opcCmdContent.addList() = bDesc;        
+            opcCmdContent.addList() = bInHand;
+            opcCmdContent.addList() = bOnTopOf;
+            opcCmdContent.addList() = bReachW;
+            opcCmdContent.addList() = bPullW;
         }
         else
         {
-            opcCmd.addList() = bIsFree;        
+            opcCmdContent.addList() = bIsFree;        
         }
+
+        opcCmd.addList() = opcCmdContent;
 
         yDebug("%d, populating OPC with: %s", a, opcCmd.toString().c_str());
         opcPort.write(opcCmd, opcReply);
