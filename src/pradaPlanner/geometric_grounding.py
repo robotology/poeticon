@@ -232,9 +232,7 @@ def geometric_grounding():
                 tempsymbols = []
                 newsymbols = []
                 for i in range(len(symbols)-1):
-                        print 'sending:', symbols[i]
-                        tempsymbols = tempsymbols+create_symbols(objects,symbols[i])
-                        print 'received:', tempsymbols
+                    tempsymbols = tempsymbols+create_symbols(objects,symbols[i])
                 for i in range(len(tempsymbols)):
                     if tempsymbols[i] not in newsymbols:
                         newsymbols = newsymbols + [tempsymbols[i]]
