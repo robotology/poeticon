@@ -142,7 +142,7 @@ def geometric_grounding():
         right_hand = 11
         left_hand= 12
         prerule_file = open(''.join(PathName + "/pre_rules.dat"))
-        presymbol_file = open(''.join(PathName + "/pre_rules.dat"))
+        presymbol_file = open(''.join(PathName + "/pre_symbols.dat"))
 
 
 
@@ -232,7 +232,7 @@ def geometric_grounding():
                 tempsymbols = []
                 newsymbols = []
                 for i in range(len(symbols)-1):
-                        tempsymbols = tempsymbols+create_symbols(objects,symbols[i])
+                    tempsymbols = tempsymbols+create_symbols(objects,symbols[i])
                 for i in range(len(tempsymbols)):
                     if tempsymbols[i] not in newsymbols:
                         newsymbols = newsymbols + [tempsymbols[i]]

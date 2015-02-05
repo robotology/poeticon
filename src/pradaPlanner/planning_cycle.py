@@ -32,11 +32,11 @@ class worldStateCommunication:
     def is_success(self, ans):
         return ans.size() == 1 and ans.get(0).asVocad == 27503
     
-def update_state():
-    rf = yarp.ResourceFinder()
-    rf.setVerbose(True)
-    rf.setDefaultContext("poeticon")
-    PathName = rf.findPath("contexts/poeticon")
+def update_state(PathName):
+    ##rf = yarp.ResourceFinder()
+    ##rf.setVerbose(True)
+    ##rf.setDefaultContext("poeticon")
+    ##PathName = rf.findPath("contexts/poeticon")
     symbol_file = open(''.join(PathName +"/symbols.dat"))
     symbols = symbol_file.read()
     symbol_file.close()
@@ -67,7 +67,7 @@ def planning_cycle():
     rf.setVerbose(True)
     rf.setDefaultContext("poeticon")
     PathName = rf.findPath("contexts/poeticon")
-    print(''.join("." +PathName +"/planner.exe"))
+    print(''.join("cd " + PathName +" && " + "./planner.exe"))
     world_rpc = worldStateCommunication()
     geo_yarp = yarp.BufferedPortBottle()
     geo_yarp.open("/planner/grounding_cmd:io")
@@ -143,7 +143,7 @@ def planning_cycle():
             if command == 'ready':
                 print 'ready'
                 break
-    update_state()
+    update_state(PathName)
     raw_input('press any key')
 
     config_file = open(''.join(PathName +"/config"),'r')
@@ -175,7 +175,7 @@ def planning_cycle():
             if State_bottle_in:
                 print 'state updated'
                 break
-        update_state()
+        update_state(PathName)
         state_file = open(''.join(PathName +"/state.dat"),'r')
         state = state_file.read().split(' ')
         state[-1] = state[-1].replace('\r','').replace('\n','')
@@ -197,7 +197,9 @@ def planning_cycle():
             break
         #planner = subprocess.Popen(["./planner.exe"],stdout = subprocess.PIPE, stderr = subprocess.PIPE)
         print("process-planner.exe")
-        planner = subprocess.Popen([''.join("." +PathName +"/planner.exe")],stdout = subprocess.PIPE, stderr = subprocess.PIPE)
+        #planner = subprocess.Popen([''.join("." +PathName +"/planner.exe")],stdout = subprocess.PIPE, stderr = subprocess.PIPE)
+        print(''.join(PathName + "/planner.exe"))
+        planner = subprocess.Popen([''.join(PathName + "/planner.exe")],stdout = subprocess.PIPE, stderr = subprocess.PIPE,cwd = PathName)
         data = planner.communicate()
         
         data = data[0].split('\n')
