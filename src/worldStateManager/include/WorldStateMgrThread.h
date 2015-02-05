@@ -24,7 +24,7 @@
 #include <yarp/os/Time.h>
 #include <yarp/os/Vocab.h>
 
-// perception states
+// perception mode states
 #define STATE_WAIT_BLOBS   0
 #define STATE_READ_BLOBS   1
 #define STATE_INIT_TRACKER 2
@@ -33,7 +33,7 @@
 #define STATE_POPULATE_DB  5
 #define STATE_UPDATE_DB    6
 
-// playback states
+// playback mode states
 #define STATE_PARSE_FILE 100
 #define STATE_STEP_FILE  101
 #define STATE_END_FILE   102
