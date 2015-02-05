@@ -36,8 +36,12 @@ def goal_imaginer():
     rf.setDefaultContext("poeticon")
     PathName = rf.findPath("contexts/poeticon")
     while 1:
-        goal_bottle_in = goal_yarp.read(True)
-        command = goal_bottle_in.toString()
+        while 1:
+            goal_bottle_in = goal_yarp.read(False)
+            yarp.Time.delay(0.2)
+            if goal_bottle_in:
+                 command = goal_bottle_in.toString()
+                 break
         if command == 'start':
             print 'starting'
             goal_file = open(''.join(PathName +"/goal.dat"),'w')
