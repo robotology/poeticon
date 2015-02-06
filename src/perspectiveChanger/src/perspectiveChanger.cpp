@@ -29,7 +29,7 @@ bool   PerspectiveChangerModule::updateModule() {
 bool   PerspectiveChangerModule::configure(yarp::os::ResourceFinder &rf) {
 
     /* module name */
-    moduleName = rf.check("name", Value("perspectivechanger"),
+    moduleName = rf.check("name", Value("perspectiveChanger"),
                           "Module name (string)").asString();
 
     setName(moduleName.c_str());
