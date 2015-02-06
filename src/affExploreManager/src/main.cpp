@@ -30,7 +30,7 @@ int main(int argc, char *argv[])
     ResourceFinder rf;
     rf.setVerbose(true);
     rf.setDefault("name","affExploreManager");
-    rf.setDefaultContext("affExploreManager");
+    rf.setDefaultContext("poeticon");
     rf.setDefaultConfigFile("affExploreManager.ini");
     rf.setDefault("tracking_period","30");
     rf.configure(argc,argv);

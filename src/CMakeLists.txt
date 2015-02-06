@@ -29,6 +29,7 @@ add_subdirectory(worldStateManager)
 # modules that need OpenCV
 if(OpenCV_FOUND)
     add_subdirectory(activeSegmentation)
+    #add_subdirectory(affExploreManager)
     add_subdirectory(blobSpotter)
     add_subdirectory(blobDescriptor)
     #add_subdirectory(objectDescriptor)

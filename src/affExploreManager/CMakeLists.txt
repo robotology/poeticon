@@ -46,5 +46,3 @@ source_group("Header Files" FILES ${folder_header})
 add_executable(${PROJECTNAME} ${folder_header} ${folder_source})
 target_link_libraries(${PROJECTNAME} ${OpenCV_LIBRARIES} ${GSL_LIBRARIES} ${YARP_LIBRARIES})
 install(TARGETS ${PROJECTNAME} DESTINATION bin)
-
-add_subdirectory(app)
