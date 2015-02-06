@@ -201,7 +201,8 @@ void WorldStateMgrThread::fsmPerception()
         case STATE_WAIT_BLOBS:
         {
             // acquire initial entries (robot hands) from OPC database
-            getInitialEntries();
+            // TODO: this should be called as soon as opcPort is connected
+            getInitialOPC();
 
             // wait for blobs data to arrive
             refreshBlobs();
@@ -295,12 +296,11 @@ void WorldStateMgrThread::fsmPerception()
     }
 }
 
-void WorldStateMgrThread::getInitialEntries()
+void WorldStateMgrThread::getInitialOPC()
 {
     // acquire initial entries (robot hands) from OPC, save them
     if (opcPort.getOutputCount()>0 && !gotInitialEntries)
     {
-        yDebug("saving initial OPC entries into world state map");
         Bottle opcCmd, opcCmdContent, opcReply;
         opcCmd.addVocab(Vocab::encode("ask"));
         opcCmdContent.addString("all");
@@ -324,7 +324,7 @@ void WorldStateMgrThread::getInitialEntries()
         }
 
         gotInitialEntries = true;        
-        //yDebug("saved initial OPC entries into opcIDs");
+        yDebug() << "saved initial OPC entries, opcIDs =" << opcIDs;
     }
 }
 
@@ -361,6 +361,9 @@ void WorldStateMgrThread::refreshTracker()
     {
         // number of tracked objects
         sizeTargets = inTargets->size();
+        
+        // get current track IDs
+        refreshTrackIDs();
     }
     else
     {
@@ -368,6 +371,11 @@ void WorldStateMgrThread::refreshTracker()
     }
     
     //yDebug("successfully refreshed tracker input");
+}
+
+void WorldStateMgrThread::refreshTrackIDs()
+{
+    // TODO: inTargets->get(*).asList()->get(0).asDouble() -> trackIDs
 }
 
 void WorldStateMgrThread::refreshPerception()

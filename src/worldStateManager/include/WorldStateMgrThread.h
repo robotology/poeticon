@@ -82,6 +82,7 @@ class WorldStateMgrThread : public RateThread
         Bottle *inTargets;
         int sizeTargets, sizeAff;
         std::vector<int> opcIDs;
+        std::vector<int> trackIDs;
         idsMap ids;
 
         // playback mode
@@ -109,9 +110,10 @@ class WorldStateMgrThread : public RateThread
         bool initPerceptionVars();
         bool initTracker();
         void fsmPerception();
-        void getInitialEntries();
+        void getInitialOPC();
         void refreshBlobs();
         void refreshTracker();
+        void refreshTrackIDs();
         void refreshPerception();
         bool refreshPerceptionAndValidate();
         bool doPopulateDB();
