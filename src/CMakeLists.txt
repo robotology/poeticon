@@ -25,6 +25,7 @@ find_package(TBB)
 add_subdirectory(opc2prada)
 add_subdirectory(pradaPlanner)
 add_subdirectory(worldStateManager)
+add_subdirectory(affExploreManager)
 
 # modules that need OpenCV
 if(OpenCV_FOUND)
