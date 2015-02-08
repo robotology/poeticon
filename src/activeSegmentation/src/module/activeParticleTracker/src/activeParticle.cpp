@@ -112,6 +112,13 @@ int TRACKERModule::track(const int32_t fix_x, const int32_t fix_y)
 }
 
 /**********************************************************/
+bool TRACKERModule::countFrom(const int32_t index)
+{
+    trackerManager->countFrom(index);
+    return true;
+}
+
+/**********************************************************/
 bool TRACKERModule::untrack(const int32_t id)
 {
     trackerManager->stopTracker(id);
@@ -229,6 +236,13 @@ void TRACKERManager::interrupt()
 }
 
 /**********************************************************/
+bool TRACKERManager::countFrom(int index)
+{
+    iter=index;
+    return true;
+}
+
+/**********************************************************/
 bool TRACKERManager::stopTracker(int id)
 {
     mutex.wait();
@@ -303,7 +317,7 @@ int TRACKERManager::processFixationPoint(Bottle &b)
             {
                 SegInfo info (fix_x, fix_y, cropSizeWidth,  cropSizeHeight);
                 id = iter;
-                fprintf(stdout, "OK SHOULD START THREAD %d\n", id);
+                fprintf(stdout, "OK SHOULD START THREAD %d with ITER %d\n", id, iter);
                 
                 workerThreads[id] = new ParticleThread(id, rf, info);
                 workerThreads[id]->start();
