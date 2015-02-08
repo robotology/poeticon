@@ -60,7 +60,6 @@ ActiveSeg::Error ActiveSeg::getSegWithFixation( const IplImage *img, IplImage* &
         fprintf(stdout, "Invalid right size for x position,reducing crop to: %d \n", info.cropWidth);
 #endif
     }
-    fprintf(stdout, "ACTIVE SEG: dbg 3\n");
     //check if y and crop are within width range
     if ( (info.fix_y - info.cropHeight/2) < 0 )
     {
