@@ -189,6 +189,7 @@ void ParticleThread::run()
         retreive_particle( particles );
 
         cvReleaseImage(&img_hsv);
+        cvReleaseImage(&image);
         mutex.post();
     }
 }

@@ -454,12 +454,13 @@ void TRACKERManager::onRead(ImageOf<yarp::sig::PixelRgb> &img)
                 {
                     cvCircle ((IplImage*)outImg.getIplImage(), pts[0], 5,  CV_RGB(255, 0 , 255), CV_FILLED, CV_AA);
                     cvCircle ((IplImage*)outImg.getIplImage(), pts[1], 5,  CV_RGB(255, 0 , 255), CV_FILLED, CV_AA);
-                    cvSaveImage("output.png", (IplImage*)outImg.getIplImage());
+                    //cvSaveImage("output.png", (IplImage*)outImg.getIplImage());
                     cloneTracker(obj, pts);
                 }
             }
         }
     }
+    
     container.unlock();
     if (b.size())
     targetOutPort.write();
@@ -489,7 +490,6 @@ void TRACKERManager::cloneTracker(TargetObject *obj, cv::Point *pt)
         iter++;
 
         SegInfo info1 (pt[1].x, pt[1].y, cropSizeWidth, cropSizeHeight);
-        id = 0;
         id = workerThreads.size();
 
         workerThreads[id] = new ParticleThread(id, rf, info1, group, &obj->colour);//&obj->colour);
