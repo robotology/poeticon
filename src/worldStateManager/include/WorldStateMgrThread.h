@@ -61,14 +61,12 @@ class WorldStateMgrThread : public RateThread
         string inAffPortName;
         string outFixationPortName;
         string opcPortName;
-        string geomIFPortName;
-        string iolPortName;
+        string activityPortName;
         BufferedPort<Bottle> inTargetsPort;
         BufferedPort<Bottle> inAffPort;
         Port outFixationPort;
         RpcClient opcPort;
-        RpcClient geomIFPort;
-        RpcClient iolPort;
+        RpcClient activityPort;
         bool closing;
 
         // perception and playback modes

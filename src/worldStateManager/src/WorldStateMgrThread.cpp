@@ -38,11 +38,8 @@ bool WorldStateMgrThread::openPorts()
     outFixationPortName = "/" + moduleName + "/fixation:o";
     outFixationPort.open(outFixationPortName.c_str());
 
-    geomIFPortName = "/" + moduleName + "/geomIF:rpc";
-    geomIFPort.open(geomIFPortName.c_str());
-
-    iolPortName = "/" + moduleName + "/iol:rpc";
-    iolPort.open(iolPortName.c_str());
+    activityPortName = "/" + moduleName + "/activity:rpc";
+    activityPort.open(activityPortName.c_str());
 
     return true;
 }
@@ -59,8 +56,7 @@ void WorldStateMgrThread::close()
     inTargetsPort.close();
     inAffPort.close();
     outFixationPort.close();
-    geomIFPort.close();
-    iolPort.close();
+    activityPort.close();
 }
 
 void WorldStateMgrThread::interrupt()
@@ -76,8 +72,7 @@ void WorldStateMgrThread::interrupt()
     inTargetsPort.interrupt();
     inAffPort.interrupt();
     outFixationPort.interrupt();
-    geomIFPort.interrupt();
-    iolPort.interrupt();
+    activityPort.interrupt();
 }
 
 bool WorldStateMgrThread::threadInit()
@@ -126,9 +121,9 @@ bool WorldStateMgrThread::updateWorldState()
      if (!playbackMode)
      {
          // perception mode
-         if (geomIFPort.getOutputCount() < 1)
+         if (activityPort.getOutputCount() < 1)
          {
-             yWarning() << __func__ << "not connected to GeometricIF";
+             yWarning() << __func__ << "not connected to ActivityIF";
          }
          refreshPerceptionAndValidate();
      }
@@ -564,52 +559,52 @@ bool WorldStateMgrThread::doPopulateDB()
 
 string WorldStateMgrThread::getName(const int &id)
 {
-    if (iolPort.getOutputCount() < 1)
+    if (activityPort.getOutputCount() < 1)
     {
-        yWarning() << __func__ << "not connected to GeometricIF";
+        yWarning() << __func__ << "not connected to ActivityIF";
         return string();
     }
 
-    Bottle iolCmd, iolReply;
-    iolCmd.addVocab(Vocab::encode("name"));
-    iolCmd.addInt(id);
-    yDebug() << __func__ <<  "sending query to IOL:" << iolCmd.toString().c_str();
-    iolPort.write(iolCmd, iolReply);
+    Bottle activityCmd, activityReply;
+    activityCmd.addVocab(Vocab::encode("name"));
+    activityCmd.addInt(id);
+    yDebug() << __func__ <<  "sending query to ActivityIF:" << activityCmd.toString().c_str();
+    activityPort.write(activityCmd, activityReply);
 
     bool validResponse = false;
-    validResponse = ( (iolReply.size()>1) &&
-                      (iolReply.get(0).asVocab()==Vocab::encode("ack")) );
+    validResponse = ( (activityReply.size()>1) &&
+                      (activityReply.get(0).asVocab()==Vocab::encode("ack")) );
 
     if (validResponse)
-        return iolReply.get(1).asString();
+        return activityReply.get(1).asString();
     else
     {
-        yWarning() << __func__ << "obtained invalid response from IOL";
+        yWarning() << __func__ << "obtained invalid response from ActivityIF";
         return string();
     }
 }
 
 vector<double> WorldStateMgrThread::getTooltipOffset(const int &id)
 {
-    if (geomIFPort.getOutputCount() < 1)
+    if (activityPort.getOutputCount() < 1)
     {
-        yWarning() << __func__ << "not connected to GeometricIF";
+        yWarning() << __func__ << "not connected to ActivityIF";
         return vector<double>();
     }
 
-    Bottle geomIFCmd, geomIFReply;
-    geomIFCmd.addVocab(Vocab::encode("offset"));
-    geomIFCmd.addInt(id);
-    yDebug() << __func__ << "sending query to GeometricIF:" << geomIFCmd.toString().c_str();
-    geomIFPort.write(geomIFCmd, geomIFReply);
+    Bottle activityCmd, activityReply;
+    activityCmd.addVocab(Vocab::encode("offset"));
+    activityCmd.addInt(id);
+    yDebug() << __func__ << "sending query to ActivityIF:" << activityCmd.toString().c_str();
+    activityPort.write(activityCmd, activityReply);
 
     bool validResponse = false;
-    validResponse = ( (geomIFReply.size()>1) &&
-                      (geomIFReply.get(0).asVocab()==Vocab::encode("ack")) );
+    validResponse = ( (activityReply.size()>1) &&
+                      (activityReply.get(0).asVocab()==Vocab::encode("ack")) );
 
     if (validResponse)
     {
-        Bottle *bOffset = geomIFReply.get(1).asList();
+        Bottle *bOffset = activityReply.get(1).asList();
         vector<double> offset; // TODO: pre-allocate size
         for (int t=0; t<bOffset->size(); t++)
         {
@@ -619,32 +614,32 @@ vector<double> WorldStateMgrThread::getTooltipOffset(const int &id)
     }
     else
     {
-        yWarning() << __func__ << "obtained invalid response from GeometricIF";
+        yWarning() << __func__ << "obtained invalid response from ActivityIF";
         return vector<double>();
     }
 }
 
 vector<int> WorldStateMgrThread::isOnTopOf(const int &id)
 {
-    if (geomIFPort.getOutputCount() < 1)
+    if (activityPort.getOutputCount() < 1)
     {
-        yWarning() << __func__ << "not connected to GeometricIF";
+        yWarning() << __func__ << "not connected to ActivityIF";
         return vector<int>();
     }
 
-    Bottle geomIFCmd, geomIFReply;
-    geomIFCmd.addVocab(Vocab::encode("oto"));
-    geomIFCmd.addInt(id);
-    yDebug() << __func__ << "sending query to GeometricIF:" << geomIFCmd.toString().c_str();
-    geomIFPort.write(geomIFCmd, geomIFReply);
+    Bottle activityCmd, activityReply;
+    activityCmd.addVocab(Vocab::encode("oto"));
+    activityCmd.addInt(id);
+    yDebug() << __func__ << "sending query to ActivityIF:" << activityCmd.toString().c_str();
+    activityPort.write(activityCmd, activityReply);
 
     bool validResponse = false;
-    validResponse = ( (geomIFReply.size()>1) &&
-                      (geomIFReply.get(0).asVocab()==Vocab::encode("ack")) );
+    validResponse = ( (activityReply.size()>1) &&
+                      (activityReply.get(0).asVocab()==Vocab::encode("ack")) );
 
     if (validResponse)
     {
-        Bottle *bIds = geomIFReply.get(1).asList();
+        Bottle *bIds = activityReply.get(1).asList();
         vector<int> ids; // TODO: pre-allocate size
         for (int o=0; o<bIds->size(); o++)
         {
@@ -654,32 +649,32 @@ vector<int> WorldStateMgrThread::isOnTopOf(const int &id)
     }
     else
     {
-        yWarning() << __func__ << "obtained invalid response from GeometricIF";
+        yWarning() << __func__ << "obtained invalid response from ActivityIF";
         return vector<int>();
     }
 }
 
 vector<int> WorldStateMgrThread::getIdsToReach(const int &id)
 {
-    if (geomIFPort.getOutputCount() < 1)
+    if (activityPort.getOutputCount() < 1)
     {
-        yWarning() << __func__ << "not connected to GeometricIF";
+        yWarning() << __func__ << "not connected to ActivityIF";
         return vector<int>();
     }
 
-    Bottle geomIFCmd, geomIFReply;
-    geomIFCmd.addVocab(Vocab::encode("reaw"));
-    geomIFCmd.addInt(id);
-    yDebug() << "sending query to GeometricIF:" << geomIFCmd.toString().c_str();
-    geomIFPort.write(geomIFCmd, geomIFReply);
+    Bottle activityCmd, activityReply;
+    activityCmd.addVocab(Vocab::encode("reaw"));
+    activityCmd.addInt(id);
+    yDebug() << "sending query to ActivityIF:" << activityCmd.toString().c_str();
+    activityPort.write(activityCmd, activityReply);
 
     bool validResponse = false;
-    validResponse = ( (geomIFReply.size()>1) &&
-                      (geomIFReply.get(0).asVocab()==Vocab::encode("ack")) );
+    validResponse = ( (activityReply.size()>1) &&
+                      (activityReply.get(0).asVocab()==Vocab::encode("ack")) );
 
     if (validResponse)
     {
-        Bottle *bIds = geomIFReply.get(1).asList();
+        Bottle *bIds = activityReply.get(1).asList();
         vector<int> ids; // TODO: pre-allocate size
         for (int o=0; o<bIds->size(); o++)
         {
@@ -689,32 +684,32 @@ vector<int> WorldStateMgrThread::getIdsToReach(const int &id)
     }
     else
     {
-        yWarning() << __func__ << "obtained invalid response from GeometricIF";
+        yWarning() << __func__ << "obtained invalid response from ActivityIF";
         return vector<int>();
     }
 }
 
 vector<int> WorldStateMgrThread::getIdsToPull(const int &id)
 {
-    if (geomIFPort.getOutputCount() < 1)
+    if (activityPort.getOutputCount() < 1)
     {
-        yWarning() << __func__ << "not connected to GeometricIF";
+        yWarning() << __func__ << "not connected to ActivityIF";
         return vector<int>();
     }
 
-    Bottle geomIFCmd, geomIFReply;
-    geomIFCmd.addVocab(Vocab::encode("pulw"));
-    geomIFCmd.addInt(id);
-    yDebug() << "sending query to GeometricIF:" << geomIFCmd.toString().c_str();
-    geomIFPort.write(geomIFCmd, geomIFReply);
+    Bottle activityCmd, activityReply;
+    activityCmd.addVocab(Vocab::encode("pulw"));
+    activityCmd.addInt(id);
+    yDebug() << "sending query to ActivityIF:" << activityCmd.toString().c_str();
+    activityPort.write(activityCmd, activityReply);
 
     bool validResponse = false;
-    validResponse = ( (geomIFReply.size()>1) &&
-                      (geomIFReply.get(0).asVocab()==Vocab::encode("ack")) );
+    validResponse = ( (activityReply.size()>1) &&
+                      (activityReply.get(0).asVocab()==Vocab::encode("ack")) );
 
     if (validResponse)
     {
-        Bottle *bIds = geomIFReply.get(1).asList();
+        Bottle *bIds = activityReply.get(1).asList();
         vector<int> ids; // TODO: pre-allocate size
         for (int o=0; o<bIds->size(); o++)
         {
@@ -724,16 +719,16 @@ vector<int> WorldStateMgrThread::getIdsToPull(const int &id)
     }
     else
     {
-        yWarning() << __func__ << "obtained invalid response from GeometricIF";
+        yWarning() << __func__ << "obtained invalid response from ActivityIF";
         return vector<int>();
     }
 }
 
 bool WorldStateMgrThread::isHandFree(const string &handName)
 {
-    if (geomIFPort.getOutputCount() < 1)
+    if (activityPort.getOutputCount() < 1)
     {
-        yWarning() << __func__ << "not connected to GeometricIF";
+        yWarning() << __func__ << "not connected to ActivityIF";
         return false;
     }
 
@@ -743,24 +738,24 @@ bool WorldStateMgrThread::isHandFree(const string &handName)
         yWarning("isHandFree: argument handName must be left_hand or right_hand");
     }
     
-    Bottle geomIFCmd, geomIFReply;
-    geomIFCmd.addVocab(Vocab::encode("isfree"));
-    geomIFCmd.addString(handName.c_str());
-    yDebug() << "sending query to GeometricIF:" << geomIFCmd.toString().c_str();
-    geomIFPort.write(geomIFCmd, geomIFReply);
+    Bottle activityCmd, activityReply;
+    activityCmd.addVocab(Vocab::encode("isfree"));
+    activityCmd.addString(handName.c_str());
+    yDebug() << "sending query to ActivityIF:" << activityCmd.toString().c_str();
+    activityPort.write(activityCmd, activityReply);
     
     bool validResponse = false;
-    validResponse = ( (geomIFReply.size()>1) &&
-                      (geomIFReply.get(0).asVocab()==Vocab::encode("ack")) );
+    validResponse = ( (activityReply.size()>1) &&
+                      (activityReply.get(0).asVocab()==Vocab::encode("ack")) );
 
-    return (validResponse && (geomIFReply.get(1).asBool()==true));
+    return (validResponse && (activityReply.get(1).asBool()==true));
 }
 
 string WorldStateMgrThread::inWhichHand(const string &objName)
 {
-    if (geomIFPort.getOutputCount() < 1)
+    if (activityPort.getOutputCount() < 1)
     {
-        yWarning() << __func__ << "not connected to GeometricIF";
+        yWarning() << __func__ << "not connected to ActivityIF";
     }
 
     // TODO: use consistent names everywhere (incl. RPC): left or left_hand or lefthand
@@ -769,29 +764,29 @@ string WorldStateMgrThread::inWhichHand(const string &objName)
         yWarning() << __func__ << "argument objName must be an object name, not a hand name";
     }
 
-    Bottle geomIFCmd, geomIFReply;
-    geomIFCmd.addVocab(Vocab::encode("inhand"));
-    geomIFCmd.addString(objName.c_str());
-    yDebug() << __func__ << "sending query to GeometricIF:" << geomIFCmd.toString().c_str();
-    geomIFPort.write(geomIFCmd, geomIFReply);
+    Bottle activityCmd, activityReply;
+    activityCmd.addVocab(Vocab::encode("inhand"));
+    activityCmd.addString(objName.c_str());
+    yDebug() << __func__ << "sending query to ActivityIF:" << activityCmd.toString().c_str();
+    activityPort.write(activityCmd, activityReply);
     
     bool validResponse = false;
-    validResponse = ( (geomIFReply.size()>1) &&
-                      (geomIFReply.get(0).asVocab()==Vocab::encode("ack")) );
+    validResponse = ( (activityReply.size()>1) &&
+                      (activityReply.get(0).asVocab()==Vocab::encode("ack")) );
 
     // TODO: use consistent names everywhere (incl. RPC): left or left_hand or lefthand
     if (validResponse)
     {
-        if ((geomIFReply.get(1).asString()=="left") || (geomIFReply.get(1).asString()=="right"))
+        if ((activityReply.get(1).asString()=="left") || (activityReply.get(1).asString()=="right"))
         {
             // success, return "left" or "right" as received from GeomIF
-            return geomIFReply.get(1).asString();
+            return activityReply.get(1).asString();
         }
         else
-            yWarning() << __func__ << "obtained valid but unknown response from GeometricIF";
+            yWarning() << __func__ << "obtained valid but unknown response from ActivityIF";
     }
     else
-        yWarning() << __func__ << "obtained invalid response from GeometricIF";
+        yWarning() << __func__ << "obtained invalid response from ActivityIF";
 
     // default
     return "none";
