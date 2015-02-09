@@ -104,10 +104,11 @@ class WorldStateMgrThread : public RateThread
         void interrupt();
         bool threadInit();
         void run();
-        
+
         // perception and playback modes
+        bool resetWorldState();
         bool updateWorldState();
-        
+
         // perception mode
         bool initPerceptionVars();
         bool initTracker();
@@ -119,7 +120,7 @@ class WorldStateMgrThread : public RateThread
         void refreshPerception();
         bool refreshPerceptionAndValidate();
         bool doPopulateDB();
-        string getName(const double &u, const double &v);
+        string getLabel(const double &u, const double &v);
         bool mono2stereo(const double &u, const double &v, double x, double y, double z);
         vector<double> getTooltipOffset(const int &id);
         vector<int> isOnTopOf(const int &id);

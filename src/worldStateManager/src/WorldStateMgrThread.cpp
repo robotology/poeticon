@@ -117,31 +117,36 @@ void WorldStateMgrThread::run()
 /* perception and playback modes                                              */
 /* ************************************************************************** */
 
+bool WorldStateMgrThread::resetWorldState()
+{
+    // TODO: complete
+    return true;
+}
+
 bool WorldStateMgrThread::updateWorldState()
 {
-     // TODO: move this check to inner perception func (already done for dummy)
-     //if (opcPort.getOutputCount() < 1)
-     //    yWarning() << __func__ << "not connected to OPC";
+    // TODO: move this check to inner perception func (already done for dummy)
+    //if (opcPort.getOutputCount() < 1)
+    //    yWarning() << __func__ << "not connected to OPC";
 
-     if (!playbackMode)
-     {
-         // perception mode
-         if (activityPort.getOutputCount() < 1)
-         {
-             yWarning() << __func__ << "not connected to ActivityIF";
-         }
-         refreshPerceptionAndValidate();
-     }
-     else
-     {
-         // playback mode
-         playbackPaused = false;
-     }
-     
-     // TODO: opcPort.write() should be here instead of inner functions
+    if (!playbackMode)
+    {
+        // perception mode
+        if (activityPort.getOutputCount() < 1)
+        {
+            yWarning() << __func__ << "not connected to ActivityIF";
+        }
+        refreshPerceptionAndValidate();
+    }
+    else
+    {
+        // playback mode
+        playbackPaused = false;
+    }
 
+    // TODO: opcPort.write() should be here instead of inner functions
 
-     return true;
+    return true;
 }
 
 /* ************************************************************************** */
@@ -367,7 +372,7 @@ void WorldStateMgrThread::refreshTracker()
     {
         // number of tracked objects
         sizeTargets = inTargets->size();
-        
+
         // get current track IDs
         refreshTrackIDs();
     }
@@ -375,7 +380,7 @@ void WorldStateMgrThread::refreshTracker()
     {
         yWarning() << __func__ << "did not receive data from tracker, was it initialized?";
     }
-    
+
     //yDebug("successfully refreshed tracker input");
 }
 
@@ -406,7 +411,7 @@ bool WorldStateMgrThread::refreshPerceptionAndValidate()
         yWarning("sizeAff=%d differs from sizeTargets=%d", sizeAff, sizeTargets);
         return false;
     }
-    
+
     //yDebug("successfully refreshed and validated perception");
     return true;
 }
@@ -417,12 +422,12 @@ bool WorldStateMgrThread::doPopulateDB()
     for(int a=0; a<sizeAff; a++)
     {
         yDebug("doPopulateDB, a=%d", a);
-        
+
         // common properties
         Bottle bName;
         Bottle bPos;
         Bottle bIsHand;
-        
+
         // object properties
         Bottle bOffset;
         Bottle bDesc;
@@ -430,7 +435,7 @@ bool WorldStateMgrThread::doPopulateDB()
         Bottle bOnTopOf;
         Bottle bReachW;
         Bottle bPullW;
-        
+
         // hand properties
         Bottle bIsFree;
 
@@ -440,7 +445,7 @@ bool WorldStateMgrThread::doPopulateDB()
         //double u = inAff->get(a+1).asList()->get(0).asDouble(); // from blobs
         //double v = inAff->get(a+1).asList()->get(1).asDouble();
         bName.addString("name");
-        string bNameValue = getName(u, v);
+        string bNameValue = getLabel(u, v);
         bName.addString(bNameValue.c_str());
 
         // prepare position property
@@ -457,7 +462,7 @@ bool WorldStateMgrThread::doPopulateDB()
         bIsHand.addString("is_hand");
         bool bIsHandValue = false; // except for special entries in dbhands.ini
         bIsHand.addInt(bIsHandValue); // 1=true, 0=false
-        
+
         if (!bIsHandValue)
         {
             // object properties
@@ -479,18 +484,19 @@ bool WorldStateMgrThread::doPopulateDB()
             // prepare 2D shape descriptors property
             bDesc.addString("desc2d");
             Bottle &bDescValue = bDesc.addList();
-            bDescValue.addDouble(inAff->get(a+1).asList()->get(23).asDouble()); // area
-            bDescValue.addDouble(inAff->get(a+1).asList()->get(24).asDouble());
-            bDescValue.addDouble(inAff->get(a+1).asList()->get(25).asDouble());
-            bDescValue.addDouble(inAff->get(a+1).asList()->get(26).asDouble());
-            bDescValue.addDouble(inAff->get(a+1).asList()->get(27).asDouble());
-            bDescValue.addDouble(inAff->get(a+1).asList()->get(28).asDouble());
+            int areaIdx = 23;
+            bDescValue.addDouble(inAff->get(a+1).asList()->get(areaIdx).asDouble()); // area
+            bDescValue.addDouble(inAff->get(a+1).asList()->get(areaIdx+1).asDouble()); // conv
+            bDescValue.addDouble(inAff->get(a+1).asList()->get(areaIdx+2).asDouble()); // ecc
+            bDescValue.addDouble(inAff->get(a+1).asList()->get(areaIdx+3).asDouble()); // comp
+            bDescValue.addDouble(inAff->get(a+1).asList()->get(areaIdx+4).asDouble()); // circ
+            bDescValue.addDouble(inAff->get(a+1).asList()->get(areaIdx+5).asDouble()); // sq
 
             // prepare in_hand property (none/left/right)
             bInHand.addString("in_hand");
             string bInHandValue = inWhichHand(bNameValue.c_str());
             bInHand.addString(bInHandValue);
-            
+
             // prepare on_top_of property
             bOnTopOf.addString("on_top_of");
             Bottle &bOnTopOfValue = bOnTopOf.addList();
@@ -553,7 +559,7 @@ bool WorldStateMgrThread::doPopulateDB()
 
         yDebug("%d, populating OPC with: %s", a, opcCmd.toString().c_str());
         opcPort.write(opcCmd, opcReply);
-        
+
         // process OPC response
         if (opcReply.size() > 1)
         {
@@ -571,7 +577,7 @@ bool WorldStateMgrThread::doPopulateDB()
     return true;
 }
 
-string WorldStateMgrThread::getName(const double &u, const double &v)
+string WorldStateMgrThread::getLabel(const double &u, const double &v)
 {
     if (activityPort.getOutputCount() < 1)
     {
@@ -580,18 +586,17 @@ string WorldStateMgrThread::getName(const double &u, const double &v)
     }
 
     Bottle activityCmd, activityReply;
-    activityCmd.addVocab(Vocab::encode("name"));
+    activityCmd.addString("getLabel");
     activityCmd.addDouble(u);
     activityCmd.addDouble(v);
     yDebug() << __func__ <<  "sending query to ActivityIF:" << activityCmd.toString().c_str();
     activityPort.write(activityCmd, activityReply);
 
     bool validResponse = false;
-    validResponse = ( (activityReply.size()>1) &&
-                      (activityReply.get(0).asVocab()==Vocab::encode("ok")) );
+    validResponse = activityReply.get(0).isString(); // TODO: check string length
 
     if (validResponse)
-        return activityReply.get(1).asString();
+        return activityReply.get(0).asString();
     else
     {
         yWarning() << __func__ << "obtained invalid response from ActivityIF";
@@ -609,21 +614,21 @@ bool WorldStateMgrThread::mono2stereo(const double &u, const double &v,
     }
 
     Bottle activityCmd, activityReply;
-    activityCmd.addString("get3d");
+    activityCmd.addString("get3D");
     activityCmd.addDouble(u);
     activityCmd.addDouble(v);
     yDebug() << __func__ <<  "sending query to ActivityIF:" << activityCmd.toString().c_str();
     activityPort.write(activityCmd, activityReply);
 
     bool validResponse = false;
-    validResponse = ( (activityReply.size()>3) &&
-                      (activityReply.get(0).asVocab()==Vocab::encode("ok")) );
+    validResponse = ( activityReply.get(0).isList() &&
+                      activityReply.get(0).asList()->size()==3 );
 
     if (validResponse)
     {
-        x = activityReply.get(1).asDouble();
-        y = activityReply.get(2).asDouble();
-        z = activityReply.get(3).asDouble();
+        x = activityReply.get(0).asList()->get(1).asDouble();
+        y = activityReply.get(0).asList()->get(2).asDouble();
+        z = activityReply.get(0).asList()->get(3).asDouble();
         yDebug() << __func__ <<  "obtained successful 3D coordinates from ActivityIF";
     }
     else
@@ -788,13 +793,13 @@ bool WorldStateMgrThread::isHandFree(const string &handName)
     {
         yWarning("isHandFree: argument handName must be left_hand or right_hand");
     }
-    
+
     Bottle activityCmd, activityReply;
     activityCmd.addVocab(Vocab::encode("isfree"));
     activityCmd.addString(handName.c_str());
     yDebug() << "sending query to ActivityIF:" << activityCmd.toString().c_str();
     activityPort.write(activityCmd, activityReply);
-    
+
     bool validResponse = false;
     validResponse = ( (activityReply.size()>1) &&
                       (activityReply.get(0).asVocab()==Vocab::encode("ok")) );
@@ -820,7 +825,7 @@ string WorldStateMgrThread::inWhichHand(const string &objName)
     activityCmd.addString(objName.c_str());
     yDebug() << __func__ << "sending query to ActivityIF:" << activityCmd.toString().c_str();
     activityPort.write(activityCmd, activityReply);
-    
+
     bool validResponse = false;
     validResponse = ( (activityReply.size()>1) &&
                       (activityReply.get(0).asVocab()==Vocab::encode("ok")) );
@@ -874,13 +879,13 @@ void WorldStateMgrThread::fsmPlayback()
                 yError("file empty or not parsable");
                 playbackFSMState = STATE_END_FILE;
             }
-            
+
             // proceed to "[state00]"
             currPlayback = 0;
             playbackFSMState = STATE_STEP_FILE;
             break;
         }
-        
+
         case STATE_STEP_FILE:
         {
             if (!playbackPaused)
@@ -919,7 +924,7 @@ void WorldStateMgrThread::fsmPlayback()
                         yWarning() << __func__ << "not connected to OPC";
                         break;
                     }
-                    
+
                     if (opcReply.get(0).asVocab() == Vocab::encode("ack"))
                     {
                         // yes -> just update entry's properties
@@ -942,7 +947,7 @@ void WorldStateMgrThread::fsmPlayback()
                         content.append(*obj_j->get(1).asList()); // propSet
                         opcCmd.addList() = content;
                         opcPort.write(opcCmd, opcReply);
-                        
+
                         // handle problems and inconsistencies
                         if (opcReply.get(1).asList()->get(1).asInt() !=
                             obj_j->get(0).asList()->get(1).asInt())
@@ -957,23 +962,23 @@ void WorldStateMgrThread::fsmPlayback()
                         }
                     }
                 }
-                
+
                 ++currPlayback;
                 playbackPaused = true;
             }
-            
+
             // stay in same state, wait for next update instruction over rpc
-            
+
             break;
         }
-        
+
         case STATE_END_FILE:
         {
             yInfo("finished reading from playback file");
             closing = true;
             break;        
         }
-        
+
         default:
             break;
     }
