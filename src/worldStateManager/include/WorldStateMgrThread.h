@@ -119,7 +119,8 @@ class WorldStateMgrThread : public RateThread
         void refreshPerception();
         bool refreshPerceptionAndValidate();
         bool doPopulateDB();
-        string getName(const double &x, const double &y);
+        string getName(const double &u, const double &v);
+        bool mono2stereo(const double &u, const double &v, double x, double y, double z);
         vector<double> getTooltipOffset(const int &id);
         vector<int> isOnTopOf(const int &id);
         vector<int> getIdsToReach(const int &id);

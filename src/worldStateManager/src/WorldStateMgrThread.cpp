@@ -192,19 +192,19 @@ bool WorldStateMgrThread::initTracker()
 
     yInfo("initializing multi-object tracking of %d objects:", sizeAff);
     Bottle fixation;
-    double x=0.0, y=0.0;
+    double u=0.0, v=0.0;
 
     for(int a=0; a<sizeAff; a++)
     {
-        x = inAff->get(a+1).asList()->get(0).asDouble();
-        y = inAff->get(a+1).asList()->get(1).asDouble();
+        u = inAff->get(a+1).asList()->get(0).asDouble();
+        v = inAff->get(a+1).asList()->get(1).asDouble();
 
         fixation.clear();
-        fixation.addDouble(x);
-        fixation.addDouble(y);
+        fixation.addDouble(u);
+        fixation.addDouble(v);
         outFixationPort.write(fixation);
 
-        yInfo("id %d: %f %f", a, x, y);
+        yInfo("id %d: %f %f", a, u, v);
     }
     yInfo("done initializing tracker");
 
@@ -435,23 +435,23 @@ bool WorldStateMgrThread::doPopulateDB()
         Bottle bIsFree;
 
         // prepare name property
-        // from tracker
-        double x = inTargets->get(a).asList()->get(1).asDouble();
-        double y = inTargets->get(a).asList()->get(2).asDouble();
+        double u = inTargets->get(a).asList()->get(1).asDouble(); // from tracker
+        double v = inTargets->get(a).asList()->get(2).asDouble();
+        //double u = inAff->get(a+1).asList()->get(0).asDouble(); // from blobs
+        //double v = inAff->get(a+1).asList()->get(1).asDouble();
         bName.addString("name");
-        string bNameValue = getName(x, y);
+        string bNameValue = getName(u, v);
         bName.addString(bNameValue.c_str());
 
         // prepare position property
-        // TODO: transform to 3D ref frame with iKinGazeCtrl
         bPos.addString("pos");
         Bottle &bPosValue = bPos.addList();
-        // from blobs
-        //bPosValue.addDouble(inAff->get(a+1).asList()->get(0).asDouble());
-        //bPosValue.addDouble(inAff->get(a+1).asList()->get(1).asDouble());
-        // from tracker
+        // 2D to 3D transformation
+        double x=0.0, y=0.0, z=0.0;
+        mono2stereo(u, v, x, y, z);
         bPosValue.addDouble(x);
         bPosValue.addDouble(y);
+        bPosValue.addDouble(z);
 
         // prepare is_hand property
         bIsHand.addString("is_hand");
@@ -571,7 +571,7 @@ bool WorldStateMgrThread::doPopulateDB()
     return true;
 }
 
-string WorldStateMgrThread::getName(const double &x, const double &y)
+string WorldStateMgrThread::getName(const double &u, const double &v)
 {
     if (activityPort.getOutputCount() < 1)
     {
@@ -581,8 +581,8 @@ string WorldStateMgrThread::getName(const double &x, const double &y)
 
     Bottle activityCmd, activityReply;
     activityCmd.addVocab(Vocab::encode("name"));
-    activityCmd.addDouble(x);
-    activityCmd.addDouble(y);
+    activityCmd.addDouble(u);
+    activityCmd.addDouble(v);
     yDebug() << __func__ <<  "sending query to ActivityIF:" << activityCmd.toString().c_str();
     activityPort.write(activityCmd, activityReply);
 
@@ -597,6 +597,42 @@ string WorldStateMgrThread::getName(const double &x, const double &y)
         yWarning() << __func__ << "obtained invalid response from ActivityIF";
         return string();
     }
+}
+
+bool WorldStateMgrThread::mono2stereo(const double &u, const double &v,
+                                      double x, double y, double z)
+{
+    if (activityPort.getOutputCount() < 1)
+    {
+        yWarning() << __func__ << "not connected to ActivityIF";
+        return false;
+    }
+
+    Bottle activityCmd, activityReply;
+    activityCmd.addString("get3d");
+    activityCmd.addDouble(u);
+    activityCmd.addDouble(v);
+    yDebug() << __func__ <<  "sending query to ActivityIF:" << activityCmd.toString().c_str();
+    activityPort.write(activityCmd, activityReply);
+
+    bool validResponse = false;
+    validResponse = ( (activityReply.size()>3) &&
+                      (activityReply.get(0).asVocab()==Vocab::encode("ok")) );
+
+    if (validResponse)
+    {
+        x = activityReply.get(1).asDouble();
+        y = activityReply.get(2).asDouble();
+        z = activityReply.get(3).asDouble();
+        yDebug() << __func__ <<  "obtained successful 3D coordinates from ActivityIF";
+    }
+    else
+    {
+        yWarning() << __func__ << "obtained invalid response from ActivityIF";
+        return false;
+    }
+
+    return true;
 }
 
 vector<double> WorldStateMgrThread::getTooltipOffset(const int &id)
