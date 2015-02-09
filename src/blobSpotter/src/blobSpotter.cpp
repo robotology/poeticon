@@ -84,6 +84,40 @@ bool SPOTTERModule::quit()
 }
 
 /**********************************************************/
+int SPOTTERModule::getMaxArea()
+{
+    return spotterManager->maxArea;
+}
+
+/**********************************************************/
+bool SPOTTERModule::setMaxArea(const int32_t area)
+{
+    if (area > spotterManager->minArea && area < 20000)
+    {
+        spotterManager->maxArea = area;
+        return true;
+    }else
+        return false;
+}
+
+/**********************************************************/
+int SPOTTERModule::getMinArea()
+{
+    return spotterManager->minArea;
+}
+
+/**********************************************************/
+bool SPOTTERModule::setMinArea(const int32_t area)
+{
+    if (area < spotterManager->maxArea && area > 1)
+    {
+        spotterManager->minArea = area;
+        return true;
+    }else
+        return false;
+}
+
+/**********************************************************/
 int SPOTTERModule::getTotHist()
 {
     return spotterManager->histCnt;
@@ -154,6 +188,8 @@ SPOTTERManager::SPOTTERManager( const string &moduleName )
     this->moduleName = moduleName;
     roiPoints.setManager(this);
     deleted = false;
+    minArea = 100;
+    maxArea = 2000;
 }
 
 /**********************************************************/
@@ -332,7 +368,7 @@ void SPOTTERManager::onRead(ImageOf<yarp::sig::PixelRgb> &img)
 
         // Find contours
         findContours( test, cnt, hrch, CV_RETR_CCOMP, CV_CHAIN_APPROX_SIMPLE);
-	//findContours( test, cnt, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_TC89_L1);
+        //findContours( test, cnt, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_TC89_L1);
         // Get the moments
         vector<cv::Moments> mu(cnt.size() );
         for( int i = 0; i < cnt.size(); i++ )
@@ -356,7 +392,7 @@ void SPOTTERManager::onRead(ImageOf<yarp::sig::PixelRgb> &img)
 
         for( int i = 0; i< cnt.size(); i++ )
         {
-            if (mu[i].m00 > 100 &&  mu[i].m00 < 2000 && mc[i].y > 30)
+            if (mu[i].m00 > minArea &&  mu[i].m00 < maxArea && mc[i].y > 30)
             {
                 //printf(" * Contour[%d] -X[%lf]  -Y[%lf] -Area  = %.2f -Area OpenCV: %.2f -Length: %.2f \n", i, mc[i].x, mc[i].y, mu[i].m00, contourArea(cnt[i]), arcLength( cnt[i], true ) );
 
