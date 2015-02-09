@@ -41,6 +41,9 @@ bool WorldStateMgrThread::openPorts()
     activityPortName = "/" + moduleName + "/activity:rpc";
     activityPort.open(activityPortName.c_str());
 
+    trackerPortName = "/" + moduleName + "/tracker:rpc";
+    trackerPort.open(trackerPortName.c_str());
+
     return true;
 }
 
@@ -57,6 +60,7 @@ void WorldStateMgrThread::close()
     inAffPort.close();
     outFixationPort.close();
     activityPort.close();
+    trackerPort.close();
 }
 
 void WorldStateMgrThread::interrupt()
@@ -73,6 +77,7 @@ void WorldStateMgrThread::interrupt()
     inAffPort.interrupt();
     outFixationPort.interrupt();
     activityPort.interrupt();
+    trackerPort.interrupt();
 }
 
 bool WorldStateMgrThread::threadInit()
@@ -165,6 +170,31 @@ bool WorldStateMgrThread::initTracker()
         yWarning() << __func__ << "exiting, fixation:o not connected to tracker input";
         return false;
     }
+
+    if (trackerPort.getOutputCount() < 1)
+    {
+        yWarning() << __func__ << "exiting," << trackerPortName << "not connected to <activeParticleTrack>/rpc:i";
+        return false;
+    }
+
+    int startID = 13;
+    Bottle trackerCmd, trackerReply;
+    trackerCmd.addString("countFrom");
+    trackerCmd.addInt(startID);
+    //yDebug() << __func__ <<  "sending query to tracker:" << trackerCmd.toString().c_str();
+    trackerPort.write(trackerCmd, trackerReply);
+    //yDebug() << __func__ <<  "obtained response:" << trackerReply.toString().c_str();
+    bool validResponse = false;
+    validResponse = ( (trackerReply.size()>0) &&
+                      (trackerReply.get(0).asVocab()==Vocab::encode("ok")) );
+    if (!validResponse)
+    {
+        yWarning() << __func__ << "obtained invalid response from tracker";
+        return false;
+    }
+    //else
+    //    yDebug() << __func__ << "successfully communicated countFrom index to tracker";
+    yInfo("told tracker to assign IDs starting from %d", startID);
 
     yInfo("initializing multi-object tracking of %d objects:", sizeAff);
 

@@ -60,13 +60,15 @@ class WorldStateMgrThread : public RateThread
         string inTargetsPortName;
         string inAffPortName;
         string outFixationPortName;
-        string opcPortName;
         string activityPortName;
+        string opcPortName;
+        string trackerPortName;
         BufferedPort<Bottle> inTargetsPort;
         BufferedPort<Bottle> inAffPort;
         Port outFixationPort;
-        RpcClient opcPort;
         RpcClient activityPort;
+        RpcClient opcPort;
+        RpcClient trackerPort;
         bool closing;
 
         // perception and playback modes

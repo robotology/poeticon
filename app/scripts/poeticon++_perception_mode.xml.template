@@ -129,6 +129,10 @@
     <to>/activeParticleTrack/fixation:i</to>
 </connection>
 <connection>
+    <from>/wsm/tracker:rpc</from>
+    <to>/activeParticleTrack/rpc:i</to>
+</connection>
+<connection>
     <from>/activeParticleTrack/target:o</from>
     <to>/wsm/target:i</to>
 </connection>
@@ -139,10 +143,6 @@
 <connection>
     <from>/wsm/opc:io</from>
     <to>/memory/rpc</to>
-</connection>
-<connection>
-    <from>/wsm/are:rpc</from>
-    <to>/actionsRenderingEngine/cmd:io</to>
 </connection>
 <connection>
     <from>/opc2prada/rpcClient</from>
