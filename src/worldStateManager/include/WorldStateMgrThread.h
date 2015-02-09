@@ -57,18 +57,20 @@ class WorldStateMgrThread : public RateThread
 {
     private:
         string moduleName;
+        string opcPortName;
         string inTargetsPortName;
         string inAffPortName;
         string outFixationPortName;
         string activityPortName;
-        string opcPortName;
         string trackerPortName;
+
+        RpcClient opcPort;
         BufferedPort<Bottle> inTargetsPort;
         BufferedPort<Bottle> inAffPort;
         Port outFixationPort;
         RpcClient activityPort;
-        RpcClient opcPort;
         RpcClient trackerPort;
+
         bool closing;
 
         // perception and playback modes
@@ -117,7 +119,7 @@ class WorldStateMgrThread : public RateThread
         void refreshPerception();
         bool refreshPerceptionAndValidate();
         bool doPopulateDB();
-        string getName(const int &id);
+        string getName(const double &x, const double &y);
         vector<double> getTooltipOffset(const int &id);
         vector<int> isOnTopOf(const int &id);
         vector<int> getIdsToReach(const int &id);

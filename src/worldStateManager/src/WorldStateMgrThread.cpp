@@ -139,8 +139,8 @@ bool WorldStateMgrThread::updateWorldState()
      }
      
      // TODO: opcPort.write() should be here instead of inner functions
-     
-     
+
+
      return true;
 }
 
@@ -159,12 +159,6 @@ bool WorldStateMgrThread::initPerceptionVars()
 
 bool WorldStateMgrThread::initTracker()
 {
-    if (playbackMode)
-    {
-        yWarning() << __func__ << "called when it was not supposed to";
-        return false;
-    }
-
     if (outFixationPort.getOutputCount() < 1)
     {
         yWarning() << __func__ << "exiting, fixation:o not connected to tracker input";
@@ -177,6 +171,7 @@ bool WorldStateMgrThread::initTracker()
         return false;
     }
 
+    // TODO: this should be done as soon as trackerPort is connected
     int startID = 13;
     Bottle trackerCmd, trackerReply;
     trackerCmd.addString("countFrom");
@@ -192,12 +187,10 @@ bool WorldStateMgrThread::initTracker()
         yWarning() << __func__ << "obtained invalid response from tracker";
         return false;
     }
-    //else
-    //    yDebug() << __func__ << "successfully communicated countFrom index to tracker";
+    //else yDebug() << __func__ << "successfully communicated countFrom index to tracker";
     yInfo("told tracker to assign IDs starting from %d", startID);
 
     yInfo("initializing multi-object tracking of %d objects:", sizeAff);
-
     Bottle fixation;
     double x=0.0, y=0.0;
 
@@ -213,8 +206,8 @@ bool WorldStateMgrThread::initTracker()
 
         yInfo("id %d: %f %f", a, x, y);
     }
-
     yInfo("done initializing tracker");
+
     return true;
 }
 
@@ -355,12 +348,6 @@ void WorldStateMgrThread::getInitialOPC()
 
 void WorldStateMgrThread::refreshBlobs()
 {
-    if (playbackMode)
-    {
-        yWarning() << __func__ << "called when it was not supposed to";
-        return;
-    }
-
     inAff = inAffPort.read();
 
     if (inAff != NULL)
@@ -374,12 +361,6 @@ void WorldStateMgrThread::refreshBlobs()
 
 void WorldStateMgrThread::refreshTracker()
 {
-    if (playbackMode)
-    {
-        yWarning() << __func__ << "called when it was not supposed to";
-        return;
-    }
-
     inTargets = inTargetsPort.read();
 
     if (inTargets != NULL)
@@ -452,10 +433,13 @@ bool WorldStateMgrThread::doPopulateDB()
         
         // hand properties
         Bottle bIsFree;
-    
+
         // prepare name property
+        // from tracker
+        double x = inTargets->get(a).asList()->get(1).asDouble();
+        double y = inTargets->get(a).asList()->get(2).asDouble();
         bName.addString("name");
-        string bNameValue = getName(a); // TODO: use robust id instead of a
+        string bNameValue = getName(x, y);
         bName.addString(bNameValue.c_str());
 
         // prepare position property
@@ -466,8 +450,8 @@ bool WorldStateMgrThread::doPopulateDB()
         //bPosValue.addDouble(inAff->get(a+1).asList()->get(0).asDouble());
         //bPosValue.addDouble(inAff->get(a+1).asList()->get(1).asDouble());
         // from tracker
-        bPosValue.addDouble(inTargets->get(a).asList()->get(1).asDouble());
-        bPosValue.addDouble(inTargets->get(a).asList()->get(2).asDouble());
+        bPosValue.addDouble(x);
+        bPosValue.addDouble(y);
 
         // prepare is_hand property
         bIsHand.addString("is_hand");
@@ -587,7 +571,7 @@ bool WorldStateMgrThread::doPopulateDB()
     return true;
 }
 
-string WorldStateMgrThread::getName(const int &id)
+string WorldStateMgrThread::getName(const double &x, const double &y)
 {
     if (activityPort.getOutputCount() < 1)
     {
@@ -597,13 +581,14 @@ string WorldStateMgrThread::getName(const int &id)
 
     Bottle activityCmd, activityReply;
     activityCmd.addVocab(Vocab::encode("name"));
-    activityCmd.addInt(id);
+    activityCmd.addDouble(x);
+    activityCmd.addDouble(y);
     yDebug() << __func__ <<  "sending query to ActivityIF:" << activityCmd.toString().c_str();
     activityPort.write(activityCmd, activityReply);
 
     bool validResponse = false;
     validResponse = ( (activityReply.size()>1) &&
-                      (activityReply.get(0).asVocab()==Vocab::encode("ack")) );
+                      (activityReply.get(0).asVocab()==Vocab::encode("ok")) );
 
     if (validResponse)
         return activityReply.get(1).asString();
@@ -630,7 +615,7 @@ vector<double> WorldStateMgrThread::getTooltipOffset(const int &id)
 
     bool validResponse = false;
     validResponse = ( (activityReply.size()>1) &&
-                      (activityReply.get(0).asVocab()==Vocab::encode("ack")) );
+                      (activityReply.get(0).asVocab()==Vocab::encode("ok")) );
 
     if (validResponse)
     {
@@ -665,7 +650,7 @@ vector<int> WorldStateMgrThread::isOnTopOf(const int &id)
 
     bool validResponse = false;
     validResponse = ( (activityReply.size()>1) &&
-                      (activityReply.get(0).asVocab()==Vocab::encode("ack")) );
+                      (activityReply.get(0).asVocab()==Vocab::encode("ok")) );
 
     if (validResponse)
     {
@@ -700,7 +685,7 @@ vector<int> WorldStateMgrThread::getIdsToReach(const int &id)
 
     bool validResponse = false;
     validResponse = ( (activityReply.size()>1) &&
-                      (activityReply.get(0).asVocab()==Vocab::encode("ack")) );
+                      (activityReply.get(0).asVocab()==Vocab::encode("ok")) );
 
     if (validResponse)
     {
@@ -735,7 +720,7 @@ vector<int> WorldStateMgrThread::getIdsToPull(const int &id)
 
     bool validResponse = false;
     validResponse = ( (activityReply.size()>1) &&
-                      (activityReply.get(0).asVocab()==Vocab::encode("ack")) );
+                      (activityReply.get(0).asVocab()==Vocab::encode("ok")) );
 
     if (validResponse)
     {
@@ -776,7 +761,7 @@ bool WorldStateMgrThread::isHandFree(const string &handName)
     
     bool validResponse = false;
     validResponse = ( (activityReply.size()>1) &&
-                      (activityReply.get(0).asVocab()==Vocab::encode("ack")) );
+                      (activityReply.get(0).asVocab()==Vocab::encode("ok")) );
 
     return (validResponse && (activityReply.get(1).asBool()==true));
 }
@@ -802,7 +787,7 @@ string WorldStateMgrThread::inWhichHand(const string &objName)
     
     bool validResponse = false;
     validResponse = ( (activityReply.size()>1) &&
-                      (activityReply.get(0).asVocab()==Vocab::encode("ack")) );
+                      (activityReply.get(0).asVocab()==Vocab::encode("ok")) );
 
     // TODO: use consistent names everywhere (incl. RPC): left or left_hand or lefthand
     if (validResponse)
