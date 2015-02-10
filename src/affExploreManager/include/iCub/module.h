@@ -52,6 +52,7 @@ const double                    VDRAW_THR                    = 0.1;
 const double                    TOOL_TRANSFORM_DEFAULT[]     = {0.17, -0.17, 0.06};
 const double                    TABLE_HEIGHT_OFFSET_DEFAULT  = 0.03;
 const double                    OBJECT_SIZE_OFFSET_DEFAULT   = 0.04;
+const int                       HAND_NATURAL_POSE_DEFAULT    = 0; // 0 = straight pose, 1 = pronated pose.
 
 /**********************************************************/
 class BlobInfo
@@ -225,6 +226,7 @@ protected:
     int                         motSteps;
     int                         motStepsMin;
 
+    int                         handNaturalPose;
 
     std::ofstream               descData;
     std::ofstream               descDataMin;

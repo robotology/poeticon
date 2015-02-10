@@ -61,6 +61,7 @@ bool Manager::configure(ResourceFinder &rf)
     tableHeightOffset=rf.check("tableHeightOffset", Value(TABLE_HEIGHT_OFFSET_DEFAULT)).asDouble();
     objectSizeOffset=rf.check("objectSizeOffset", Value(OBJECT_SIZE_OFFSET_DEFAULT)).asDouble();
 
+    handNaturalPose=rf.check("handNaturalPose", Value(HAND_NATURAL_POSE_DEFAULT)).asInt();
     
     const ConstString icubContribEnvPath = yarp::os::getenv("ICUBcontrib_DIR");
     const ConstString localPath = "/share/ICUBcontrib/contexts/poeticonManager/";
@@ -729,7 +730,7 @@ void Manager::performAction()
     //executeToolAttach(toolTransform[toolId-1]);
 
     Bottle karmaMotor, KarmaReply;
-    int pose=1;
+    int pose=handNaturalPose;
 
     yarp::sig::Vector actPos;
     actPos.resize(3);
