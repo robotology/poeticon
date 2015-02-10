@@ -24,7 +24,7 @@
 ######################################################################################
 
 import yarp
-from multiprocessing import Process, Pipe
+## from multiprocessing import Process, Pipe
 
 
 
@@ -51,7 +51,7 @@ def Affordance_comm():
             if Affor_bottle_in:
                 command = Affor_bottle_in.toString()
                 break
-
+        print "updating rule..."
         new_rule = []
         if command == 'kill':
             break
@@ -66,6 +66,7 @@ def Affordance_comm():
             for y in range(len(data)):
                 data[y] = data[y].replace('"','')
             rule = data[0]
+            print rule
             context = data[1]
             outcome = data[2]
             outcome2 = data[3]
