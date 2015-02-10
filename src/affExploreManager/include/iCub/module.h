@@ -49,6 +49,9 @@ const int                       DEFAULT_MOTION_STEPS_MIN     = 2;
 const int                       DEFAULT_MAX_OBJ              = 1;
 const double                    DEFAULT_CLOSE_THR            = 30.0;
 const double                    VDRAW_THR                    = 0.1;
+const double                    TOOL_TRANSFORM_DEFAULT[]     = {0.17, -0.17, 0.06};
+const double                    TABLE_HEIGHT_OFFSET_DEFAULT  = 0.03;
+const double                    OBJECT_SIZE_OFFSET_DEFAULT   = 0.04;
 
 /**********************************************************/
 class BlobInfo
@@ -186,6 +189,7 @@ protected:
     yarp::sig::Vector           objectPos;
 
     std::vector<yarp::sig::Vector> toolTransform;
+    yarp::sig::Vector              toolTransformDefault;
 
     bool                        get3DPosition(const CvPoint &point, yarp::sig::Vector &x);
     int                         processHumanCmd(const yarp::os::Bottle &cmd, yarp::os::Bottle &b);
@@ -214,6 +218,9 @@ protected:
     double                      z_start;
     double                      u_start;
     double                      v_start;
+
+    double                      tableHeightOffset;
+    double                      objectSizeOffset;
 
     int                         motSteps;
     int                         motStepsMin;

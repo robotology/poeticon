@@ -58,6 +58,9 @@ bool Manager::configure(ResourceFinder &rf)
         motStepsMin=motSteps-1;
     }
 
+    tableHeightOffset=rf.check("tableHeightOffset", Value(TABLE_HEIGHT_OFFSET_DEFAULT)).asDouble();
+    objectSizeOffset=rf.check("objectSizeOffset", Value(OBJECT_SIZE_OFFSET_DEFAULT)).asDouble();
+
     
     const ConstString icubContribEnvPath = yarp::os::getenv("ICUBcontrib_DIR");
     const ConstString localPath = "/share/ICUBcontrib/contexts/poeticonManager/";
@@ -114,7 +117,8 @@ bool Manager::configure(ResourceFinder &rf)
     Bottle tool;
     char toolName[] = {'t', 'o', 'o', 'l', '0', '\0'};
 
-    for (int toolIndex = 0; toolIndex<n_tools; toolIndex++) {
+    for (int toolIndex = 0; toolIndex<n_tools; toolIndex++) 
+    {
         toolName[4]++;
         tool.clear();
         tool = rf.findGroup(toolName);
@@ -125,6 +129,11 @@ bool Manager::configure(ResourceFinder &rf)
     }
 
     toolId=1;   //default tool
+
+    toolTransformDefault.resize(3);
+    toolTransformDefault[0] = TOOL_TRANSFORM_DEFAULT[0];
+    toolTransformDefault[1] = TOOL_TRANSFORM_DEFAULT[1];
+    toolTransformDefault[2] = TOOL_TRANSFORM_DEFAULT[2];
 
     return true;
 }
@@ -445,7 +454,18 @@ bool Manager::updateModule()
 
     if (rxCmd==Vocab::encode("grab")) 
     {
-        toolName = cmd.get(1).asString();
+        if (cmd.size()>1)
+        {
+            toolName = cmd.get(1).asString();
+        }
+        else
+        {
+            toolName = "default";
+        }
+
+        reply.addString("grab");
+        reply.addString(toolName.c_str());
+        rpcHuman.reply(reply);
 
         if (simMode.compare("on")!=0) 
         {
@@ -453,20 +473,44 @@ bool Manager::updateModule()
             {
                 graspTool();
 
-                yarp::sig::Vector tTransform;
-                tTransform.resize(3);
-                tTransform[0] = cmd.get(2).asDouble();
-                tTransform[1] = cmd.get(3).asDouble();
-                tTransform[2] = cmd.get(4).asDouble();
-                executeToolAttach(tTransform);
+                if (cmd.size()>1)
+		{
+                    yarp::sig::Vector tTransform;
+                    tTransform.resize(3);
+                    tTransform[0] = cmd.get(2).asDouble();
+                    tTransform[1] = cmd.get(3).asDouble();
+                    tTransform[2] = cmd.get(4).asDouble();
+
+		    if (executeToolAttach(tTransform))
+		       fprintf(stderr,"\nTool attached \n");
+		    else
+		       fprintf(stderr,"\nERROR -- Problem in attaching the tool...\n"); 
+		}
+		else
+		{
+                    if (executeToolAttach(toolTransformDefault))
+		       fprintf(stderr,"\nTool attached \n");
+		    else
+		       fprintf(stderr,"\nERROR -- Problem in attaching the tool...\n");
+		}            
+                
             }
+
         }
         else 
         {
-            toolSimNum = cmd.get(1).asInt();
-            goHomeArmsHead();
-            //clears the space  in front of the robot
-            cmdSim.clear();
+            if (cmd.size()>1)
+            {
+                toolSimNum = cmd.get(1).asInt();
+            }
+	    else
+	    {
+		toolSimNum = 1;
+	    }
+            //toolSimNum = cmd.get(1).asInt();
+
+            goHomeArmsHead(); 
+            cmdSim.clear(); //clears the space in front of the robot
             replySim.clear();
             cmdSim.addString("clea");
             simObjLoaderModuleOutputPort.write(cmdSim,replySim);
@@ -476,13 +520,13 @@ bool Manager::updateModule()
             cmdSim.addString("grab");
             cmdSim.addInt(toolSimNum);
             simObjLoaderModuleOutputPort.write(cmdSim,replySim);
-
+            
             executeToolAttach(toolTransform[toolSimNum-1]);
         }
 
         goHomeArmsHead();
         reply.addString("grab:");
-        reply.addString(toolName.data());
+        reply.addString(toolName.c_str());
         rpcHuman.reply(reply);
     }
 
@@ -700,9 +744,9 @@ void Manager::performAction()
     }
     else 
     {
-        actPos[0]=objectPos[0]-0.02;
+        actPos[0]=objectPos[0] - objectSizeOffset;      // takes in consideration the object dimension, for an object of about objectSizeOffset radius. This might be taken from the object descriptors as well... (FUTURE WORKS)
         actPos[1]=objectPos[1];
-        actPos[2]=objectPos[2]-0.02;     // TODO (Afonso#1#): define table offset
+        actPos[2]=objectPos[2] + tableHeightOffset;     // define table offset
     }
 
     fprintf(stdout,"Acting on position: x=%+.3f y=%+.3f z=%+.3f\n",actPos[0],actPos[1],actPos[2]);
@@ -731,10 +775,10 @@ void Manager::performAction()
             karmaMotor.addString("pusp");
             karmaMotor.addInt(pose);
             karmaMotor.addDouble(actPos[0]);
-            karmaMotor.addDouble(actPos[1]);
+            karmaMotor.addDouble(actPos[1]); 
             karmaMotor.addDouble(actPos[2]);
             karmaMotor.addDouble(90.0); // direction (from right)
-            karmaMotor.addDouble(0.10);
+            karmaMotor.addDouble(objectSizeOffset*2.0); // Amount of the movement. It takes in consideration the object dimension, for an object of about objectSizeOffset radius. This might be taken from the object descriptors as well... (FUTURE WORKS)
 
             fprintf(stdout,"%s\n",karmaMotor.toString().c_str());
             actionStartTime=Time::now();
@@ -751,10 +795,10 @@ void Manager::performAction()
             karmaMotor.addString("pusp");
             karmaMotor.addInt(pose);
             karmaMotor.addDouble(actPos[0]);
-            karmaMotor.addDouble(actPos[1]);
+            karmaMotor.addDouble(actPos[1]); 
             karmaMotor.addDouble(actPos[2]);
             karmaMotor.addDouble(270.0); // direction (from left)
-            karmaMotor.addDouble(0.10);
+            karmaMotor.addDouble(objectSizeOffset*2.0); // Amount of the movement. It takes in consideration the object dimension, for an object of about objectSizeOffset radius. This might be taken from the object descriptors as well... (FUTURE WORKS)
 
             fprintf(stdout,"%s\n",karmaMotor.toString().c_str());
             actionStartTime=Time::now();
@@ -1022,10 +1066,10 @@ int Manager::askForTool()
     cmdAre.clear();
     replyAre.clear();
     cmdAre.addString("tato");
-    cmdAre.addString(hand);
+    cmdAre.addString(hand.c_str());
     fprintf(stdout,"%s\n",cmdAre.toString().c_str());
     rpcMotorAre.write(cmdAre, replyAre);
-    fprintf(stdout,"'tato' '%s' action is %s:\n",hand.data(),replyAre.toString().c_str());
+    fprintf(stdout,"'tato' '%s' action is %s:\n",hand.c_str(),replyAre.toString().c_str());
 
     return 1;
 }
@@ -1034,15 +1078,15 @@ int Manager::askForTool()
 void Manager::graspTool()
 {
     Time::delay(4.0);
-    fprintf(stdout,"Start 'clto' '%s' (close tool %s) proceedure:\n",hand.data(),hand.data());
+    fprintf(stdout,"Start 'clto' '%s' (close tool %s) proceedure:\n",hand.c_str(),hand.c_str());
     Bottle cmdAre,replyAre;
     cmdAre.clear();
     replyAre.clear();
     cmdAre.addString("clto");
-    cmdAre.addString(hand);
+    cmdAre.addString(hand.c_str());
     fprintf(stdout,"%s\n",cmdAre.toString().c_str());
     rpcMotorAre.write(cmdAre, replyAre);
-    fprintf(stdout,"'clto' '%s' action is %s:\n",hand.data(),replyAre.toString().c_str());
+    fprintf(stdout,"'clto' '%s' action is %s:\n",hand.c_str(),replyAre.toString().c_str());
 }
 
 /**********************************************************/
@@ -1131,32 +1175,45 @@ void Manager::goHomeHands()
 /**********************************************************/
 int Manager::executeToolAttach(const Vector &tool)
 {
-    fprintf(stdout,"Will now send to karmaMotor:\n");
-    Bottle karmaMotor,KarmaReply;
+    fprintf(stderr,"Reset tool transform.\n");
+    Bottle karmaMotor, KarmaReply;
     Bottle toolFinderCmd, toolFinderRpl;
 
     karmaMotor.addString("toop");
     karmaMotor.addString("remove");
     rpcMotorKarma.write(karmaMotor, KarmaReply);
+    fprintf(stderr,"reply is %s:\n",KarmaReply.toString().c_str());
 
-    karmaMotor.clear();KarmaReply.clear();
+    karmaMotor.clear();
+    KarmaReply.clear();
     karmaMotor.addString("toop");
     karmaMotor.addString("attach");
-    karmaMotor.addString(hand);
+    karmaMotor.addString(hand.c_str());
     karmaMotor.addDouble(tool[0]);
     karmaMotor.addDouble(tool[1]);
     karmaMotor.addDouble(tool[2]);
+    fprintf(stderr,"Will now send to karmaMotor:\n");
+    fprintf(stderr,"%s\n",karmaMotor.toString().c_str());
+    rpcMotorKarma.write(karmaMotor, KarmaReply);
+    fprintf(stderr,"reply is %s:\n",KarmaReply.toString().c_str());
+
+    karmaMotor.clear();
+    KarmaReply.clear();
+    karmaMotor.addString("toop");
+    karmaMotor.addString("get");
     fprintf(stdout,"%s\n",karmaMotor.toString().c_str());
     rpcMotorKarma.write(karmaMotor, KarmaReply);
     fprintf(stdout,"reply is %s:\n",KarmaReply.toString().c_str());
 
-    toolFinderCmd.clear();toolFinderRpl.clear();
+    toolFinderCmd.clear();
+    toolFinderRpl.clear();
     toolFinderCmd.addString("select");
-    toolFinderCmd.addString(hand);
-    toolFinderCmd.addString(hand);
+    toolFinderCmd.addString(hand.c_str());
+    toolFinderCmd.addString(hand.c_str());
     rpcToolFinder.write(toolFinderCmd, toolFinderRpl);
 
-    toolFinderCmd.clear();toolFinderRpl.clear();
+    toolFinderCmd.clear();
+    toolFinderRpl.clear();
     toolFinderCmd.addString("show");
     toolFinderCmd.addDouble(tool[0]);
     toolFinderCmd.addDouble(tool[1]);
