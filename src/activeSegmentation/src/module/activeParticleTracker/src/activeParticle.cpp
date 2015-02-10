@@ -346,6 +346,7 @@ void TRACKERManager::onRead(ImageOf<yarp::sig::PixelRgb> &img)
     std::map< unsigned int, ParticleThread* >::iterator itr;
     for (itr = workerThreads.begin(); itr!=workerThreads.end(); itr++)
     {
+        //workerThreads[itr->first]->
         workerThreads[itr->first]->update(orig);
     }
     mutex.post();

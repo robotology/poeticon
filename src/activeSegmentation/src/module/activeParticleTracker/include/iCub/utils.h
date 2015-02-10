@@ -31,6 +31,7 @@
 #include <yarp/os/PortReport.h>
 #include <yarp/os/Stamp.h>
 #include <yarp/os/Semaphore.h>
+#include <yarp/os/LockGuard.h>
 #include <yarp/sig/Vector.h>
 #include <yarp/sig/Image.h>
 #include <yarp/os/Event.h>
@@ -137,8 +138,6 @@ public:
     particle                *particles;
 
 private:
-    
-    yarp::os::Semaphore     sema;
 
     SegInfo                 info;
     int                     group;
@@ -157,6 +156,9 @@ private:
     CvRect                  **regions;
     histogram               **ref_histos;
     yarp::os::Semaphore     mutex;
+    
+    bool                    doneUpdating;
+
     gsl_rng                 *rng;
 
     particle                *sort_particles;

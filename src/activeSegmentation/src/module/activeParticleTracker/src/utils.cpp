@@ -68,6 +68,8 @@ ParticleThread::ParticleThread ( unsigned int id, ResourceFinder &rf, SegInfo in
     rng = gsl_rng_alloc( gsl_rng_mt19937 );
     gsl_rng_set( rng, (unsigned long)time(NULL) );
     activeSeg.configure(rf);
+    
+    doneUpdating=false;
 }
 
 /**********************************************************/
@@ -121,7 +123,7 @@ void ParticleThread::isInitialized()
 /**********************************************************/
 void ParticleThread::run()
 {
-    while (isStopping() != true)
+    while (isStopping() != true )
     {
         event.wait();
         mutex.wait();
@@ -130,66 +132,73 @@ void ParticleThread::run()
             mutex.post();
             return;
         }
-        IplImage *img_hsv = bgr2hsv( image );
-
-        if (object==NULL)
+        IplImage *img_hsv;
+        
+        if (!image)
+            fprintf(stdout, "received a NULL image, skipping frame\n");
+        
+        if (image)
         {
-            object = new TargetObject(id);
-            object->group = group;
-            object->colour = ParticleThread::colour;
-
-            activeSeg.getSegWithFixation(image, object->seg, info);
-            
-            activeSeg.getTemplateFromSeg(image, object->seg, object->tpl, info);
-            
-            container.lock();
-            container.add(object);
-            container.unlock();
-
-            if (num_objects>0)
-                free(*regions);
-            num_objects = 0;
-            cvCvtColor(image, image, CV_BGR2RGB);
-            num_objects = get_regionsImage( image, regions );
-
-            image = bgr2hsv( image );
-            if (ref_histos!=NULL)
-                free_histos ( ref_histos, num_objects);
-
-            ref_histos = compute_ref_histos( img_hsv, *regions, num_objects );
-
-            if (particles != NULL)
-                free (particles);
-
-            particles= init_distribution( *regions, ref_histos, num_objects, num_particles );
-            
-            mutexThread.unlock();
-        }
-        else
-        {
-            // perform prediction and measurement for each particle
-            for( int j = 0; j < num_particles; j++ )
+            img_hsv = bgr2hsv( image );
+        
+            if (object==NULL)
             {
-                particles[j] = transition( particles[j], image->width, image->height, rng );
-                float s = particles[j].s;
-                particles[j].w = likelihood( img_hsv, cvRound(particles[j].y),
-                    cvRound( particles[j].x ),
-                    cvRound( particles[j].width * s ),
-                    cvRound( particles[j].height * s ),
-                    particles[j].histo );
+                object = new TargetObject(id);
+                object->group = group;
+                object->colour = ParticleThread::colour;
+
+                activeSeg.getSegWithFixation(image, object->seg, info);
+                
+                activeSeg.getTemplateFromSeg(image, object->seg, object->tpl, info);
+                
+                container.lock();
+                container.add(object);
+                container.unlock();
+
+                if (num_objects>0)
+                    free(*regions);
+                num_objects = 0;
+                cvCvtColor(image, image, CV_BGR2RGB);
+                num_objects = get_regionsImage( image, regions );
+
+                if (ref_histos!=NULL)
+                    free_histos ( ref_histos, num_objects);
+
+                ref_histos = compute_ref_histos( img_hsv, *regions, num_objects );
+
+                if (particles != NULL)
+                    free (particles);
+
+                particles= init_distribution( *regions, ref_histos, num_objects, num_particles );
+                mutexThread.unlock();
             }
-            // normalize weights and resample a set of unweighted particles
-            normalize_weights( particles, num_particles );
-            sort_particles = resample( particles, num_particles );
-            free( particles );
-            particles = sort_particles;
+            else
+            {
+                // perform prediction and measurement for each particle
+                for( int j = 0; j < num_particles; j++ )
+                {
+                    particles[j] = transition( particles[j], img_hsv->width, img_hsv->height, rng );
+                    float s = particles[j].s;
+                    particles[j].w = likelihood( img_hsv, cvRound(particles[j].y),
+                        cvRound( particles[j].x ),
+                        cvRound( particles[j].width * s ),
+                        cvRound( particles[j].height * s ),
+                        particles[j].histo );
+                }
+                // normalize weights and resample a set of unweighted particles
+                normalize_weights( particles, num_particles );
+                sort_particles = resample( particles, num_particles );
+                free( particles );
+                particles = sort_particles;
+            }
+            qsort( particles, num_particles, sizeof( ParticleThread::particle ), &particle_cmp );
+
+            retreive_particle( particles );
+            
+            
+            cvReleaseImage(&image);
         }
-        qsort( particles, num_particles, sizeof( ParticleThread::particle ), &particle_cmp );
-
-        retreive_particle( particles );
-
         cvReleaseImage(&img_hsv);
-        cvReleaseImage(&image);
         mutex.post();
     }
 }
@@ -207,7 +216,6 @@ void ParticleThread::threadRelease()
 {
     if (image)
         cvReleaseImage(&image);
-
 }
 
 /**********************************************************/
@@ -222,7 +230,7 @@ void ParticleThread::update(IplImage *img)
 /**********************************************************/
 IplImage* ParticleThread::bgr2hsv( IplImage* bgr )
 {
-    IplImage* bgr32f, * hsv;
+    IplImage* bgr32f, *hsv;
 
     bgr32f = cvCreateImage( cvGetSize(bgr), IPL_DEPTH_32F, 3 );
     hsv = cvCreateImage( cvGetSize(bgr), IPL_DEPTH_32F, 3 );
@@ -473,12 +481,14 @@ float ParticleThread::likelihood( IplImage* img, int r, int c, int w, int h, his
     IplImage* tmp;
     histogram* histo;
     float d_sq;
-
+    if (img!=NULL)
+    {
     // extract region around (r,c) and compute and normalize its histogram
     cvSetImageROI( img, cvRect( c - w / 2, r - h / 2, w, h ) );
     tmp = cvCreateImage( cvGetSize(img), IPL_DEPTH_32F, 3 );
     cvCopy( img, tmp, NULL );
     cvResetImageROI( img );
+    }
     histo = calc_histogram( &tmp, 1 );
     cvReleaseImage( &tmp );
     normalize_histogram( histo );
@@ -486,6 +496,7 @@ float ParticleThread::likelihood( IplImage* img, int r, int c, int w, int h, his
     // compute likelihood as e^{\lambda D^2(h, h^*)}
     d_sq = histo_dist_sq( histo, ref_histo );
     free( histo );
+        
     return exp( -LAMBDA * d_sq );
 }
 
