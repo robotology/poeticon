@@ -16,6 +16,9 @@ PRADA probabilistic planner dependencies:
 - Python 2.7
 - [YARP Python bindings](http://wiki.icub.org/yarpdoc/yarp_swig.html)
 
+SLIC Superpixels dependencies:
+- [TBB](https://www.threadingbuildingblocks.org/)
+
 ### Linux
 
 Installation of the core POETICON++ build:
