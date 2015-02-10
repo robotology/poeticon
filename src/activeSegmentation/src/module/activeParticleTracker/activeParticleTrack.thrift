@@ -39,6 +39,15 @@ service activeParticleTrack_IDLServer
   bool untrack(1:i32 id);
   
   /**
+  * Sets the tracker to the user desired index. 
+  * Usesul for synchronisation issues.
+  * provided by the user.
+  * @param id specifies the index to start incrementing from
+  * @return true/false on success/failure
+  */
+  bool countFrom(1:i32 id);
+  
+  /**
   * Reset all the trakers. This is used in case the user
   * would like to reset the whole tracking process.
   * @return true/false on success/failure

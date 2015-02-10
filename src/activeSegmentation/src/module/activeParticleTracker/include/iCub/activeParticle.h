@@ -110,6 +110,7 @@ public:
     int     processFixationPoint(yarp::os::Bottle &b);
     bool    stopTracker(int id);
     bool    stopTrackers();
+    bool    countFrom(int index);
 
     void afterStart(bool s)
     {
@@ -142,6 +143,7 @@ public:
     bool display(const std::string &value);
     int  track(const int32_t fix_x, const int32_t fix_y);
     bool untrack(const int32_t id);
+    bool countFrom(const int32_t index);
     bool reset();
     bool quit();
 

@@ -102,6 +102,8 @@ public:
     int                         histIndex;
     std::vector<cv::Point2f>    roi;
     yarp::os::Semaphore         mutex;
+    int                         minArea;
+    int                         maxArea;
 
     bool    open();
     void    close();
@@ -131,6 +133,11 @@ public:
     bool close();                                 // close and shut down the module
 
     bool attach(yarp::os::RpcServer &source);
+    
+    int  getMinArea();
+    bool setMinArea(const int32_t area);
+    int  getMaxArea();
+    bool setMaxArea(const int32_t area);
     int  newHist();
     int  getTotHist();
     int  getCurHist();

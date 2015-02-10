@@ -112,6 +112,13 @@ int TRACKERModule::track(const int32_t fix_x, const int32_t fix_y)
 }
 
 /**********************************************************/
+bool TRACKERModule::countFrom(const int32_t index)
+{
+    trackerManager->countFrom(index);
+    return true;
+}
+
+/**********************************************************/
 bool TRACKERModule::untrack(const int32_t id)
 {
     trackerManager->stopTracker(id);
@@ -229,6 +236,13 @@ void TRACKERManager::interrupt()
 }
 
 /**********************************************************/
+bool TRACKERManager::countFrom(int index)
+{
+    iter=index;
+    return true;
+}
+
+/**********************************************************/
 bool TRACKERManager::stopTracker(int id)
 {
     mutex.wait();
@@ -303,7 +317,7 @@ int TRACKERManager::processFixationPoint(Bottle &b)
             {
                 SegInfo info (fix_x, fix_y, cropSizeWidth,  cropSizeHeight);
                 id = iter;
-                fprintf(stdout, "OK SHOULD START THREAD %d\n", id);
+                fprintf(stdout, "OK SHOULD START THREAD %d with ITER %d\n", id, iter);
                 
                 workerThreads[id] = new ParticleThread(id, rf, info);
                 workerThreads[id]->start();
@@ -332,6 +346,7 @@ void TRACKERManager::onRead(ImageOf<yarp::sig::PixelRgb> &img)
     std::map< unsigned int, ParticleThread* >::iterator itr;
     for (itr = workerThreads.begin(); itr!=workerThreads.end(); itr++)
     {
+        //workerThreads[itr->first]->
         workerThreads[itr->first]->update(orig);
     }
     mutex.post();
@@ -440,12 +455,13 @@ void TRACKERManager::onRead(ImageOf<yarp::sig::PixelRgb> &img)
                 {
                     cvCircle ((IplImage*)outImg.getIplImage(), pts[0], 5,  CV_RGB(255, 0 , 255), CV_FILLED, CV_AA);
                     cvCircle ((IplImage*)outImg.getIplImage(), pts[1], 5,  CV_RGB(255, 0 , 255), CV_FILLED, CV_AA);
-                    cvSaveImage("output.png", (IplImage*)outImg.getIplImage());
+                    //cvSaveImage("output.png", (IplImage*)outImg.getIplImage());
                     cloneTracker(obj, pts);
                 }
             }
         }
     }
+    
     container.unlock();
     if (b.size())
     targetOutPort.write();
@@ -475,7 +491,6 @@ void TRACKERManager::cloneTracker(TargetObject *obj, cv::Point *pt)
         iter++;
 
         SegInfo info1 (pt[1].x, pt[1].y, cropSizeWidth, cropSizeHeight);
-        id = 0;
         id = workerThreads.size();
 
         workerThreads[id] = new ParticleThread(id, rf, info1, group, &obj->colour);//&obj->colour);

@@ -89,6 +89,13 @@ bool WorldStateMgrModule::attach(RpcServer &source)
     return this->yarp().attachAsServer(source);
 }
 
+bool WorldStateMgrModule::reset()
+{
+    yInfo("resetting world state");
+
+    return thread->resetWorldState();
+}
+
 bool WorldStateMgrModule::update()
 {
     if (playbackMode)

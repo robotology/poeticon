@@ -38,11 +38,11 @@ bool WorldStateMgrThread::openPorts()
     outFixationPortName = "/" + moduleName + "/fixation:o";
     outFixationPort.open(outFixationPortName.c_str());
 
-    geomIFPortName = "/" + moduleName + "/geomIF:rpc";
-    geomIFPort.open(geomIFPortName.c_str());
+    activityPortName = "/" + moduleName + "/activity:rpc";
+    activityPort.open(activityPortName.c_str());
 
-    iolPortName = "/" + moduleName + "/iol:rpc";
-    iolPort.open(iolPortName.c_str());
+    trackerPortName = "/" + moduleName + "/tracker:rpc";
+    trackerPort.open(trackerPortName.c_str());
 
     return true;
 }
@@ -59,8 +59,8 @@ void WorldStateMgrThread::close()
     inTargetsPort.close();
     inAffPort.close();
     outFixationPort.close();
-    geomIFPort.close();
-    iolPort.close();
+    activityPort.close();
+    trackerPort.close();
 }
 
 void WorldStateMgrThread::interrupt()
@@ -76,8 +76,8 @@ void WorldStateMgrThread::interrupt()
     inTargetsPort.interrupt();
     inAffPort.interrupt();
     outFixationPort.interrupt();
-    geomIFPort.interrupt();
-    iolPort.interrupt();
+    activityPort.interrupt();
+    trackerPort.interrupt();
 }
 
 bool WorldStateMgrThread::threadInit()
@@ -117,31 +117,36 @@ void WorldStateMgrThread::run()
 /* perception and playback modes                                              */
 /* ************************************************************************** */
 
+bool WorldStateMgrThread::resetWorldState()
+{
+    // TODO: complete
+    return true;
+}
+
 bool WorldStateMgrThread::updateWorldState()
 {
-     // TODO: move this check to inner perception func (already done for dummy)
-     //if (opcPort.getOutputCount() < 1)
-     //    yWarning() << __func__ << "not connected to OPC";
+    // TODO: move this check to inner perception func (already done for dummy)
+    //if (opcPort.getOutputCount() < 1)
+    //    yWarning() << __func__ << "not connected to OPC";
 
-     if (!playbackMode)
-     {
-         // perception mode
-         if (geomIFPort.getOutputCount() < 1)
-         {
-             yWarning() << __func__ << "not connected to GeometricIF";
-         }
-         refreshPerceptionAndValidate();
-     }
-     else
-     {
-         // playback mode
-         playbackPaused = false;
-     }
-     
-     // TODO: opcPort.write() should be here instead of inner functions
-     
-     
-     return true;
+    if (!playbackMode)
+    {
+        // perception mode
+        if (activityPort.getOutputCount() < 1)
+        {
+            yWarning() << __func__ << "not connected to ActivityIF";
+        }
+        refreshPerceptionAndValidate();
+    }
+    else
+    {
+        // playback mode
+        playbackPaused = false;
+    }
+
+    // TODO: opcPort.write() should be here instead of inner functions
+
+    return true;
 }
 
 /* ************************************************************************** */
@@ -159,37 +164,55 @@ bool WorldStateMgrThread::initPerceptionVars()
 
 bool WorldStateMgrThread::initTracker()
 {
-    if (playbackMode)
-    {
-        yWarning() << __func__ << "called when it was not supposed to";
-        return false;
-    }
-
     if (outFixationPort.getOutputCount() < 1)
     {
         yWarning() << __func__ << "exiting, fixation:o not connected to tracker input";
         return false;
     }
 
-    yInfo("initializing multi-object tracking of %d objects:", sizeAff);
+    if (trackerPort.getOutputCount() < 1)
+    {
+        yWarning() << __func__ << "exiting," << trackerPortName << "not connected to <activeParticleTrack>/rpc:i";
+        return false;
+    }
 
+    // TODO: this should be done as soon as trackerPort is connected
+    int startID = 13;
+    Bottle trackerCmd, trackerReply;
+    trackerCmd.addString("countFrom");
+    trackerCmd.addInt(startID);
+    //yDebug() << __func__ <<  "sending query to tracker:" << trackerCmd.toString().c_str();
+    trackerPort.write(trackerCmd, trackerReply);
+    //yDebug() << __func__ <<  "obtained response:" << trackerReply.toString().c_str();
+    bool validResponse = false;
+    validResponse = ( (trackerReply.size()>0) &&
+                      (trackerReply.get(0).asVocab()==Vocab::encode("ok")) );
+    if (!validResponse)
+    {
+        yWarning() << __func__ << "obtained invalid response from tracker";
+        return false;
+    }
+    //else yDebug() << __func__ << "successfully communicated countFrom index to tracker";
+    yInfo("told tracker to assign IDs starting from %d", startID);
+
+    yInfo("initializing multi-object tracking of %d objects:", sizeAff);
     Bottle fixation;
-    double x=0.0, y=0.0;
+    double u=0.0, v=0.0;
 
     for(int a=0; a<sizeAff; a++)
     {
-        x = inAff->get(a+1).asList()->get(0).asDouble();
-        y = inAff->get(a+1).asList()->get(1).asDouble();
+        u = inAff->get(a+1).asList()->get(0).asDouble();
+        v = inAff->get(a+1).asList()->get(1).asDouble();
 
         fixation.clear();
-        fixation.addDouble(x);
-        fixation.addDouble(y);
+        fixation.addDouble(u);
+        fixation.addDouble(v);
         outFixationPort.write(fixation);
 
-        yInfo("id %d: %f %f", a, x, y);
+        yInfo("id %d: %f %f", a, u, v);
     }
-
     yInfo("done initializing tracker");
+
     return true;
 }
 
@@ -201,7 +224,8 @@ void WorldStateMgrThread::fsmPerception()
         case STATE_WAIT_BLOBS:
         {
             // acquire initial entries (robot hands) from OPC database
-            getInitialEntries();
+            // TODO: this should be called as soon as opcPort is connected
+            getInitialOPC();
 
             // wait for blobs data to arrive
             refreshBlobs();
@@ -295,12 +319,11 @@ void WorldStateMgrThread::fsmPerception()
     }
 }
 
-void WorldStateMgrThread::getInitialEntries()
+void WorldStateMgrThread::getInitialOPC()
 {
     // acquire initial entries (robot hands) from OPC, save them
     if (opcPort.getOutputCount()>0 && !gotInitialEntries)
     {
-        yDebug("saving initial OPC entries into world state map");
         Bottle opcCmd, opcCmdContent, opcReply;
         opcCmd.addVocab(Vocab::encode("ask"));
         opcCmdContent.addString("all");
@@ -324,18 +347,12 @@ void WorldStateMgrThread::getInitialEntries()
         }
 
         gotInitialEntries = true;        
-        //yDebug("saved initial OPC entries into opcIDs");
+        yDebug() << "saved initial OPC entries, opcIDs =" << opcIDs;
     }
 }
 
 void WorldStateMgrThread::refreshBlobs()
 {
-    if (playbackMode)
-    {
-        yWarning() << __func__ << "called when it was not supposed to";
-        return;
-    }
-
     inAff = inAffPort.read();
 
     if (inAff != NULL)
@@ -349,25 +366,27 @@ void WorldStateMgrThread::refreshBlobs()
 
 void WorldStateMgrThread::refreshTracker()
 {
-    if (playbackMode)
-    {
-        yWarning() << __func__ << "called when it was not supposed to";
-        return;
-    }
-
     inTargets = inTargetsPort.read();
 
     if (inTargets != NULL)
     {
         // number of tracked objects
         sizeTargets = inTargets->size();
+
+        // get current track IDs
+        refreshTrackIDs();
     }
     else
     {
         yWarning() << __func__ << "did not receive data from tracker, was it initialized?";
     }
-    
+
     //yDebug("successfully refreshed tracker input");
+}
+
+void WorldStateMgrThread::refreshTrackIDs()
+{
+    // TODO: inTargets->get(*).asList()->get(0).asDouble() -> trackIDs
 }
 
 void WorldStateMgrThread::refreshPerception()
@@ -392,7 +411,7 @@ bool WorldStateMgrThread::refreshPerceptionAndValidate()
         yWarning("sizeAff=%d differs from sizeTargets=%d", sizeAff, sizeTargets);
         return false;
     }
-    
+
     //yDebug("successfully refreshed and validated perception");
     return true;
 }
@@ -403,12 +422,12 @@ bool WorldStateMgrThread::doPopulateDB()
     for(int a=0; a<sizeAff; a++)
     {
         yDebug("doPopulateDB, a=%d", a);
-        
+
         // common properties
         Bottle bName;
         Bottle bPos;
         Bottle bIsHand;
-        
+
         // object properties
         Bottle bOffset;
         Bottle bDesc;
@@ -416,31 +435,34 @@ bool WorldStateMgrThread::doPopulateDB()
         Bottle bOnTopOf;
         Bottle bReachW;
         Bottle bPullW;
-        
+
         // hand properties
         Bottle bIsFree;
-    
+
         // prepare name property
+        double u = inTargets->get(a).asList()->get(1).asDouble(); // from tracker
+        double v = inTargets->get(a).asList()->get(2).asDouble();
+        //double u = inAff->get(a+1).asList()->get(0).asDouble(); // from blobs
+        //double v = inAff->get(a+1).asList()->get(1).asDouble();
         bName.addString("name");
-        string bNameValue = getName(a); // TODO: use robust id instead of a
+        string bNameValue = getLabel(u, v);
         bName.addString(bNameValue.c_str());
 
         // prepare position property
-        // TODO: transform to 3D ref frame with iKinGazeCtrl
         bPos.addString("pos");
         Bottle &bPosValue = bPos.addList();
-        // from blobs
-        //bPosValue.addDouble(inAff->get(a+1).asList()->get(0).asDouble());
-        //bPosValue.addDouble(inAff->get(a+1).asList()->get(1).asDouble());
-        // from tracker
-        bPosValue.addDouble(inTargets->get(a).asList()->get(1).asDouble());
-        bPosValue.addDouble(inTargets->get(a).asList()->get(2).asDouble());
+        // 2D to 3D transformation
+        double x=0.0, y=0.0, z=0.0;
+        mono2stereo(u, v, x, y, z);
+        bPosValue.addDouble(x);
+        bPosValue.addDouble(y);
+        bPosValue.addDouble(z);
 
         // prepare is_hand property
         bIsHand.addString("is_hand");
         bool bIsHandValue = false; // except for special entries in dbhands.ini
         bIsHand.addInt(bIsHandValue); // 1=true, 0=false
-        
+
         if (!bIsHandValue)
         {
             // object properties
@@ -462,18 +484,19 @@ bool WorldStateMgrThread::doPopulateDB()
             // prepare 2D shape descriptors property
             bDesc.addString("desc2d");
             Bottle &bDescValue = bDesc.addList();
-            bDescValue.addDouble(inAff->get(a+1).asList()->get(23).asDouble()); // area
-            bDescValue.addDouble(inAff->get(a+1).asList()->get(24).asDouble());
-            bDescValue.addDouble(inAff->get(a+1).asList()->get(25).asDouble());
-            bDescValue.addDouble(inAff->get(a+1).asList()->get(26).asDouble());
-            bDescValue.addDouble(inAff->get(a+1).asList()->get(27).asDouble());
-            bDescValue.addDouble(inAff->get(a+1).asList()->get(28).asDouble());
+            int areaIdx = 23;
+            bDescValue.addDouble(inAff->get(a+1).asList()->get(areaIdx).asDouble()); // area
+            bDescValue.addDouble(inAff->get(a+1).asList()->get(areaIdx+1).asDouble()); // conv
+            bDescValue.addDouble(inAff->get(a+1).asList()->get(areaIdx+2).asDouble()); // ecc
+            bDescValue.addDouble(inAff->get(a+1).asList()->get(areaIdx+3).asDouble()); // comp
+            bDescValue.addDouble(inAff->get(a+1).asList()->get(areaIdx+4).asDouble()); // circ
+            bDescValue.addDouble(inAff->get(a+1).asList()->get(areaIdx+5).asDouble()); // sq
 
             // prepare in_hand property (none/left/right)
             bInHand.addString("in_hand");
             string bInHandValue = inWhichHand(bNameValue.c_str());
             bInHand.addString(bInHandValue);
-            
+
             // prepare on_top_of property
             bOnTopOf.addString("on_top_of");
             Bottle &bOnTopOfValue = bOnTopOf.addList();
@@ -536,7 +559,7 @@ bool WorldStateMgrThread::doPopulateDB()
 
         yDebug("%d, populating OPC with: %s", a, opcCmd.toString().c_str());
         opcPort.write(opcCmd, opcReply);
-        
+
         // process OPC response
         if (opcReply.size() > 1)
         {
@@ -554,54 +577,90 @@ bool WorldStateMgrThread::doPopulateDB()
     return true;
 }
 
-string WorldStateMgrThread::getName(const int &id)
+string WorldStateMgrThread::getLabel(const double &u, const double &v)
 {
-    if (iolPort.getOutputCount() < 1)
+    if (activityPort.getOutputCount() < 1)
     {
-        yWarning() << __func__ << "not connected to GeometricIF";
+        yWarning() << __func__ << "not connected to ActivityIF";
         return string();
     }
 
-    Bottle iolCmd, iolReply;
-    iolCmd.addVocab(Vocab::encode("name"));
-    iolCmd.addInt(id);
-    yDebug() << __func__ <<  "sending query to IOL:" << iolCmd.toString().c_str();
-    iolPort.write(iolCmd, iolReply);
+    Bottle activityCmd, activityReply;
+    activityCmd.addString("getLabel");
+    activityCmd.addDouble(u);
+    activityCmd.addDouble(v);
+    yDebug() << __func__ <<  "sending query to ActivityIF:" << activityCmd.toString().c_str();
+    activityPort.write(activityCmd, activityReply);
 
     bool validResponse = false;
-    validResponse = ( (iolReply.size()>1) &&
-                      (iolReply.get(0).asVocab()==Vocab::encode("ack")) );
+    validResponse = activityReply.get(0).isString(); // TODO: check string length
 
     if (validResponse)
-        return iolReply.get(1).asString();
+        return activityReply.get(0).asString();
     else
     {
-        yWarning() << __func__ << "obtained invalid response from IOL";
+        yWarning() << __func__ << "obtained invalid response from ActivityIF";
         return string();
     }
 }
 
-vector<double> WorldStateMgrThread::getTooltipOffset(const int &id)
+bool WorldStateMgrThread::mono2stereo(const double &u, const double &v,
+                                      double x, double y, double z)
 {
-    if (geomIFPort.getOutputCount() < 1)
+    if (activityPort.getOutputCount() < 1)
     {
-        yWarning() << __func__ << "not connected to GeometricIF";
-        return vector<double>();
+        yWarning() << __func__ << "not connected to ActivityIF";
+        return false;
     }
 
-    Bottle geomIFCmd, geomIFReply;
-    geomIFCmd.addVocab(Vocab::encode("offset"));
-    geomIFCmd.addInt(id);
-    yDebug() << __func__ << "sending query to GeometricIF:" << geomIFCmd.toString().c_str();
-    geomIFPort.write(geomIFCmd, geomIFReply);
+    Bottle activityCmd, activityReply;
+    activityCmd.addString("get3D");
+    activityCmd.addDouble(u);
+    activityCmd.addDouble(v);
+    yDebug() << __func__ <<  "sending query to ActivityIF:" << activityCmd.toString().c_str();
+    activityPort.write(activityCmd, activityReply);
 
     bool validResponse = false;
-    validResponse = ( (geomIFReply.size()>1) &&
-                      (geomIFReply.get(0).asVocab()==Vocab::encode("ack")) );
+    validResponse = ( activityReply.get(0).isList() &&
+                      activityReply.get(0).asList()->size()==3 );
 
     if (validResponse)
     {
-        Bottle *bOffset = geomIFReply.get(1).asList();
+        x = activityReply.get(0).asList()->get(1).asDouble();
+        y = activityReply.get(0).asList()->get(2).asDouble();
+        z = activityReply.get(0).asList()->get(3).asDouble();
+        yDebug() << __func__ <<  "obtained successful 3D coordinates from ActivityIF";
+    }
+    else
+    {
+        yWarning() << __func__ << "obtained invalid response from ActivityIF";
+        return false;
+    }
+
+    return true;
+}
+
+vector<double> WorldStateMgrThread::getTooltipOffset(const int &id)
+{
+    if (activityPort.getOutputCount() < 1)
+    {
+        yWarning() << __func__ << "not connected to ActivityIF";
+        return vector<double>();
+    }
+
+    Bottle activityCmd, activityReply;
+    activityCmd.addVocab(Vocab::encode("offset"));
+    activityCmd.addInt(id);
+    yDebug() << __func__ << "sending query to ActivityIF:" << activityCmd.toString().c_str();
+    activityPort.write(activityCmd, activityReply);
+
+    bool validResponse = false;
+    validResponse = ( (activityReply.size()>1) &&
+                      (activityReply.get(0).asVocab()==Vocab::encode("ok")) );
+
+    if (validResponse)
+    {
+        Bottle *bOffset = activityReply.get(1).asList();
         vector<double> offset; // TODO: pre-allocate size
         for (int t=0; t<bOffset->size(); t++)
         {
@@ -611,32 +670,32 @@ vector<double> WorldStateMgrThread::getTooltipOffset(const int &id)
     }
     else
     {
-        yWarning() << __func__ << "obtained invalid response from GeometricIF";
+        yWarning() << __func__ << "obtained invalid response from ActivityIF";
         return vector<double>();
     }
 }
 
 vector<int> WorldStateMgrThread::isOnTopOf(const int &id)
 {
-    if (geomIFPort.getOutputCount() < 1)
+    if (activityPort.getOutputCount() < 1)
     {
-        yWarning() << __func__ << "not connected to GeometricIF";
+        yWarning() << __func__ << "not connected to ActivityIF";
         return vector<int>();
     }
 
-    Bottle geomIFCmd, geomIFReply;
-    geomIFCmd.addVocab(Vocab::encode("oto"));
-    geomIFCmd.addInt(id);
-    yDebug() << __func__ << "sending query to GeometricIF:" << geomIFCmd.toString().c_str();
-    geomIFPort.write(geomIFCmd, geomIFReply);
+    Bottle activityCmd, activityReply;
+    activityCmd.addVocab(Vocab::encode("oto"));
+    activityCmd.addInt(id);
+    yDebug() << __func__ << "sending query to ActivityIF:" << activityCmd.toString().c_str();
+    activityPort.write(activityCmd, activityReply);
 
     bool validResponse = false;
-    validResponse = ( (geomIFReply.size()>1) &&
-                      (geomIFReply.get(0).asVocab()==Vocab::encode("ack")) );
+    validResponse = ( (activityReply.size()>1) &&
+                      (activityReply.get(0).asVocab()==Vocab::encode("ok")) );
 
     if (validResponse)
     {
-        Bottle *bIds = geomIFReply.get(1).asList();
+        Bottle *bIds = activityReply.get(1).asList();
         vector<int> ids; // TODO: pre-allocate size
         for (int o=0; o<bIds->size(); o++)
         {
@@ -646,32 +705,32 @@ vector<int> WorldStateMgrThread::isOnTopOf(const int &id)
     }
     else
     {
-        yWarning() << __func__ << "obtained invalid response from GeometricIF";
+        yWarning() << __func__ << "obtained invalid response from ActivityIF";
         return vector<int>();
     }
 }
 
 vector<int> WorldStateMgrThread::getIdsToReach(const int &id)
 {
-    if (geomIFPort.getOutputCount() < 1)
+    if (activityPort.getOutputCount() < 1)
     {
-        yWarning() << __func__ << "not connected to GeometricIF";
+        yWarning() << __func__ << "not connected to ActivityIF";
         return vector<int>();
     }
 
-    Bottle geomIFCmd, geomIFReply;
-    geomIFCmd.addVocab(Vocab::encode("reaw"));
-    geomIFCmd.addInt(id);
-    yDebug() << "sending query to GeometricIF:" << geomIFCmd.toString().c_str();
-    geomIFPort.write(geomIFCmd, geomIFReply);
+    Bottle activityCmd, activityReply;
+    activityCmd.addVocab(Vocab::encode("reaw"));
+    activityCmd.addInt(id);
+    yDebug() << "sending query to ActivityIF:" << activityCmd.toString().c_str();
+    activityPort.write(activityCmd, activityReply);
 
     bool validResponse = false;
-    validResponse = ( (geomIFReply.size()>1) &&
-                      (geomIFReply.get(0).asVocab()==Vocab::encode("ack")) );
+    validResponse = ( (activityReply.size()>1) &&
+                      (activityReply.get(0).asVocab()==Vocab::encode("ok")) );
 
     if (validResponse)
     {
-        Bottle *bIds = geomIFReply.get(1).asList();
+        Bottle *bIds = activityReply.get(1).asList();
         vector<int> ids; // TODO: pre-allocate size
         for (int o=0; o<bIds->size(); o++)
         {
@@ -681,32 +740,32 @@ vector<int> WorldStateMgrThread::getIdsToReach(const int &id)
     }
     else
     {
-        yWarning() << __func__ << "obtained invalid response from GeometricIF";
+        yWarning() << __func__ << "obtained invalid response from ActivityIF";
         return vector<int>();
     }
 }
 
 vector<int> WorldStateMgrThread::getIdsToPull(const int &id)
 {
-    if (geomIFPort.getOutputCount() < 1)
+    if (activityPort.getOutputCount() < 1)
     {
-        yWarning() << __func__ << "not connected to GeometricIF";
+        yWarning() << __func__ << "not connected to ActivityIF";
         return vector<int>();
     }
 
-    Bottle geomIFCmd, geomIFReply;
-    geomIFCmd.addVocab(Vocab::encode("pulw"));
-    geomIFCmd.addInt(id);
-    yDebug() << "sending query to GeometricIF:" << geomIFCmd.toString().c_str();
-    geomIFPort.write(geomIFCmd, geomIFReply);
+    Bottle activityCmd, activityReply;
+    activityCmd.addVocab(Vocab::encode("pulw"));
+    activityCmd.addInt(id);
+    yDebug() << "sending query to ActivityIF:" << activityCmd.toString().c_str();
+    activityPort.write(activityCmd, activityReply);
 
     bool validResponse = false;
-    validResponse = ( (geomIFReply.size()>1) &&
-                      (geomIFReply.get(0).asVocab()==Vocab::encode("ack")) );
+    validResponse = ( (activityReply.size()>1) &&
+                      (activityReply.get(0).asVocab()==Vocab::encode("ok")) );
 
     if (validResponse)
     {
-        Bottle *bIds = geomIFReply.get(1).asList();
+        Bottle *bIds = activityReply.get(1).asList();
         vector<int> ids; // TODO: pre-allocate size
         for (int o=0; o<bIds->size(); o++)
         {
@@ -716,16 +775,16 @@ vector<int> WorldStateMgrThread::getIdsToPull(const int &id)
     }
     else
     {
-        yWarning() << __func__ << "obtained invalid response from GeometricIF";
+        yWarning() << __func__ << "obtained invalid response from ActivityIF";
         return vector<int>();
     }
 }
 
 bool WorldStateMgrThread::isHandFree(const string &handName)
 {
-    if (geomIFPort.getOutputCount() < 1)
+    if (activityPort.getOutputCount() < 1)
     {
-        yWarning() << __func__ << "not connected to GeometricIF";
+        yWarning() << __func__ << "not connected to ActivityIF";
         return false;
     }
 
@@ -734,25 +793,25 @@ bool WorldStateMgrThread::isHandFree(const string &handName)
     {
         yWarning("isHandFree: argument handName must be left_hand or right_hand");
     }
-    
-    Bottle geomIFCmd, geomIFReply;
-    geomIFCmd.addVocab(Vocab::encode("isfree"));
-    geomIFCmd.addString(handName.c_str());
-    yDebug() << "sending query to GeometricIF:" << geomIFCmd.toString().c_str();
-    geomIFPort.write(geomIFCmd, geomIFReply);
-    
-    bool validResponse = false;
-    validResponse = ( (geomIFReply.size()>1) &&
-                      (geomIFReply.get(0).asVocab()==Vocab::encode("ack")) );
 
-    return (validResponse && (geomIFReply.get(1).asBool()==true));
+    Bottle activityCmd, activityReply;
+    activityCmd.addVocab(Vocab::encode("isfree"));
+    activityCmd.addString(handName.c_str());
+    yDebug() << "sending query to ActivityIF:" << activityCmd.toString().c_str();
+    activityPort.write(activityCmd, activityReply);
+
+    bool validResponse = false;
+    validResponse = ( (activityReply.size()>1) &&
+                      (activityReply.get(0).asVocab()==Vocab::encode("ok")) );
+
+    return (validResponse && (activityReply.get(1).asBool()==true));
 }
 
 string WorldStateMgrThread::inWhichHand(const string &objName)
 {
-    if (geomIFPort.getOutputCount() < 1)
+    if (activityPort.getOutputCount() < 1)
     {
-        yWarning() << __func__ << "not connected to GeometricIF";
+        yWarning() << __func__ << "not connected to ActivityIF";
     }
 
     // TODO: use consistent names everywhere (incl. RPC): left or left_hand or lefthand
@@ -761,29 +820,29 @@ string WorldStateMgrThread::inWhichHand(const string &objName)
         yWarning() << __func__ << "argument objName must be an object name, not a hand name";
     }
 
-    Bottle geomIFCmd, geomIFReply;
-    geomIFCmd.addVocab(Vocab::encode("inhand"));
-    geomIFCmd.addString(objName.c_str());
-    yDebug() << __func__ << "sending query to GeometricIF:" << geomIFCmd.toString().c_str();
-    geomIFPort.write(geomIFCmd, geomIFReply);
-    
+    Bottle activityCmd, activityReply;
+    activityCmd.addVocab(Vocab::encode("inhand"));
+    activityCmd.addString(objName.c_str());
+    yDebug() << __func__ << "sending query to ActivityIF:" << activityCmd.toString().c_str();
+    activityPort.write(activityCmd, activityReply);
+
     bool validResponse = false;
-    validResponse = ( (geomIFReply.size()>1) &&
-                      (geomIFReply.get(0).asVocab()==Vocab::encode("ack")) );
+    validResponse = ( (activityReply.size()>1) &&
+                      (activityReply.get(0).asVocab()==Vocab::encode("ok")) );
 
     // TODO: use consistent names everywhere (incl. RPC): left or left_hand or lefthand
     if (validResponse)
     {
-        if ((geomIFReply.get(1).asString()=="left") || (geomIFReply.get(1).asString()=="right"))
+        if ((activityReply.get(1).asString()=="left") || (activityReply.get(1).asString()=="right"))
         {
             // success, return "left" or "right" as received from GeomIF
-            return geomIFReply.get(1).asString();
+            return activityReply.get(1).asString();
         }
         else
-            yWarning() << __func__ << "obtained valid but unknown response from GeometricIF";
+            yWarning() << __func__ << "obtained valid but unknown response from ActivityIF";
     }
     else
-        yWarning() << __func__ << "obtained invalid response from GeometricIF";
+        yWarning() << __func__ << "obtained invalid response from ActivityIF";
 
     // default
     return "none";
@@ -820,13 +879,13 @@ void WorldStateMgrThread::fsmPlayback()
                 yError("file empty or not parsable");
                 playbackFSMState = STATE_END_FILE;
             }
-            
+
             // proceed to "[state00]"
             currPlayback = 0;
             playbackFSMState = STATE_STEP_FILE;
             break;
         }
-        
+
         case STATE_STEP_FILE:
         {
             if (!playbackPaused)
@@ -865,7 +924,7 @@ void WorldStateMgrThread::fsmPlayback()
                         yWarning() << __func__ << "not connected to OPC";
                         break;
                     }
-                    
+
                     if (opcReply.get(0).asVocab() == Vocab::encode("ack"))
                     {
                         // yes -> just update entry's properties
@@ -888,7 +947,7 @@ void WorldStateMgrThread::fsmPlayback()
                         content.append(*obj_j->get(1).asList()); // propSet
                         opcCmd.addList() = content;
                         opcPort.write(opcCmd, opcReply);
-                        
+
                         // handle problems and inconsistencies
                         if (opcReply.get(1).asList()->get(1).asInt() !=
                             obj_j->get(0).asList()->get(1).asInt())
@@ -903,23 +962,23 @@ void WorldStateMgrThread::fsmPlayback()
                         }
                     }
                 }
-                
+
                 ++currPlayback;
                 playbackPaused = true;
             }
-            
+
             // stay in same state, wait for next update instruction over rpc
-            
+
             break;
         }
-        
+
         case STATE_END_FILE:
         {
             yInfo("finished reading from playback file");
             closing = true;
             break;        
         }
-        
+
         default:
             break;
     }

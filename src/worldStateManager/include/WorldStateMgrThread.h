@@ -57,18 +57,20 @@ class WorldStateMgrThread : public RateThread
 {
     private:
         string moduleName;
+        string opcPortName;
         string inTargetsPortName;
         string inAffPortName;
         string outFixationPortName;
-        string opcPortName;
-        string geomIFPortName;
-        string iolPortName;
+        string activityPortName;
+        string trackerPortName;
+
+        RpcClient opcPort;
         BufferedPort<Bottle> inTargetsPort;
         BufferedPort<Bottle> inAffPort;
         Port outFixationPort;
-        RpcClient opcPort;
-        RpcClient geomIFPort;
-        RpcClient iolPort;
+        RpcClient activityPort;
+        RpcClient trackerPort;
+
         bool closing;
 
         // perception and playback modes
@@ -82,6 +84,7 @@ class WorldStateMgrThread : public RateThread
         Bottle *inTargets;
         int sizeTargets, sizeAff;
         std::vector<int> opcIDs;
+        std::vector<int> trackIDs;
         idsMap ids;
 
         // playback mode
@@ -101,21 +104,24 @@ class WorldStateMgrThread : public RateThread
         void interrupt();
         bool threadInit();
         void run();
-        
+
         // perception and playback modes
+        bool resetWorldState();
         bool updateWorldState();
-        
+
         // perception mode
         bool initPerceptionVars();
         bool initTracker();
         void fsmPerception();
-        void getInitialEntries();
+        void getInitialOPC();
         void refreshBlobs();
         void refreshTracker();
+        void refreshTrackIDs();
         void refreshPerception();
         bool refreshPerceptionAndValidate();
         bool doPopulateDB();
-        string getName(const int &id);
+        string getLabel(const double &u, const double &v);
+        bool mono2stereo(const double &u, const double &v, double x, double y, double z);
         vector<double> getTooltipOffset(const int &id);
         vector<int> isOnTopOf(const int &id);
         vector<int> getIdsToReach(const int &id);
