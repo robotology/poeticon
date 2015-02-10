@@ -8,7 +8,7 @@
 </module>
 <module>
     <name>objectsPropertiesCollector</name>
-    <parameters>--name memory --context poeticon --db dbhands.ini --nosave</parameters>
+    <parameters>--name wsopc --context poeticon --db dbhands.ini --nosave</parameters>
     <node>console</node>
 </module>
 <module>
@@ -34,14 +34,14 @@
 
 <connection>
     <from>/wsm/opc:io</from>
-    <to>/memory/rpc</to>
+    <to>/wsopc/rpc</to>
 </connection>
 <connection>
     <from>/opc2prada/rpcClient</from>
-    <to>/memory/rpc</to>
+    <to>/wsopc/rpc</to>
 </connection>
 <connection>
-    <from>/memory/broadcast:o</from>
+    <from>/wsopc/broadcast:o</from>
     <to>/opc2prada/broadcast:i</to>
 </connection>
 <connection>
