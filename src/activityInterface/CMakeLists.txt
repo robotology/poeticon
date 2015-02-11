@@ -42,7 +42,6 @@ add_executable(${PROJECTNAME} ${source} ${header} ${idl} )
 target_link_libraries(${PROJECTNAME} ${YARP_LIBRARIES} icubmod)
 
 install(TARGETS ${PROJECTNAME} DESTINATION bin)
-add_subdirectory(app)
 
 #icubcontrib_finalize_export (${PROJECT_NAME})
 #icubcontrib_add_uninstall_target()
