@@ -30,7 +30,7 @@ import yarp
 def goal_imaginer():
     yarp.Network.init()
     goal_yarp = yarp.BufferedPortBottle()
-    goal_yarp.open("/goal_imag:io")
+    goal_yarp.open("/goal_imag/planner_cmd:io") ##
     rf = yarp.ResourceFinder()
     rf.setVerbose(True)
     rf.setDefaultContext("poeticon")

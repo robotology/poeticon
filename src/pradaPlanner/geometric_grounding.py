@@ -131,9 +131,9 @@ def create_symbols(objects, symbols):
 def geometric_grounding():
         yarp.Network.init()
         p = yarp.BufferedPortBottle()
-        p.open("/grounding:io")
+        p.open("/grounding/planner_cmd:io")##
         Affor_yarp = yarp.BufferedPortBottle()
-        Affor_yarp.open("/ground_Aff:io")
+        Affor_yarp.open("/grounding/Aff_cmd:io")##
         rf = yarp.ResourceFinder()
         rf.setVerbose(True)
         rf.setDefaultContext("poeticon")

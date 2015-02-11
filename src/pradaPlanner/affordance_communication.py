@@ -31,7 +31,7 @@ import yarp
 def Affordance_comm():
     yarp.Network.init()
     geo_yarp = yarp.BufferedPortBottle()
-    geo_yarp.open("/Aff_ground:io")
+    geo_yarp.open("/AffordanceComm/ground_cmd:io")##
 ##    Aff_yarp = yarp.BufferedPortBottle()
 ##    Aff_yarp.open("/Aff_query:io")
     rf = yarp.ResourceFinder()
