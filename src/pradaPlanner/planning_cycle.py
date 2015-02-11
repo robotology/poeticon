@@ -38,10 +38,32 @@ class ActionExecutorCommunication:
         self._rpc_client.open(self._port_name)
         self._rpc_client.addOutput("/are/rpc:i") ## need to verify the port!!!!
 
-    def _execute(self,cmd):
+    def _execute(self, PathName, cmd):
+        Objects_file = open(''.join(PathName +"/Object_names-IDs.dat"))
+        Object_list = Objects_file.read().split(';')
+        Objects_file.close()
+        for k in range(len(Object_list)):
+            Object_list[k] = Object_list[k].replace('(','').replace(')','').split(',')
+        cmd = cmd.split('_')
+        if 'on' in cmd:
+            obj = cmd[3]
+            hand = cmd[5].replace('()','')
+            act = cmd[0]
+        else:
+            act = cmd[0]
+            obj = cmd[1]
+            hand = cmd[3].replace('()','')
+        for k in range(len(Object_list)):
+            if str(act) == Object_list[k][0]:
+                act = Object_list[k][1]
+            if str(obj) == Object_list[k][0]:
+                obj = Object_list[k][1]
+            if str(hand) == Object_list[k][0]:
+                hand = Object_list[k][1].replace('hand','')
+        print act, obj, hand
         message = yarp.Bottle()
         message.clear()
-        map(message.addString, [cmd])
+        map(message.addString, [act, obj, hand])
         ans = yarp.Bottle()
         self._rpc_client.write(message, ans)
         return ans
@@ -84,6 +106,7 @@ def planning_cycle():
     PathName = rf.findPath("contexts/poeticon")
     print(''.join("cd " + PathName +" && " + "./planner.exe"))
     world_rpc = worldStateCommunication()
+    motor_rpc = ActionExecutorCommunication()
     
     geo_yarp = yarp.BufferedPortBottle()
     geo_yarp.open("/planner/grounding_cmd:io")
@@ -135,7 +158,6 @@ def planning_cycle():
                         if State_bottle_in:
                             Object_file = open(''.join(PathName +"/Object_names-IDs.dat"))
                             Objects = Object_file.read().split(';')
-                            print Objects
                             if len(Objects) > 3:
                                 state_flag = 1
                                 break
@@ -201,7 +223,6 @@ def planning_cycle():
         rules_file = open(''.join(PathName +"/rules.dat"),'r')
         old_rules = rules_file.read().split('\n')
         rules_file.close()
-        raw_input("press any key")
         update_state(PathName)
 
         config_file = open(''.join(PathName +"/config"),'r')
@@ -224,9 +245,9 @@ def planning_cycle():
             cont = 0
             if mode != 3:
                 while 1:
-                    choice_var = raw_input("update state? y/n")
-                    if choice_var == 'n':
-                        break
+##                    choice_var = raw_input("update state? y/n")
+##                    if choice_var == 'n':
+##                        break
                     print "communicating..."
                     state_flag = 0
                     State_bottle_out = State_yarp.prepare()
@@ -314,7 +335,7 @@ def planning_cycle():
                             rules_file.write(rules[y])
                             rules_file.write('\n')
                         rules_file.close()
-                        raw_input("rules adapted")
+                        print "rules adapted"
                         break
 
             subgoal_file = open(''.join(PathName +"/goal.dat"),'w')
@@ -376,6 +397,7 @@ def planning_cycle():
                 if goal[t] not in state:
                     print goal[t]
                     cont = 1
+            print '\n'
             
             holding_symbols = []
             for t in range(len(aux_subgoals[plan_level-1])):
@@ -383,7 +405,6 @@ def planning_cycle():
                     holding_symbols = holding_symbols + [aux_subgoals[plan_level-1][t]]
             if holding_symbols != []:
                 holding_symbols.pop(-1)
-            print holding_symbols
             if plan_level >= 1:
                 for t in range(len(holding_symbols)):
                     if holding_symbols[t] not in state:
@@ -434,6 +455,7 @@ def planning_cycle():
             act_check = '  %s' %next_action
             if act_check in rules:
                 print 'action to be executed: ', next_action, '\n'
+                motor_rpc._is_success(motor_rpc._execute(PathName, next_action))
                 world_rpc._is_success(world_rpc._execute("update"))
                 raw_input("press any key")
 
