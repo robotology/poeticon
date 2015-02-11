@@ -152,10 +152,6 @@ bool ActivityInterface::configure(yarp::os::ResourceFinder &rf)
         robotArm.view(limArm);
         robotTorso.view(limTorso);
         
-        
-        //arm_left=new iCubArm("left");
-        //arm_right=new iCubArm("right");
-        
         chain_left=arm_left.asChain();
         chain_right=arm_right.asChain();
         
@@ -271,7 +267,6 @@ Bottle ActivityInterface::getMemoryBottle()
         {
             if (Bottle *idValues=idField->get(1).asList())
             {
-                //fprintf(stdout,"size of available objects is %d\n", idValues->size());
                 //cycle over items
                 for (int i=0; i<idValues->size(); i++)
                 {
@@ -287,7 +282,6 @@ Bottle ActivityInterface::getMemoryBottle()
                     
                     Bottle *timePassed = cmdReply.get(1).asList();
                     double time = timePassed->get(0).asDouble();
-                    //fprintf(stdout, "only Time reply: %lf \n", time);
                     
                     if (time < 0.5)
                     {
