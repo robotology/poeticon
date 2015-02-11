@@ -34,8 +34,6 @@
 #include <yarp/sig/Image.h>
 #include <yarp/sig/Vector.h>
 
-#include <cv.h>
-
 #include "iCub/utils.h"
 
 #define LEFTARM             0
