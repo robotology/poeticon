@@ -22,11 +22,11 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/../conf"
 find_package(TBB)
 
 # modules that do not need OpenCV
+add_subdirectory(activityInterface)
+add_subdirectory(affExploreManager)
 add_subdirectory(opc2prada)
 add_subdirectory(pradaPlanner)
 add_subdirectory(worldStateManager)
-add_subdirectory(affExploreManager)
-add_subdirectory(activityInterface)
 
 # modules that need OpenCV
 if(OpenCV_FOUND)
@@ -42,6 +42,6 @@ if(OpenCV_FOUND)
     else(TBB_FOUND)
         message(STATUS "TBB not found, skipping SLIC Superpixels")
     endif(TBB_FOUND)
-else(ICUB_USE_OpenCV)
+else(OpenCV_FOUND)
     message(STATUS "OpenCV not found or selected, skipping vision modules")
 endif(OpenCV_FOUND)
