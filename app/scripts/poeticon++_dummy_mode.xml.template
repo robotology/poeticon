@@ -46,47 +46,51 @@
 </connection>
 <connection>
     <from>/opc2prada/cmd:io</from>
-    <to>/planner/cmd:io</to>
+    <to>/planner/opc_cmd:io</to>
 </connection>
 <connection>
-    <from>/planner/cmd:io</from>
+    <from>/planner/wsm_rpc:o</from>
+    <to>/wsm/rpc:i</to>
+</connection>
+<connection>
+    <from>/planner/actInt_rpc:o</from>
+    <to>/activityInterface/rpc:i</to>
+</connection>
+<connection>
+    <from>/planner/opc_cmd:io</from>
     <to>/opc2prada/cmd:io</to>
 </connection>
 <connection>
     <from>/planner/grounding_cmd:io</from>
-    <to>/grounding:io</to>
+    <to>/grounding/planner_cmd:io</to>
 </connection>
 <connection>
     <from>/planner/goal_cmd:io</from>
-    <to>/goal_imag:io</to>
+    <to>/goal_imag/planner_cmd:io</to>
 </connection>
 <connection>
-    <from>/planner/are_cmd:io</from>
-    <to>/ARM_comm:i</to>
-</connection>
-<connection>
-    <from>/grounding:io</from>
+    <from>/grounding/planner_cmd:io</from>
     <to>/planner/grounding_cmd:io</to>
 </connection>
 <connection>
-    <from>/goal_imag:io</from>
+    <from>/goal_imag/planner_cmd:io</from>
     <to>/planner/goal_cmd:io</to>
 </connection>
 <connection>
-    <from>/ARM_comm:o</from>
-    <to>/planner/are_cmd:io</to>
+    <from>/planner/prax_inst:io</from>
+    <to>/praxicon/planner_cmd:io</to>
 </connection>
 <connection>
-    <from>/Aff_ground:io</from>
-    <to>/ground_Aff:io</to>
+    <from>/praxicon/planner_cmd:io</from>
+    <to>/planner/prax_inst:io</to>
 </connection>
 <connection>
-    <from>/ground_Aff:io</from>
-    <to>/Aff_ground:io</to>
+    <from>/AffordanceComm/ground_cmd:io</from>
+    <to>/grounding/Aff_cmd:io</to>
 </connection>
 <connection>
-    <from>/opc2prada/cmd:io</from>
-    <to>/planner/cmd:io</to>
+    <from>/grounding/Aff_cmd:io</from>
+    <to>/AffordanceComm/ground_cmd:io</to>
 </connection>
 
 </application>

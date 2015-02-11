@@ -14,7 +14,7 @@ class worldStateCommunication:
 
     def __init__(self):
         self._rpc_client = yarp.RpcClient()
-        self._port_name = "/planner/ws_rpc:o"
+        self._port_name = "/planner/wsm_rpc:o"
         self._rpc_client.open(self._port_name)
         ## self._rpc_client.addOutput("/wsm/rpc:i") 
 
@@ -34,9 +34,9 @@ class ActionExecutorCommunication:
 
     def __init__(self):
         self._rpc_client = yarp.RpcClient()
-        self._port_name = "/planner/are_rpc:o"
+        self._port_name = "/planner/actInt_rpc:o"
         self._rpc_client.open(self._port_name)
-        self._rpc_client.addOutput("/are/rpc:i") ## need to verify the port!!!!
+##        self._rpc_client.addOutput("/activityInterface/rpc:i") ## need to verify the port!!!!
 
     def _execute(self, PathName, cmd):
         Objects_file = open(''.join(PathName +"/Object_names-IDs.dat"))
@@ -108,19 +108,16 @@ def planning_cycle():
     world_rpc = worldStateCommunication()
     motor_rpc = ActionExecutorCommunication()
     
-    geo_yarp = yarp.BufferedPortBottle()
+    geo_yarp = yarp.BufferedPortBottle()##
     geo_yarp.open("/planner/grounding_cmd:io")
     
-    goal_yarp = yarp.BufferedPortBottle()
+    goal_yarp = yarp.BufferedPortBottle()##
     goal_yarp.open("/planner/goal_cmd:io")
     
-    ARE_yarp = yarp.BufferedPortBottle()
-    ARE_yarp.open("/planner/are_cmd:io")
-    
-    State_yarp = yarp.BufferedPortBottle()
-    State_yarp.open("/planner/cmd:io")
+    State_yarp = yarp.BufferedPortBottle()##
+    State_yarp.open("/planner/opc_cmd:io")
 
-    prax_yarp = yarp.BufferedPortBottle()
+    prax_yarp = yarp.BufferedPortBottle()##
     prax_yarp.open("/planner/prax_inst:io")
 
 
