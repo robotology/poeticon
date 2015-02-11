@@ -119,7 +119,18 @@ void WorldStateMgrThread::run()
 
 bool WorldStateMgrThread::resetWorldState()
 {
-    // TODO: complete
+    if (!playbackMode)
+    {
+        yWarning("user requested to reset the world state in perception mode - to be implemented");
+        return false;
+    }
+    else
+    {
+        yInfo("reset to [state00]");
+        currPlayback = 0;
+        playbackFSMState = STATE_DUMMY_STEP;
+    }
+    
     return true;
 }
 
@@ -193,7 +204,7 @@ bool WorldStateMgrThread::initTracker()
         return false;
     }
     //else yDebug() << __func__ << "successfully communicated countFrom index to tracker";
-    yInfo("told tracker to assign IDs starting from %d", startID);
+    yDebug("told tracker to assign IDs starting from %d", startID);
 
     yInfo("initializing multi-object tracking of %d objects:", sizeAff);
     Bottle fixation;
@@ -378,7 +389,7 @@ void WorldStateMgrThread::refreshTracker()
     }
     else
     {
-        yWarning() << __func__ << "did not receive data from tracker, was it initialized?";
+        yWarning() << __func__ << "did not receive data from tracker, is it initialized?";
     }
 
     //yDebug("successfully refreshed tracker input");
@@ -386,7 +397,12 @@ void WorldStateMgrThread::refreshTracker()
 
 void WorldStateMgrThread::refreshTrackIDs()
 {
-    // TODO: inTargets->get(*).asList()->get(0).asDouble() -> trackIDs
+    // TODO: add inTargets->get(*).asList()->get(0).asDouble() to trackIDs
+    //       (no repetitions)
+    for (int t=0; t<sizeTargets; t++)
+    {
+        //inTargets->get(t).asList()->get(0).asDouble();
+    }
 }
 
 void WorldStateMgrThread::refreshPerception()
@@ -854,8 +870,10 @@ string WorldStateMgrThread::inWhichHand(const string &objName)
 
 bool WorldStateMgrThread::initPlaybackVars()
 {
+    toldUserConnectOPC = false;
+    toldUserRewind = false;
     playbackPaused = true;
-    playbackFSMState = STATE_PARSE_FILE;
+    playbackFSMState = STATE_DUMMY_PARSE;
     sizePlaybackFile = -1;
     currPlayback = -1;
 
@@ -867,26 +885,55 @@ void WorldStateMgrThread::fsmPlayback()
     //yDebug("playback state=%d", playbackFSMState);
     switch (playbackFSMState)
     {
-        case STATE_PARSE_FILE:
+
+        case STATE_DUMMY_PARSE:
         {
             // acquire Bottle with whole file content
-            Property findProperty;
-            findProperty.fromConfigFile(playbackFile.c_str());
-            findBottle.read(findProperty);
-            sizePlaybackFile = findBottle.size();
+            Property wholeFile;
+            wholeFile.fromConfigFile(playbackFile.c_str());
+            stateBottle.read(wholeFile);
+            sizePlaybackFile = stateBottle.size();
             if (sizePlaybackFile < 1)
             {
                 yError("file empty or not parsable");
-                playbackFSMState = STATE_END_FILE;
+                playbackFSMState = STATE_DUMMY_ERROR;
+                break;
             }
-
-            // proceed to "[state00]"
-            currPlayback = 0;
-            playbackFSMState = STATE_STEP_FILE;
+            
+            yDebug("file parsed successfully");
+            playbackFSMState = STATE_DUMMY_WAIT_OPC;
             break;
         }
 
-        case STATE_STEP_FILE:
+        case STATE_DUMMY_WAIT_OPC:
+        {
+            if (!toldUserConnectOPC && opcPort.getOutputCount()<1)
+            {
+                yInfo("waiting for /%s/opc:io to be connected to wsopc/rpc", moduleName.c_str());
+                toldUserConnectOPC = true;
+            }
+
+            if (opcPort.getOutputCount()>=1)
+            {
+                yInfo("connected, you can now send commands over RPC");
+                playbackFSMState = STATE_DUMMY_WAIT_CMD;
+            }
+
+            break;
+        }
+
+        case STATE_DUMMY_WAIT_CMD:
+        {
+            playbackPaused = true;
+
+            // initially we are in "[state00]"
+            currPlayback = 0;
+            playbackFSMState = STATE_DUMMY_STEP;
+
+            break;
+        }
+
+        case STATE_DUMMY_STEP:
         {
             if (!playbackPaused)
             {
@@ -894,12 +941,12 @@ void WorldStateMgrThread::fsmPlayback()
                 // TODO: make it work for "[state##]" with ##>9, simplify
                 ostringstream tag;
                 tag << "state" << std::setw(2) << std::setfill('0') << currPlayback << "";
-                Bottle &bCurr = findBottle.findGroup(tag.str().c_str());
+                Bottle &bCurr = stateBottle.findGroup(tag.str().c_str());
                 if (bCurr.size() < 1)
                 {
                     yWarning() << tag.str().c_str() << "not found";
                     playbackPaused = true;
-                    playbackFSMState = STATE_END_FILE;
+                    playbackFSMState = STATE_DUMMY_EOF;
                     break;
                 }
                 yDebug("loaded group %s, has size %d incl. group tag", tag.str().c_str(), bCurr.size());
@@ -972,15 +1019,28 @@ void WorldStateMgrThread::fsmPlayback()
             break;
         }
 
-        case STATE_END_FILE:
+        case STATE_DUMMY_EOF:
         {
-            yInfo("finished reading from playback file");
+            if (!toldUserRewind)
+                yInfo("finished reading from playback file, send reset command over RPC to rewind");
+
+            toldUserRewind = true;
+            break;        
+        }
+
+        case STATE_DUMMY_ERROR:
+        {
+            // TODO: exit cleanly and automatically
             closing = true;
+            yError("please quit the module");
             break;        
         }
 
         default:
+        {
+            yWarning("unknown FSM state");
             break;
+        }
     }
 }
 

@@ -35,9 +35,17 @@
 #define STATE_UPDATE_DB    6
 
 // playback mode states
+/*
 #define STATE_PARSE_FILE 100
 #define STATE_STEP_FILE  101
 #define STATE_END_FILE   102
+*/
+#define STATE_DUMMY_PARSE    100
+#define STATE_DUMMY_WAIT_OPC 101
+#define STATE_DUMMY_WAIT_CMD 102
+#define STATE_DUMMY_STEP     103
+#define STATE_DUMMY_EOF      104
+#define STATE_DUMMY_ERROR    105
 
 // make sure __func__ is set correctly, http://stackoverflow.com/a/17528983
 #if __STDC_VERSION__ < 199901L
@@ -91,7 +99,8 @@ class WorldStateMgrThread : public RateThread
         int playbackFSMState;
         string playbackFile;
         bool playbackPaused;
-        Bottle findBottle;
+        bool toldUserConnectOPC, toldUserRewind;
+        Bottle stateBottle;
         int sizePlaybackFile;
         int currPlayback;
 

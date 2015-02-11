@@ -27,7 +27,7 @@ bool WorldStateMgrModule::configure(ResourceFinder &rf)
             return false;
         }
         else
-            yInfo() << "playback file" << playbackFile << "loaded successfully";
+            yInfo() << "playback file loaded successfully:" << playbackFile;
     }
 
     handlerPortName = "/" + moduleName + "/rpc:i";
