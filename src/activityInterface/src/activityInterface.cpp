@@ -47,11 +47,16 @@ ActivityInterface::~ActivityInterface()
 /**********************************************************/
 bool ActivityInterface::configure(yarp::os::ResourceFinder &rf)
 {
+    bool with_robot = true;
+    
     moduleName = rf.check("name", Value("activityInterface"), "module name (string)").asString();
     Bottle bArm[2];
     
     bArm[LEFT]=rf.findGroup("left_arm");
     bArm[RIGHT]=rf.findGroup("right_arm");
+    
+    if (rf.check("no_robot"))
+        with_robot = false;
     
     if (Bottle *pB=bArm[LEFT].find("reach_above_orientation").asList())
     {
@@ -101,82 +106,84 @@ bool ActivityInterface::configure(yarp::os::ResourceFinder &rf)
     yarp::os::Network::connect("/activityInterface/are:rpc", "/actionsRenderingEngine/get:io");
     yarp::os::Network::connect("/activityInterface/memory:rpc", "/memory/rpc");
     
-   /*Property optionLeft("(device cartesiancontrollerclient)");
-    optionLeft.put("remote","/icub/cartesianController/left_arm");
-    optionLeft.put("local","/cartesian_client/left_arm");
-    
-    Property optionRight("(device cartesiancontrollerclient)");
-    optionRight.put("remote","/icub/cartesianController/right_arm");
-    optionRight.put("local","/cartesian_client/right_arm");
-    
-    if (!client_left.open(optionLeft))
-        return false;
-    
-    if (!client_right.open(optionRight))
+    if (with_robot)
     {
-        client_left.close();
-        return false;
+        Property optionLeft("(device cartesiancontrollerclient)");
+        optionLeft.put("remote","/icub/cartesianController/left_arm");
+        optionLeft.put("local","/cartesian_client/left_arm");
+        
+        Property optionRight("(device cartesiancontrollerclient)");
+        optionRight.put("remote","/icub/cartesianController/right_arm");
+        optionRight.put("local","/cartesian_client/right_arm");
+        
+        if (!client_left.open(optionLeft))
+            return false;
+        
+        if (!client_right.open(optionRight))
+        {
+            client_left.close();
+            return false;
+        }
+        
+        // open the view
+        client_left.view(icart_left);
+        client_right.view(icart_right);
+        
+        Property optArm;
+        
+        optArm.put("device", "remote_controlboard");
+        optArm.put("remote","/icub/left_arm");
+        optArm.put("local",("/localArm/left"));
+        
+        Property optTorso;
+        optTorso.put("device", "remote_controlboard");
+        optTorso.put("remote","/icub/torso");
+        optTorso.put("local",("/grasplocalTorso/left"));
+        
+        robotArm.open(optArm);
+        robotTorso.open(optTorso);
+        
+        if (!robotTorso.isValid() || !robotArm.isValid())
+        {
+            fprintf(stdout, "Device not available\n");
+            return false;
+        }
+        
+        robotArm.view(limArm);
+        robotTorso.view(limTorso);
+        
+        
+        //arm_left=new iCubArm("left");
+        //arm_right=new iCubArm("right");
+        
+        chain_left=arm_left.asChain();
+        chain_right=arm_right.asChain();
+        
+        chain_left->releaseLink(0);
+        chain_left->releaseLink(1);
+        chain_left->releaseLink(2);
+        
+        chain_right->releaseLink(0);
+        chain_right->releaseLink(1);
+        chain_right->releaseLink(2);
+        
+        deque<IControlLimits*> lim_left;
+        lim_left.push_back(limTorso);
+        lim_left.push_back(limArm);
+        arm_left.alignJointsBounds(lim_left);
+        
+        arm_left.setAllConstraints(false);
+        arm_right.setAllConstraints(false);
+        
+        thetaMin.resize(10,0.0);
+        thetaMax.resize(10,0.0);
+        
+        for (unsigned int i=0; i<chain_left->getDOF(); i++)
+        {
+            thetaMin[i]=(*chain_left)(i).getMin();
+            thetaMax[i]=(*chain_left)(i).getMax();
+        }
     }
-    
-    // open the view
-    client_left.view(icart_left);
-    client_right.view(icart_right);
-    
-    Property optArm;
-    
-    optArm.put("device", "remote_controlboard");
-    optArm.put("remote","/icub/left_arm");
-    optArm.put("local",("/localArm/left"));
-    
-    Property optTorso;
-    optTorso.put("device", "remote_controlboard");
-    optTorso.put("remote","/icub/torso");
-    optTorso.put("local",("/grasplocalTorso/left"));
-    
-    robotArm.open(optArm);
-    robotTorso.open(optTorso);
-    
-    if (!robotTorso.isValid() || !robotArm.isValid())
-    {
-        fprintf(stdout, "Device not available\n");
-        return false;
-    }
-    
-    robotArm.view(limArm);
-    robotTorso.view(limTorso);
-    
-    
-    //arm_left=new iCubArm("left");
-    //arm_right=new iCubArm("right");
-    
-    chain_left=arm_left.asChain();
-    chain_right=arm_right.asChain();
-    
-    chain_left->releaseLink(0);
-    chain_left->releaseLink(1);
-    chain_left->releaseLink(2);
-    
-    chain_right->releaseLink(0);
-    chain_right->releaseLink(1);
-    chain_right->releaseLink(2);
-    
-    deque<IControlLimits*> lim_left;
-    lim_left.push_back(limTorso);
-    lim_left.push_back(limArm);
-    arm_left.alignJointsBounds(lim_left);
-    
-    arm_left.setAllConstraints(false);
-    arm_right.setAllConstraints(false);
-    
-    thetaMin.resize(10,0.0);
-    thetaMax.resize(10,0.0);
-    
-    for (unsigned int i=0; i<chain_left->getDOF(); i++)
-    {
-        thetaMin[i]=(*chain_left)(i).getMin();
-        thetaMax[i]=(*chain_left)(i).getMax();
-    }
-    */
     attach(rpcPort);
     
     first = true;
