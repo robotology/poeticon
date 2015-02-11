@@ -26,6 +26,7 @@ add_subdirectory(opc2prada)
 add_subdirectory(pradaPlanner)
 add_subdirectory(worldStateManager)
 add_subdirectory(affExploreManager)
+add_subdirectory(activityInterface)
 
 # modules that need OpenCV
 if(OpenCV_FOUND)
