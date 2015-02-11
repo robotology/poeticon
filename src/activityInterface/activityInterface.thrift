@@ -1,5 +1,5 @@
 # Copyright: (C) 2013 iCub Facility - Istituto Italiano di Tecnologia
-# Authors: Ugo Pattacini
+# Authors: Vadim Tikhanoff
 # CopyPolicy: Released under the terms of the GNU GPL v2.0.
 #
 #activityInterface.thrift
