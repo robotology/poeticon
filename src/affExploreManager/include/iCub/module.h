@@ -48,9 +48,9 @@ const int                       DEFAULT_MAX_OBJ              = 1;
 const double                    DEFAULT_CLOSE_THR            = 30.0;
 const double                    VDRAW_THR                    = 0.1;
 const double                    TOOL_TRANSFORM_DEFAULT[]     = {0.17, -0.17, 0.06};
-const double                    TABLE_HEIGHT_OFFSET_DEFAULT  = 0.03;
+const double                    TABLE_HEIGHT_OFFSET_DEFAULT  = 0.06;
 const double                    OBJECT_SIZE_OFFSET_DEFAULT   = 0.04;
-const int                       HAND_NATURAL_POSE_DEFAULT    = 0; // 0 = straight pose, 1 = pronated pose.
+const int                       HAND_NATURAL_POSE_DEFAULT    = 1; // 0 = straight pose (hand palms facing each others), 1 = pronated pose (hand palms facing the table).
 
 /**********************************************************/
 class BlobInfo
@@ -107,6 +107,30 @@ public:
 
   }
 
+  void clear()
+  {
+      roi_x = 0; 
+      roi_y = 0;
+      roi_width = 0;
+      roi_height = 0;
+      angle = 0;
+      special_point_x = 0;
+      special_point_y = 0;
+
+      for(int i=0; i<16; i++)
+      {
+          hist[i] = 0;
+      }
+
+      area = 0;
+      convexity = 0;
+      eccentricity = 0;
+      compactness = 0; 
+      circleness = 0;
+      squareness = 0;
+      elongatedness = 0;
+  }
+
 };
 
 /**********************************************************/
@@ -151,6 +175,21 @@ public:
       return blobsString;
 
   }
+
+  void clear()
+  {
+      roi_x = 0; 
+      roi_y = 0;
+
+      area = 0;
+      convexity = 0;
+      eccentricity = 0;
+      compactness = 0; 
+      circleness = 0;
+      squareness = 0;
+      elongatedness = 0;
+  }
+
 };
 
 /**********************************************************/

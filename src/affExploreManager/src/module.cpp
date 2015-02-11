@@ -587,125 +587,164 @@ int Manager::processHumanCmd(const Bottle &cmd, Bottle &b)
 bool Manager::updateObjectDesc(const Bottle *msgO, const Bottle *msgOP, const Bottle *msgO_PC, const Bottle *msgOP_PC)
 {
     fprintf(stderr,"check descriptors...\n");
-    int N_blobs;
+    int N_blobs, N_blobs_parts, N_blobs_PC, N_blobs_parts_PC;
     N_blobs = msgO->get(0).asInt();
     printf("%d blobs have been detected\n", N_blobs);
-    N_blobs = msgOP->get(0).asInt();
-    printf("%d blobs have been divided in parts (two parts each, top and bottom)\n", N_blobs);
-    printf("\n\nOnly the descriptors of the first blob will be considered. \n");
+    N_blobs_parts = msgOP->get(0).asInt();
+    printf("%d blobs have been divided in parts (two parts each, top and bottom)\n", N_blobs_parts);
+    N_blobs_PC = msgO_PC->get(0).asInt();
+    printf("%d blobs from bird's eye perspective have been detected\n", N_blobs_PC);
+    N_blobs_parts_PC = msgOP_PC->get(0).asInt();
+    printf("%d blobs  from bird's eye perspective have been divided in parts (two parts each, top and bottom)\n", N_blobs_parts_PC);
+    printf("\n\nOnly the descriptors of one blob (the first from top left in the image) will be considered. \n");
 
-    yarp::os::Value& element = msgO->get(1);
+    Bottle *objbot;
+    Bottle *objbot_PC;
 
-    Bottle *objbot = element.asList();
-
-    printf("list of %d elements\n", objbot->size());
-
-    // width and height
-    objDesc.roi_x           = objbot->get(0).asDouble();
-    objDesc.roi_y           = objbot->get(1).asDouble();
-    objDesc.roi_width       = objbot->get(2).asDouble();
-    objDesc.roi_height      = objbot->get(3).asDouble();
-    objDesc.angle           = objbot->get(4).asDouble();
-    objDesc.special_point_x = objbot->get(5).asDouble();
-    objDesc.special_point_y = objbot->get(6).asDouble();
-
-    for (int j=0; j<16; j++) 
+    if (msgO->size()>1)
     {
-        objDesc.hist[j]     = objbot->get(7+j).asDouble();
+        yarp::os::Value& element = msgO->get(1);
+        objbot = element.asList();
+
+        //printf("list of %d elements\n", objbot->size());
+
+        // width and height
+        objDesc.roi_x           = objbot->get(0).asDouble();
+        objDesc.roi_y           = objbot->get(1).asDouble();
+        objDesc.roi_width       = objbot->get(2).asDouble();
+        objDesc.roi_height      = objbot->get(3).asDouble();
+        objDesc.angle           = objbot->get(4).asDouble();
+        objDesc.special_point_x = objbot->get(5).asDouble();
+        objDesc.special_point_y = objbot->get(6).asDouble();
+
+        for (int j=0; j<16; j++) 
+        {
+             objDesc.hist[j]     = objbot->get(7+j).asDouble();
+        }
+
+        objDesc.area            = objbot->get(23).asDouble();
+        objDesc.convexity       = objbot->get(24).asDouble();
+        objDesc.eccentricity    = objbot->get(25).asDouble();
+        objDesc.compactness     = objbot->get(26).asDouble();
+        objDesc.circleness      = objbot->get(27).asDouble();
+        objDesc.squareness      = objbot->get(28).asDouble();
+        objDesc.elongatedness   = objbot->get(29).asDouble();
+        
+    }
+    else
+    {
+        objDesc.clear();
+    }
+    
+    if (msgOP->size()>1)
+    {
+
+        // -- OBJECT TOP PART (in the image) --
+        yarp::os::Value& elementOP = msgOP->get(1);
+        objbot = elementOP.asList()->get(0).asList();
+
+        objTopDesc.roi_x           = objbot->get(0).asDouble();
+        objTopDesc.roi_y           = objbot->get(1).asDouble();
+        objTopDesc.area            = objbot->get(2).asDouble();
+        objTopDesc.convexity       = objbot->get(3).asDouble();
+        objTopDesc.eccentricity    = objbot->get(4).asDouble();
+        objTopDesc.compactness     = objbot->get(5).asDouble();
+        objTopDesc.circleness      = objbot->get(6).asDouble();
+        objTopDesc.squareness      = objbot->get(7).asDouble();
+        objTopDesc.elongatedness   = objbot->get(8).asDouble();
+
+        // -- OBJECT BOTTOM PART (in the image) --
+        objbot = elementOP.asList()->get(1).asList();
+
+        objBottomDesc.roi_x           = objbot->get(0).asDouble();
+        objBottomDesc.roi_y           = objbot->get(1).asDouble();
+        objBottomDesc.area            = objbot->get(2).asDouble();
+        objBottomDesc.convexity       = objbot->get(3).asDouble();
+        objBottomDesc.eccentricity    = objbot->get(4).asDouble();
+        objBottomDesc.compactness     = objbot->get(5).asDouble();
+        objBottomDesc.circleness      = objbot->get(6).asDouble();
+        objBottomDesc.squareness      = objbot->get(7).asDouble();
+        objBottomDesc.elongatedness   = objbot->get(8).asDouble();
+
+    }
+    else
+    {
+        objTopDesc.clear();
+        objBottomDesc.clear();
     }
 
-    objDesc.area            = objbot->get(23).asDouble();
-    objDesc.convexity       = objbot->get(24).asDouble();
-    objDesc.eccentricity    = objbot->get(25).asDouble();
-    objDesc.compactness     = objbot->get(26).asDouble();
-    objDesc.circleness      = objbot->get(27).asDouble();
-    objDesc.squareness      = objbot->get(28).asDouble();
-    objDesc.elongatedness   = objbot->get(29).asDouble();
-
-    // -- OBJECT TOP PART (in the image) --
-    yarp::os::Value& elementOP = msgOP->get(1);
-
-    objbot = elementOP.asList()->get(0).asList();
-    objTopDesc.roi_x           = objbot->get(0).asDouble();
-    objTopDesc.roi_y           = objbot->get(1).asDouble();
-    objTopDesc.area            = objbot->get(2).asDouble();
-    objTopDesc.convexity       = objbot->get(3).asDouble();
-    objTopDesc.eccentricity    = objbot->get(4).asDouble();
-    objTopDesc.compactness     = objbot->get(5).asDouble();
-    objTopDesc.circleness      = objbot->get(6).asDouble();
-    objTopDesc.squareness      = objbot->get(7).asDouble();
-    objTopDesc.elongatedness   = objbot->get(8).asDouble();
-
-    // -- OBJECT BOTTOM PART (in the image) --
-    objbot = elementOP.asList()->get(1).asList();
-    objBottomDesc.roi_x           = objbot->get(0).asDouble();
-    objBottomDesc.roi_y           = objbot->get(1).asDouble();
-    objBottomDesc.area            = objbot->get(2).asDouble();
-    objBottomDesc.convexity       = objbot->get(3).asDouble();
-    objBottomDesc.eccentricity    = objbot->get(4).asDouble();
-    objBottomDesc.compactness     = objbot->get(5).asDouble();
-    objBottomDesc.circleness      = objbot->get(6).asDouble();
-    objBottomDesc.squareness      = objbot->get(7).asDouble();
-    objBottomDesc.elongatedness   = objbot->get(8).asDouble();
-
-    // -- descriptors coming from perspectiveChanger //
-
-    yarp::os::Value& element_PC = msgO_PC->get(1);
-
-    Bottle *objbot_PC = element_PC.asList();
-
-    printf("list of %d elements\n", objbot_PC->size());
-
-    // width and height
-    objDescPC.roi_x           = objbot_PC->get(0).asDouble();
-    objDescPC.roi_y           = objbot_PC->get(1).asDouble();
-    objDescPC.roi_width       = objbot_PC->get(2).asDouble();
-    objDescPC.roi_height      = objbot_PC->get(3).asDouble();
-    objDescPC.angle           = objbot_PC->get(4).asDouble();
-    objDescPC.special_point_x = objbot_PC->get(5).asDouble();
-    objDescPC.special_point_y = objbot_PC->get(6).asDouble();
-
-    for (int j=0; j<16; j++) 
+    if (msgO_PC->size()>1)
     {
-        objDescPC.hist[j]     = objbot_PC->get(7+j).asDouble();
+
+        // -- descriptors coming from perspectiveChanger //
+        yarp::os::Value& element_PC = msgO_PC->get(1);
+        objbot_PC = element_PC.asList();
+        
+        //printf("list of %d elements\n", objbot_PC->size());
+
+        // width and height
+        objDescPC.roi_x           = objbot_PC->get(0).asDouble();
+        objDescPC.roi_y           = objbot_PC->get(1).asDouble();
+        objDescPC.roi_width       = objbot_PC->get(2).asDouble();
+        objDescPC.roi_height      = objbot_PC->get(3).asDouble();
+        objDescPC.angle           = objbot_PC->get(4).asDouble();
+        objDescPC.special_point_x = objbot_PC->get(5).asDouble();
+        objDescPC.special_point_y = objbot_PC->get(6).asDouble();
+
+        for (int j=0; j<16; j++) 
+        {
+            objDescPC.hist[j]     = objbot_PC->get(7+j).asDouble();
+        }
+
+        objDescPC.area            = objbot_PC->get(23).asDouble();
+        objDescPC.convexity       = objbot_PC->get(24).asDouble();
+        objDescPC.eccentricity    = objbot_PC->get(25).asDouble();
+        objDescPC.compactness     = objbot_PC->get(26).asDouble();
+        objDescPC.circleness      = objbot_PC->get(27).asDouble();
+        objDescPC.squareness      = objbot_PC->get(28).asDouble();
+        objDescPC.elongatedness   = objbot_PC->get(29).asDouble();
+    }
+    else
+    {
+        objDescPC.clear();
     }
 
-    objDescPC.area            = objbot_PC->get(23).asDouble();
-    objDescPC.convexity       = objbot_PC->get(24).asDouble();
-    objDescPC.eccentricity    = objbot_PC->get(25).asDouble();
-    objDescPC.compactness     = objbot_PC->get(26).asDouble();
-    objDescPC.circleness      = objbot_PC->get(27).asDouble();
-    objDescPC.squareness      = objbot_PC->get(28).asDouble();
-    objDescPC.elongatedness   = objbot_PC->get(29).asDouble();
+    if (msgOP_PC->size()>1)
+    {
+        // -- OBJECT PARTS (in the image) --
+        yarp::os::Value& elementOP_PC = msgOP_PC->get(1);
 
-    // -- OBJECT PARTS (in the image) --
-    yarp::os::Value& elementOP_PC = msgOP_PC->get(1);
+        // -- OBJECT TOP PART (in the image) --
+        objbot_PC = elementOP_PC.asList()->get(0).asList();
 
-    // -- OBJECT TOP PART (in the image) --
-    objbot_PC = elementOP_PC.asList()->get(0).asList();
+        objTopDescPC.roi_x           = objbot_PC->get(0).asDouble();
+        objTopDescPC.roi_y           = objbot_PC->get(1).asDouble();
+        objTopDescPC.area            = objbot_PC->get(2).asDouble();
+        objTopDescPC.convexity       = objbot_PC->get(3).asDouble();
+        objTopDescPC.eccentricity    = objbot_PC->get(4).asDouble();
+        objTopDescPC.compactness     = objbot_PC->get(5).asDouble();
+        objTopDescPC.circleness      = objbot_PC->get(6).asDouble();
+        objTopDescPC.squareness      = objbot_PC->get(7).asDouble();
+        objTopDescPC.elongatedness   = objbot_PC->get(8).asDouble();
 
-    objTopDescPC.roi_x           = objbot_PC->get(0).asDouble();
-    objTopDescPC.roi_y           = objbot_PC->get(1).asDouble();
-    objTopDescPC.area            = objbot_PC->get(2).asDouble();
-    objTopDescPC.convexity       = objbot_PC->get(3).asDouble();
-    objTopDescPC.eccentricity    = objbot_PC->get(4).asDouble();
-    objTopDescPC.compactness     = objbot_PC->get(5).asDouble();
-    objTopDescPC.circleness      = objbot_PC->get(6).asDouble();
-    objTopDescPC.squareness      = objbot_PC->get(7).asDouble();
-    objTopDescPC.elongatedness   = objbot_PC->get(8).asDouble();
+        // -- OBJECT BOTTOM PART (in the image) --
+        objbot_PC = elementOP_PC.asList()->get(1).asList();
 
-    // -- OBJECT BOTTOM PART (in the image) --
-    objbot_PC = elementOP_PC.asList()->get(1).asList();
-
-    objBottomDescPC.roi_x           = objbot_PC->get(0).asDouble();
-    objBottomDescPC.roi_y           = objbot_PC->get(1).asDouble();
-    objBottomDescPC.area            = objbot_PC->get(2).asDouble();
-    objBottomDescPC.convexity       = objbot_PC->get(3).asDouble();
-    objBottomDescPC.eccentricity    = objbot_PC->get(4).asDouble();
-    objBottomDescPC.compactness     = objbot_PC->get(5).asDouble();
-    objBottomDescPC.circleness      = objbot_PC->get(6).asDouble();
-    objBottomDescPC.squareness      = objbot_PC->get(7).asDouble();
-    objBottomDescPC.elongatedness   = objbot_PC->get(8).asDouble();
+        objBottomDescPC.roi_x           = objbot_PC->get(0).asDouble();
+        objBottomDescPC.roi_y           = objbot_PC->get(1).asDouble();
+        objBottomDescPC.area            = objbot_PC->get(2).asDouble();
+        objBottomDescPC.convexity       = objbot_PC->get(3).asDouble();
+        objBottomDescPC.eccentricity    = objbot_PC->get(4).asDouble();
+        objBottomDescPC.compactness     = objbot_PC->get(5).asDouble();
+        objBottomDescPC.circleness      = objbot_PC->get(6).asDouble();
+        objBottomDescPC.squareness      = objbot_PC->get(7).asDouble();
+        objBottomDescPC.elongatedness   = objbot_PC->get(8).asDouble();
+    }
+    else
+    {
+        objTopDescPC.clear();
+        objBottomDescPC.clear();
+    }
 
     return true;
 }
@@ -1044,11 +1083,15 @@ void Manager::computeObjectDesc()
 
     fprintf(stderr,"check blobs...\n");
 
-    if (objBottle->size()>1 && objPartsBottle->size()>1 && objBottlePC->size()>1 && objPartsBottlePC->size()>1) 
+    if (objBottle->size()>1) 
     {
         updateObjectDesc(objBottle, objPartsBottle, objBottlePC, objPartsBottlePC);
         fprintf(stderr,"msg received...\n");
         fprintf(stderr,"Position of the object center in image field is: \n U = %d - V = %d \n", (int) objDesc.roi_x, (int) objDesc.roi_y);
+    }
+    else
+    {
+        fprintf(stderr,"\n\n[WARNING] - No blobs detected! \n\n");
     }
     fprintf(stderr,"...done!\n");
 
