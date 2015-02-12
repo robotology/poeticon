@@ -25,7 +25,7 @@
 #include <yarp/os/RateThread.h>
 #include <yarp/os/PortReport.h>
 
-#include <cv.h>
+/*#include <cv.h>*/
 
 class Manager;  //forward declaration
 
