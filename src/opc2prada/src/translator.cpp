@@ -56,109 +56,213 @@ bool   TranslatorModule::close() {
     return true;
 }
 bool   TranslatorModule::updateModule() {
+    int ObjectID;
     Bottle *receive,dataBase,ids2,*idsp;
     if(readingThread->_runit) {
         receive = translatorPort.read(false);  //non-block       
         if(receive == NULL)
             return true;
-        cout << "Writing the world state to file..." << endl;
-        readingThread->guard.lock();
-        dataBase = readingThread->_data;
-        ids2 = readingThread->_ids;
-        readingThread->guard.unlock();
+        if(receive->get(0).asString() == "update") {
+            cout << "Writing the world state to file..." << endl;
+            readingThread->guard.lock();
+            dataBase = readingThread->_data;
+            ids2 = readingThread->_ids;
+            readingThread->guard.unlock();
 
-        if(dataBase.size()>0 && (dataBase.get(1).asString()!="empty")) {
-	        //cout << "f1: " << objIDsFileName << "f2: " << stateFileName << endl;
-            //myfile.open( objIDsFileName);
-            //myfile2.open ( stateFileName);
+            if(dataBase.size()>0 && (dataBase.get(1).asString()!="empty")) {
+	            //cout << "f1: " << objIDsFileName << "f2: " << stateFileName << endl;
+                //myfile.open( objIDsFileName);
+                //myfile2.open ( stateFileName);
 
-            myfile.open( objIDsFileName.c_str());
-            myfile2.open ( stateFileName.c_str());
+                myfile.open( objIDsFileName.c_str());
+                myfile2.open ( stateFileName.c_str());
 
-	        //myfile.open ("Object names-IDs.dat");
-            //myfile2.open ("state.dat");
+	            //myfile.open ("Object names-IDs.dat");
+                //myfile2.open ("state.dat");
+                idsp = ids2.get(1).asList();
+                idsp = idsp->get(1).asList();
+                for(int i=1;i<dataBase.size();i++){ // for each object
+                    Bottle *objecto = dataBase.get(i).asList();
+                    for(int j=0;j<objecto->size();j++) { // for each properties
+                        Bottle *propriedade = objecto->get(j).asList();
+                        switchCase r = hashtable(propriedade->get(0).asString());
+                        switch(r) {
+                            case name:{
+			    		        myfile <<"(" << idsp->get((i-1)).asInt() << "," << propriedade->get(1).asString().c_str() << ");";
+                                break;
+                            }
+                            case desc: {
+                                break;
+                            }
+                            case pos: {
+                                break;
+                            }
+                            case on_t: {
+                                Bottle *ontop = propriedade->get(1).asList();
+                                for(int k=0; k < ontop->size(); k++){
+                                    myfile2 << idsp->get((i-1)).asInt() <<"_on_" <<ontop->get(k).asInt() <<"() ";
+                                }
+                                break;
+                            }
+                            case re_w: {
+                                Bottle *reachable = propriedade->get(1).asList();
+                                for(int k=0; k < reachable->size(); k++){
+                                    myfile2 << idsp->get((i-1)).asInt() <<"_isreachable_with_" <<reachable->get(k).asInt() <<"() ";
+                                }
+                                break;
+                            }
+                            case pu_w: {
+                                Bottle *pullable = propriedade->get(1).asList();
+                                for(int k=0; k < pullable->size(); k++){
+                                    myfile2 << idsp->get((i-1)).asInt() <<"_ispullable_with_" <<pullable->get(k).asInt() <<"() ";
+                                }
+                                break;
+                            }
+                           /* case touch: {
+                                Bottle *touch = propriedade->get(1).asList();
+                                for(int k=0; k < touch->size(); k++){
+                                    myfile2 << idsp->get((i-1)).asInt() <<"_touch_" <<touch->get(k).asInt() <<"() ";
+                                }
+                                break;
+                            }*/
+                            case is_h: {
+                                if(propriedade->get(1).asString() == "true") {
+                                    myfile2 << idsp->get((i-1)).asInt() <<"_ishand" <<"() ";
+                                }
+                                break;
+                            }
+                            case free: {
+                                if(propriedade->get(1).asString() == "true") {
+                                    myfile2 << idsp->get((i-1)).asInt() <<"_clearhand" <<"() ";
+                                    myfile2 << idsp->get((i-1)).asInt() <<"_istool" <<"() ";
+                                }
+                                break;
+                            }
+                            case in_h: {
+                                if(propriedade->get(1).asString() == "right") {
+                                    myfile2 << idsp->get((i-1)).asInt() <<"_inhand_" << "12" << "() "; //according to dbhands.ini - id 12 corresponds to the right hand
+                                    myfile2 << idsp->get((i-1)).asInt() <<"_istool" <<"() ";
+                                }
+                                if(propriedade->get(1).asString() == "left") {
+                                    myfile2 << idsp->get((i-1)).asInt() <<"_inhand_" << "11" << "() "; //according to dbhands.ini - id 12 corresponds to the right hand
+                                    myfile2 << idsp->get((i-1)).asInt() <<"_istool" <<"() ";
+                                }
+                                break;
+                            }
+
+                            default: {
+                                cout << "not known attribute..." << endl;
+                                break;
+                            }
+                        } // end switch
+                    } // end for property
+                } // end for object
+        
+                myfile.close();
+                myfile2.close();
+
+            } // end if
+        }
+        else if(receive->get(0).asString() == "query" && receive->get(1).isInt()) {
+            readingThread->guard.lock();
+            dataBase = readingThread->_data;
+            ids2 = readingThread->_ids;
+            readingThread->guard.unlock();
             idsp = ids2.get(1).asList();
             idsp = idsp->get(1).asList();
-            for(int i=1;i<dataBase.size();i++){ // for each object
-                Bottle *objecto = dataBase.get(i).asList();
-                for(int j=0;j<objecto->size();j++) { // for each properties
-                    Bottle *propriedade = objecto->get(j).asList();
-                    switchCase r = hashtable(propriedade->get(0).asString());
-                    switch(r) {
-                        case name:{
-					        myfile <<"(" << idsp->get((i-1)).asInt() << "," << propriedade->get(1).asString().c_str() << ");";
-                            break;
-                        }
-                        case desc: {
-                            break;
-                        }
-                        case pos: {
-                            break;
-                        }
-                        case on_t: {
-                            Bottle *ontop = propriedade->get(1).asList();
-                            for(int k=0; k < ontop->size(); k++){
-                                myfile2 << idsp->get((i-1)).asInt() <<"_on_" <<ontop->get(k).asInt() <<"() ";
-                            }
-                            break;
-                        }
-                        case re_w: {
-                            Bottle *reachable = propriedade->get(1).asList();
-                            for(int k=0; k < reachable->size(); k++){
-                                myfile2 << idsp->get((i-1)).asInt() <<"_isreachable_with_" <<reachable->get(k).asInt() <<"() ";
-                            }
-                            break;
-                        }
-                        case pu_w: {
-                            Bottle *pullable = propriedade->get(1).asList();
-                            for(int k=0; k < pullable->size(); k++){
-                                myfile2 << idsp->get((i-1)).asInt() <<"_ispullable_with_" <<pullable->get(k).asInt() <<"() ";
-                            }
-                            break;
-                        }
-                       /* case touch: {
-                            Bottle *touch = propriedade->get(1).asList();
-                            for(int k=0; k < touch->size(); k++){
-                                myfile2 << idsp->get((i-1)).asInt() <<"_touch_" <<touch->get(k).asInt() <<"() ";
-                            }
-                            break;
+            ObjectID = receive->get(1).asInt();
+            for(int i=0;i<idsp->size();i++) {
+                if(idsp->get(i).asInt() == ObjectID) {
+                    ObjectID = i;
+                    break;
+                }
+            }
+            Bottle *objecto = dataBase.get(ObjectID+1).asList();
+            for(int j=0;j<objecto->size();j++) { // for each properties
+                Bottle *propriedade = objecto->get(j).asList();
+                switchCase r = hashtable(propriedade->get(0).asString());
+                switch(r) {
+                    case name:{
+    		            /*myfile <<"(" << idsp->get((i-1)).asInt() << "," << propriedade->get(1).asString().c_str() << ");";*/
+                        break;
+                    }
+                    case desc: {
+                        Bottle &send = translatorPort.prepare();
+                        send.clear();
+                        send.addList()=*propriedade->get(1).asList();
+                        translatorPort.write();
+                        break;
+                    }
+                    case pos: {
+                        break;
+                    }
+                    case on_t: {
+                        /*Bottle *ontop = propriedade->get(1).asList();
+                        for(int k=0; k < ontop->size(); k++){
+                        myfile2 << idsp->get((i-1)).asInt() <<"_on_" <<ontop->get(k).asInt() <<"() ";
                         }*/
-                        case is_h: {
-                            if(propriedade->get(1).asString() == "true") {
-                                myfile2 << idsp->get((i-1)).asInt() <<"_ishand" <<"() ";
-                            }
-                            break;
+                        break;
+                    }
+                    case re_w: {
+                        /*Bottle *reachable = propriedade->get(1).asList();
+                        for(int k=0; k < reachable->size(); k++){
+                        myfile2 << idsp->get((i-1)).asInt() <<"_isreachable_with_" <<reachable->get(k).asInt() <<"() ";
+                        }*/
+                        break;
+                    }
+                    case pu_w: {
+                        /*Bottle *pullable = propriedade->get(1).asList();
+                        for(int k=0; k < pullable->size(); k++){
+                            myfile2 << idsp->get((i-1)).asInt() <<"_ispullable_with_" <<pullable->get(k).asInt() <<"() ";
+                        }*/
+                        break;
+                    }
+                    /* case touch: {
+                        Bottle *touch = propriedade->get(1).asList();
+                        for(int k=0; k < touch->size(); k++){
+                            myfile2 << idsp->get((i-1)).asInt() <<"_touch_" <<touch->get(k).asInt() <<"() ";
                         }
-                        case free: {
-                            if(propriedade->get(1).asString() == "true") {
-                                myfile2 << idsp->get((i-1)).asInt() <<"_clearhand" <<"() ";
-                                myfile2 << idsp->get((i-1)).asInt() <<"_istool" <<"() ";
-                            }
-                            break;
+                        break;
+                    }*/
+                    case is_h: {
+                        /*if(propriedade->get(1).asString() == "true") {
+                            myfile2 << idsp->get((i-1)).asInt() <<"_ishand" <<"() ";
+                        }*/
+                        break;
+                    }
+                    case free: {
+                        /*if(propriedade->get(1).asString() == "true") {
+                            myfile2 << idsp->get((i-1)).asInt() <<"_clearhand" <<"() ";
+                            myfile2 << idsp->get((i-1)).asInt() <<"_istool" <<"() ";
+                        }*/
+                        break;
+                    }
+                    case in_h: {
+                        /*if(propriedade->get(1).asString() == "right") {
+                            myfile2 << idsp->get((i-1)).asInt() <<"_inhand_" << "12" << "() "; //according to dbhands.ini - id 12 corresponds to the right hand
+                            myfile2 << idsp->get((i-1)).asInt() <<"_istool" <<"() ";
                         }
-                        case in_h: {
-                            if(propriedade->get(1).asString() == "right") {
-                                myfile2 << idsp->get((i-1)).asInt() <<"_inhand_" << "12" << "() "; //according to dbhands.ini - id 12 corresponds to the right hand
-                                myfile2 << idsp->get((i-1)).asInt() <<"_istool" <<"() ";
-                            }
-                            if(propriedade->get(1).asString() == "left") {
-                                myfile2 << idsp->get((i-1)).asInt() <<"_inhand_" << "11" << "() "; //according to dbhands.ini - id 12 corresponds to the right hand
-                                myfile2 << idsp->get((i-1)).asInt() <<"_istool" <<"() ";
-                            }
-                            break;
-                        }
+                        if(propriedade->get(1).asString() == "left") {
+                            myfile2 << idsp->get((i-1)).asInt() <<"_inhand_" << "11" << "() "; //according to dbhands.ini - id 12 corresponds to the right hand
+                            myfile2 << idsp->get((i-1)).asInt() <<"_istool" <<"() ";
+                        }*/
+                        break;
+                    }
 
-                        default: {
-                            cout << "not known attribute..." << endl;
-                            break;
-                        }
-                    } // end switch
-                } // end for property
-            } // end for object
-            myfile.close();
-            myfile2.close();
-
-        } // end if
+                    default: {
+                        cout << "not known attribute..." << endl;
+                        break;
+                    }
+                }
+            }
+        }
+        else {
+            Bottle &send = translatorPort.prepare();
+            send.clear();
+            send.addString("NACK");
+            translatorPort.write();
+        }
+            
         Bottle &send = translatorPort.prepare();
         send.clear();
         send.addString("ACK");
