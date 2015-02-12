@@ -84,7 +84,7 @@ class WorldStateMgrThread : public RateThread
         // perception and playback modes
         bool playbackMode;
         bool populated;
-        bool gotInitialEntries;
+        bool gotIDsOPC;
 
         // perception mode
         int perceptionFSMState;
@@ -99,7 +99,7 @@ class WorldStateMgrThread : public RateThread
         int playbackFSMState;
         string playbackFile;
         bool playbackPaused;
-        bool toldUserConnectOPC, toldUserRewind;
+        bool toldUserConnectOPC, toldUserEof;
         Bottle stateBottle;
         int sizePlaybackFile;
         int currPlayback;
@@ -115,14 +115,14 @@ class WorldStateMgrThread : public RateThread
         void run();
 
         // perception and playback modes
-        bool resetWorldState();
+        bool dumpWorldState();
         bool updateWorldState();
 
         // perception mode
         bool initPerceptionVars();
         bool initTracker();
         void fsmPerception();
-        void getInitialOPC();
+        void getIDsOPC();
         void refreshBlobs();
         void refreshTracker();
         void refreshTrackIDs();

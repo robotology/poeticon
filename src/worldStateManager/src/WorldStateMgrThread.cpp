@@ -86,7 +86,7 @@ bool WorldStateMgrThread::threadInit()
     //yDebug("thread initialization");
     closing = false;
     populated = false; // TODO: really check if opc was populated before this module started
-    gotInitialEntries = false;
+    gotIDsOPC = false;
     if ( !openPorts() )
     {
         yError("problem opening ports");
@@ -117,20 +117,19 @@ void WorldStateMgrThread::run()
 /* perception and playback modes                                              */
 /* ************************************************************************** */
 
-bool WorldStateMgrThread::resetWorldState()
+bool WorldStateMgrThread::dumpWorldState()
 {
-    if (!playbackMode)
+    if (opcPort.getOutputCount() < 1)
     {
-        yWarning("user requested to reset the world state in perception mode - to be implemented");
+        yWarning() << __func__ << "not connected to OPC";
         return false;
     }
-    else
-    {
-        yInfo("reset to [state00]");
-        currPlayback = 0;
-        playbackFSMState = STATE_DUMMY_STEP;
-    }
-    
+    getIDsOPC();
+    yInfo() << "opcIDs =" << opcIDs;
+
+    if (!playbackMode)
+        yInfo() << "trackIDs =" << trackIDs;
+
     return true;
 }
 
@@ -236,7 +235,7 @@ void WorldStateMgrThread::fsmPerception()
         {
             // acquire initial entries (robot hands) from OPC database
             // TODO: this should be called as soon as opcPort is connected
-            getInitialOPC();
+            getIDsOPC();
 
             // wait for blobs data to arrive
             refreshBlobs();
@@ -330,10 +329,9 @@ void WorldStateMgrThread::fsmPerception()
     }
 }
 
-void WorldStateMgrThread::getInitialOPC()
+void WorldStateMgrThread::getIDsOPC()
 {
-    // acquire initial entries (robot hands) from OPC, save them
-    if (opcPort.getOutputCount()>0 && !gotInitialEntries)
+    if (opcPort.getOutputCount()>0)
     {
         Bottle opcCmd, opcCmdContent, opcReply;
         opcCmd.addVocab(Vocab::encode("ask"));
@@ -341,24 +339,23 @@ void WorldStateMgrThread::getInitialOPC()
         opcCmd.addList() = opcCmdContent;
         opcPort.write(opcCmd, opcReply);
 
-        // process OPC response
         if (opcReply.size() > 1)
         {
             if (opcReply.get(0).asVocab()==Vocab::encode("ack") &&
                 opcReply.get(1).asList()->get(0).asString()=="id")
             {
-                Bottle *initialIDs = opcReply.get(1).asList()->get(1).asList();
-                for (int o=0; o<initialIDs->size(); o++)
+                opcIDs.clear();
+                Bottle *currIDs = opcReply.get(1).asList()->get(1).asList();
+                for (int o=0; o<currIDs->size(); o++)
                 {
-                    opcIDs.push_back(initialIDs->get(o).asInt());
+                    opcIDs.push_back(currIDs->get(o).asInt());
                 }
             }
             else
                 yDebug() << __func__ << "did not receive ack from OPC";
         }
 
-        gotInitialEntries = true;        
-        yDebug() << "saved initial OPC entries, opcIDs =" << opcIDs;
+        gotIDsOPC = true;        
     }
 }
 
@@ -871,7 +868,7 @@ string WorldStateMgrThread::inWhichHand(const string &objName)
 bool WorldStateMgrThread::initPlaybackVars()
 {
     toldUserConnectOPC = false;
-    toldUserRewind = false;
+    toldUserEof = false;
     playbackPaused = true;
     playbackFSMState = STATE_DUMMY_PARSE;
     sizePlaybackFile = -1;
@@ -900,7 +897,7 @@ void WorldStateMgrThread::fsmPlayback()
                 break;
             }
             
-            yDebug("file parsed successfully");
+            yDebug("file parsed successfully: %d state entries", sizePlaybackFile);
             playbackFSMState = STATE_DUMMY_WAIT_OPC;
             break;
         }
@@ -915,6 +912,7 @@ void WorldStateMgrThread::fsmPlayback()
 
             if (opcPort.getOutputCount()>=1)
             {
+                dumpWorldState();
                 yInfo("connected, you can now send commands over RPC");
                 playbackFSMState = STATE_DUMMY_WAIT_CMD;
             }
@@ -1008,11 +1006,16 @@ void WorldStateMgrThread::fsmPlayback()
                             //break;
                         }
                     }
-                }
+
+                } // end for parse each entry/line
+
+                // update and print opcIDs
+                getIDsOPC();
+                dumpWorldState();
 
                 ++currPlayback;
                 playbackPaused = true;
-            }
+            } // end if (!playbackPaused)
 
             // stay in same state, wait for next update instruction over rpc
 
@@ -1021,10 +1024,10 @@ void WorldStateMgrThread::fsmPlayback()
 
         case STATE_DUMMY_EOF:
         {
-            if (!toldUserRewind)
-                yInfo("finished reading from playback file, send reset command over RPC to rewind");
+            if (!toldUserEof)
+                yInfo("finished reading from playback file");
 
-            toldUserRewind = true;
+            toldUserEof = true;
             break;        
         }
 

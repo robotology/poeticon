@@ -44,7 +44,7 @@ class WorldStateMgrModule : public RFModule, public WorldStateMgr_IDL
 
         // IDL functions
         bool attach(yarp::os::RpcServer &source);
-        bool reset();
+        bool dump();
         bool update();
         bool quit();
 };
