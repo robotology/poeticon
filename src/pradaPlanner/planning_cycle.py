@@ -153,6 +153,7 @@ def planning_cycle():
                         print 'waiting...'
                         State_bottle_in = State_yarp.read(False)
                         if State_bottle_in:
+                            print 'Bottle:', State_bottle_in.toString()
                             Object_file = open(''.join(PathName +"/Object_names-IDs.dat"))
                             Objects = Object_file.read().split(';')
                             if len(Objects) > 3:

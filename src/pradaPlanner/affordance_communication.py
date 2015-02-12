@@ -32,6 +32,10 @@ def Affordance_comm():
     yarp.Network.init()
     geo_yarp = yarp.BufferedPortBottle()
     geo_yarp.open("/AffordanceComm/ground_cmd:io")##
+
+    desc_yarp = yarp.BufferedPortBottle()
+    desc_yarp.open("/AffordanceComm/desc_query:io")
+    
 ##    Aff_yarp = yarp.BufferedPortBottle()
 ##    Aff_yarp.open("/Aff_query:io")
     rf = yarp.ResourceFinder()
@@ -57,7 +61,7 @@ def Affordance_comm():
             break
         elif command == 'update':
             while 1:
-                Affor_bottle_in = geo_yarp.read()
+                Affor_bottle_in = geo_yarp.read(False)
                 yarp.Time.delay(0.2)
                 if Affor_bottle_in:
                     data = Affor_bottle_in.toString()
@@ -106,8 +110,21 @@ def Affordance_comm():
 ##                  in either case, o X nao ira interessar
 ##                  a menos que seja muito grande (noise?)
 
-                    
-
+                    tool = rule.split('_')[3].replace('()','').replace(' ','')                    
+                    desc_bottle_out = desc_yarp.prepare()
+                    desc_bottle_out.clear()
+                    desc_bottle_out.addString("query")
+                    desc_bottle_out.addInt(int(tool))
+                    print desc_bottle_out.toString()
+                    desc_yarp.write()
+                    descriptors = []
+                    while 1:
+                        desc_bottle_in = desc_yarp.read(False)
+                        yarp.Time.delay(0.2)
+                        if desc_bottle_in:
+                            descriptors = desc_bottle_in.toString()
+                            break
+                    print descriptors
                     new_rule = new_rule + [outcome]
                     new_rule = new_rule + [outcome2]
                     new_rule = new_rule + [outcome3]
