@@ -35,13 +35,71 @@ def Affordance_comm():
 
     desc_yarp = yarp.BufferedPortBottle()
     desc_yarp.open("/AffordanceComm/desc_query:io")
-    
-##    Aff_yarp = yarp.BufferedPortBottle()
-##    Aff_yarp.open("/Aff_query:io")
+
+    planner_yarp = yarp.BufferedPortBottle()
+    planner_yarp.open("/AffordanceComm/planner_cmd:io")
+
     rf = yarp.ResourceFinder()
     rf.setVerbose(True)
     rf.setDefaultContext("poeticon")
     PathName = rf.findPath("contexts/poeticon")
+    
+## waits for instruction from the planner to update
+    while 1:
+        planner_bottle_in = planner_yarp.read(False)
+        yarp.Time.delay(0.2)
+        if planner_bottle_in:
+            command = planner_bottle_in.toString()
+            if command == 'update':
+                break
+
+    descriptors = []
+    object_file = open(''.join(PathName + "/Object_names-IDs.dat"))
+    object_IDs = object_file.read().replace(')','').replace('(','').split(';')
+    object_file.close()
+    object_IDs.pop(-1)
+    Obj_ID = []
+    print object_IDs
+    for i in range(len(object_IDs)):
+        if object_IDs[i].split(',')[0] != '11' and object_IDs[i].split(',')[0] != '12':
+            Obj_ID = Obj_ID + [object_IDs[i].split(',')[0]]
+        
+    print Obj_ID
+    for i in range(len(Obj_ID)):
+            
+        desc_bottle_out = desc_yarp.prepare()
+        desc_bottle_out.clear()
+        desc_bottle_out.addString("query")
+        desc_bottle_out.addInt(int(Obj_ID[i]))
+        print desc_bottle_out.toString()
+        desc_yarp.write()
+
+        while 1:
+            desc_bottle_in = desc_yarp.read(False)
+            yarp.Time.delay(0.2)
+            print "waiting for reply..."
+            if desc_bottle_in:
+                data = desc_bottle_in.toString()
+                print "bottle received:", data
+                if data != 'ACK':
+                    data = desc_bottle_in.get(0).asList()
+                    data = data.toString().split(' ')
+                    for t in range(len(data)):
+                        data[t] = float(data[t])
+                    print data
+                    break
+##                if data == 'ACK':
+##                    print "resending"
+##                    desc_bottle_out = desc_yarp.prepare()
+##                    desc_bottle_out.clear()
+##                    desc_bottle_out.addString("query")
+##                    desc_bottle_out.addInt(int(Obj_ID[i]))
+##                    desc_yarp.write()
+        descriptors = descriptors + [[Obj_ID[i], data]]
+    print descriptors
+##    Aff_yarp = yarp.BufferedPortBottle()
+##    Aff_yarp.open("/Aff_query:io")
+    
     translation_file = open(''.join(PathName +"/Action_Affordance_Translation.dat"))
     aux_translation = translation_file.read().split('\n')
     translation = []
@@ -110,21 +168,7 @@ def Affordance_comm():
 ##                  in either case, o X nao ira interessar
 ##                  a menos que seja muito grande (noise?)
 
-                    tool = rule.split('_')[3].replace('()','').replace(' ','')                    
-                    desc_bottle_out = desc_yarp.prepare()
-                    desc_bottle_out.clear()
-                    desc_bottle_out.addString("query")
-                    desc_bottle_out.addInt(int(tool))
-                    print desc_bottle_out.toString()
-                    desc_yarp.write()
-                    descriptors = []
-                    while 1:
-                        desc_bottle_in = desc_yarp.read(False)
-                        yarp.Time.delay(0.2)
-                        if desc_bottle_in:
-                            descriptors = desc_bottle_in.toString()
-                            break
-                    print descriptors
+                    
                     new_rule = new_rule + [outcome]
                     new_rule = new_rule + [outcome2]
                     new_rule = new_rule + [outcome3]

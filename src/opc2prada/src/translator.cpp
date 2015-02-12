@@ -162,8 +162,14 @@ bool   TranslatorModule::updateModule() {
                 myfile2.close();
 
             } // end if
+            Bottle &send = translatorPort.prepare();
+            send.clear();
+            send.addString("ACK");
+            cout << "DONE" << endl;
+            translatorPort.write();
         }
         else if(receive->get(0).asString() == "query" && receive->get(1).isInt()) {
+            /*cout << "query received" << endl;*/
             readingThread->guard.lock();
             dataBase = readingThread->_data;
             ids2 = readingThread->_ids;
@@ -178,9 +184,11 @@ bool   TranslatorModule::updateModule() {
                 }
             }
             Bottle *objecto = dataBase.get(ObjectID+1).asList();
+            /*cout << ObjectID << endl;*/
             for(int j=0;j<objecto->size();j++) { // for each properties
                 Bottle *propriedade = objecto->get(j).asList();
                 switchCase r = hashtable(propriedade->get(0).asString());
+                /*cout << propriedade->get(0).asString().c_str() << endl;*/
                 switch(r) {
                     case name:{
     		            /*myfile <<"(" << idsp->get((i-1)).asInt() << "," << propriedade->get(1).asString().c_str() << ");";*/
@@ -190,6 +198,7 @@ bool   TranslatorModule::updateModule() {
                         Bottle &send = translatorPort.prepare();
                         send.clear();
                         send.addList()=*propriedade->get(1).asList();
+//                        cout << send.toString().c_str() << endl;
                         translatorPort.write();
                         break;
                     }
@@ -262,12 +271,6 @@ bool   TranslatorModule::updateModule() {
             send.addString("NACK");
             translatorPort.write();
         }
-            
-        Bottle &send = translatorPort.prepare();
-        send.clear();
-        send.addString("ACK");
-        cout << "DONE" << endl;
-        translatorPort.write();
     }
     return true;
 }

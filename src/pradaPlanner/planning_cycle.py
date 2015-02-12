@@ -120,6 +120,9 @@ def planning_cycle():
     prax_yarp = yarp.BufferedPortBottle()##
     prax_yarp.open("/planner/prax_inst:io")
 
+    Aff_yarp = yarp.BufferedPortBottle()
+    Aff_yarp.open("/planner/Aff_cmd:io")
+
 
     while 1:
         old_state = []
@@ -169,7 +172,11 @@ def planning_cycle():
                 yarp.Time.delay(1)
     ###################
         
-        print 'state updated'    
+        print 'state updated'
+        Aff_bottle_out = Aff_yarp.prepare()
+        Aff_bottle_out.clear()
+        Aff_bottle_out.addString('update')
+        Aff_yarp.write()
         command = ''
         while 1:
             if goal_yarp.getOutputCount() != 0:
