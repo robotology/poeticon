@@ -53,6 +53,13 @@ const double                    OBJECT_SIZE_OFFSET_DEFAULT   = 0.04;
 const int                       HAND_NATURAL_POSE_DEFAULT    = 1; // 0 = straight pose (hand palms facing each others), 1 = pronated pose (hand palms facing the table).
 
 /**********************************************************/
+
+struct imgPoint
+{
+  int x;
+  int y;
+};
+
 class BlobInfo
 {
 public:
@@ -221,7 +228,6 @@ protected:
 
     int                         n_tools;
     yarp::os::Semaphore         mutexResources;     //mutex for ressources
-    CvPoint                     pointLocation;      //x and y of the pointed location
     yarp::os::Bottle            lastBlobs;
     yarp::os::Bottle            lastTool;
     yarp::sig::Vector           objectPos;
@@ -229,7 +235,7 @@ protected:
     std::vector<yarp::sig::Vector> toolTransform;
     yarp::sig::Vector              toolTransformDefault;
 
-    bool                        get3DPosition(const CvPoint &point, yarp::sig::Vector &x);
+    bool                        get3DPosition(imgPoint point, yarp::sig::Vector &x);
     int                         processHumanCmd(const yarp::os::Bottle &cmd, yarp::os::Bottle &b);
 
     int                         executeToolAttach(const yarp::sig::Vector &tool);
@@ -278,8 +284,8 @@ protected:
     BlobPartInfo                objTopDescPC;
     BlobPartInfo                objBottomDescPC;
 
-    CvPoint                     objImgPos;
-    CvPoint                     objImgPos_onTable;
+    imgPoint                    objImgPos;
+    imgPoint                    objImgPos_onTable;
     int                         maxObjects;
     double                      closeThr;
 
