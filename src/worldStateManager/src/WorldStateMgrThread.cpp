@@ -86,13 +86,16 @@ bool WorldStateMgrThread::threadInit()
     //yDebug("thread initialization");
     closing = false;
     populated = false; // TODO: really check if opc was populated before this module started
-    gotIDsOPC = false;
     if ( !openPorts() )
     {
         yError("problem opening ports");
         return false;
     }
 
+    // initialize variables common to both perception and playback modes
+    initCommonVars();
+
+    // initialize specific variables
     return ( playbackMode ? initPlaybackVars() : initPerceptionVars() );
 }
 
@@ -117,6 +120,13 @@ void WorldStateMgrThread::run()
 /* perception and playback modes                                              */
 /* ************************************************************************** */
 
+bool WorldStateMgrThread::initCommonVars()
+{
+    toldUserConnectOPC = false;
+
+    return true;
+}
+
 bool WorldStateMgrThread::dumpWorldState()
 {
     if (opcPort.getOutputCount() < 1)
@@ -124,7 +134,7 @@ bool WorldStateMgrThread::dumpWorldState()
         yWarning() << __func__ << "not connected to OPC";
         return false;
     }
-    getIDsOPC();
+    refreshOPCIDs();
     yInfo() << "opcIDs =" << opcIDs;
 
     if (!playbackMode)
@@ -167,7 +177,7 @@ bool WorldStateMgrThread::initPerceptionVars()
 {
     inAff = NULL;
     inTargets = NULL;
-    perceptionFSMState = STATE_WAIT_BLOBS;
+    perceptionFSMState = STATE_PERCEPTION_WAIT_OPC;
 
     return true;
 }
@@ -231,67 +241,85 @@ void WorldStateMgrThread::fsmPerception()
     //yDebug("perception state=%d", perceptionFSMState);
     switch(perceptionFSMState)
     {
-        case STATE_WAIT_BLOBS:
+
+        case STATE_PERCEPTION_WAIT_OPC:
+        {
+            if (!toldUserConnectOPC && opcPort.getOutputCount()<1)
+            {
+                yInfo("waiting for /%s/opc:io to be connected to wsopc/rpc", moduleName.c_str());
+                toldUserConnectOPC = true;
+            }
+
+            if (opcPort.getOutputCount()>=1)
+            {
+                dumpWorldState();
+                yInfo("connected, you can now send commands over RPC");
+                playbackFSMState = STATE_PERCEPTION_WAIT_BLOBS;
+            }
+
+            break;
+        }
+
+        case STATE_PERCEPTION_WAIT_BLOBS:
         {
             // acquire initial entries (robot hands) from OPC database
-            // TODO: this should be called as soon as opcPort is connected
-            getIDsOPC();
+            refreshOPCIDs();
 
             // wait for blobs data to arrive
             refreshBlobs();
             // when something arrives, proceed
             if (inAff != NULL)
-                perceptionFSMState = STATE_READ_BLOBS;
+                perceptionFSMState = STATE_PERCEPTION_READ_BLOBS;
 
             break;
         }
 
-        case STATE_READ_BLOBS:
+        case STATE_PERCEPTION_READ_BLOBS:
         {
             // if size>0 proceed, else go back one state
             if (sizeAff > 0)
-                perceptionFSMState = STATE_INIT_TRACKER;
+                perceptionFSMState = STATE_PERCEPTION_INIT_TRACKER;
             else
-                perceptionFSMState = STATE_WAIT_BLOBS;
+                perceptionFSMState = STATE_PERCEPTION_WAIT_BLOBS;
 
             break;
         }
 
-        case STATE_INIT_TRACKER:
+        case STATE_PERCEPTION_INIT_TRACKER:
         {
             // initialize multi-object active particle tracker
             initTracker();
 
             // proceed
-            perceptionFSMState = STATE_WAIT_TRACKER;
+            perceptionFSMState = STATE_PERCEPTION_WAIT_TRACKER;
 
             break;
         }
 
-        case STATE_WAIT_TRACKER:
+        case STATE_PERCEPTION_WAIT_TRACKER:
         {
             // wait for tracker data to arrive
             refreshTracker();
 
             // when something arrives, proceed
             if (inTargets != NULL)
-                perceptionFSMState = STATE_READ_TRACKER;
+                perceptionFSMState = STATE_PERCEPTION_READ_TRACKER;
 
             break;
         }
 
-        case STATE_READ_TRACKER:
+        case STATE_PERCEPTION_READ_TRACKER:
         {
             // if size>0 proceed, else go back one state
             if (sizeTargets > 0)
-                perceptionFSMState = STATE_POPULATE_DB;
+                perceptionFSMState = STATE_PERCEPTION_POPULATE_DB;
             else
-                perceptionFSMState = STATE_WAIT_TRACKER;
+                perceptionFSMState = STATE_PERCEPTION_WAIT_TRACKER;
 
             break;
         }
 
-        case STATE_POPULATE_DB:
+        case STATE_PERCEPTION_POPULATE_DB:
         {
             // read new data and ensure validity
             refreshPerceptionAndValidate();
@@ -301,12 +329,14 @@ void WorldStateMgrThread::fsmPerception()
 
             // if database was successfully populated proceed, else stay in same state
             if (populated)
-                perceptionFSMState = STATE_UPDATE_DB;
+                perceptionFSMState = STATE_PERCEPTION_UPDATE_DB;
+
+            dumpWorldState();
 
             break;
         }
 
-        case STATE_UPDATE_DB:
+        case STATE_PERCEPTION_UPDATE_DB:
         {
             // read new data and ensure validity
             refreshPerceptionAndValidate();
@@ -320,6 +350,8 @@ void WorldStateMgrThread::fsmPerception()
                 yWarning("could not update database");
             */
 
+            dumpWorldState();
+
             break;
         }
         default:
@@ -329,7 +361,7 @@ void WorldStateMgrThread::fsmPerception()
     }
 }
 
-void WorldStateMgrThread::getIDsOPC()
+void WorldStateMgrThread::refreshOPCIDs()
 {
     if (opcPort.getOutputCount()>0)
     {
@@ -354,8 +386,6 @@ void WorldStateMgrThread::getIDsOPC()
             else
                 yDebug() << __func__ << "did not receive ack from OPC";
         }
-
-        gotIDsOPC = true;        
     }
 }
 
@@ -867,7 +897,6 @@ string WorldStateMgrThread::inWhichHand(const string &objName)
 
 bool WorldStateMgrThread::initPlaybackVars()
 {
-    toldUserConnectOPC = false;
     toldUserEof = false;
     playbackPaused = true;
     playbackFSMState = STATE_DUMMY_PARSE;
@@ -1010,7 +1039,7 @@ void WorldStateMgrThread::fsmPlayback()
                 } // end for parse each entry/line
 
                 // update and print opcIDs
-                getIDsOPC();
+                refreshOPCIDs();
                 dumpWorldState();
 
                 ++currPlayback;
