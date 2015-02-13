@@ -6,10 +6,6 @@
 </dependencies>
 
 <module>
-    <name>actionsRenderingEngine</name>
-    <node>pwrNode</node>
-</module>
-<module>
     <name>blobSpotter</name>
     <node>pwrNode</node>
 </module>
