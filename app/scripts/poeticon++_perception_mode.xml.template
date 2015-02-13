@@ -6,6 +6,10 @@
 </dependencies>
 
 <module>
+    <name>activityInterface</name>
+    <node>enigma</node>
+</module>
+<module>
     <name>blobSpotter</name>
     <node>pwrNode</node>
 </module>
@@ -119,6 +123,10 @@
 <connection>
     <from>/icub/camcalib/left/out</from>
     <to>/activeParticleTrack/image:i</to>
+</connection>
+<connection>
+    <from>/wsm/activity:rpc</from>
+    <to>/activityInterface/rpc:i</to>
 </connection>
 <connection>
     <from>/wsm/fixation:o</from>

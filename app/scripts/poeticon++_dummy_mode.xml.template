@@ -2,6 +2,11 @@
 <name>POETICON++ from Dummy File</name>
 
 <module>
+    <name>activityInterface</name>
+    <parameters>--no_robot</parameters>
+    <node>console</node>
+</module>
+<module>
     <name>worldStateManager</name>
     <parameters>--playback dbdummy.ini</parameters>
     <node>console</node>
