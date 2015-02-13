@@ -1268,7 +1268,7 @@ int Manager::executeToolAttach(const Vector &tool)
 }
 
 /**********************************************************/
-bool Manager::get3DPosition(const CvPoint &point, Vector &x)
+bool Manager::get3DPosition(imgPoint point, Vector &x)
 {
     Bottle cmdMotor,replyMotor;
     cmdMotor.addVocab(Vocab::encode("get"));

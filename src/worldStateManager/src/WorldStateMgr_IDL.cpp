@@ -6,7 +6,7 @@
 
 
 
-class WorldStateMgr_IDL_reset : public yarp::os::Portable {
+class WorldStateMgr_IDL_dump : public yarp::os::Portable {
 public:
   bool _return;
   void init();
@@ -30,14 +30,14 @@ public:
   virtual bool read(yarp::os::ConnectionReader& connection);
 };
 
-bool WorldStateMgr_IDL_reset::write(yarp::os::ConnectionWriter& connection) {
+bool WorldStateMgr_IDL_dump::write(yarp::os::ConnectionWriter& connection) {
   yarp::os::idl::WireWriter writer(connection);
   if (!writer.writeListHeader(1)) return false;
-  if (!writer.writeTag("reset",1,1)) return false;
+  if (!writer.writeTag("dump",1,1)) return false;
   return true;
 }
 
-bool WorldStateMgr_IDL_reset::read(yarp::os::ConnectionReader& connection) {
+bool WorldStateMgr_IDL_dump::read(yarp::os::ConnectionReader& connection) {
   yarp::os::idl::WireReader reader(connection);
   if (!reader.readListReturn()) return false;
   if (!reader.readBool(_return)) {
@@ -47,7 +47,7 @@ bool WorldStateMgr_IDL_reset::read(yarp::os::ConnectionReader& connection) {
   return true;
 }
 
-void WorldStateMgr_IDL_reset::init() {
+void WorldStateMgr_IDL_dump::init() {
   _return = false;
 }
 
@@ -96,12 +96,12 @@ void WorldStateMgr_IDL_quit::init() {
 WorldStateMgr_IDL::WorldStateMgr_IDL() {
   yarp().setOwner(*this);
 }
-bool WorldStateMgr_IDL::reset() {
+bool WorldStateMgr_IDL::dump() {
   bool _return = false;
-  WorldStateMgr_IDL_reset helper;
+  WorldStateMgr_IDL_dump helper;
   helper.init();
   if (!yarp().canWrite()) {
-    fprintf(stderr,"Missing server method '%s'?\n","bool WorldStateMgr_IDL::reset()");
+    fprintf(stderr,"Missing server method '%s'?\n","bool WorldStateMgr_IDL::dump()");
   }
   bool ok = yarp().write(helper,helper);
   return ok?helper._return:_return;
@@ -136,9 +136,9 @@ bool WorldStateMgr_IDL::read(yarp::os::ConnectionReader& connection) {
   if (direct) tag = reader.readTag();
   while (!reader.isError()) {
     // TODO: use quick lookup, this is just a test
-    if (tag == "reset") {
+    if (tag == "dump") {
       bool _return;
-      _return = reset();
+      _return = dump();
       yarp::os::idl::WireWriter writer(reader);
       if (!writer.isNull()) {
         if (!writer.writeListHeader(1)) return false;
@@ -203,17 +203,15 @@ std::vector<std::string> WorldStateMgr_IDL::help(const std::string& functionName
   std::vector<std::string> helpString;
   if(showAll) {
     helpString.push_back("*** Available commands:");
-    helpString.push_back("reset");
+    helpString.push_back("dump");
     helpString.push_back("update");
     helpString.push_back("quit");
     helpString.push_back("help");
   }
   else {
-    if (functionName=="reset") {
-      helpString.push_back("bool reset() ");
-      helpString.push_back("Resets the world state database to the initial state. ");
-      helpString.push_back("If the module was started in playback mode, the new state will be created ");
-      helpString.push_back("according to the first time instant defined in the world state text file. ");
+    if (functionName=="dump") {
+      helpString.push_back("bool dump() ");
+      helpString.push_back("Print information the current world state on the screen. ");
       helpString.push_back("@return true/false on success/failure ");
     }
     if (functionName=="update") {

@@ -14,12 +14,10 @@ class WorldStateMgr_IDL : public yarp::os::Wire {
 public:
   WorldStateMgr_IDL();
   /**
-   * Resets the world state database to the initial state.
-   * If the module was started in playback mode, the new state will be created
-   * according to the first time instant defined in the world state text file.
+   * Print information the current world state on the screen.
    * @return true/false on success/failure
    */
-  virtual bool reset();
+  virtual bool dump();
   /**
    * Update the world state database.
    * If the module was started in perception mode (default), the new state will
