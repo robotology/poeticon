@@ -544,6 +544,8 @@ bool ActivityInterface::take(const string &objName, const string &handName)
     //handStatus(handName);
     //talk to iolStateMachineHandler
     
+    
+    
     inHandStatus.insert(pair<string, string>(objName.c_str(), handName.c_str()));
     return true;
 }
@@ -552,7 +554,7 @@ bool ActivityInterface::take(const string &objName, const string &handName)
 bool ActivityInterface::drop(const string &objName, const string &handName)
 {
     //talk to iolStateMachineHandler
-    inHandStatus.erase(objName);
+    inHandStatus.erase(objName.c_str());
     return true;
 }
 
