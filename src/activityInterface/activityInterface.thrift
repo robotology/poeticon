@@ -23,7 +23,7 @@ service activityInterface_IDLServer
     * @param handName specifies the name of hand to query
     * @return double of best manipulability
     **/
-    double getManip(1:string objName, 2:handName)
+    double getManip(1:string objName, 2:string handName)
     
     /**
     * Get the status of the left or right hand
