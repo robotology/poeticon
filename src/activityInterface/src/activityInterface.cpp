@@ -429,9 +429,9 @@ string ActivityInterface::getLabel(const int32_t pos_x, const int32_t pos_y)
 }
 
 /**********************************************************/
-double ActivityInterface::getManip(const string &target)
+double ActivityInterface::getManip(const string &objName, const std::string &handName)
 {
-    Bottle getObjectPos = get3D(target);
+    Bottle getObjectPos = get3D(objName);
     Vector o_left, o_right, x;
     
     o_left  = reachAboveOrient[LEFT];
@@ -497,7 +497,15 @@ double ActivityInterface::getManip(const string &target)
         
         manip_right*=(1-exp(-limits_right));
         
-        manip = max(manip_left, manip_right);
+        
+        if (strcmp (handName.c_str(),"left") == 0)
+            manip = manip_left;
+        else if (strcmp (handName.c_str(),"right") == 0)
+            manip = manip_right;
+        else
+            manip = 0.0;
+        
+        //manip = max(manip_left, manip_right);
     }
     
     return manip;

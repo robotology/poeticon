@@ -122,7 +122,7 @@ public:
 
     /* rpc interface functions */
     bool                attach(yarp::os::RpcServer &source);
-    double              getManip(const std::string &target);
+    double              getManip(const std::string &objName, const std::string &handName);
     bool                handStat(const std::string &handName);
     yarp::os::Bottle    get3D(const std::string &objName);
     std::string         getLabel(const int32_t pos_x, const int32_t pos_y);
