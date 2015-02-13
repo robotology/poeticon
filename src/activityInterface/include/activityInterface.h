@@ -119,6 +119,7 @@ public:
     yarp::os::Bottle    getMemoryBottle();
     yarp::os::Bottle    getBlobCOG(const yarp::os::Bottle &blobs, const int i);
     bool                propagateStatus();
+    bool                with_robot;
 
     /* rpc interface functions */
     bool                attach(yarp::os::RpcServer &source);

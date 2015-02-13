@@ -438,74 +438,87 @@ double ActivityInterface::getManip(const string &objName, const std::string &han
     o_right = reachAboveOrient[RIGHT];
     double manip = 0.0;
     
-    if ( getObjectPos.size() >2 )
+    if (with_robot)
     {
-        x.resize(getObjectPos.size());
-        x[0] = getObjectPos.get(0).asDouble();
-        x[1] = getObjectPos.get(1).asDouble();
-        x[2] = getObjectPos.get(2).asDouble();
-        
-        fprintf(stdout," \n\n\nPosition is: %s \n", x.toString().c_str());
-        fprintf(stdout,"Left orientation is: %s \n", o_left.toString().c_str());
-        fprintf(stdout,"Right orientation is: %s \n \n \n", o_right.toString().c_str());
-        
-        Vector xhat_left, xhat_right, ohat_left, ohat_right;
-        Vector q_left, q_right;
-        
-        int ctxt_left_tmp;
-        int ctxt_right_tmp;
-        
-        icart_left->storeContext(&ctxt_left_tmp);
-        icart_right->storeContext(&ctxt_right_tmp);
-        
-        Vector dof(10, 1.0);
-        dof[1]=0.0;
+        if ( getObjectPos.size() >2 )
+        {
+            x.resize(getObjectPos.size());
+            x[0] = getObjectPos.get(0).asDouble();
+            x[1] = getObjectPos.get(1).asDouble();
+            x[2] = getObjectPos.get(2).asDouble();
             
-        icart_left->setDOF(dof, dof);
-        icart_right->setDOF(dof, dof);
-        
-        icart_left->askForPose(x, o_left, xhat_left, ohat_left, q_left);
-        icart_right->askForPose(x, o_right, xhat_right, ohat_right, q_right);
-        
-        icart_left->restoreContext(ctxt_left_tmp);
-        icart_right->restoreContext(ctxt_right_tmp);
-        
-        icart_left->deleteContext(ctxt_left_tmp);
-        icart_right->deleteContext(ctxt_right_tmp);
-        
-        fprintf(stdout,"q_left is: %s \n", q_left.toString().c_str());
-        fprintf(stdout,"q_right is: %s \n", q_right.toString().c_str());
-        
-        q_left  *= M_PI / 180.0;
-        q_right *= M_PI / 180.0;
-        
-        Matrix J_left  = arm_left.GeoJacobian(q_left);
-        Matrix J_right = arm_right.GeoJacobian(q_right);
+            fprintf(stdout," \n\n\nPosition is: %s \n", x.toString().c_str());
+            fprintf(stdout,"Left orientation is: %s \n", o_left.toString().c_str());
+            fprintf(stdout,"Right orientation is: %s \n \n \n", o_right.toString().c_str());
+            
+            Vector xhat_left, xhat_right, ohat_left, ohat_right;
+            Vector q_left, q_right;
+            
+            int ctxt_left_tmp;
+            int ctxt_right_tmp;
+            
+            icart_left->storeContext(&ctxt_left_tmp);
+            icart_right->storeContext(&ctxt_right_tmp);
+            
+            Vector dof(10, 1.0);
+            dof[1]=0.0;
+                
+            icart_left->setDOF(dof, dof);
+            icart_right->setDOF(dof, dof);
+            
+            icart_left->askForPose(x, o_left, xhat_left, ohat_left, q_left);
+            icart_right->askForPose(x, o_right, xhat_right, ohat_right, q_right);
+            
+            icart_left->restoreContext(ctxt_left_tmp);
+            icart_right->restoreContext(ctxt_right_tmp);
+            
+            icart_left->deleteContext(ctxt_left_tmp);
+            icart_right->deleteContext(ctxt_right_tmp);
+            
+            fprintf(stdout,"q_left is: %s \n", q_left.toString().c_str());
+            fprintf(stdout,"q_right is: %s \n", q_right.toString().c_str());
+            
+            q_left  *= M_PI / 180.0;
+            q_right *= M_PI / 180.0;
+            
+            Matrix J_left  = arm_left.GeoJacobian(q_left);
+            Matrix J_right = arm_right.GeoJacobian(q_right);
 
-        double manip_left = sqrt(det(J_left * J_left.transposed()));
-        double manip_right = sqrt(det(J_right * J_right.transposed()));
-        
-        double limits_left=0.0;
-        for (unsigned int k=0; k<thetaMin.size(); k++)
-            limits_left+=(q_left[k]-thetaMin[k])*(thetaMax[k]-q_left[k])/((thetaMax[k]-thetaMin[k])*(thetaMax[k]-thetaMin[k]));
-        
-        manip_left*=(1-exp(-limits_left));
-        
-        double limits_right=0.0;
-        for (unsigned int k=0; k<thetaMin.size(); k++)
-            limits_right+=(q_right[k]-thetaMin[k])*(thetaMax[k]-q_right[k])/((thetaMax[k]-thetaMin[k])*(thetaMax[k]-thetaMin[k]));
-        
-        manip_right*=(1-exp(-limits_right));
-        
-        
-        if (strcmp (handName.c_str(),"left") == 0)
-            manip = manip_left;
-        else if (strcmp (handName.c_str(),"right") == 0)
-            manip = manip_right;
-        else
-            manip = 0.0;
+            double manip_left = sqrt(det(J_left * J_left.transposed()));
+            double manip_right = sqrt(det(J_right * J_right.transposed()));
+            
+            double limits_left=0.0;
+            for (unsigned int k=0; k<thetaMin.size(); k++)
+                limits_left+=(q_left[k]-thetaMin[k])*(thetaMax[k]-q_left[k])/((thetaMax[k]-thetaMin[k])*(thetaMax[k]-thetaMin[k]));
+            
+            manip_left*=(1-exp(-limits_left));
+            
+            double limits_right=0.0;
+            for (unsigned int k=0; k<thetaMin.size(); k++)
+                limits_right+=(q_right[k]-thetaMin[k])*(thetaMax[k]-q_right[k])/((thetaMax[k]-thetaMin[k])*(thetaMax[k]-thetaMin[k]));
+            
+            manip_right*=(1-exp(-limits_right));
+            
+            
+            if (strcmp (handName.c_str(),"left") == 0)
+                manip = manip_left;
+            else if (strcmp (handName.c_str(),"right") == 0)
+                manip = manip_right;
+            else
+                manip = 0.0;
+            
+        }
         
         //manip = max(manip_left, manip_right);
+    }
+    else
+    {
+        if (strcmp (handName.c_str(),"left") == 0)
+            manip = 0.6;
+        else if (strcmp (handName.c_str(),"right") == 0)
+            manip = 0.4;
+        else
+            manip = 0.0;
     }
     
     return manip;
