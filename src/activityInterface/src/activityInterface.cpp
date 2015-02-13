@@ -529,8 +529,14 @@ string ActivityInterface::inHand(const string &objName)
 {
     string handName;
     
-    handName = inHandStatus.find(objName.c_str())->second;
+    //handName = inHandStatus.find(objName.c_str())->second;
     
+    for (std::map<string, string>::iterator it=inHandStatus.begin(); it!=inHandStatus.end(); ++it)
+    {
+        if (strcmp (it->first.c_str(), objName.c_str() ) == 0)
+            handName = it->second.c_str();
+        
+    }
     if (handName.empty())
         handName = "none";
         
@@ -543,8 +549,6 @@ bool ActivityInterface::take(const string &objName, const string &handName)
     //check for hand status beforehand to make sure that it is empty
     //handStatus(handName);
     //talk to iolStateMachineHandler
-    
-    
     
     inHandStatus.insert(pair<string, string>(objName.c_str(), handName.c_str()));
     return true;
