@@ -33,7 +33,8 @@
 #define STATE_PERCEPTION_WAIT_TRACKER 4
 #define STATE_PERCEPTION_READ_TRACKER 5
 #define STATE_PERCEPTION_POPULATE_DB  6
-#define STATE_PERCEPTION_UPDATE_DB    7
+#define STATE_PERCEPTION_WAIT_CMD     7
+#define STATE_PERCEPTION_UPDATE_DB    8
 
 // playback mode states
 #define STATE_DUMMY_PARSE    100
@@ -84,6 +85,7 @@ class WorldStateMgrThread : public RateThread
 
         // perception mode
         int perceptionFSMState;
+        bool needUpdate;
         Bottle *inAff;
         Bottle *inTargets;
         int sizeTargets, sizeAff;

@@ -156,7 +156,8 @@ bool WorldStateMgrThread::updateWorldState()
         {
             yWarning() << __func__ << "not connected to ActivityIF";
         }
-        refreshPerceptionAndValidate();
+        needUpdate = true;
+        refreshPerceptionAndValidate(); // TODO: redundant?
     }
     else
     {
@@ -177,6 +178,7 @@ bool WorldStateMgrThread::initPerceptionVars()
 {
     inAff = NULL;
     inTargets = NULL;
+    needUpdate = false;
     perceptionFSMState = STATE_PERCEPTION_WAIT_OPC;
 
     return true;
@@ -241,7 +243,6 @@ void WorldStateMgrThread::fsmPerception()
     //yDebug("perception state=%d", perceptionFSMState);
     switch(perceptionFSMState)
     {
-
         case STATE_PERCEPTION_WAIT_OPC:
         {
             if (!toldUserConnectOPC && opcPort.getOutputCount()<1)
@@ -254,7 +255,7 @@ void WorldStateMgrThread::fsmPerception()
             {
                 dumpWorldState();
                 yInfo("connected, you can now send commands over RPC");
-                playbackFSMState = STATE_PERCEPTION_WAIT_BLOBS;
+                perceptionFSMState = STATE_PERCEPTION_WAIT_BLOBS;
             }
 
             break;
@@ -329,31 +330,38 @@ void WorldStateMgrThread::fsmPerception()
 
             // if database was successfully populated proceed, else stay in same state
             if (populated)
-                perceptionFSMState = STATE_PERCEPTION_UPDATE_DB;
+                perceptionFSMState = STATE_PERCEPTION_WAIT_CMD;
 
             dumpWorldState();
+
+            break;
+        }
+
+        case STATE_PERCEPTION_WAIT_CMD:
+        {
+            if (needUpdate)
+                perceptionFSMState = STATE_PERCEPTION_UPDATE_DB;
 
             break;
         }
 
         case STATE_PERCEPTION_UPDATE_DB:
         {
-            // read new data and ensure validity
-            refreshPerceptionAndValidate();
+            if (needUpdate)
+            {
+                // read new data and ensure validity
+                refreshPerceptionAndValidate();
+                // TODO: doPopulateDB() part
+                needUpdate = false;
+                dumpWorldState();
 
-            // update database - TODO: uncomment when IDs and consistency are implemented
-            /*
-            bool updated = doPopulateDB();
-            if (updated)
-                yDebug("database updated successfully");
-            else
-                yWarning("could not update database");
-            */
-
-            dumpWorldState();
+                // go back one state
+                perceptionFSMState = STATE_PERCEPTION_WAIT_CMD;
+            }
 
             break;
         }
+
         default:
         {
             break;
