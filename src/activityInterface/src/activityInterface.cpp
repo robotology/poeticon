@@ -529,6 +529,7 @@ bool ActivityInterface::take(const string &objName, const string &handName)
 {
     //check for hand status beforehand to make sure that it is empty
     //handStatus(handName);
+    //talk to iolStateMachineHandler
     
     inHandStatus.insert(pair<string, string>(objName.c_str(), handName.c_str()));
     return true;
@@ -537,6 +538,7 @@ bool ActivityInterface::take(const string &objName, const string &handName)
 /**********************************************************/
 bool ActivityInterface::drop(const string &objName, const string &handName)
 {
+    //talk to iolStateMachineHandler
     inHandStatus.erase(objName);
     return true;
 }
