@@ -55,7 +55,7 @@ class ActionQueryCommunication:
         print act, obj, hand
         message = yarp.Bottle()
         message.clear()
-        map(message.addString, ["query", act, obj, hand])
+        map(message.addString, ["getManip", obj, hand])
         ## this needs to be discussed, what is the syntax?
         ans = yarp.Bottle()
         self._rpc_client.write(message, ans)
@@ -197,110 +197,126 @@ def Affordance_comm():
 
 ## Se for pull/push, -> ask Affordances
                     if translation[i][2] == 'push':
-                        if rule.split('_')[1] != '11' and rule.split('_')[1] != '12' and rule.split('_')[3] != '11' and rule.split('_')[3] != '12':
-                            affnet_bottle_out = affnet_yarp.prepare()
-                            affnet_bottle_out.clear()
-                            obj = rule.split('_')[1]
-                            tool = rule.split('_')[3]
-                            for o in range(len(descriptors)):
-                                if descriptors[o][0] == obj:
-                                    obj_desc = descriptors[o][1]
-                                if descriptors[o][0] == tool:
-                                    tool_desc = descriptors[o][1]
-                            message = tool_desc + obj_desc + [3]
-                            print message
-                            affnet_bottle_out.addList(message)
-                            affnet_yarp.write()
-                            while 1:
-                                affnet_bottle_in = affnet_yarp.read(False)
-                                yarp.Time.delay(0.2)
-                                if affnet_bottle_in:
-                                    data = []
-                                    for g in range(5):
-                                        data = data + affnet_bottle_in.get(g).asList().toString().split(' ')
-                                        for j in range(len(data[g])):
-                                            data[g][j] = float(data[g][j])
-                                    print data
-                                    break
-                            prob_succ = 0
-                            for g in range(len(data)):
-                                if g > 3:
-                                    for j in range(len(data[g])):
-                                        prob_succ = prob_succ + data[g][j]
-                            prob_fail = 1 - prob_succ
-                            
-                            new_outcome = outcome.split(' ')
-                            new_outcome[2] = str(prob_succ)
-                            new_outcome = ' '.join(new_outcome)
-                            new_outcome2 = outcome2.split(' ')
-                            new_outcome2[2] = str(prob_fail)
-                            new_outcome2 = ' '.join(new_outcome2)
-                            Affor_bottle_out = geo_yarp.prepare()
-                            Affor_bottle_out.clear()
-                            Affor_bottle_out.addString(new_outcome)
-                            Affor_bottle_out.addString(new_outcome2)
-                            Affor_bottle_out.addString(outcome3)
-                            geo_yarp.write()
-                        else:
+                        if affnet_yarp.getOutputCount() == 0:
                             Affor_bottle_out = geo_yarp.prepare()
                             Affor_bottle_out.clear()
                             Affor_bottle_out.addString(outcome)
                             Affor_bottle_out.addString(outcome2)
                             Affor_bottle_out.addString(outcome3)
                             geo_yarp.write()
+                        else:
+                            if rule.split('_')[1] != '11' and rule.split('_')[1] != '12' and rule.split('_')[3] != '11' and rule.split('_')[3] != '12':
+                                affnet_bottle_out = affnet_yarp.prepare()
+                                affnet_bottle_out.clear()
+                                obj = rule.split('_')[1]
+                                tool = rule.split('_')[3]
+                                for o in range(len(descriptors)):
+                                    if descriptors[o][0] == obj:
+                                        obj_desc = descriptors[o][1]
+                                    if descriptors[o][0] == tool:
+                                        tool_desc = descriptors[o][1]
+                                message = tool_desc + obj_desc + [3]
+                                print message
+                                affnet_bottle_out.addList(message)
+                                affnet_yarp.write()
+                                while 1:
+                                    affnet_bottle_in = affnet_yarp.read(False)
+                                    yarp.Time.delay(0.2)
+                                    if affnet_bottle_in:
+                                        data = []
+                                        for g in range(5):
+                                            data = data + affnet_bottle_in.get(g).asList().toString().split(' ')
+                                            for j in range(len(data[g])):
+                                                data[g][j] = float(data[g][j])
+                                        print data
+                                        break
+                                prob_succ = 0
+                                for g in range(len(data)):
+                                    if g > 3:
+                                        for j in range(len(data[g])):
+                                            prob_succ = prob_succ + data[g][j]
+                                prob_fail = 1 - prob_succ
+                                
+                                new_outcome = outcome.split(' ')
+                                new_outcome[2] = str(prob_succ)
+                                new_outcome = ' '.join(new_outcome)
+                                new_outcome2 = outcome2.split(' ')
+                                new_outcome2[2] = str(prob_fail)
+                                new_outcome2 = ' '.join(new_outcome2)
+                                Affor_bottle_out = geo_yarp.prepare()
+                                Affor_bottle_out.clear()
+                                Affor_bottle_out.addString(new_outcome)
+                                Affor_bottle_out.addString(new_outcome2)
+                                Affor_bottle_out.addString(outcome3)
+                                geo_yarp.write()
+                            else:
+                                Affor_bottle_out = geo_yarp.prepare()
+                                Affor_bottle_out.clear()
+                                Affor_bottle_out.addString(outcome)
+                                Affor_bottle_out.addString(outcome2)
+                                Affor_bottle_out.addString(outcome3)
+                                geo_yarp.write()
                             
                     if translation[i][2] == 'pull':
-                        if rule.split('_')[1] != '11' and rule.split('_')[1] != '12' and rule.split('_')[3] != '11' and rule.split('_')[3] != '12':
-                            affnet_bottle_out = affnet_yarp.prepare()
-                            affnet_bottle_out.clear()
-                            obj = rule.split('_')[1]
-                            tool = rule.split('_')[3]
-                            for o in range(len(descriptors)):
-                                if descriptors[o][0] == obj:
-                                    obj_desc = descriptors[o][1]
-                                if descriptors[o][0] == tool:
-                                    tool_desc = descriptors[o][1]
-                            message = tool_desc + obj_desc + [4]
-                            print message
-                            affnet_bottle_out.addList(message)
-                            affnet_yarp.write()
-                            while 1:
-                                affnet_bottle_in = affnet_yarp.read(False)
-                                yarp.Time.delay(0.2)
-                                if affnet_bottle_in:
-                                    data = []
-                                    for g in range(5):
-                                        data = data + affnet_bottle_in.get(g).asList().toString().split(' ')
-                                        for j in range(len(data[g])):
-                                            data[g][j] = float(data[g][j])
-                                    print data
-                                    break
-                            prob_succ = 0
-                            for g in range(len(data)):
-                                if g < 3:
-                                    for j in range(len(data[g])):
-                                        prob_succ = prob_succ + data[g][j]
-                            prob_fail = 1 - prob_succ
-                            
-                            new_outcome = outcome.split(' ')
-                            new_outcome[2] = str(prob_succ)
-                            new_outcome = ' '.join(new_outcome)
-                            new_outcome2 = outcome2.split(' ')
-                            new_outcome2[2] = str(prob_fail)
-                            new_outcome2 = ' '.join(new_outcome2)
-                            Affor_bottle_out = geo_yarp.prepare()
-                            Affor_bottle_out.clear()
-                            Affor_bottle_out.addString(new_outcome)
-                            Affor_bottle_out.addString(new_outcome2)
-                            Affor_bottle_out.addString(outcome3)
-                            geo_yarp.write()
-                        else:
+                        if affnet_yarp.getOutputCount() == 0:
                             Affor_bottle_out = geo_yarp.prepare()
                             Affor_bottle_out.clear()
                             Affor_bottle_out.addString(outcome)
                             Affor_bottle_out.addString(outcome2)
                             Affor_bottle_out.addString(outcome3)
                             geo_yarp.write()
+                        else:
+                            if rule.split('_')[1] != '11' and rule.split('_')[1] != '12' and rule.split('_')[3] != '11' and rule.split('_')[3] != '12':
+                                affnet_bottle_out = affnet_yarp.prepare()
+                                affnet_bottle_out.clear()
+                                obj = rule.split('_')[1]
+                                tool = rule.split('_')[3]
+                                for o in range(len(descriptors)):
+                                    if descriptors[o][0] == obj:
+                                        obj_desc = descriptors[o][1]
+                                    if descriptors[o][0] == tool:
+                                        tool_desc = descriptors[o][1]
+                                message = tool_desc + obj_desc + [4]
+                                print message
+                                affnet_bottle_out.addList(message)
+                                affnet_yarp.write()
+                                while 1:
+                                    affnet_bottle_in = affnet_yarp.read(False)
+                                    yarp.Time.delay(0.2)
+                                    if affnet_bottle_in:
+                                        data = []
+                                        for g in range(5):
+                                            data = data + affnet_bottle_in.get(g).asList().toString().split(' ')
+                                            for j in range(len(data[g])):
+                                                data[g][j] = float(data[g][j])
+                                        print data
+                                        break
+                                prob_succ = 0
+                                for g in range(len(data)):
+                                    if g < 3:
+                                        for j in range(len(data[g])):
+                                            prob_succ = prob_succ + data[g][j]
+                                prob_fail = 1 - prob_succ
+                                
+                                new_outcome = outcome.split(' ')
+                                new_outcome[2] = str(prob_succ)
+                                new_outcome = ' '.join(new_outcome)
+                                new_outcome2 = outcome2.split(' ')
+                                new_outcome2[2] = str(prob_fail)
+                                new_outcome2 = ' '.join(new_outcome2)
+                                Affor_bottle_out = geo_yarp.prepare()
+                                Affor_bottle_out.clear()
+                                Affor_bottle_out.addString(new_outcome)
+                                Affor_bottle_out.addString(new_outcome2)
+                                Affor_bottle_out.addString(outcome3)
+                                geo_yarp.write()
+                            else:
+                                Affor_bottle_out = geo_yarp.prepare()
+                                Affor_bottle_out.clear()
+                                Affor_bottle_out.addString(outcome)
+                                Affor_bottle_out.addString(outcome2)
+                                Affor_bottle_out.addString(outcome3)
+                                geo_yarp.write()
 ## drop and put keep the "default" probabilities, as we don't have affordances for them yet.
 
                     if translation[i][2] == 'drop':
