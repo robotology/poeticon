@@ -26,20 +26,17 @@
 #include <yarp/os/Vocab.h>
 
 // perception mode states
-#define STATE_WAIT_BLOBS   0
-#define STATE_READ_BLOBS   1
-#define STATE_INIT_TRACKER 2
-#define STATE_WAIT_TRACKER 3
-#define STATE_READ_TRACKER 4
-#define STATE_POPULATE_DB  5
-#define STATE_UPDATE_DB    6
+#define STATE_PERCEPTION_WAIT_OPC     0
+#define STATE_PERCEPTION_WAIT_BLOBS   1
+#define STATE_PERCEPTION_READ_BLOBS   2
+#define STATE_PERCEPTION_INIT_TRACKER 3
+#define STATE_PERCEPTION_WAIT_TRACKER 4
+#define STATE_PERCEPTION_READ_TRACKER 5
+#define STATE_PERCEPTION_POPULATE_DB  6
+#define STATE_PERCEPTION_WAIT_CMD     7
+#define STATE_PERCEPTION_UPDATE_DB    8
 
 // playback mode states
-/*
-#define STATE_PARSE_FILE 100
-#define STATE_STEP_FILE  101
-#define STATE_END_FILE   102
-*/
 #define STATE_DUMMY_PARSE    100
 #define STATE_DUMMY_WAIT_OPC 101
 #define STATE_DUMMY_WAIT_CMD 102
@@ -84,10 +81,11 @@ class WorldStateMgrThread : public RateThread
         // perception and playback modes
         bool playbackMode;
         bool populated;
-        bool gotIDsOPC;
+        bool toldUserConnectOPC;
 
         // perception mode
         int perceptionFSMState;
+        bool needUpdate;
         Bottle *inAff;
         Bottle *inTargets;
         int sizeTargets, sizeAff;
@@ -99,7 +97,7 @@ class WorldStateMgrThread : public RateThread
         int playbackFSMState;
         string playbackFile;
         bool playbackPaused;
-        bool toldUserConnectOPC, toldUserEof;
+        bool toldUserEof;
         Bottle stateBottle;
         int sizePlaybackFile;
         int currPlayback;
@@ -115,6 +113,7 @@ class WorldStateMgrThread : public RateThread
         void run();
 
         // perception and playback modes
+        bool initCommonVars();
         bool dumpWorldState();
         bool updateWorldState();
 
@@ -122,7 +121,7 @@ class WorldStateMgrThread : public RateThread
         bool initPerceptionVars();
         bool initTracker();
         void fsmPerception();
-        void getIDsOPC();
+        void refreshOPCIDs();
         void refreshBlobs();
         void refreshTracker();
         void refreshTrackIDs();

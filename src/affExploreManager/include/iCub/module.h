@@ -23,6 +23,7 @@
 #include <string>
 #include <fstream>
 #include <sstream>
+#include <vector>
 
 #include <yarp/os/Time.h>
 #include <yarp/os/Semaphore.h>
@@ -33,8 +34,6 @@
 #include <yarp/os/Port.h>
 #include <yarp/sig/Image.h>
 #include <yarp/sig/Vector.h>
-
-#include "iCub/utils.h"
 
 #define LEFTARM             0
 #define RIGHTARM            1
@@ -53,6 +52,23 @@ const double                    OBJECT_SIZE_OFFSET_DEFAULT   = 0.04;
 const int                       HAND_NATURAL_POSE_DEFAULT    = 1; // 0 = straight pose (hand palms facing each others), 1 = pronated pose (hand palms facing the table).
 
 /**********************************************************/
+
+class SegmentationPoint : public yarp::os::Port
+{
+public:
+    void segment(yarp::os::Bottle &b)
+    {
+        if (getOutputCount()>0)
+        {
+            //send 2D x y coordinates to segmentator
+            yarp::os::Bottle request;
+            request.addDouble(b.get(0).asDouble());
+            request.addDouble(b.get(1).asDouble());
+            write(request);
+        }
+    }
+
+};
 
 struct imgPoint
 {

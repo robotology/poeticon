@@ -36,8 +36,8 @@ include_directories(${PROJECT_SOURCE_DIR}/include
 
 set(folder_source main.cpp)
 # Search for source code.
-file( GLOB folder_source src/*.cpp )
-file( GLOB folder_header include/iCub/*.h )
+file( GLOB folder_source src/main.cpp src/module.cpp )
+file( GLOB folder_header include/iCub/module.h )
 
 source_group("Source Files" FILES ${folder_source})
 source_group("Header Files" FILES ${folder_header})
