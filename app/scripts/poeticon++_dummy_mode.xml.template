@@ -54,11 +54,23 @@
     <to>/planner/opc_cmd:io</to>
 </connection>
 <connection>
+    <from>/AffordanceComm/aff_query:io</from>
+    <to>/Eprediction/read:i</to>
+</connection>
+<connection>
+    <from>/Eprediction/write:o</from>
+    <to>/AffordanceComm/aff_query:io</to>
+</connection>
+<connection>
     <from>/planner/wsm_rpc:o</from>
     <to>/wsm/rpc:i</to>
 </connection>
 <connection>
     <from>/planner/actInt_rpc:o</from>
+    <to>/activityInterface/rpc:i</to>
+</connection>
+<connection>
+    <from>/AffordanceComm/actInt_rpc:o</from>
     <to>/activityInterface/rpc:i</to>
 </connection>
 <connection>
@@ -96,6 +108,22 @@
 <connection>
     <from>/grounding/Aff_cmd:io</from>
     <to>/AffordanceComm/ground_cmd:io</to>
+</connection>
+<connection>
+    <from>/opc2prada/cmd:io</from>
+    <to>/AffordanceComm/desc_query:io</to>
+</connection>
+<connection>
+    <from>/AffordanceComm/desc_query:io</from>
+    <to>/opc2prada/cmd:io</to>
+</connection>
+<connection>
+    <from>/AffordanceComm/planner_cmd:io</from>
+    <to>/planner/Aff_cmd:io</to>
+</connection>
+<connection>
+    <from>/planner/Aff_cmd:io</from>
+    <to>/AffordanceComm/planner_cmd:io</to>
 </connection>
 
 </application>

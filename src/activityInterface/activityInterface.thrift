@@ -19,10 +19,11 @@ service activityInterface_IDLServer
 {
     /**
     * Asks for the manipulability percentage
-    * @param target specifies the name of the target object
+    * @param objName specifies the name of the target object
+    * @param handName specifies the name of hand to query
     * @return double of best manipulability
     **/
-    double getManip(1:string target)
+    double getManip(1:string objName, 2:string handName)
     
     /**
     * Get the status of the left or right hand

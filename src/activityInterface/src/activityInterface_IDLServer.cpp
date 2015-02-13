@@ -8,9 +8,10 @@
 
 class activityInterface_IDLServer_getManip : public yarp::os::Portable {
 public:
-  std::string target;
+  std::string objName;
+  std::string handName;
   double _return;
-  void init(const std::string& target);
+  void init(const std::string& objName, const std::string& handName);
   virtual bool write(yarp::os::ConnectionWriter& connection);
   virtual bool read(yarp::os::ConnectionReader& connection);
 };
@@ -82,9 +83,10 @@ public:
 
 bool activityInterface_IDLServer_getManip::write(yarp::os::ConnectionWriter& connection) {
   yarp::os::idl::WireWriter writer(connection);
-  if (!writer.writeListHeader(2)) return false;
+  if (!writer.writeListHeader(3)) return false;
   if (!writer.writeTag("getManip",1,1)) return false;
-  if (!writer.writeString(target)) return false;
+  if (!writer.writeString(objName)) return false;
+  if (!writer.writeString(handName)) return false;
   return true;
 }
 
@@ -98,9 +100,10 @@ bool activityInterface_IDLServer_getManip::read(yarp::os::ConnectionReader& conn
   return true;
 }
 
-void activityInterface_IDLServer_getManip::init(const std::string& target) {
+void activityInterface_IDLServer_getManip::init(const std::string& objName, const std::string& handName) {
   _return = (double)0;
-  this->target = target;
+  this->objName = objName;
+  this->handName = handName;
 }
 
 bool activityInterface_IDLServer_handStat::write(yarp::os::ConnectionWriter& connection) {
@@ -271,12 +274,12 @@ void activityInterface_IDLServer_quit::init() {
 activityInterface_IDLServer::activityInterface_IDLServer() {
   yarp().setOwner(*this);
 }
-double activityInterface_IDLServer::getManip(const std::string& target) {
+double activityInterface_IDLServer::getManip(const std::string& objName, const std::string& handName) {
   double _return = (double)0;
   activityInterface_IDLServer_getManip helper;
-  helper.init(target);
+  helper.init(objName,handName);
   if (!yarp().canWrite()) {
-    fprintf(stderr,"Missing server method '%s'?\n","double activityInterface_IDLServer::getManip(const std::string& target)");
+    fprintf(stderr,"Missing server method '%s'?\n","double activityInterface_IDLServer::getManip(const std::string& objName, const std::string& handName)");
   }
   bool ok = yarp().write(helper,helper);
   return ok?helper._return:_return;
@@ -362,13 +365,18 @@ bool activityInterface_IDLServer::read(yarp::os::ConnectionReader& connection) {
   while (!reader.isError()) {
     // TODO: use quick lookup, this is just a test
     if (tag == "getManip") {
-      std::string target;
-      if (!reader.readString(target)) {
+      std::string objName;
+      std::string handName;
+      if (!reader.readString(objName)) {
+        reader.fail();
+        return false;
+      }
+      if (!reader.readString(handName)) {
         reader.fail();
         return false;
       }
       double _return;
-      _return = getManip(target);
+      _return = getManip(objName,handName);
       yarp::os::idl::WireWriter writer(reader);
       if (!writer.isNull()) {
         if (!writer.writeListHeader(1)) return false;
@@ -545,9 +553,10 @@ std::vector<std::string> activityInterface_IDLServer::help(const std::string& fu
   }
   else {
     if (functionName=="getManip") {
-      helpString.push_back("double getManip(const std::string& target) ");
+      helpString.push_back("double getManip(const std::string& objName, const std::string& handName) ");
       helpString.push_back("Asks for the manipulability percentage ");
-      helpString.push_back("@param target specifies the name of the target object ");
+      helpString.push_back("@param objName specifies the name of the target object ");
+      helpString.push_back("@param handName specifies the name of hand to query ");
       helpString.push_back("@return double of best manipulability ");
     }
     if (functionName=="handStat") {

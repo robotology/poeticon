@@ -20,10 +20,11 @@ public:
   activityInterface_IDLServer();
   /**
    * Asks for the manipulability percentage
-   * @param target specifies the name of the target object
+   * @param objName specifies the name of the target object
+   * @param handName specifies the name of hand to query
    * @return double of best manipulability
    */
-  virtual double getManip(const std::string& target);
+  virtual double getManip(const std::string& objName, const std::string& handName);
   /**
    * Get the status of the left or right hand
    * @param handName specifies the name of the hand in question
