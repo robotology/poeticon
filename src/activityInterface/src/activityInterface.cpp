@@ -246,7 +246,7 @@ bool ActivityInterface::updateModule()
 /**********************************************************/
 double ActivityInterface::getPeriod()
 {
-    return 0.1;
+    return 0.5;
 }
 
 /**********************************************************/
