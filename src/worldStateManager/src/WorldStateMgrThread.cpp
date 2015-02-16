@@ -247,7 +247,7 @@ void WorldStateMgrThread::fsmPerception()
         {
             if (!toldUserConnectOPC && opcPort.getOutputCount()<1)
             {
-                yInfo("waiting for /%s/opc:io to be connected to wsopc/rpc", moduleName.c_str());
+                yInfo("waiting for /%s/opc:io to be connected to /wsopc/rpc", moduleName.c_str());
                 toldUserConnectOPC = true;
             }
 
@@ -691,7 +691,7 @@ bool WorldStateMgrThread::mono2stereo(const double &u, const double &v,
     return true;
 }
 
-vector<double> WorldStateMgrThread::getTooltipOffset(const int &id)
+vector<double> WorldStateMgrThread::getTooltipOffset(const string &objName)
 {
     if (activityPort.getOutputCount() < 1)
     {
@@ -700,8 +700,8 @@ vector<double> WorldStateMgrThread::getTooltipOffset(const int &id)
     }
 
     Bottle activityCmd, activityReply;
-    activityCmd.addVocab(Vocab::encode("offset"));
-    activityCmd.addInt(id);
+    activityCmd.addString("getOffset");
+    activityCmd.addInt(objName.c_str());
     yDebug() << __func__ << "sending query to ActivityIF:" << activityCmd.toString().c_str();
     activityPort.write(activityCmd, activityReply);
 
@@ -726,7 +726,7 @@ vector<double> WorldStateMgrThread::getTooltipOffset(const int &id)
     }
 }
 
-vector<int> WorldStateMgrThread::isOnTopOf(const int &id)
+vector<int> WorldStateMgrThread::isOnTopOf(const string &objName)
 {
     if (activityPort.getOutputCount() < 1)
     {
@@ -735,8 +735,8 @@ vector<int> WorldStateMgrThread::isOnTopOf(const int &id)
     }
 
     Bottle activityCmd, activityReply;
-    activityCmd.addVocab(Vocab::encode("oto"));
-    activityCmd.addInt(id);
+    activityCmd.addString("onTopOf");
+    activityCmd.addInt(objName.c_str());
     yDebug() << __func__ << "sending query to ActivityIF:" << activityCmd.toString().c_str();
     activityPort.write(activityCmd, activityReply);
 
@@ -761,7 +761,7 @@ vector<int> WorldStateMgrThread::isOnTopOf(const int &id)
     }
 }
 
-vector<int> WorldStateMgrThread::getIdsToReach(const int &id)
+vector<int> WorldStateMgrThread::getIdsToReach(const string &objName)
 {
     if (activityPort.getOutputCount() < 1)
     {
@@ -770,8 +770,8 @@ vector<int> WorldStateMgrThread::getIdsToReach(const int &id)
     }
 
     Bottle activityCmd, activityReply;
-    activityCmd.addVocab(Vocab::encode("reaw"));
-    activityCmd.addInt(id);
+    activityCmd.addString("reachableWith");
+    activityCmd.addInt(objName.c_str());
     yDebug() << "sending query to ActivityIF:" << activityCmd.toString().c_str();
     activityPort.write(activityCmd, activityReply);
 
@@ -796,7 +796,7 @@ vector<int> WorldStateMgrThread::getIdsToReach(const int &id)
     }
 }
 
-vector<int> WorldStateMgrThread::getIdsToPull(const int &id)
+vector<int> WorldStateMgrThread::getIdsToPull(const string &objName)
 {
     if (activityPort.getOutputCount() < 1)
     {
@@ -805,8 +805,8 @@ vector<int> WorldStateMgrThread::getIdsToPull(const int &id)
     }
 
     Bottle activityCmd, activityReply;
-    activityCmd.addVocab(Vocab::encode("pulw"));
-    activityCmd.addInt(id);
+    activityCmd.addString("pullableWith");
+    activityCmd.addInt(objName.c_str());
     yDebug() << "sending query to ActivityIF:" << activityCmd.toString().c_str();
     activityPort.write(activityCmd, activityReply);
 
@@ -846,7 +846,7 @@ bool WorldStateMgrThread::isHandFree(const string &handName)
     }
 
     Bottle activityCmd, activityReply;
-    activityCmd.addVocab(Vocab::encode("isfree"));
+    activityCmd.addString("handStat");
     activityCmd.addString(handName.c_str());
     yDebug() << "sending query to ActivityIF:" << activityCmd.toString().c_str();
     activityPort.write(activityCmd, activityReply);
@@ -872,7 +872,7 @@ string WorldStateMgrThread::inWhichHand(const string &objName)
     }
 
     Bottle activityCmd, activityReply;
-    activityCmd.addVocab(Vocab::encode("inhand"));
+    activityCmd.addString("inHand");
     activityCmd.addString(objName.c_str());
     yDebug() << __func__ << "sending query to ActivityIF:" << activityCmd.toString().c_str();
     activityPort.write(activityCmd, activityReply);
@@ -943,7 +943,7 @@ void WorldStateMgrThread::fsmPlayback()
         {
             if (!toldUserConnectOPC && opcPort.getOutputCount()<1)
             {
-                yInfo("waiting for /%s/opc:io to be connected to wsopc/rpc", moduleName.c_str());
+                yInfo("waiting for /%s/opc:io to be connected to /wsopc/rpc", moduleName.c_str());
                 toldUserConnectOPC = true;
             }
 

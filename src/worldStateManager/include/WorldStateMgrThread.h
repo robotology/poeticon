@@ -130,10 +130,11 @@ class WorldStateMgrThread : public RateThread
         bool doPopulateDB();
         string getLabel(const double &u, const double &v);
         bool mono2stereo(const double &u, const double &v, double x, double y, double z);
-        vector<double> getTooltipOffset(const int &id);
-        vector<int> isOnTopOf(const int &id);
-        vector<int> getIdsToReach(const int &id);
-        vector<int> getIdsToPull(const int &id);
+        // TODO: return Bottle instead of std::vector
+        vector<double> getTooltipOffset(const string &objName);
+        vector<int> isOnTopOf(const string &objName);
+        vector<int> getIdsToReach(const string &objName);
+        vector<int> getIdsToPull(const string &objName);
         bool isHandFree(const string &handName);
         string inWhichHand(const string &objName);
 
