@@ -122,6 +122,7 @@ void WorldStateMgrThread::run()
 
 bool WorldStateMgrThread::initCommonVars()
 {
+    fsmState = (playbackMode ? STATE_DUMMY_PARSE : STATE_PERCEPTION_WAIT_OPC);
     toldUserConnectOPC = false;
 
     return true;
@@ -179,7 +180,6 @@ bool WorldStateMgrThread::initPerceptionVars()
     inAff = NULL;
     inTargets = NULL;
     needUpdate = false;
-    perceptionFSMState = STATE_PERCEPTION_WAIT_OPC;
 
     return true;
 }
@@ -240,8 +240,8 @@ bool WorldStateMgrThread::initTracker()
 
 void WorldStateMgrThread::fsmPerception()
 {
-    //yDebug("perception state=%d", perceptionFSMState);
-    switch(perceptionFSMState)
+    //yDebug("perception state=%d", fsmState);
+    switch(fsmState)
     {
         case STATE_PERCEPTION_WAIT_OPC:
         {
@@ -255,7 +255,7 @@ void WorldStateMgrThread::fsmPerception()
             {
                 dumpWorldState();
                 yInfo("connected, you can now send commands over RPC");
-                perceptionFSMState = STATE_PERCEPTION_WAIT_BLOBS;
+                fsmState = STATE_PERCEPTION_WAIT_BLOBS;
             }
 
             break;
@@ -270,7 +270,7 @@ void WorldStateMgrThread::fsmPerception()
             refreshBlobs();
             // when something arrives, proceed
             if (inAff != NULL)
-                perceptionFSMState = STATE_PERCEPTION_READ_BLOBS;
+                fsmState = STATE_PERCEPTION_READ_BLOBS;
 
             break;
         }
@@ -279,9 +279,9 @@ void WorldStateMgrThread::fsmPerception()
         {
             // if size>0 proceed, else go back one state
             if (sizeAff > 0)
-                perceptionFSMState = STATE_PERCEPTION_INIT_TRACKER;
+                fsmState = STATE_PERCEPTION_INIT_TRACKER;
             else
-                perceptionFSMState = STATE_PERCEPTION_WAIT_BLOBS;
+                fsmState = STATE_PERCEPTION_WAIT_BLOBS;
 
             break;
         }
@@ -292,7 +292,7 @@ void WorldStateMgrThread::fsmPerception()
             initTracker();
 
             // proceed
-            perceptionFSMState = STATE_PERCEPTION_WAIT_TRACKER;
+            fsmState = STATE_PERCEPTION_WAIT_TRACKER;
 
             break;
         }
@@ -304,7 +304,7 @@ void WorldStateMgrThread::fsmPerception()
 
             // when something arrives, proceed
             if (inTargets != NULL)
-                perceptionFSMState = STATE_PERCEPTION_READ_TRACKER;
+                fsmState = STATE_PERCEPTION_READ_TRACKER;
 
             break;
         }
@@ -313,9 +313,9 @@ void WorldStateMgrThread::fsmPerception()
         {
             // if size>0 proceed, else go back one state
             if (sizeTargets > 0)
-                perceptionFSMState = STATE_PERCEPTION_POPULATE_DB;
+                fsmState = STATE_PERCEPTION_POPULATE_DB;
             else
-                perceptionFSMState = STATE_PERCEPTION_WAIT_TRACKER;
+                fsmState = STATE_PERCEPTION_WAIT_TRACKER;
 
             break;
         }
@@ -330,7 +330,7 @@ void WorldStateMgrThread::fsmPerception()
 
             // if database was successfully populated proceed, else stay in same state
             if (populated)
-                perceptionFSMState = STATE_PERCEPTION_WAIT_CMD;
+                fsmState = STATE_PERCEPTION_WAIT_CMD;
 
             dumpWorldState();
 
@@ -340,7 +340,7 @@ void WorldStateMgrThread::fsmPerception()
         case STATE_PERCEPTION_WAIT_CMD:
         {
             if (needUpdate)
-                perceptionFSMState = STATE_PERCEPTION_UPDATE_DB;
+                fsmState = STATE_PERCEPTION_UPDATE_DB;
 
             break;
         }
@@ -356,7 +356,7 @@ void WorldStateMgrThread::fsmPerception()
                 dumpWorldState();
 
                 // go back one state
-                perceptionFSMState = STATE_PERCEPTION_WAIT_CMD;
+                fsmState = STATE_PERCEPTION_WAIT_CMD;
             }
 
             break;
@@ -470,6 +470,7 @@ bool WorldStateMgrThread::refreshPerceptionAndValidate()
 bool WorldStateMgrThread::doPopulateDB()
 {
 
+    // TODO: cycle over OPC IDs & tracker IDs not yet in OPC
     for(int a=0; a<sizeAff; a++)
     {
         yDebug("doPopulateDB, a=%d", a);
@@ -623,7 +624,6 @@ bool WorldStateMgrThread::doPopulateDB()
                 yDebug() << __func__ << "did not receive ack from OPC";
         }
     }
-    // now we have populated the database with all objects
 
     return true;
 }
@@ -907,7 +907,6 @@ bool WorldStateMgrThread::initPlaybackVars()
 {
     toldUserEof = false;
     playbackPaused = true;
-    playbackFSMState = STATE_DUMMY_PARSE;
     sizePlaybackFile = -1;
     currPlayback = -1;
 
@@ -916,8 +915,8 @@ bool WorldStateMgrThread::initPlaybackVars()
 
 void WorldStateMgrThread::fsmPlayback()
 {
-    //yDebug("playback state=%d", playbackFSMState);
-    switch (playbackFSMState)
+    //yDebug("playback state=%d", fsmState);
+    switch (fsmState)
     {
 
         case STATE_DUMMY_PARSE:
@@ -930,12 +929,12 @@ void WorldStateMgrThread::fsmPlayback()
             if (sizePlaybackFile < 1)
             {
                 yError("file empty or not parsable");
-                playbackFSMState = STATE_DUMMY_ERROR;
+                fsmState = STATE_DUMMY_ERROR;
                 break;
             }
             
             yDebug("file parsed successfully: %d state entries", sizePlaybackFile);
-            playbackFSMState = STATE_DUMMY_WAIT_OPC;
+            fsmState = STATE_DUMMY_WAIT_OPC;
             break;
         }
 
@@ -951,7 +950,7 @@ void WorldStateMgrThread::fsmPlayback()
             {
                 dumpWorldState();
                 yInfo("connected, you can now send commands over RPC");
-                playbackFSMState = STATE_DUMMY_WAIT_CMD;
+                fsmState = STATE_DUMMY_WAIT_CMD;
             }
 
             break;
@@ -963,7 +962,7 @@ void WorldStateMgrThread::fsmPlayback()
 
             // initially we are in "[state00]"
             currPlayback = 0;
-            playbackFSMState = STATE_DUMMY_STEP;
+            fsmState = STATE_DUMMY_STEP;
 
             break;
         }
@@ -981,7 +980,7 @@ void WorldStateMgrThread::fsmPlayback()
                 {
                     yWarning() << tag.str().c_str() << "not found";
                     playbackPaused = true;
-                    playbackFSMState = STATE_DUMMY_EOF;
+                    fsmState = STATE_DUMMY_EOF;
                     break;
                 }
                 yDebug("loaded group %s, has size %d incl. group tag", tag.str().c_str(), bCurr.size());

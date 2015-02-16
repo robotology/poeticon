@@ -80,11 +80,11 @@ class WorldStateMgrThread : public RateThread
 
         // perception and playback modes
         bool playbackMode;
+        int fsmState;
         bool populated;
         bool toldUserConnectOPC;
 
         // perception mode
-        int perceptionFSMState;
         bool needUpdate;
         Bottle *inAff;
         Bottle *inTargets;
@@ -94,7 +94,6 @@ class WorldStateMgrThread : public RateThread
         idsMap ids;
 
         // playback mode
-        int playbackFSMState;
         string playbackFile;
         bool playbackPaused;
         bool toldUserEof;
