@@ -521,7 +521,7 @@ bool WorldStateMgrThread::doPopulateDB()
             // prepare offset property (end-effector transform when grasping tools)
             bOffset.addString("offset");
             Bottle &bOffsetValue = bOffset.addList();
-            vector<double> offset = getTooltipOffset(a); // TODO: use robust id instead of a
+            vector<double> offset = getTooltipOffset(bNameValue.c_str());
 
             if (offset.size()>1)
             {
@@ -551,7 +551,7 @@ bool WorldStateMgrThread::doPopulateDB()
             // prepare on_top_of property
             bOnTopOf.addString("on_top_of");
             Bottle &bOnTopOfValue = bOnTopOf.addList();
-            vector<int> idsBelow = isOnTopOf(a); // TODO: use robust id instead of a
+            vector<int> idsBelow = isOnTopOf(bNameValue.c_str());
             for (int o=0; o<idsBelow.size(); o++)
             {
                 bOnTopOfValue.addInt(idsBelow[o]);
@@ -560,7 +560,7 @@ bool WorldStateMgrThread::doPopulateDB()
             // prepare reachable_with property
             bReachW.addString("reachable_with");
             Bottle &bReachWValue = bReachW.addList();
-            vector<int> idsToReach = getIdsToReach(a); // TODO: use robust id instead of a
+            vector<int> idsToReach = getIdsToReach(bNameValue.c_str());
             for (int o=0; o<idsToReach.size(); o++)
             {
                 bReachWValue.addInt(idsBelow[o]);
@@ -569,7 +569,7 @@ bool WorldStateMgrThread::doPopulateDB()
             // prepare pullable_with property
             bPullW.addString("pullable_with");
             Bottle &bPullWValue = bPullW.addList();
-            vector<int> idsToPull = getIdsToPull(a); // TODO: use robust id instead of a
+            vector<int> idsToPull = getIdsToPull(bNameValue.c_str());
             for (int o=0; o<idsToPull.size(); o++)
             {
                 bPullWValue.addInt(idsToPull[o]);
@@ -701,7 +701,7 @@ vector<double> WorldStateMgrThread::getTooltipOffset(const string &objName)
 
     Bottle activityCmd, activityReply;
     activityCmd.addString("getOffset");
-    activityCmd.addInt(objName.c_str());
+    activityCmd.addString(objName.c_str());
     yDebug() << __func__ << "sending query to ActivityIF:" << activityCmd.toString().c_str();
     activityPort.write(activityCmd, activityReply);
 
@@ -736,7 +736,7 @@ vector<int> WorldStateMgrThread::isOnTopOf(const string &objName)
 
     Bottle activityCmd, activityReply;
     activityCmd.addString("onTopOf");
-    activityCmd.addInt(objName.c_str());
+    activityCmd.addString(objName.c_str());
     yDebug() << __func__ << "sending query to ActivityIF:" << activityCmd.toString().c_str();
     activityPort.write(activityCmd, activityReply);
 
@@ -771,7 +771,7 @@ vector<int> WorldStateMgrThread::getIdsToReach(const string &objName)
 
     Bottle activityCmd, activityReply;
     activityCmd.addString("reachableWith");
-    activityCmd.addInt(objName.c_str());
+    activityCmd.addString(objName.c_str());
     yDebug() << "sending query to ActivityIF:" << activityCmd.toString().c_str();
     activityPort.write(activityCmd, activityReply);
 
@@ -806,7 +806,7 @@ vector<int> WorldStateMgrThread::getIdsToPull(const string &objName)
 
     Bottle activityCmd, activityReply;
     activityCmd.addString("pullableWith");
-    activityCmd.addInt(objName.c_str());
+    activityCmd.addString(objName.c_str());
     yDebug() << "sending query to ActivityIF:" << activityCmd.toString().c_str();
     activityPort.write(activityCmd, activityReply);
 
