@@ -139,7 +139,12 @@ bool WorldStateMgrThread::dumpWorldState()
     yInfo() << "opcIDs =" << opcIDs;
 
     if (!playbackMode)
+    {
+        if (trackerInit)
+            refreshTracker();
+
         yInfo() << "trackIDs =" << trackIDs;
+    }
 
     return true;
 }
@@ -180,6 +185,7 @@ bool WorldStateMgrThread::initPerceptionVars()
     inAff = NULL;
     inTargets = NULL;
     needUpdate = false;
+    trackerInit = false;
 
     return true;
 }
@@ -290,6 +296,7 @@ void WorldStateMgrThread::fsmPerception()
         {
             // initialize multi-object active particle tracker
             initTracker();
+            trackerInit = true;
 
             // proceed
             fsmState = STATE_PERCEPTION_WAIT_TRACKER;
@@ -300,7 +307,7 @@ void WorldStateMgrThread::fsmPerception()
         case STATE_PERCEPTION_WAIT_TRACKER:
         {
             // wait for tracker data to arrive
-            refreshTracker();
+            refreshTracker(); // internally checks for !=NULL
 
             // when something arrives, proceed
             if (inTargets != NULL)
@@ -419,8 +426,8 @@ void WorldStateMgrThread::refreshTracker()
         // number of tracked objects
         sizeTargets = inTargets->size();
 
-        // get current track IDs
-        refreshTrackIDs();
+        // get current track IDs, update container, no duplicates
+        updateTrackIDsNoDupes();
     }
     else
     {
@@ -430,14 +437,19 @@ void WorldStateMgrThread::refreshTracker()
     //yDebug("successfully refreshed tracker input");
 }
 
-void WorldStateMgrThread::refreshTrackIDs()
+void WorldStateMgrThread::updateTrackIDsNoDupes()
 {
-    // TODO: add inTargets->get(*).asList()->get(0).asDouble() to trackIDs
-    //       (no repetitions)
+    trackIDs.clear();
     for (int t=0; t<sizeTargets; t++)
     {
-        //inTargets->get(t).asList()->get(0).asDouble();
+        trackIDs.push_back( inTargets->get(t).asList()->get(0).asDouble() );
     }
+
+    /*
+    // remove duplicates
+    std::sort( trackIDs.begin(),trackIDs.end() );
+    trackIDs.erase( std::unique(trackIDs.begin(),trackIDs.end()), trackIDs.end() );
+    */
 }
 
 void WorldStateMgrThread::refreshPerception()
@@ -642,6 +654,7 @@ string WorldStateMgrThread::getLabel(const double &u, const double &v)
     activityCmd.addDouble(v);
     yDebug() << __func__ <<  "sending query to ActivityIF:" << activityCmd.toString().c_str();
     activityPort.write(activityCmd, activityReply);
+    yDebug() << __func__ <<  "obtained response from ActivityIF:" << activityReply.toString().c_str();
 
     bool validResponse = false;
     validResponse = activityReply.get(0).isString(); // TODO: check string length
@@ -670,6 +683,7 @@ bool WorldStateMgrThread::mono2stereo(const double &u, const double &v,
     activityCmd.addDouble(v);
     yDebug() << __func__ <<  "sending query to ActivityIF:" << activityCmd.toString().c_str();
     activityPort.write(activityCmd, activityReply);
+    yDebug() << __func__ <<  "obtained response from ActivityIF:" << activityReply.toString().c_str();
 
     bool validResponse = false;
     validResponse = ( activityReply.get(0).isList() &&
@@ -704,19 +718,21 @@ vector<double> WorldStateMgrThread::getTooltipOffset(const string &objName)
     activityCmd.addString(objName.c_str());
     yDebug() << __func__ << "sending query to ActivityIF:" << activityCmd.toString().c_str();
     activityPort.write(activityCmd, activityReply);
+    yDebug() << __func__ <<  "obtained response from ActivityIF:" << activityReply.toString().c_str();
 
     bool validResponse = false;
-    validResponse = ( (activityReply.size()>1) &&
-                      (activityReply.get(0).asVocab()==Vocab::encode("ok")) );
+    validResponse = ( activityReply.get(0).isList() &&
+                      activityReply.get(0).asList()->size()==3 );
 
     if (validResponse)
     {
-        Bottle *bOffset = activityReply.get(1).asList();
+        Bottle *bOffset = activityReply.get(0).asList();
         vector<double> offset; // TODO: pre-allocate size
         for (int t=0; t<bOffset->size(); t++)
         {
             offset.push_back( bOffset->get(t).asDouble() );
         }
+        yDebug() << __func__ <<  "obtained successful offset from ActivityIF";
         return offset;
     }
     else
@@ -739,6 +755,7 @@ vector<int> WorldStateMgrThread::isOnTopOf(const string &objName)
     activityCmd.addString(objName.c_str());
     yDebug() << __func__ << "sending query to ActivityIF:" << activityCmd.toString().c_str();
     activityPort.write(activityCmd, activityReply);
+    yDebug() << __func__ <<  "obtained response from ActivityIF:" << activityReply.toString().c_str();
 
     bool validResponse = false;
     validResponse = ( (activityReply.size()>1) &&
@@ -772,8 +789,9 @@ vector<int> WorldStateMgrThread::getIdsToReach(const string &objName)
     Bottle activityCmd, activityReply;
     activityCmd.addString("reachableWith");
     activityCmd.addString(objName.c_str());
-    yDebug() << "sending query to ActivityIF:" << activityCmd.toString().c_str();
+    yDebug() << __func__ << "sending query to ActivityIF:" << activityCmd.toString().c_str();
     activityPort.write(activityCmd, activityReply);
+    yDebug() << __func__ <<  "obtained response from ActivityIF:" << activityReply.toString().c_str();
 
     bool validResponse = false;
     validResponse = ( (activityReply.size()>1) &&
@@ -878,16 +896,20 @@ string WorldStateMgrThread::inWhichHand(const string &objName)
     activityPort.write(activityCmd, activityReply);
 
     bool validResponse = false;
-    validResponse = ( (activityReply.size()>1) &&
+    validResponse = ( (activityReply.size()>0) &&
                       (activityReply.get(0).asVocab()==Vocab::encode("ok")) );
 
     // TODO: use consistent names everywhere (incl. RPC): left or left_hand or lefthand
     if (validResponse)
     {
-        if ((activityReply.get(1).asString()=="left") || (activityReply.get(1).asString()=="right"))
+        if ( (activityReply.get(0).asString()=="left") ||
+             (activityReply.get(0).asString()=="right") ||
+             (activityReply.get(0).asString()=="none")
+           )
         {
             // success, return "left" or "right" as received from GeomIF
-            return activityReply.get(1).asString();
+            yDebug() << __func__ <<  "obtained successful response from ActivityIF";
+            return activityReply.get(0).asString();
         }
         else
             yWarning() << __func__ << "obtained valid but unknown response from ActivityIF";

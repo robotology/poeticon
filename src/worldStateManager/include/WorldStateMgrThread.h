@@ -10,10 +10,12 @@
 #ifndef __WSM_THREAD_H__
 #define __WSM_THREAD_H__
 
+#include <algorithm>
 #include <iomanip>
 #include <iostream> // __func__
 #include <map>
 #include <sstream>
+#include <vector>
 #include <yarp/os/Bottle.h>
 #include <yarp/os/BufferedPort.h>
 #include <yarp/os/Log.h>
@@ -86,6 +88,7 @@ class WorldStateMgrThread : public RateThread
 
         // perception mode
         bool needUpdate;
+        bool trackerInit;
         Bottle *inAff;
         Bottle *inTargets;
         int sizeTargets, sizeAff;
@@ -123,7 +126,7 @@ class WorldStateMgrThread : public RateThread
         void refreshOPCIDs();
         void refreshBlobs();
         void refreshTracker();
-        void refreshTrackIDs();
+        void updateTrackIDsNoDupes();
         void refreshPerception();
         bool refreshPerceptionAndValidate();
         bool doPopulateDB();
