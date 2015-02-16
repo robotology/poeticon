@@ -66,9 +66,9 @@ public:
 class activityInterface_IDLServer_drop : public yarp::os::Portable {
 public:
   std::string objName;
-  std::string handName;
+  std::string targetName;
   bool _return;
-  void init(const std::string& objName, const std::string& handName);
+  void init(const std::string& objName, const std::string& targetName);
   virtual bool write(yarp::os::ConnectionWriter& connection);
   virtual bool read(yarp::os::ConnectionReader& connection);
 };
@@ -230,7 +230,7 @@ bool activityInterface_IDLServer_drop::write(yarp::os::ConnectionWriter& connect
   if (!writer.writeListHeader(3)) return false;
   if (!writer.writeTag("drop",1,1)) return false;
   if (!writer.writeString(objName)) return false;
-  if (!writer.writeString(handName)) return false;
+  if (!writer.writeString(targetName)) return false;
   return true;
 }
 
@@ -244,10 +244,10 @@ bool activityInterface_IDLServer_drop::read(yarp::os::ConnectionReader& connecti
   return true;
 }
 
-void activityInterface_IDLServer_drop::init(const std::string& objName, const std::string& handName) {
+void activityInterface_IDLServer_drop::init(const std::string& objName, const std::string& targetName) {
   _return = false;
   this->objName = objName;
-  this->handName = handName;
+  this->targetName = targetName;
 }
 
 bool activityInterface_IDLServer_quit::write(yarp::os::ConnectionWriter& connection) {
@@ -334,12 +334,12 @@ bool activityInterface_IDLServer::take(const std::string& objName, const std::st
   bool ok = yarp().write(helper,helper);
   return ok?helper._return:_return;
 }
-bool activityInterface_IDLServer::drop(const std::string& objName, const std::string& handName) {
+bool activityInterface_IDLServer::drop(const std::string& objName, const std::string& targetName) {
   bool _return = false;
   activityInterface_IDLServer_drop helper;
-  helper.init(objName,handName);
+  helper.init(objName,targetName);
   if (!yarp().canWrite()) {
-    fprintf(stderr,"Missing server method '%s'?\n","bool activityInterface_IDLServer::drop(const std::string& objName, const std::string& handName)");
+    fprintf(stderr,"Missing server method '%s'?\n","bool activityInterface_IDLServer::drop(const std::string& objName, const std::string& targetName)");
   }
   bool ok = yarp().write(helper,helper);
   return ok?helper._return:_return;
@@ -477,17 +477,17 @@ bool activityInterface_IDLServer::read(yarp::os::ConnectionReader& connection) {
     }
     if (tag == "drop") {
       std::string objName;
-      std::string handName;
+      std::string targetName;
       if (!reader.readString(objName)) {
         reader.fail();
         return false;
       }
-      if (!reader.readString(handName)) {
+      if (!reader.readString(targetName)) {
         reader.fail();
         return false;
       }
       bool _return;
-      _return = drop(objName,handName);
+      _return = drop(objName,targetName);
       yarp::os::idl::WireWriter writer(reader);
       if (!writer.isNull()) {
         if (!writer.writeListHeader(1)) return false;
@@ -592,10 +592,10 @@ std::vector<std::string> activityInterface_IDLServer::help(const std::string& fu
       helpString.push_back("@return true/false on taking or not ");
     }
     if (functionName=="drop") {
-      helpString.push_back("bool drop(const std::string& objName, const std::string& handName) ");
+      helpString.push_back("bool drop(const std::string& objName, const std::string& targetName) ");
       helpString.push_back("Perform the drop action on the particular object with the particular hand ");
       helpString.push_back("@param objName specifies the name of the object in question ");
-      helpString.push_back("@param handName specifies the name of the hand in question ");
+      helpString.push_back("@param targetName specifies the name of target object to drop onto. ");
       helpString.push_back("@return true/false on droping or not ");
     }
     if (functionName=="quit") {

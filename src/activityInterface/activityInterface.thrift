@@ -65,10 +65,10 @@ service activityInterface_IDLServer
     /**
      * Perform the drop action on the particular object with the particular hand
      * @param objName specifies the name of the object in question
-     * @param handName specifies the name of the hand in question
+     * @param targetName specifies the name of target object to drop onto.
      * @return true/false on droping or not
      **/
-    bool drop(1:string objName, 2:string handName)
+    bool drop(1:string objName, 2:string targetName)
     
     /**
      * Quit the module.

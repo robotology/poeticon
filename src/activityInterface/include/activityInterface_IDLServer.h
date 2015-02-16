@@ -60,10 +60,10 @@ public:
   /**
    * Perform the drop action on the particular object with the particular hand
    * @param objName specifies the name of the object in question
-   * @param handName specifies the name of the hand in question
+   * @param targetName specifies the name of target object to drop onto.
    * @return true/false on droping or not
    */
-  virtual bool drop(const std::string& objName, const std::string& handName);
+  virtual bool drop(const std::string& objName, const std::string& targetName);
   /**
    * Quit the module.
    * @return true/false on success/failure

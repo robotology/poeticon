@@ -129,7 +129,7 @@ public:
     std::string         getLabel(const int32_t pos_x, const int32_t pos_y);
     std::string         inHand(const std::string &objName);
     bool                take(const std::string &objName, const std::string &handName);
-    bool                drop(const std::string &objName, const std::string &handName);
+    bool                drop(const std::string &objName, const std::string &targetName);
     bool                quit();
 };
 

@@ -555,9 +555,11 @@ bool ActivityInterface::take(const string &objName, const string &handName)
 }
 
 /**********************************************************/
-bool ActivityInterface::drop(const string &objName, const string &handName)
+bool ActivityInterface::drop(const string &objName, const string &targetName)
 {
     //talk to iolStateMachineHandler
+    //should drop objName on top of targetName
+    
     inHandStatus.erase(objName.c_str());
     return true;
 }
