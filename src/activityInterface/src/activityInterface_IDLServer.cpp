@@ -73,6 +73,15 @@ public:
   virtual bool read(yarp::os::ConnectionReader& connection);
 };
 
+class activityInterface_IDLServer_underOf : public yarp::os::Portable {
+public:
+  std::string objName;
+  yarp::os::Bottle _return;
+  void init(const std::string& objName);
+  virtual bool write(yarp::os::ConnectionWriter& connection);
+  virtual bool read(yarp::os::ConnectionReader& connection);
+};
+
 class activityInterface_IDLServer_quit : public yarp::os::Portable {
 public:
   bool _return;
@@ -250,6 +259,29 @@ void activityInterface_IDLServer_drop::init(const std::string& objName, const st
   this->targetName = targetName;
 }
 
+bool activityInterface_IDLServer_underOf::write(yarp::os::ConnectionWriter& connection) {
+  yarp::os::idl::WireWriter writer(connection);
+  if (!writer.writeListHeader(2)) return false;
+  if (!writer.writeTag("underOf",1,1)) return false;
+  if (!writer.writeString(objName)) return false;
+  return true;
+}
+
+bool activityInterface_IDLServer_underOf::read(yarp::os::ConnectionReader& connection) {
+  yarp::os::idl::WireReader reader(connection);
+  if (!reader.readListReturn()) return false;
+  if (!reader.read(_return)) {
+    reader.fail();
+    return false;
+  }
+  return true;
+}
+
+void activityInterface_IDLServer_underOf::init(const std::string& objName) {
+  _return;
+  this->objName = objName;
+}
+
 bool activityInterface_IDLServer_quit::write(yarp::os::ConnectionWriter& connection) {
   yarp::os::idl::WireWriter writer(connection);
   if (!writer.writeListHeader(1)) return false;
@@ -340,6 +372,16 @@ bool activityInterface_IDLServer::drop(const std::string& objName, const std::st
   helper.init(objName,targetName);
   if (!yarp().canWrite()) {
     fprintf(stderr,"Missing server method '%s'?\n","bool activityInterface_IDLServer::drop(const std::string& objName, const std::string& targetName)");
+  }
+  bool ok = yarp().write(helper,helper);
+  return ok?helper._return:_return;
+}
+yarp::os::Bottle activityInterface_IDLServer::underOf(const std::string& objName) {
+  yarp::os::Bottle _return;
+  activityInterface_IDLServer_underOf helper;
+  helper.init(objName);
+  if (!yarp().canWrite()) {
+    fprintf(stderr,"Missing server method '%s'?\n","yarp::os::Bottle activityInterface_IDLServer::underOf(const std::string& objName)");
   }
   bool ok = yarp().write(helper,helper);
   return ok?helper._return:_return;
@@ -496,6 +538,22 @@ bool activityInterface_IDLServer::read(yarp::os::ConnectionReader& connection) {
       reader.accept();
       return true;
     }
+    if (tag == "underOf") {
+      std::string objName;
+      if (!reader.readString(objName)) {
+        reader.fail();
+        return false;
+      }
+      yarp::os::Bottle _return;
+      _return = underOf(objName);
+      yarp::os::idl::WireWriter writer(reader);
+      if (!writer.isNull()) {
+        if (!writer.writeListHeader(1)) return false;
+        if (!writer.write(_return)) return false;
+      }
+      reader.accept();
+      return true;
+    }
     if (tag == "quit") {
       bool _return;
       _return = quit();
@@ -548,6 +606,7 @@ std::vector<std::string> activityInterface_IDLServer::help(const std::string& fu
     helpString.push_back("get3D");
     helpString.push_back("take");
     helpString.push_back("drop");
+    helpString.push_back("underOf");
     helpString.push_back("quit");
     helpString.push_back("help");
   }
@@ -597,6 +656,12 @@ std::vector<std::string> activityInterface_IDLServer::help(const std::string& fu
       helpString.push_back("@param objName specifies the name of the object in question ");
       helpString.push_back("@param targetName specifies the name of target object to drop onto. ");
       helpString.push_back("@return true/false on droping or not ");
+    }
+    if (functionName=="underOf") {
+      helpString.push_back("yarp::os::Bottle underOf(const std::string& objName) ");
+      helpString.push_back("Ask for the list of labels that are under ojbName ");
+      helpString.push_back("@param objName specifies the name of the object in question ");
+      helpString.push_back("@return Bottle containing list of labels that are under objName ");
     }
     if (functionName=="quit") {
       helpString.push_back("bool quit() ");

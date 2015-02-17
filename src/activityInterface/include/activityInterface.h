@@ -69,39 +69,41 @@ protected:
     yarp::os::Port                  robotStatus;
     
     /* left & right cartesian interfaces */
-    yarp::dev::PolyDriver           client_left;
-    yarp::dev::ICartesianControl    *icart_left;
+    yarp::dev::PolyDriver               client_left;
+    yarp::dev::ICartesianControl        *icart_left;
     
-    yarp::dev::PolyDriver           client_right;
-    yarp::dev::ICartesianControl    *icart_right;
+    yarp::dev::PolyDriver               client_right;
+    yarp::dev::ICartesianControl        *icart_right;
     
-    yarp::dev::PolyDriver           robotTorso;
-    yarp::dev::PolyDriver           robotArm;
+    yarp::dev::PolyDriver               robotTorso;
+    yarp::dev::PolyDriver               robotArm;
     
-    yarp::dev::IControlLimits       *limTorso, *limArm;
+    yarp::dev::IControlLimits           *limTorso, *limArm;
     
-    iCub::iKin::iCubArm             arm_left;
-    iCub::iKin::iCubArm             arm_right;
+    iCub::iKin::iCubArm                 arm_left;
+    iCub::iKin::iCubArm                 arm_right;
     
-    iCub::iKin::iKinChain           *chain_left;
-    iCub::iKin::iKinChain           *chain_right;
+    iCub::iKin::iKinChain               *chain_left;
+    iCub::iKin::iKinChain               *chain_right;
     
-    yarp::sig::Vector               reachAboveOrient[2];
-    yarp::sig::Vector               thetaMin, thetaMax;
+    yarp::sig::Vector                   reachAboveOrient[2];
+    yarp::sig::Vector                   thetaMin, thetaMax;
     
-    MemoryReporter                  memoryReporter; //OPC class
+    MemoryReporter                      memoryReporter; //OPC class
     
-    friend class                    MemoryReporter;
+    friend class                        MemoryReporter;
 
-    bool                            first;
-    int                             ctxt_left;
-    int                             ctxt_right;
+    bool                                first;
+    int                                 ctxt_left;
+    int                                 ctxt_right;
     
     /* parameters */
-    bool                            closing;
-    bool                            scheduleLoadMemory;
+    bool                                closing;
+    bool                                scheduleLoadMemory;
     
-    std::map<std::string, std::string> inHandStatus;
+    std::map<std::string, std::string>  inHandStatus;
+    std::map<int, std::string>          onTopElements;
+    int                                 elements;
     
 public:
     
@@ -130,6 +132,7 @@ public:
     std::string         inHand(const std::string &objName);
     bool                take(const std::string &objName, const std::string &handName);
     bool                drop(const std::string &objName, const std::string &targetName);
+    yarp::os::Bottle    underOf(const std::string &objName);
     bool                quit();
 };
 

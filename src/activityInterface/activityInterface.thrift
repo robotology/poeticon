@@ -71,6 +71,13 @@ service activityInterface_IDLServer
     bool drop(1:string objName, 2:string targetName)
     
     /**
+     * Ask for the list of labels that are under ojbName
+     * @param objName specifies the name of the object in question
+     * @return Bottle containing list of labels that are under objName
+     **/
+    Bottle underOf(1:string objName)
+    
+    /**
      * Quit the module.
      * @return true/false on success/failure
      */

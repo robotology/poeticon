@@ -183,6 +183,7 @@ bool ActivityInterface::configure(yarp::os::ResourceFinder &rf)
     attach(rpcPort);
     
     first = true;
+    elements = 0;
     
     return true ;
 }
@@ -547,9 +548,27 @@ string ActivityInterface::inHand(const string &objName)
 bool ActivityInterface::take(const string &objName, const string &handName)
 {
     //check for hand status beforehand to make sure that it is empty
-    //handStatus(handName);
-    //talk to iolStateMachineHandler
     
+    //handStatus(handName);
+    
+    //talk to iolStateMachineHandler
+    //figure out if object is visible
+    
+    //if object is visible do the following
+    
+    for (std::map<int, string>::iterator it=onTopElements.begin(); it!=onTopElements.end(); ++it)
+    {
+        if (strcmp (it->second.c_str(), objName.c_str() ) == 0)
+        {
+            int id = it->first;
+            onTopElements.erase(id);
+            elements--;
+        }
+    }
+    
+    //do the take actions
+    
+    //update inHandStatus map
     inHandStatus.insert(pair<string, string>(objName.c_str(), handName.c_str()));
     return true;
 }
@@ -560,10 +579,52 @@ bool ActivityInterface::drop(const string &objName, const string &targetName)
     //talk to iolStateMachineHandler
     //should drop objName on top of targetName
     
-    inHandStatus.erase(objName.c_str());
+    if (!targetName.empty())
+    {
+        if (elements == 0)
+        {
+            onTopElements.insert(pair<int, string>(elements, targetName.c_str()));
+            elements++;
+        }
+
+        onTopElements.insert(pair<int, string>(elements, objName.c_str()));
+        elements++;
+    }
+    
+    for (std::map<string, string>::iterator it=inHandStatus.begin(); it!=inHandStatus.end(); ++it)
+    {
+        if (strcmp (it->first.c_str(), objName.c_str() ) == 0)
+        {
+            inHandStatus.erase(objName.c_str());
+            break;
+        }
+    }
+    
     return true;
 }
 
+
+/**********************************************************/
+Bottle ActivityInterface::underOf(const std::string &objName)
+{
+    Bottle replyList;
+    
+    replyList.clear();
+    Bottle &list=replyList.addList();
+    
+    int id = -1;
+    
+    for (std::map<int, string>::reverse_iterator rit=onTopElements.rbegin(); rit!=onTopElements.rend(); ++rit)
+        if (strcmp (objName.c_str(), rit->second.c_str() ) == 0)
+            id = rit->first;
+    
+    
+    for (std::map<int, string>::reverse_iterator rit=onTopElements.rbegin(); rit!=onTopElements.rend(); ++rit)
+        if (strcmp (objName.c_str(), rit->second.c_str() ) != 0 && id >= 0 && rit->first <= id)
+            list.addString(rit->second.c_str());
+    
+    return replyList;
+}
 
 
 

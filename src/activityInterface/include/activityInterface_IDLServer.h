@@ -65,6 +65,12 @@ public:
    */
   virtual bool drop(const std::string& objName, const std::string& targetName);
   /**
+   * Ask for the list of labels that are under ojbName
+   * @param objName specifies the name of the object in question
+   * @return Bottle containing list of labels that are under objName
+   */
+  virtual yarp::os::Bottle underOf(const std::string& objName);
+  /**
    * Quit the module.
    * @return true/false on success/failure
    */
