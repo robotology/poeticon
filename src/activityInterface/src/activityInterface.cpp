@@ -576,8 +576,11 @@ bool ActivityInterface::take(const string &objName, const string &handName)
 /**********************************************************/
 bool ActivityInterface::drop(const string &objName, const string &targetName)
 {
+    //check for inHand status beforehand to make sure that the hand has the object
+    
+    //inHand(objName.c_str());
+    
     //talk to iolStateMachineHandler
-    //should drop objName on top of targetName
     
     if (!targetName.empty())
     {
