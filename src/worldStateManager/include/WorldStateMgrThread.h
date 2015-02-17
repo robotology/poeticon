@@ -15,6 +15,7 @@
 #include <iostream> // __func__
 #include <map>
 #include <sstream>
+#include <string>
 #include <vector>
 #include <yarp/os/Bottle.h>
 #include <yarp/os/BufferedPort.h>
@@ -134,9 +135,9 @@ class WorldStateMgrThread : public RateThread
         bool mono2stereo(const double &u, const double &v, double x, double y, double z);
         // TODO: return Bottle instead of std::vector
         vector<double> getTooltipOffset(const string &objName);
-        vector<int> isOnTopOf(const string &objName);
-        vector<int> getIdsToReach(const string &objName);
-        vector<int> getIdsToPull(const string &objName);
+        vector<string> isUnderOf(const string &objName);
+        vector<string> isReachableWith(const string &objName);
+        vector<string> isPullableWith(const string &objName);
         bool isHandFree(const string &handName);
         string inWhichHand(const string &objName);
 
