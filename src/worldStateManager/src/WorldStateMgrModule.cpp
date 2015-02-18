@@ -96,11 +96,6 @@ bool WorldStateMgrModule::dump()
 
 bool WorldStateMgrModule::update()
 {
-    if (playbackMode)
-        yInfo("updating world state from playback file");
-    else
-        yInfo("updating world state from robot perception");
-
     return thread->updateWorldState();
 }
 

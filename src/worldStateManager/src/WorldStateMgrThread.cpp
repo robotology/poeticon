@@ -124,6 +124,7 @@ bool WorldStateMgrThread::initCommonVars()
 {
     fsmState = (playbackMode ? STATE_DUMMY_PARSE : STATE_PERCEPTION_WAIT_OPC);
     toldUserConnectOPC = false;
+    toldUserOPCConnected = false;
 
     return true;
 }
@@ -132,9 +133,10 @@ bool WorldStateMgrThread::dumpWorldState()
 {
     if (opcPort.getOutputCount() < 1)
     {
-        yWarning() << __func__ << "not connected to OPC";
+        yWarning() << __func__ << "not connected to WSOPC";
         return false;
     }
+
     refreshOPCIDs();
     yInfo() << "opcIDs =" << opcIDs;
 
@@ -151,10 +153,6 @@ bool WorldStateMgrThread::dumpWorldState()
 
 bool WorldStateMgrThread::updateWorldState()
 {
-    // TODO: move this check to inner perception func (already done for dummy)
-    //if (opcPort.getOutputCount() < 1)
-    //    yWarning() << __func__ << "not connected to OPC";
-
     if (!playbackMode)
     {
         // perception mode
@@ -164,11 +162,13 @@ bool WorldStateMgrThread::updateWorldState()
         }
         needUpdate = true;
         refreshPerceptionAndValidate(); // TODO: redundant?
+        yInfo("updated world state from robot perception");
     }
     else
     {
         // playback mode
         playbackPaused = false;
+        yInfo("updated world state from playback file");
     }
 
     // TODO: opcPort.write() should be here instead of inner functions
@@ -186,6 +186,12 @@ bool WorldStateMgrThread::initPerceptionVars()
     inTargets = NULL;
     needUpdate = false;
     trackerInit = false;
+    toldUserWaitBlobs = false;
+    toldUserBlobsConnected = false;
+    toldUserWaitTracker = false;
+    toldUserTrackerConnected = false;
+    toldUserWaitActivityIF = false;
+    toldUserActivityIFConnected = false;
 
     return true;
 }
@@ -253,14 +259,19 @@ void WorldStateMgrThread::fsmPerception()
         {
             if (!toldUserConnectOPC && opcPort.getOutputCount()<1)
             {
-                yInfo("waiting for %s to be connected to /wsopc/rpc", opcPortName.c_str());
+                yDebug("waiting for %s to be connected to /wsopc/rpc", opcPortName.c_str());
                 toldUserConnectOPC = true;
+            }
+
+            if (!toldUserOPCConnected && opcPort.getOutputCount()>=1)
+            {
+                dumpWorldState();
+                yInfo("connected to WSOPC, you can now send RPC commands to /%s/rpc:i", moduleName.c_str());
+                toldUserOPCConnected = true;
             }
 
             if (opcPort.getOutputCount()>=1)
             {
-                dumpWorldState();
-                yInfo("connected, you can now send RPC commands to /%s/rpc:i", moduleName.c_str());
                 // proceed
                 fsmState = STATE_PERCEPTION_WAIT_BLOBS;
             }
@@ -270,8 +281,21 @@ void WorldStateMgrThread::fsmPerception()
 
         case STATE_PERCEPTION_WAIT_BLOBS:
         {
-            // acquire initial entries (robot hands) from OPC database
+            // acquire initial entries (robot hands) from WSOPC database
             refreshOPCIDs();
+
+            if (!toldUserWaitBlobs && inAffPort.getOutputCount()<1)
+            {
+                yDebug("waiting for %s to be connected to /blobDescriptor/affDescriptor:o",
+                      inAffPortName.c_str());
+                toldUserWaitBlobs = true;
+            }
+
+            if (!toldUserBlobsConnected && inAffPort.getInputCount()>=1)
+            {
+                yDebug("connected to BlobDescriptor, waiting for data");
+                toldUserBlobsConnected = true;
+            }
 
             // wait for blobs data to arrive
             refreshBlobs();
@@ -286,9 +310,30 @@ void WorldStateMgrThread::fsmPerception()
         {
             // if size>0 proceed, else go back one state
             if (sizeAff > 0)
-                fsmState = STATE_PERCEPTION_INIT_TRACKER;
+                fsmState = STATE_PERCEPTION_WAIT_TRACKER;
             else
                 fsmState = STATE_PERCEPTION_WAIT_BLOBS;
+
+            break;
+        }
+
+        case STATE_PERCEPTION_WAIT_TRACKER:
+        {
+            if (!toldUserWaitTracker && inTargetsPort.getOutputCount()<1)
+            {
+                yDebug("waiting for %s to be connected to /activeParticleTrack/target:o",
+                      inTargetsPortName.c_str());
+                toldUserWaitTracker = true;
+            }
+
+            if (!toldUserTrackerConnected && inTargetsPort.getInputCount()>=1)
+            {
+                yDebug("connected to tracker");
+                toldUserTrackerConnected = true;
+            }
+
+            // proceed
+            fsmState = STATE_PERCEPTION_INIT_TRACKER;
 
             break;
         }
@@ -296,34 +341,57 @@ void WorldStateMgrThread::fsmPerception()
         case STATE_PERCEPTION_INIT_TRACKER:
         {
             // initialize multi-object active particle tracker
-            initTracker();
-            trackerInit = true;
+            if (!trackerInit)
+            {
+                initTracker();
+                trackerInit = true;
+            }
 
-            // proceed
-            fsmState = STATE_PERCEPTION_WAIT_TRACKER;
-
-            break;
-        }
-
-        case STATE_PERCEPTION_WAIT_TRACKER:
-        {
-            // wait for tracker data to arrive
-            refreshTracker(); // internally checks for !=NULL
-
-            // when something arrives, proceed
-            if (inTargets != NULL)
+            if (trackerInit)
+            {
+                // proceed
                 fsmState = STATE_PERCEPTION_READ_TRACKER;
+            }
 
             break;
         }
 
         case STATE_PERCEPTION_READ_TRACKER:
         {
-            // if size>0 proceed, else go back one state
+            // wait for tracker data to arrive
+            refreshTracker(); // internally checks for !=NULL
+
+            // if size>0 proceed, else stay in same state
             if (sizeTargets > 0)
+                fsmState = STATE_PERCEPTION_WAIT_ACTIVITYIF;
+
+            break;
+        }
+
+        case STATE_PERCEPTION_WAIT_ACTIVITYIF:
+        {
+            if (!toldUserWaitActivityIF && activityPort.getOutputCount()<1)
+            {
+                yDebug("waiting for %s to be connected to /activityInterface/rpc:i",
+                      activityPortName.c_str());
+                toldUserWaitActivityIF = true;
+            }
+
+            if (!toldUserActivityIFConnected && activityPort.getOutputCount()>=1)
+            {
+                yDebug("connected to ActivityInterface");
+                toldUserActivityIFConnected = true;
+
+                // proceed
                 fsmState = STATE_PERCEPTION_POPULATE_DB;
-            else
-                fsmState = STATE_PERCEPTION_WAIT_TRACKER;
+            }
+
+            // if one of the inputs is missing, go back to beginning
+            if (opcPort.getOutputCount()<1 || inAffPort.getOutputCount()<1 ||
+                inTargetsPort.getOutputCount()<1 || activityPort.getOutputCount()<1)
+            {
+                fsmState = STATE_PERCEPTION_WAIT_OPC;
+            }
 
             break;
         }
@@ -995,10 +1063,11 @@ void WorldStateMgrThread::fsmPlayback()
                 toldUserConnectOPC = true;
             }
 
-            if (opcPort.getOutputCount()>=1)
+            if (!toldUserOPCConnected && opcPort.getOutputCount()>=1)
             {
                 dumpWorldState();
-                yInfo("connected, you can now send commands over RPC");
+                yInfo("connected to WSOPC, you can now send commands over RPC");
+                toldUserOPCConnected = true;
                 fsmState = STATE_DUMMY_WAIT_CMD;
             }
 
@@ -1051,7 +1120,7 @@ void WorldStateMgrThread::fsmPlayback()
                     // stop here if no OPC connection
                     if (opcPort.getOutputCount() < 1)
                     {
-                        yWarning() << __func__ << "not connected to OPC";
+                        yWarning() << __func__ << "not connected to WSOPC";
                         break;
                     }
 

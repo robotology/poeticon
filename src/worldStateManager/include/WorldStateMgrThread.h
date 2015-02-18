@@ -29,15 +29,16 @@
 #include <yarp/os/Vocab.h>
 
 // perception mode states
-#define STATE_PERCEPTION_WAIT_OPC     0
-#define STATE_PERCEPTION_WAIT_BLOBS   1
-#define STATE_PERCEPTION_READ_BLOBS   2
-#define STATE_PERCEPTION_INIT_TRACKER 3
-#define STATE_PERCEPTION_WAIT_TRACKER 4
-#define STATE_PERCEPTION_READ_TRACKER 5
-#define STATE_PERCEPTION_POPULATE_DB  6
-#define STATE_PERCEPTION_WAIT_CMD     7
-#define STATE_PERCEPTION_UPDATE_DB    8
+#define STATE_PERCEPTION_WAIT_OPC         0
+#define STATE_PERCEPTION_WAIT_BLOBS       1
+#define STATE_PERCEPTION_READ_BLOBS       2
+#define STATE_PERCEPTION_WAIT_TRACKER     3
+#define STATE_PERCEPTION_INIT_TRACKER     4
+#define STATE_PERCEPTION_READ_TRACKER     5
+#define STATE_PERCEPTION_WAIT_ACTIVITYIF  6
+#define STATE_PERCEPTION_POPULATE_DB      7
+#define STATE_PERCEPTION_WAIT_CMD         8
+#define STATE_PERCEPTION_UPDATE_DB        9
 
 // playback mode states
 #define STATE_DUMMY_PARSE    100
@@ -86,10 +87,17 @@ class WorldStateMgrThread : public RateThread
         int fsmState;
         bool populated;
         bool toldUserConnectOPC;
-
+        bool toldUserOPCConnected;
+        
         // perception mode
         bool needUpdate;
         bool trackerInit;
+        bool toldUserWaitBlobs;
+        bool toldUserBlobsConnected;
+        bool toldUserWaitTracker;
+        bool toldUserTrackerConnected;
+        bool toldUserWaitActivityIF;
+        bool toldUserActivityIFConnected;
         Bottle *inAff;
         Bottle *inTargets;
         int sizeTargets, sizeAff;

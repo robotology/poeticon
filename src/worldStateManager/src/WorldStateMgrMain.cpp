@@ -16,6 +16,7 @@
     object, previously computed from segmented blob silhouettes
  2. populates an ObjectsPropertiesCollector database
  3. maintains the database up-to-date when changes in the world are perceived
+    (perception & reasoning are performed by ActivityInterface module)
  */
 
 #include <yarp/os/Log.h>
