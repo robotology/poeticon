@@ -60,7 +60,7 @@
 using namespace std;
 using namespace yarp::os;
 
-typedef std::map<int,double> idsMap;
+typedef std::map<int,string> idsMap;
 
 class WorldStateMgrThread : public RateThread
 {
@@ -133,6 +133,7 @@ class WorldStateMgrThread : public RateThread
         bool initTracker();
         void fsmPerception();
         void refreshOPCIDs();
+        void dumpMap(const idsMap &ids);
         void refreshBlobs();
         void refreshTracker();
         void updateTrackIDsNoDupes();

@@ -147,6 +147,7 @@ bool WorldStateMgrThread::dumpWorldState()
 
         yInfo() << "trackIDs =" << trackIDs;
     }
+    dumpMap(ids);
 
     return true;
 }
@@ -468,9 +469,63 @@ void WorldStateMgrThread::refreshOPCIDs()
                 }
             }
             else
-                yDebug() << __func__ << "did not receive ack from OPC";
+                yDebug() << __func__ << "did not receive ack from WSOPC";
         }
+
+        // TODO: put this names part into a separate function
+        Bottle opcReplyProp;
+        opcCmd.clear();
+        opcCmdContent.clear();
+        opcReply.clear();
+        opcReplyProp.clear();
+        // adapted from iolHelper by Ugo Pattacini
+        // cycle over items
+        for (int i=0; i<opcIDs.size(); i++)
+        {
+            int id=opcIDs[i];
+
+            // get the relevant properties
+            // [get] (("id" <num>) ("propSet" ("name")))
+            opcCmd.clear();
+            opcCmd.addVocab(Vocab::encode("get"));
+            Bottle &content=opcCmd.addList();
+            Bottle &list_bid=content.addList();
+            list_bid.addString("id");
+            list_bid.addInt(id);
+            Bottle &list_propSet=content.addList();
+            list_propSet.addString("propSet");
+            list_propSet.addList().addString("name");
+            opcPort.write(opcCmd,opcReplyProp);
+
+            // append the name (if any)
+            if (opcReplyProp.get(0).asVocab()==Vocab::encode("ack"))
+               if (Bottle *propField=opcReplyProp.get(1).asList())
+                   if (propField->check("name"))
+                   {
+                       // assume names cannot change: use only insert(), not []
+                       // http://stackoverflow.com/questions/326062/in-stl-maps-is-it-better-to-use-mapinsert-than
+                       ids.insert(make_pair(id, propField->find("name").asString().c_str()));
+                   }
+        }
+
     }
+}
+
+void WorldStateMgrThread::dumpMap(const idsMap &ids)
+{
+    ostringstream fullMapContent; // output stream we'll feed to yDebug macro
+    size_t items_remaining = ids.size(); // http://stackoverflow.com/a/151112
+    bool last_iteration = false; 
+    for(idsMap::const_iterator iter = ids.begin();
+        iter != ids.end();
+        ++iter)
+    {
+        fullMapContent << iter->first << " " << iter->second;
+        last_iteration = (items_remaining-- == 1);
+        if (!last_iteration)
+            fullMapContent << "; ";
+    }
+    yInfo() << "[" << fullMapContent.str().c_str() << "]";
 }
 
 void WorldStateMgrThread::refreshBlobs()
@@ -705,11 +760,11 @@ bool WorldStateMgrThread::doPopulateDB()
         {
             if (opcReply.get(0).asVocab()==Vocab::encode("ack"))
             {
-                yDebug() << __func__ << "received ack from OPC";
+                yDebug() << __func__ << "received ack from WSOPC";
                 // TODO: store opc ID into std::map
             }
             else
-                yDebug() << __func__ << "did not receive ack from OPC";
+                yDebug() << __func__ << "did not receive ack from WSOPC";
         }
     }
 
