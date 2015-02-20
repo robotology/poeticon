@@ -137,17 +137,20 @@ bool WorldStateMgrThread::dumpWorldState()
         return false;
     }
 
-    refreshOPCIDs();
-    yInfo() << "opcIDs =" << opcIDs;
+    refreshOPC();
+    //yDebug() << "opcIDs =" << opcIDs;
 
     if (!playbackMode)
     {
         if (trackerInit)
             refreshTracker();
 
-        yInfo() << "trackIDs =" << trackIDs;
+        //yDebug() << "trackIDs =" << trackIDs;
     }
-    dumpMap(ids);
+
+    yDebug("opcMap, trackMap:");
+    dumpMap(opcMap);
+    dumpMap(trackMap);
 
     return true;
 }
@@ -283,7 +286,7 @@ void WorldStateMgrThread::fsmPerception()
         case STATE_PERCEPTION_WAIT_BLOBS:
         {
             // acquire initial entries (robot hands) from WSOPC database
-            refreshOPCIDs();
+            refreshOPC();
 
             if (!toldUserWaitBlobs && inAffPort.getOutputCount()<1)
             {
@@ -446,78 +449,117 @@ void WorldStateMgrThread::fsmPerception()
     }
 }
 
-void WorldStateMgrThread::refreshOPCIDs()
+void WorldStateMgrThread::refreshOPC()
 {
     if (opcPort.getOutputCount()>0)
     {
-        Bottle opcCmd, opcCmdContent, opcReply;
-        opcCmd.addVocab(Vocab::encode("ask"));
-        opcCmdContent.addString("all");
-        opcCmd.addList() = opcCmdContent;
-        opcPort.write(opcCmd, opcReply);
+        refreshOPCIDs();
 
-        if (opcReply.size() > 1)
-        {
-            if (opcReply.get(0).asVocab()==Vocab::encode("ack") &&
-                opcReply.get(1).asList()->get(0).asString()=="id")
-            {
-                opcIDs.clear();
-                Bottle *currIDs = opcReply.get(1).asList()->get(1).asList();
-                for (int o=0; o<currIDs->size(); o++)
-                {
-                    opcIDs.push_back(currIDs->get(o).asInt());
-                }
-            }
-            else
-                yDebug() << __func__ << "did not receive ack from WSOPC";
-        }
-
-        // TODO: put this names part into a separate function
-        Bottle opcReplyProp;
-        opcCmd.clear();
-        opcCmdContent.clear();
-        opcReply.clear();
-        opcReplyProp.clear();
-        // adapted from iolHelper by Ugo Pattacini
-        // cycle over items
-        for (int i=0; i<opcIDs.size(); i++)
-        {
-            int id=opcIDs[i];
-
-            // get the relevant properties
-            // [get] (("id" <num>) ("propSet" ("name")))
-            opcCmd.clear();
-            opcCmd.addVocab(Vocab::encode("get"));
-            Bottle &content=opcCmd.addList();
-            Bottle &list_bid=content.addList();
-            list_bid.addString("id");
-            list_bid.addInt(id);
-            Bottle &list_propSet=content.addList();
-            list_propSet.addString("propSet");
-            list_propSet.addList().addString("name");
-            opcPort.write(opcCmd,opcReplyProp);
-
-            // append the name (if any)
-            if (opcReplyProp.get(0).asVocab()==Vocab::encode("ack"))
-               if (Bottle *propField=opcReplyProp.get(1).asList())
-                   if (propField->check("name"))
-                   {
-                       // assume names cannot change: use only insert(), not []
-                       // http://stackoverflow.com/questions/326062/in-stl-maps-is-it-better-to-use-mapinsert-than
-                       ids.insert(make_pair(id, propField->find("name").asString().c_str()));
-                   }
-        }
-
+        refreshOPCNames();
     }
 }
 
-void WorldStateMgrThread::dumpMap(const idsMap &ids)
+void WorldStateMgrThread::refreshOPCIDs()
+{
+    // assume opcPort.getOutputCount()>0
+
+    // query: [ask] (all)
+    Bottle opcCmd, opcCmdContent, opcReply;
+    opcCmd.addVocab(Vocab::encode("ask"));
+    opcCmdContent.addString("all");
+    opcCmd.addList() = opcCmdContent;
+    opcPort.write(opcCmd, opcReply);
+
+    // reply: [ack] (id (11 12 ...))
+    if (opcReply.size() > 1)
+    {
+        if (opcReply.get(0).asVocab()==Vocab::encode("ack") &&
+            opcReply.get(1).asList()->get(0).asString()=="id")
+        {
+            opcIDs.clear();
+            Bottle *currIDs = opcReply.get(1).asList()->get(1).asList();
+            for (int o=0; o<currIDs->size(); o++)
+            {
+                opcIDs.push_back(currIDs->get(o).asInt());
+            }
+        }
+        else
+            yDebug() << __func__ << "did not receive ack from WSOPC";
+    }
+}
+
+void WorldStateMgrThread::refreshOPCNames()
+{
+    // assume opcPort.getOutputCount()>0
+
+    // adapted from iolHelper by Ugo Pattacini
+    Bottle opcCmd, opcReplyProp;
+
+    // cycle over items
+    for (int i=0; i<opcIDs.size(); i++)
+    {
+        int id=opcIDs[i];
+
+        // get the relevant properties
+        // [get] (("id" <num>) ("propSet" ("name")))
+        opcCmd.clear();
+        opcCmd.addVocab(Vocab::encode("get"));
+        Bottle &content=opcCmd.addList();
+        Bottle &list_bid=content.addList();
+        list_bid.addString("id");
+        list_bid.addInt(id);
+        Bottle &list_propSet=content.addList();
+        list_propSet.addString("propSet");
+        list_propSet.addList().addString("name");
+        opcPort.write(opcCmd,opcReplyProp);
+
+        // get name as propField->find("name") (if if exists)
+        if (opcReplyProp.get(0).asVocab()==Vocab::encode("ack"))
+           if (Bottle *propField=opcReplyProp.get(1).asList())
+               if (propField->check("name"))
+               {
+                   // fill map
+                   // assume names cannot change -> use insert(), not operator[]
+                   // http://stackoverflow.com/questions/326062/in-stl-maps-is-it-better-to-use-mapinsert-than
+                   opcMap.insert(make_pair(id, propField->find("name").asString().c_str()));
+               }
+    }
+}
+
+void WorldStateMgrThread::refreshTrackNames()
+{
+    if (activityPort.getOutputCount() < 1)
+    {
+        yWarning() << __func__ << "not connected to ActivityIF";
+        return;
+    }
+
+    // cycle over items
+    for (int i=0; i<trackIDs.size(); i++)
+    {
+        int id=trackIDs[i];
+
+        if ( trackMap.find(id)==trackMap.end() )
+        {
+            // name not found -> ask ActivityIF for label
+            // assume names cannot change -> use insert(), not operator[]
+            // http://stackoverflow.com/questions/326062/in-stl-maps-is-it-better-to-use-mapinsert-than
+            // TODO: make sure id corresponds to get(i)
+            double u = inTargets->get(i).asList()->get(1).asDouble();
+            double v = inTargets->get(i).asList()->get(2).asDouble();
+            trackMap.insert(make_pair(id, getLabel(u,v)));
+        }
+        // else name found -> don't ask for it again (assume they cannot change)
+    }
+}
+
+void WorldStateMgrThread::dumpMap(const idLabelMap &m)
 {
     ostringstream fullMapContent; // output stream we'll feed to yDebug macro
-    size_t items_remaining = ids.size(); // http://stackoverflow.com/a/151112
+    size_t items_remaining = m.size(); // http://stackoverflow.com/a/151112
     bool last_iteration = false; 
-    for(idsMap::const_iterator iter = ids.begin();
-        iter != ids.end();
+    for(idLabelMap::const_iterator iter = m.begin();
+        iter != m.end();
         ++iter)
     {
         fullMapContent << iter->first << " " << iter->second;
@@ -525,7 +567,7 @@ void WorldStateMgrThread::dumpMap(const idsMap &ids)
         if (!last_iteration)
             fullMapContent << "; ";
     }
-    yInfo() << "[" << fullMapContent.str().c_str() << "]";
+    yInfo() << "map = [" << fullMapContent.str().c_str() << "]";
 }
 
 void WorldStateMgrThread::refreshBlobs()
@@ -552,13 +594,14 @@ void WorldStateMgrThread::refreshTracker()
 
         // get current track IDs, update container, no duplicates
         updateTrackIDsNoDupes();
+        
+        // get labels, update map container
+        refreshTrackNames();
     }
     else
     {
-        yWarning() << __func__ << "did not receive data from tracker, is it initialized?";
+        yWarning() << __func__ << "did not receive data from tracker";
     }
-
-    //yDebug("successfully refreshed tracker input");
 }
 
 void WorldStateMgrThread::updateTrackIDsNoDupes()
@@ -580,7 +623,6 @@ void WorldStateMgrThread::refreshPerception()
 {
     refreshBlobs();
     refreshTracker();
-    //yDebug("successfully refreshed perception");
 }
 
 bool WorldStateMgrThread::refreshPerceptionAndValidate()
@@ -1218,8 +1260,7 @@ void WorldStateMgrThread::fsmPlayback()
 
                 } // end for parse each entry/line
 
-                // update and print opcIDs
-                refreshOPCIDs();
+                refreshOPC();
                 dumpWorldState();
 
                 ++currPlayback;

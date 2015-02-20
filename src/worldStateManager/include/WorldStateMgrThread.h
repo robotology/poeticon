@@ -60,7 +60,7 @@
 using namespace std;
 using namespace yarp::os;
 
-typedef std::map<int,string> idsMap;
+typedef std::map<int,string> idLabelMap;
 
 class WorldStateMgrThread : public RateThread
 {
@@ -103,7 +103,8 @@ class WorldStateMgrThread : public RateThread
         int sizeTargets, sizeAff;
         std::vector<int> opcIDs;
         std::vector<int> trackIDs;
-        idsMap ids;
+        idLabelMap opcMap;
+        idLabelMap trackMap;
 
         // playback mode
         string playbackFile;
@@ -132,8 +133,11 @@ class WorldStateMgrThread : public RateThread
         bool initPerceptionVars();
         bool initTracker();
         void fsmPerception();
+        void refreshOPC();
         void refreshOPCIDs();
-        void dumpMap(const idsMap &ids);
+        void refreshOPCNames(); // inserts in opcMap
+        void refreshTrackNames(); // inserts in trackMap
+        void dumpMap(const idLabelMap &m);
         void refreshBlobs();
         void refreshTracker();
         void updateTrackIDsNoDupes();
