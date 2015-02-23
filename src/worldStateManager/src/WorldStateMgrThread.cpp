@@ -148,9 +148,10 @@ bool WorldStateMgrThread::dumpWorldState()
         //yDebug() << "trackIDs =" << trackIDs;
     }
 
-    yDebug("opcMap, trackMap:");
+    yDebug("opcMap, trackMap, wsMap:");
     dumpMap(opcMap);
     dumpMap(trackMap);
+    dumpMap(wsMap);
 
     return true;
 }
@@ -297,7 +298,7 @@ void WorldStateMgrThread::fsmPerception()
 
             if (!toldUserBlobsConnected && inAffPort.getInputCount()>=1)
             {
-                yDebug("connected to BlobDescriptor, waiting for data");
+                yInfo("connected to BlobDescriptor, waiting for data");
                 toldUserBlobsConnected = true;
             }
 
@@ -332,7 +333,7 @@ void WorldStateMgrThread::fsmPerception()
 
             if (!toldUserTrackerConnected && inTargetsPort.getInputCount()>=1)
             {
-                yDebug("connected to tracker");
+                yInfo("connected to tracker");
                 toldUserTrackerConnected = true;
             }
 
@@ -383,19 +384,19 @@ void WorldStateMgrThread::fsmPerception()
 
             if (!toldUserActivityIFConnected && activityPort.getOutputCount()>=1)
             {
-                yDebug("connected to ActivityInterface");
+                yInfo("connected to ActivityInterface");
                 toldUserActivityIFConnected = true;
-
-                // proceed
-                fsmState = STATE_PERCEPTION_POPULATE_DB;
             }
 
-            // if one of the inputs is missing, go back to beginning
             if (opcPort.getOutputCount()<1 || inAffPort.getOutputCount()<1 ||
                 inTargetsPort.getOutputCount()<1 || activityPort.getOutputCount()<1)
             {
+                // one of the inputs is missing, go back to beginning
                 fsmState = STATE_PERCEPTION_WAIT_OPC;
             }
+
+            // proceed
+            fsmState = STATE_PERCEPTION_POPULATE_DB;
 
             break;
         }
@@ -404,6 +405,11 @@ void WorldStateMgrThread::fsmPerception()
         {
             // read new data and ensure validity
             refreshPerceptionAndValidate();
+
+            dumpMap(wsMap);
+            yDebug("merging wsMap = opcMap + trackMap");
+            mergeMaps(opcMap, trackMap, wsMap);
+            dumpMap(wsMap);
 
             // try populating database
             populated = doPopulateDB();
@@ -431,6 +437,12 @@ void WorldStateMgrThread::fsmPerception()
             {
                 // read new data and ensure validity
                 refreshPerceptionAndValidate();
+
+                dumpMap(wsMap);
+                yDebug("merging wsMap = opcMap + trackMap");
+                mergeMaps(opcMap, trackMap, wsMap);
+                dumpMap(wsMap);
+
                 // TODO: doPopulateDB() part
                 needUpdate = false;
                 dumpWorldState();
@@ -530,7 +542,7 @@ void WorldStateMgrThread::refreshTrackNames()
 {
     if (activityPort.getOutputCount() < 1)
     {
-        yWarning() << __func__ << "not connected to ActivityIF";
+        //yWarning() << __func__ << "not connected to ActivityIF";
         return;
     }
 
@@ -544,6 +556,7 @@ void WorldStateMgrThread::refreshTrackNames()
             // name not found -> ask ActivityIF for label
             // assume names cannot change -> use insert(), not operator[]
             // http://stackoverflow.com/questions/326062/in-stl-maps-is-it-better-to-use-mapinsert-than
+            yDebug() << __func__ << "name not found -> asking ActivityIF";
             // TODO: make sure id corresponds to get(i)
             double u = inTargets->get(i).asList()->get(1).asDouble();
             double v = inTargets->get(i).asList()->get(2).asDouble();
@@ -594,9 +607,12 @@ void WorldStateMgrThread::refreshTracker()
 
         // get current track IDs, update container, no duplicates
         updateTrackIDsNoDupes();
-        
-        // get labels, update map container
-        refreshTrackNames();
+
+        if (activityPort.getOutputCount()>=1)
+        {
+            // get labels, update map container
+            refreshTrackNames();
+        }
     }
     else
     {
@@ -810,6 +826,14 @@ bool WorldStateMgrThread::doPopulateDB()
         }
     }
 
+    return true;
+}
+
+bool WorldStateMgrThread::mergeMaps(const idLabelMap &map1, const idLabelMap &map2, idLabelMap &result)
+{
+    // TODO: verify merging of first and second
+    result = map1;
+    result.insert(map2.begin(), map2.end());
     return true;
 }
 
@@ -1156,7 +1180,7 @@ void WorldStateMgrThread::fsmPlayback()
         {
             if (!toldUserConnectOPC && opcPort.getOutputCount()<1)
             {
-                yInfo("waiting for /%s/opc:io to be connected to /wsopc/rpc", moduleName.c_str());
+                yDebug("waiting for /%s/opc:io to be connected to /wsopc/rpc", moduleName.c_str());
                 toldUserConnectOPC = true;
             }
 
