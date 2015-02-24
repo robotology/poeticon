@@ -83,9 +83,8 @@ void WorldStateMgrThread::interrupt()
 bool WorldStateMgrThread::threadInit()
 {
     // perception and playback modes
-    //yDebug("thread initialization");
     closing = false;
-    populated = false; // TODO: really check if opc was populated before this module started
+
     if ( !openPorts() )
     {
         yError("problem opening ports");
@@ -408,12 +407,14 @@ void WorldStateMgrThread::fsmPerception()
             mergeMaps(opcMap, trackMap, wsMap);
             dumpMap(wsMap);
 
-            // try populating database
-            populated = doPopulateDB();
-
-            // if database was successfully populated proceed, else stay in same state
-            if (populated)
+            // populate database: if success proceed, else stay in same state
+            if ( doPopulateDB() )
+            {
+                yDebug() << __func__ << "successfully populated database";
                 fsmState = STATE_PERCEPTION_WAIT_CMD;
+            }
+            else
+                yWarning() << __func__ << "problem populating database";
 
             dumpWorldState();
 
@@ -440,7 +441,12 @@ void WorldStateMgrThread::fsmPerception()
                 mergeMaps(opcMap, trackMap, wsMap);
                 dumpMap(wsMap);
 
-                // TODO: doPopulateDB() part
+                // populate database
+                if ( doPopulateDB() )
+                    yDebug() << __func__ << "successfully populated database";
+                else
+                    yWarning() << __func__ << "problem populating database";
+
                 needUpdate = false;
                 dumpWorldState();
 
@@ -557,7 +563,11 @@ void WorldStateMgrThread::refreshTrackNames()
             // TODO: make sure id corresponds to get(i)
             double u = inTargets->get(i).asList()->get(1).asDouble();
             double v = inTargets->get(i).asList()->get(2).asDouble();
-            trackMap.insert(make_pair(id, getLabel(u,v)));
+            string label;
+            if (!getLabel(u, v, label))
+                yWarning() << __func__ << "got invalid label";
+
+            trackMap.insert(make_pair(id,label));
         }
         // else name found -> don't ask for it again (assume they cannot change)
     }
@@ -660,10 +670,18 @@ bool WorldStateMgrThread::refreshPerceptionAndValidate()
 
 bool WorldStateMgrThread::doPopulateDB()
 {
-    // TODO: cycle over opcMap IDs and trackMap IDs (i.e., over wsMap IDs)
-    for(int a=0; a<sizeAff; a++)
+    yDebug() << __func__ << "going to iterate over" << wsMap.size() << "entries";
+
+    // cycle over wsMap keys (IDs)
+    for (idLabelMap::const_iterator iter = wsMap.begin();
+        iter != wsMap.end();
+        ++iter)
     {
-        yDebug("doPopulateDB, a=%d", a);
+        // a is a function of id, it must be computed later
+        int id = iter->first; // id within wsMap: 11, 12, ...
+        int a = std::distance(wsMap.find(id),wsMap.begin()); // iteration number: 0, 1, 2...
+        // TODO: make sure 'a' corresponds to correct argument of inTargets->get(.)
+        yDebug() << __func__ << "--- iteration" << a << "id" << id;
 
         // common properties
         Bottle bName;
@@ -682,12 +700,16 @@ bool WorldStateMgrThread::doPopulateDB()
         Bottle bIsFree;
 
         // prepare name property
+        // TODO: exploit get(0)=id here
         double u = inTargets->get(a).asList()->get(1).asDouble(); // from tracker
         double v = inTargets->get(a).asList()->get(2).asDouble();
         //double u = inAff->get(a+1).asList()->get(0).asDouble(); // from blobs
         //double v = inAff->get(a+1).asList()->get(1).asDouble();
         bName.addString("name");
-        string bNameValue = getLabel(u, v);
+        string bNameValue;
+        if (!getLabel(u, v, bNameValue))
+            yWarning() << __func__ << "got invalid label";
+
         bName.addString(bNameValue.c_str());
 
         // override empty labels - prevents error
@@ -734,6 +756,7 @@ bool WorldStateMgrThread::doPopulateDB()
             bDesc.addString("desc2d");
             Bottle &bDescValue = bDesc.addList();
             int areaIdx = 23;
+            // TODO: make sure a+1 corresponds to correct argument of inAff->get(.)
             bDescValue.addDouble(inAff->get(a+1).asList()->get(areaIdx).asDouble()); // area
             bDescValue.addDouble(inAff->get(a+1).asList()->get(areaIdx+1).asDouble()); // conv
             bDescValue.addDouble(inAff->get(a+1).asList()->get(areaIdx+2).asDouble()); // ecc
@@ -806,7 +829,7 @@ bool WorldStateMgrThread::doPopulateDB()
 
         opcCmd.addList() = opcCmdContent;
 
-        yDebug("%d, populating OPC with: %s", a, opcCmd.toString().c_str());
+        yDebug() << __func__ << "populating OPC with:" << opcCmd.toString().c_str();
         opcPort.write(opcCmd, opcReply);
 
         // process OPC response
@@ -815,30 +838,33 @@ bool WorldStateMgrThread::doPopulateDB()
             if (opcReply.get(0).asVocab()==Vocab::encode("ack"))
             {
                 yDebug() << __func__ << "received ack from WSOPC";
-                // TODO: store opc ID into std::map
+                // TODO: if newly added object, store it in opcMap
             }
             else
                 yDebug() << __func__ << "did not receive ack from WSOPC";
         }
+
+        yDebug("should go to next item now");
     }
+    // TODO: out of the cycle, update wsMap
 
     return true;
 }
 
 bool WorldStateMgrThread::mergeMaps(const idLabelMap &map1, const idLabelMap &map2, idLabelMap &result)
 {
-    // TODO: verify merging of first and second
     result = map1;
     result.insert(map2.begin(), map2.end());
+
     return true;
 }
 
-string WorldStateMgrThread::getLabel(const double &u, const double &v)
+bool WorldStateMgrThread::getLabel(const double &u, const double &v, string &label)
 {
     if (activityPort.getOutputCount() < 1)
     {
         yWarning() << __func__ << "not connected to ActivityIF";
-        return string();
+        return false;
     }
 
     Bottle activityCmd, activityReply;
@@ -857,17 +883,18 @@ string WorldStateMgrThread::getLabel(const double &u, const double &v)
     if (validResponse)
     {
         yDebug() << __func__ << "valid response";
-        return activityReply.get(0).asString();
+        label = activityReply.get(0).asString(); 
+        return true;
     }
     else
     {
         yWarning() << __func__ << "invalid response";
-        return string();
+        return false;
     }
 }
 
 bool WorldStateMgrThread::mono2stereo(const double &u, const double &v,
-                                      double x, double y, double z)
+                                      double &x, double &y, double &z)
 {
     if (activityPort.getOutputCount() < 1)
     {

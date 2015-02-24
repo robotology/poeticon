@@ -85,7 +85,6 @@ class WorldStateMgrThread : public RateThread
         // perception and playback modes
         bool playbackMode;
         int fsmState;
-        bool populated;
         bool toldUserConnectOPC;
         bool toldUserOPCConnected;
         
@@ -146,8 +145,8 @@ class WorldStateMgrThread : public RateThread
         bool refreshPerceptionAndValidate();
         bool doPopulateDB();
         bool mergeMaps(const idLabelMap &map1, const idLabelMap &map2, idLabelMap &result);
-        string getLabel(const double &u, const double &v);
-        bool mono2stereo(const double &u, const double &v, double x, double y, double z);
+        bool getLabel(const double &u, const double &v, string &label);
+        bool mono2stereo(const double &u, const double &v, double &x, double &y, double &z);
         // TODO: return Bottle instead of std::vector
         vector<double> getTooltipOffset(const string &objName);
         vector<string> isUnderOf(const string &objName);
