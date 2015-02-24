@@ -215,7 +215,7 @@ bool WorldStateMgrThread::initTracker()
         return false;
     }
 
-    // TODO: do this earlier, as soon as trackerPort is connected?
+    // TODO: do this earlier, as soon as trackerPort is connected
     int startID = 13; // TODO: set with ResourceFinder
     Bottle trackerCmd, trackerReply;
     trackerCmd.addString("countFrom");
@@ -231,8 +231,6 @@ bool WorldStateMgrThread::initTracker()
         yWarning() << __func__ << "invalid response from tracker";
         return false;
     }
-    //else yDebug() << __func__ << "successfully communicated countFrom index to tracker";
-    yDebug("told tracker to assign IDs starting from %d", startID);
 
     yInfo("initializing multi-object tracking of %d objects:", sizeAff);
     Bottle fixation;
@@ -406,7 +404,6 @@ void WorldStateMgrThread::fsmPerception()
             // read new data and ensure validity
             refreshPerceptionAndValidate();
 
-            dumpMap(wsMap);
             yDebug("merging wsMap = opcMap + trackMap");
             mergeMaps(opcMap, trackMap, wsMap);
             dumpMap(wsMap);
@@ -663,8 +660,7 @@ bool WorldStateMgrThread::refreshPerceptionAndValidate()
 
 bool WorldStateMgrThread::doPopulateDB()
 {
-
-    // TODO: cycle over OPC IDs & tracker IDs not yet in OPC
+    // TODO: cycle over opcMap IDs and trackMap IDs (i.e., over wsMap IDs)
     for(int a=0; a<sizeAff; a++)
     {
         yDebug("doPopulateDB, a=%d", a);

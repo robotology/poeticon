@@ -7,7 +7,7 @@
 
 <module>
     <name>activityInterface</name>
-    <node>enigma</node>
+    <node>pwrNode</node>
 </module>
 <module>
     <name>blobSpotter</name>
