@@ -1,4 +1,4 @@
-# Copyright: (C) 2015 VisLab - Institute for Systems and Robotics - Istituto Superior Técnico
+# Copyright: (C) 2015 VisLab - Institute for Systems and Robotics - Instituto Superior Técnico
 # Authors: Lorenzo Jamone, Afonso Gonçalves
 # CopyPolicy: Released under the terms of the GNU GPL v2.0.
 

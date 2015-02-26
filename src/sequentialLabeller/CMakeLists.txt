@@ -1,4 +1,4 @@
-# Copyright: (C) 2013 VisLab - Institute for Systems and Robotics - Istituto Superior Técnico
+# Copyright: (C) 2013 VisLab - Institute for Systems and Robotics - Instituto Superior Técnico
 # Authors: Afonso Gonçalves, Giovanni Saponaro
 # CopyPolicy: Released under the terms of the GNU GPL v2.0.
 
