@@ -1,5 +1,12 @@
 #!/usr/bin/python
 
+# Copyright: (C) 2012-2015 POETICON++, European Commission FP7 project ICT-288382
+# CopyPolicy: Released under the terms of the GNU GPL v2.0.
+# Copyright: (C) 2015 VisLab, Institute for Systems and Robotics,
+#                Istituto Superior Técnico, Universidade de Lisboa, Lisbon, Portugal
+# Author: Alexandre Antunes
+# CopyPolicy: Released under the terms of the GNU GPL v2.0
+
 # -*- coding: cp1252 -*-
 
 ##                                   Goal Imaginer.py                               ##
