@@ -767,7 +767,8 @@ bool WorldStateMgrThread::doPopulateDB()
             bDesc.addString("desc2d");
             Bottle &bDescValue = bDesc.addList();
             int areaIdx = 23;
-            // TODO: make sure a+1 corresponds to correct argument of inAff->get(.)
+            // TODO: in general inAff->get(tbi+1) does not correspond to inTargets->get(tbi)
+            //       make it more robust
             bDescValue.addDouble(inAff->get(tbi+1).asList()->get(areaIdx).asDouble()); // area
             bDescValue.addDouble(inAff->get(tbi+1).asList()->get(areaIdx+1).asDouble()); // conv
             bDescValue.addDouble(inAff->get(tbi+1).asList()->get(areaIdx+2).asDouble()); // ecc
@@ -786,7 +787,10 @@ bool WorldStateMgrThread::doPopulateDB()
             vector<string> labelsBelow = isUnderOf(bNameValue.c_str());
             for (int o=0; o<labelsBelow.size(); o++)
             {
-                bOnTopOfValue.addString(labelsBelow[o]);
+                int id;
+                id = label2id(labelsBelow[o]);
+                if (id != -1)
+                    bOnTopOfValue.addInt( id );
             }
 
             // prepare reachable_with property
@@ -795,7 +799,10 @@ bool WorldStateMgrThread::doPopulateDB()
             vector<string> labelsRW = isReachableWith(bNameValue.c_str());
             for (int o=0; o<labelsRW.size(); o++)
             {
-                bReachWValue.addString(labelsRW[o]);
+                int id;
+                id = label2id(labelsRW[o]);
+                if (id != -1)
+                    bReachWValue.addInt( id );
             }
 
             // prepare pullable_with property
@@ -804,7 +811,10 @@ bool WorldStateMgrThread::doPopulateDB()
             vector<string> labelsPW = isPullableWith(bNameValue.c_str());
             for (int o=0; o<labelsPW.size(); o++)
             {
-                bPullWValue.addString(labelsPW[o]);
+                int id;
+                id = label2id(labelsPW[o]);
+                if (id != -1)
+                    bPullWValue.addInt( id );
             }
         }
         else
@@ -817,50 +827,107 @@ bool WorldStateMgrThread::doPopulateDB()
             bIsFree.addInt(bIsFreeValue); // 1=true, 0=false
         }
 
-        // populate
+        // going to ask WSOPC whether entry already exists
+        // [get] ("id" <num>)
         Bottle opcCmd, opcCmdContent, opcReply;
-        opcCmd.addVocab(Vocab::encode("add"));
+        opcCmd.clear();
+        opcCmdContent.clear();
+        opcReply.clear();
+        opcCmd.addVocab(Vocab::encode("get"));
+        opcCmdContent.addString("id");
+        opcCmdContent.addInt(wsID);
+        opcCmd.addList() = opcCmdContent;
+        yDebug() << __func__ << "sending query:" << opcCmd.toString().c_str();
+        opcPort.write(opcCmd, opcReply);
+        yDebug() << __func__ << "obtained response:" << opcReply.toString().c_str();
 
-        opcCmdContent.addList() = bName;
-        opcCmdContent.addList() = bPos;
-        opcCmdContent.addList() = bIsHand;
-        if (!bIsHandValue)
+        if (opcReply.get(0).asVocab() == Vocab::encode("ack"))
         {
-            opcCmdContent.addList() = bOffset;
-            opcCmdContent.addList() = bDesc;        
-            opcCmdContent.addList() = bInHand;
-            opcCmdContent.addList() = bOnTopOf;
-            opcCmdContent.addList() = bReachW;
-            opcCmdContent.addList() = bPullW;
+            // yes -> just update entry's properties
+            // [set] (("id" <num>) ("prop0" <val0>) ...) 
+            yDebug("modifying existing entry %d in database", wsID);
+            opcCmd.clear();
+            opcCmdContent.clear();
+            opcReply.clear();
+            opcCmd.addVocab(Vocab::encode("set"));
+
+            Bottle bID;
+            bID.clear();
+            bID.addString("id");
+            bID.addInt(wsID);
+            opcCmdContent.addList() = bID;
+
+            opcCmdContent.addList() = bName;
+            opcCmdContent.addList() = bPos;
+            opcCmdContent.addList() = bIsHand;
+            if (!bIsHandValue)
+            {
+                opcCmdContent.addList() = bOffset;
+                opcCmdContent.addList() = bDesc;
+                opcCmdContent.addList() = bInHand;
+                opcCmdContent.addList() = bOnTopOf;
+                opcCmdContent.addList() = bReachW;
+                opcCmdContent.addList() = bPullW;
+            }
+            else
+            {
+                opcCmdContent.addList() = bIsFree;
+            }
+
+            opcCmd.addList() = opcCmdContent;
         }
         else
         {
-            opcCmdContent.addList() = bIsFree;        
+            // no -> add entry
+            // [add] (("prop0" <val0>) ("prop1" <val1>) ...)
+            yDebug("adding new entry %d to database", wsID);
+            opcCmd.clear();
+            opcCmdContent.clear();
+            opcReply.clear();
+            opcCmd.addVocab(Vocab::encode("add"));
+
+            opcCmdContent.addList() = bName;
+            opcCmdContent.addList() = bPos;
+            opcCmdContent.addList() = bIsHand;
+            if (!bIsHandValue)
+            {
+                opcCmdContent.addList() = bOffset;
+                opcCmdContent.addList() = bDesc;
+                opcCmdContent.addList() = bInHand;
+                opcCmdContent.addList() = bOnTopOf;
+                opcCmdContent.addList() = bReachW;
+                opcCmdContent.addList() = bPullW;
+            }
+            else
+            {
+                opcCmdContent.addList() = bIsFree;
+            }
+
+            opcCmd.addList() = opcCmdContent;
         }
 
-        opcCmd.addList() = opcCmdContent;
-
-        yDebug() << __func__ << "populating OPC with:" << opcCmd.toString().c_str();
+        yDebug() << __func__ << "sending command to WSOPC:" << opcCmd.toString().c_str();
         opcPort.write(opcCmd, opcReply);
+        yDebug() << __func__ << "received response:" << opcReply.toString().c_str();
 
-        // process OPC response
+        // process WSOPC response
         if (opcReply.size() > 1)
         {
             if (opcReply.get(0).asVocab()==Vocab::encode("ack"))
             {
                 yDebug() << __func__ << "received ack from WSOPC";
-                // TODO: if newly added object, store it in opcMap
+                // TODO: check that newly added object are stored in opcMap
             }
             else
                 yDebug() << __func__ << "did not receive ack from WSOPC";
         }
     }
     yDebug() << __func__ << "out of cycle";
+
     yInfo("updating world state map");
+    // TODO: check that invisible objects are not discarded
     mergeMaps(opcMap, trackMap, wsMap);
     dumpMap(wsMap);
-
-    // TODO: update WSOPC
 
     return true;
 }
@@ -910,6 +977,28 @@ bool WorldStateMgrThread::getTrackerBottleIndexFromID(const int &id, int &tbi)
     }
 
     return false;
+}
+
+int WorldStateMgrThread::label2id(const string &label)
+{
+    //yDebug() << __func__ << "looking for label" << label.c_str();
+    int key = -1;
+
+    idLabelMap::const_iterator iter;
+    for (iter = wsMap.begin(); iter != wsMap.end(); ++iter)
+    {
+        if (iter->second == label)
+        {
+            key = iter->first;
+            //yDebug() << __func__ << "label" << label.c_str() << "corresponds to" << key;
+            break;
+        }
+    }
+
+    if (key == -1)
+        yWarning() << __func__ << "did not find id corresponding to label" << label.c_str();
+
+    return key;
 }
 
 bool WorldStateMgrThread::getLabel(const double &u, const double &v, string &label)
@@ -1299,7 +1388,7 @@ void WorldStateMgrThread::fsmPlayback()
                 // parse each entry/line of current group "[state##]"
                 for (int j=1; j<bCurr.size(); j++)
                 {
-                    // going to ask OPC whether entry already exists
+                    // going to ask WSOPC whether entry already exists
                     opcCmd.clear();
                     content.clear();
                     opcCmd.addVocab(Vocab::encode("get"));
@@ -1309,7 +1398,7 @@ void WorldStateMgrThread::fsmPlayback()
                     opcPort.write(opcCmd, opcReply);
                     yDebug() << __func__ <<  "received response:" << opcReply.toString().c_str();
 
-                    // stop here if no OPC connection
+                    // stop here if no WSOPC connection
                     if (opcPort.getOutputCount() < 1)
                     {
                         yWarning() << __func__ << "not connected to WSOPC";
