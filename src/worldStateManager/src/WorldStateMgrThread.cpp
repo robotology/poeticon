@@ -35,9 +35,6 @@ bool WorldStateMgrThread::openPorts()
     inAffPortName = "/" + moduleName + "/affDescriptor:i";
     inAffPort.open(inAffPortName.c_str());
 
-    outFixationPortName = "/" + moduleName + "/fixation:o";
-    outFixationPort.open(outFixationPortName.c_str());
-
     activityPortName = "/" + moduleName + "/activity:rpc";
     activityPort.open(activityPortName.c_str());
 
@@ -58,7 +55,6 @@ void WorldStateMgrThread::close()
     // perception mode only
     inTargetsPort.close();
     inAffPort.close();
-    outFixationPort.close();
     activityPort.close();
     trackerPort.close();
 }
@@ -75,7 +71,6 @@ void WorldStateMgrThread::interrupt()
     // perception mode only
     inTargetsPort.interrupt();
     inAffPort.interrupt();
-    outFixationPort.interrupt();
     activityPort.interrupt();
     trackerPort.interrupt();
 }
@@ -204,12 +199,6 @@ bool WorldStateMgrThread::initPerceptionVars()
 
 bool WorldStateMgrThread::initTracker()
 {
-    if (outFixationPort.getOutputCount() < 1)
-    {
-        yWarning() << __func__ << ("exiting, %s not connected to /activeParticleTrack/fixation:i", outFixationPortName.c_str());
-        return false;
-    }
-
     if (trackerPort.getOutputCount() < 1)
     {
         yWarning() << __func__ << ("exiting, %s not connected to /activeParticleTrack/rpc:i", trackerPortName.c_str());
@@ -219,6 +208,8 @@ bool WorldStateMgrThread::initTracker()
     // TODO: do this earlier, as soon as trackerPort is connected
     int startID = 13; // TODO: set with ResourceFinder
     Bottle trackerCmd, trackerReply;
+    trackerCmd.clear();
+    trackerReply.clear();
     trackerCmd.addString("countFrom");
     trackerCmd.addInt(startID);
     //yDebug() << __func__ <<  "sending query to tracker:" << trackerCmd.toString().c_str();
@@ -234,7 +225,6 @@ bool WorldStateMgrThread::initTracker()
     }
 
     yInfo("initializing tracking of %d objects:", sizeAff);
-    Bottle fixation;
     double u=0.0, v=0.0;
 
     for(int a=0; a<sizeAff; a++)
@@ -242,12 +232,22 @@ bool WorldStateMgrThread::initTracker()
         u = inAff->get(a+1).asList()->get(0).asDouble();
         v = inAff->get(a+1).asList()->get(1).asDouble();
 
-        fixation.clear();
-        fixation.addDouble(u);
-        fixation.addDouble(v);
-        outFixationPort.write(fixation);
+        trackerCmd.clear();
+        trackerReply.clear();
 
-        yInfo("id %d: %f %f", startID+a, u, v);
+        trackerCmd.clear();
+        trackerCmd.addString("track");
+        trackerCmd.addDouble(u);
+        trackerCmd.addDouble(v);
+        //yDebug() << __func__ <<  "sending fixation request to tracker:" << trackerCmd.toString().c_str();
+        trackerPort.write(trackerCmd,trackerReply);
+        //yDebug() << __func__ <<  "obtained response:" << trackerReply.toString().c_str();
+
+        if (trackerReply.size()>0 && trackerReply.get(0).isInt() && trackerReply.get(0).asInt()!=-1)
+            yInfo("id %d: %f %f", trackerReply.get(0).asInt(), u, v);
+        else
+            yWarning("problem initializing tracker with fixation %f %f, got invalid response %s, was expecting %d",
+                u, v, trackerReply.toString().c_str(), startID+a);
     }
     yInfo("done initializing tracker");
 

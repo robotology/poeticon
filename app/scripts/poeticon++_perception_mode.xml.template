@@ -129,10 +129,6 @@
     <to>/activityInterface/rpc:i</to>
 </connection>
 <connection>
-    <from>/wsm/fixation:o</from>
-    <to>/activeParticleTrack/fixation:i</to>
-</connection>
-<connection>
     <from>/wsm/tracker:rpc</from>
     <to>/activeParticleTrack/rpc:i</to>
 </connection>

@@ -69,14 +69,12 @@ class WorldStateMgrThread : public RateThread
         string opcPortName;
         string inTargetsPortName;
         string inAffPortName;
-        string outFixationPortName;
         string activityPortName;
         string trackerPortName;
 
         RpcClient opcPort;
         BufferedPort<Bottle> inTargetsPort;
         BufferedPort<Bottle> inAffPort;
-        Port outFixationPort;
         RpcClient activityPort;
         RpcClient trackerPort;
 
