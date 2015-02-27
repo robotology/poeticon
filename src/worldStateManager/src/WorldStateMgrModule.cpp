@@ -30,13 +30,19 @@ bool WorldStateMgrModule::configure(ResourceFinder &rf)
             yInfo() << "playback file loaded successfully:" << playbackFile;
     }
 
+    // initial thread/track index for activeParticleTrack
+    countFrom = rf.check("countFrom", Value(13)).asInt();
+
     handlerPortName = "/" + moduleName + "/rpc:i";
     handlerPort.open(handlerPortName.c_str());
     attach(handlerPort);
     closing = false;
 
     // create new thread and pass pointers to the module parameters
-    thread = new WorldStateMgrThread(moduleName, threadPeriod, playbackMode);
+    thread = new WorldStateMgrThread(moduleName,
+                                     threadPeriod,
+                                     playbackMode,
+                                     countFrom);
 
     // additional settings for playback mode
     if (playbackMode) thread->setPlaybackFile(playbackFile);

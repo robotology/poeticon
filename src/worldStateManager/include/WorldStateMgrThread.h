@@ -85,7 +85,8 @@ class WorldStateMgrThread : public RateThread
         int fsmState;
         bool toldUserConnectOPC;
         bool toldUserOPCConnected;
-        
+        int countFrom; // perception only, but always initialized
+
         // perception mode
         bool needUpdate;
         bool trackerInit;
@@ -115,7 +116,8 @@ class WorldStateMgrThread : public RateThread
     public:
         WorldStateMgrThread(const string &_moduleName,
                             const double _period,
-                            bool _playbackMode=false);
+                            bool _playbackMode,
+                            const int _countFrom);
         bool openPorts();
         void close();
         void interrupt();

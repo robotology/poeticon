@@ -37,6 +37,7 @@ int main(int argc, char *argv[])
     {
         yInfo("Available options:");
         yInfo("--name prefix (default wsm)");
+        yInfo("--countFrom startIndexForTracker (default 13)");
         yInfo("--playback <file> (to read data from a file)");
         return 0; // EXIT_SUCCESS
     }

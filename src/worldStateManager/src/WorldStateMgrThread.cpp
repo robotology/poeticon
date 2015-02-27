@@ -12,10 +12,12 @@
 WorldStateMgrThread::WorldStateMgrThread(
     const string &_moduleName,
     const double _period,
-    bool _playbackMode)
+    bool _playbackMode,
+    const int _countFrom)
     : moduleName(_moduleName),
       RateThread(int(_period*1000.0)),
-      playbackMode(_playbackMode)
+      playbackMode(_playbackMode),
+      countFrom(_countFrom)
 {
     //yDebug("constructed thread");
 }
@@ -205,26 +207,9 @@ bool WorldStateMgrThread::initTracker()
         return false;
     }
 
-    // TODO: do this earlier, as soon as trackerPort is connected
-    int startID = 13; // TODO: set with ResourceFinder
-    Bottle trackerCmd, trackerReply;
-    trackerCmd.clear();
-    trackerReply.clear();
-    trackerCmd.addString("countFrom");
-    trackerCmd.addInt(startID);
-    //yDebug() << __func__ <<  "sending query to tracker:" << trackerCmd.toString().c_str();
-    trackerPort.write(trackerCmd, trackerReply);
-    //yDebug() << __func__ <<  "obtained response:" << trackerReply.toString().c_str();
-    bool validResponse = false;
-    validResponse = ( (trackerReply.size()>0) &&
-                      (trackerReply.get(0).asVocab()==Vocab::encode("ok")) );
-    if (!validResponse)
-    {
-        yWarning() << __func__ << "invalid response from tracker";
-        return false;
-    }
-
     yInfo("initializing tracking of %d objects:", sizeAff);
+    Bottle trackerCmd;
+    Bottle trackerReply;
     double u=0.0, v=0.0;
 
     for(int a=0; a<sizeAff; a++)
@@ -240,14 +225,16 @@ bool WorldStateMgrThread::initTracker()
         trackerCmd.addDouble(u);
         trackerCmd.addDouble(v);
         //yDebug() << __func__ <<  "sending fixation request to tracker:" << trackerCmd.toString().c_str();
+        double start = Time::now();
         trackerPort.write(trackerCmd,trackerReply);
+        //yDebug("time elapsed: %f seconds", (Time::now() - start) );
         //yDebug() << __func__ <<  "obtained response:" << trackerReply.toString().c_str();
 
         if (trackerReply.size()>0 && trackerReply.get(0).isInt() && trackerReply.get(0).asInt()!=-1)
             yInfo("id %d: %f %f", trackerReply.get(0).asInt(), u, v);
         else
             yWarning("problem initializing tracker with fixation %f %f, got invalid response %s, was expecting %d",
-                u, v, trackerReply.toString().c_str(), startID+a);
+                u, v, trackerReply.toString().c_str(), countFrom+a);
     }
     yInfo("done initializing tracker");
 
@@ -263,7 +250,7 @@ void WorldStateMgrThread::fsmPerception()
         {
             if (!toldUserConnectOPC && opcPort.getInputCount()<1)
             {
-                yDebug("waiting for %s to be connected to /wsopc/rpc", opcPortName.c_str());
+                yInfo("waiting for %s to be connected to /wsopc/rpc", opcPortName.c_str());
                 toldUserConnectOPC = true;
             }
 
@@ -290,14 +277,14 @@ void WorldStateMgrThread::fsmPerception()
 
             if (!toldUserWaitBlobs && inAffPort.getInputCount()<1)
             {
-                yDebug("waiting for %s to be connected to /blobDescriptor/affDescriptor:o",
+                yInfo("waiting for %s to be connected to /blobDescriptor/affDescriptor:o",
                       inAffPortName.c_str());
                 toldUserWaitBlobs = true;
             }
 
             if (!toldUserBlobsConnected && inAffPort.getInputCount()>=1)
             {
-                yInfo("connected to BlobDescriptor, waiting for data");
+                yInfo("connected to BlobDescriptor, waiting for data (requires segmentation)");
                 toldUserBlobsConnected = true;
             }
 
@@ -325,15 +312,28 @@ void WorldStateMgrThread::fsmPerception()
         {
             if (!toldUserWaitTracker && inTargetsPort.getOutputCount()<1)
             {
-                yDebug("waiting for %s to be connected to /activeParticleTrack/target:o",
+                yInfo("waiting for %s to be connected to /activeParticleTrack/target:o",
                       inTargetsPortName.c_str());
                 toldUserWaitTracker = true;
             }
 
             if (!toldUserTrackerConnected && inTargetsPort.getInputCount()>=1)
             {
-                yInfo("connected to tracker");
+                yInfo("connected to tracker, sending it instruction: countFrom %d", countFrom);
                 toldUserTrackerConnected = true;
+                Bottle trackerCmd, trackerReply;
+                trackerCmd.clear();
+                trackerReply.clear();
+                trackerCmd.addString("countFrom");
+                trackerCmd.addInt(countFrom);
+                //yDebug() << __func__ <<  "sending query to tracker:" << trackerCmd.toString().c_str();
+                trackerPort.write(trackerCmd, trackerReply);
+                //yDebug() << __func__ <<  "obtained response:" << trackerReply.toString().c_str();
+                bool validResponse = false;
+                validResponse = ( (trackerReply.size()>0) &&
+                                  (trackerReply.get(0).asVocab()==Vocab::encode("ok")) );
+                if (!validResponse)
+                    yWarning() << __func__ << "obtained invalid response from tracker:" << trackerReply.toString().c_str();
             }
 
             // proceed
@@ -362,8 +362,6 @@ void WorldStateMgrThread::fsmPerception()
 
         case STATE_PERCEPTION_READ_TRACKER:
         {
-            yDebug("----");
-
             // wait for tracker data to arrive
             refreshTracker(); // internally checks for !=NULL
 
@@ -378,7 +376,7 @@ void WorldStateMgrThread::fsmPerception()
         {
             if (!toldUserWaitActivityIF && activityPort.getOutputCount()<1)
             {
-                yDebug("waiting for %s to be connected to /activityInterface/rpc:i",
+                yInfo("waiting for %s to be connected to /activityInterface/rpc:i",
                       activityPortName.c_str());
                 toldUserWaitActivityIF = true;
             }
@@ -396,6 +394,8 @@ void WorldStateMgrThread::fsmPerception()
                 fsmState = STATE_PERCEPTION_WAIT_OPC;
             }
 
+            // TODO: make sure "connected to ActivityInterface" is printed
+
             // proceed
             fsmState = STATE_PERCEPTION_POPULATE_DB;
 
@@ -404,8 +404,6 @@ void WorldStateMgrThread::fsmPerception()
 
         case STATE_PERCEPTION_POPULATE_DB:
         {
-            yDebug("----");
-
             // read new data and ensure validity
             refreshPerceptionAndValidate();
 
@@ -1338,7 +1336,7 @@ void WorldStateMgrThread::fsmPlayback()
         {
             if (!toldUserConnectOPC && opcPort.getOutputCount()<1)
             {
-                yDebug("waiting for /%s/opc:io to be connected to /wsopc/rpc", moduleName.c_str());
+                yInfo("waiting for /%s/opc:io to be connected to /wsopc/rpc", moduleName.c_str());
                 toldUserConnectOPC = true;
             }
 
