@@ -102,11 +102,11 @@ bool TRACKERModule::display(const string &value)
 }
 
 /**********************************************************/
-int TRACKERModule::track(const int32_t fix_x, const int32_t fix_y)
+int TRACKERModule::track(const double fix_x, const double fix_y)
 {
     Bottle b;
-    b.addInt(fix_x);
-    b.addInt(fix_y);
+    b.addDouble(fix_x);
+    b.addDouble(fix_y);
     int rep = trackerManager->processFixationPoint(b);
     return rep;
 }

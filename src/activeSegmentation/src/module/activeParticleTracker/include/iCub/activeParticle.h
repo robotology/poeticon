@@ -141,7 +141,7 @@ public:
 
     bool attach(yarp::os::RpcServer &source);
     bool display(const std::string &value);
-    int  track(const int32_t fix_x, const int32_t fix_y);
+    int  track(const double fix_x, const double fix_y);
     bool untrack(const int32_t id);
     bool countFrom(const int32_t index);
     bool reset();

@@ -26,7 +26,7 @@ service activeParticleTrack_IDLServer
   * required fixation point for segmentation
   * @return i32 of thread index
   */
-  i32 track(1:i32 fix_x, 2:i32 fix_y);
+  i32 track(1:double fix_x, 2:double fix_y);
   
   /**
   * Stops a specific stacking thread. This will 
