@@ -138,15 +138,16 @@ bool WorldStateMgrThread::dumpWorldState()
 
     if (!playbackMode)
     {
+        mergeMaps(opcMap, trackMap, wsMap);
         if (trackerInit)
+        {
             refreshTracker();
 
-        //yDebug() << "trackIDs =" << trackIDs;
+            yDebug("opcMap, trackMap:");
+            dumpMap(opcMap);
+            dumpMap(trackMap);
+        }
     }
-
-    yDebug("opcMap, trackMap:");
-    dumpMap(opcMap);
-    dumpMap(trackMap);
 
     yInfo("world state map:");
     dumpMap(wsMap);
@@ -161,7 +162,13 @@ bool WorldStateMgrThread::updateWorldState()
         // perception mode
         if (activityPort.getOutputCount() < 1)
         {
-            yWarning() << __func__ << "not connected to ActivityIF";
+            yWarning("cannot update state, not connected to ActivityIF!");
+            return false;
+        }
+        if (!trackerInit)
+        {
+            yWarning("cannot update state, tracker not initialized!");
+            return false;
         }
         needUpdate = true;
         refreshPerceptionAndValidate(); // TODO: redundant?
@@ -256,13 +263,13 @@ void WorldStateMgrThread::fsmPerception()
 
             if (!toldUserOPCConnected && opcPort.getInputCount()>=1)
             {
-                dumpWorldState();
                 yInfo("connected to WSOPC, you can now send RPC commands to /%s/rpc:i", moduleName.c_str());
                 toldUserOPCConnected = true;
             }
 
             if (opcPort.getOutputCount()>=1)
             {
+                dumpWorldState();
                 // proceed
                 fsmState = STATE_PERCEPTION_WAIT_BLOBS;
             }
@@ -284,7 +291,7 @@ void WorldStateMgrThread::fsmPerception()
 
             if (!toldUserBlobsConnected && inAffPort.getInputCount()>=1)
             {
-                yInfo("connected to BlobDescriptor, waiting for data (requires segmentation)");
+                yInfo("connected to BlobDescriptor, waiting for shape data - requires segmentation");
                 toldUserBlobsConnected = true;
             }
 
@@ -550,7 +557,7 @@ void WorldStateMgrThread::refreshTrackNames()
 {
     if (activityPort.getOutputCount() < 1)
     {
-        //yWarning() << __func__ << "not connected to ActivityIF";
+        yWarning() << __func__ << "not connected to ActivityIF";
         return;
     }
 
@@ -688,7 +695,7 @@ bool WorldStateMgrThread::doPopulateDB()
         if (! getTrackerBottleIndexFromID(wsID, tbi) )
         {
             // TODO: handle novel (untracked) objects
-            yWarning() << __func__ << "did not find track id" << wsID
+            yDebug() << __func__ << "did not find track id" << wsID
                      << "in tracker Bottle, is it a robot hand? an untracked object?"
                      << "ignoring and continuing to next id";
             continue;
