@@ -162,12 +162,12 @@ bool WorldStateMgrThread::updateWorldState()
         // perception mode
         if (activityPort.getOutputCount() < 1)
         {
-            yWarning("cannot update state, not connected to ActivityIF!");
+            yWarning("cannot update world state, not connected to ActivityIF!");
             return false;
         }
         if (!trackerInit)
         {
-            yWarning("cannot update state, tracker not initialized!");
+            yWarning("cannot update world state, tracker not initialized!");
             return false;
         }
         needUpdate = true;
@@ -691,16 +691,26 @@ bool WorldStateMgrThread::doPopulateDB()
         int wsID = iter->first;
         yDebug("going to update world state id %d", wsID);
 
+        bool bIsHandValue = false; // by default it is an object
         int tbi = 0; // tracker Bottle index
         if (! getTrackerBottleIndexFromID(wsID, tbi) )
         {
-            // TODO: handle novel (untracked) objects
-            yDebug() << __func__ << "did not find track id" << wsID
-                     << "in tracker Bottle, is it a robot hand? an untracked object?"
-                     << "ignoring and continuing to next id";
-            continue;
+            if (opcMap.count(wsID) && !trackMap.count(wsID))
+            {
+                yDebug("probably a robot hand because it is present in WSOPC but not in tracker");
+                bIsHandValue = true; // robot hand
+            }
+            else
+            {
+                yDebug() << __func__ << "did not find track id" << wsID
+                         << "in tracker Bottle, why is it not tracked? did it disappear?"
+                         << "ignoring and continuing to next id";
+                continue; // next for cycle iteration
+            }
         };
-        yDebug("corresponds to tracker Bottle index %d", tbi);
+
+        if (tbi > 0)
+            yDebug("corresponds to tracker Bottle index %d", tbi);
 
         // common properties
         Bottle bName;
@@ -719,15 +729,23 @@ bool WorldStateMgrThread::doPopulateDB()
         Bottle bIsFree;
 
         // prepare name property
-        double u = inTargets->get(tbi).asList()->get(1).asDouble();
-        double v = inTargets->get(tbi).asList()->get(2).asDouble();
-        bName.addString("name");
         string bNameValue;
-        if (!getLabel(u, v, bNameValue))
-            yWarning() << __func__ << "got invalid label";
-
+        double u=0.0, v=0.0;
+        if (!bIsHandValue)
+        {
+            // object -> ask ActivityIF
+            u = inTargets->get(tbi).asList()->get(1).asDouble();
+            v = inTargets->get(tbi).asList()->get(2).asDouble();
+            bName.addString("name");
+            if (!getLabel(u, v, bNameValue))
+                yWarning() << __func__ << "got invalid label";
+        }
+        else
+        {
+             // robot hand -> ask WSOPC
+             bNameValue = opcMap[wsID];
+        }
         bName.addString(bNameValue.c_str());
-
         // override empty labels - prevents error
         // yarp: BottleImpl reader failed, unrecognized object code 25
         if (bNameValue=="")
@@ -740,14 +758,22 @@ bool WorldStateMgrThread::doPopulateDB()
         bPos.addString("pos");
         Bottle &bPosValue = bPos.addList();
         double x=0.0, y=0.0, z=0.0;
-        mono2stereo(u, v, x, y, z);
-        bPosValue.addDouble(x);
-        bPosValue.addDouble(y);
-        bPosValue.addDouble(z);
+        if (!bIsHandValue)
+        {
+            // object -> ask ActivityIF
+            mono2stereo(u, v, x, y, z);
+            bPosValue.addDouble(x);
+            bPosValue.addDouble(y);
+            bPosValue.addDouble(z);
+        }
+        else
+        {
+            // robot hand -> TODO
+            yWarning("cannot update 3D position of robot hand (to be implemented)");
+        }
 
         // prepare is_hand property
         bIsHand.addString("is_hand");
-        bool bIsHandValue = false; // except for special entries in dbhands.ini
         bIsHand.addInt(bIsHandValue); // 1=true, 0=false
 
         if (!bIsHandValue)
@@ -927,7 +953,7 @@ bool WorldStateMgrThread::doPopulateDB()
                 yDebug() << __func__ << "did not receive ack from WSOPC";
         }
     }
-    yDebug() << __func__ << "out of cycle";
+    //yDebug() << __func__ << "out of cycle";
 
     yInfo("updating world state map");
     // TODO: check that invisible objects are not discarded
