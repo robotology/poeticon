@@ -142,9 +142,9 @@ CvMat *savgolFilter(CvMat &z, double ra, double rb, double theta)
 	CvMat *filtered = cvCreateMat(z.rows,z.cols,CV_32FC1);
 	cvGetSubRect(filteredtemp,filtered,cvRect((filt->cols-1)/2,(filt->rows-1)/2,z.cols,z.rows));
 
-    //cvReleaseMat(&result);
-    //cvReleaseMat(&filt);
-    //cvReleaseMat(&ztemp);
+    cvReleaseMat(&result);
+    cvReleaseMat(&filt);
+    cvReleaseMat(&ztemp);
     //cvReleaseMat(&filteredtemp);
 
 	return filtered;
@@ -377,11 +377,11 @@ CvMat *tgso (CvMat &tmap, int ntex, double sigma, double theta, CvMat &tsim, int
 	}
 
 	//Smooth the gradient now!!
-	//CvMat *tgNew;
-    //tgNew=fitparab(*tg,sigma,sigma/4,theta);
-    tg=fitparab(*tg,sigma,sigma/4,theta);
+	CvMat *tgNew;
+    tgNew=fitparab(*tg,sigma,sigma/4,theta);
+    //tg=fitparab(*tg,sigma,sigma/4,theta);
 
-    //cvReleaseMat(&tg);
+    cvReleaseMat(&tg);
 
 	//cvMaxS(tgNew,0,tgNew);
 
@@ -402,11 +402,11 @@ CvMat *tgso (CvMat &tmap, int ntex, double sigma, double theta, CvMat &tsim, int
     //if (reshape!=NULL)
     //cvReleaseMat(&reshape);
 
-    //cvReleaseMat(&tgL);
-    //cvReleaseMat(&tgR);
+    cvReleaseMat(&tgL);
+    cvReleaseMat(&tgR);
 
-	//return tgNew;
-    return tg;
+	return tgNew;
+    //return tg;
 }
 //------------------------------------------------------------------------------
 // Multithreaded implementation 
@@ -482,14 +482,14 @@ CvMat **tgmo (CvMat &tmap, int ntex, double sigma, double *&theta, int norient, 
 			exit(1);
         }
         cvCopy(tmpArg[i]->tg,tg[i]);
-        //cvReleaseMat(&tmpArg[i]->tg);
-        //delete tmpArg[i]->tg;
-        //free (tmpArg[i]);
+        cvReleaseMat(&tmpArg[i]->tg);
+        delete tmpArg[i]->tg;
+        free (tmpArg[i]);
 	}
 
-    //free (pth);
+    free (pth);
 
-    //free (tmpArg);
+    free (tmpArg);
 
 	return tg;
 }
@@ -601,7 +601,7 @@ CvMat **cgmo (IplImage* im, int norient, double* theta)
 			cg[i*norient+o]=cvCreateMat(Lab[0]->rows,Lab[0]->cols,CV_32FC1);
 			cvCopy(temp[o],cg[i*norient+o]);
 			cvReleaseMat(&temp[o]);
-            //delete temp[o];
+            delete temp[o];
 		}
 
 		cvReleaseMat (&cmap);
@@ -612,7 +612,7 @@ CvMat **cgmo (IplImage* im, int norient, double* theta)
 	cvReleaseMat(&Lab[0]);
 	cvReleaseMat(&Lab[1]);
 	cvReleaseMat(&Lab[2]);
-    //delete Lab;
+    delete Lab;
 
 	return cg;
 }

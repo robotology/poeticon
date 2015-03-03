@@ -134,8 +134,8 @@ void assignTextons(CvMat* tmap, CvMat* grayImg, Property &fileLoc){
 	cvReleaseMat(&filterBank13x13);
 	cvReleaseMat(&filterBank19x19);
 
-    //cvReleaseMatHeader(&tmp_pad13x13);
-    //cvReleaseMatHeader(&tmp_pad19x19);
+    cvReleaseMatHeader(&tmp_pad13x13);
+    cvReleaseMatHeader(&tmp_pad19x19);
 
 	// Read the textons
     string textonsFile=fileLoc.find("textons").asString();
@@ -187,7 +187,7 @@ void assignTextons(CvMat* tmap, CvMat* grayImg, Property &fileLoc){
 	cvReleaseMat(&totSum);
 	cvReleaseMat(&tmp);
 	cvReleaseMat(&textons);
-    //cvReleaseMatHeader(&colFrmTextonMat);
+    cvReleaseMatHeader(&colFrmTextonMat);
 }
 
 //-------------------------------------------------------
@@ -216,8 +216,8 @@ CvMat** detTG(IplImage* im, int norient, double* gtheta, Property &fileLoc){
 	CvMat**  tg   = tgmo(*tmap, ntex, sigma, gtheta, norient, *tsim, 1); 
 
 
-	//cvReleaseMatHeader(&tsim);
+	cvReleaseMatHeader(&tsim);
     cvReleaseMat(&tmap);
-    //cvReleaseMatHeader(&imgGrayMat);
+    cvReleaseMatHeader(&imgGrayMat);
 	return tg;
 }
