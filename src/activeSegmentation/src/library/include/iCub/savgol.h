@@ -26,12 +26,6 @@
  * Public License for more details
  */
 
-/**
- *  Created by Leonardo Claudino on 8/3/09.
- *  Modified by Ajay Mishra on Oct 10, 2009
- *  Copyright 2009 University of Maryland at College Park. All rights reserved.
- */
-
 #ifndef _SAVGOL_H
 #define _SAVGOL_H
 

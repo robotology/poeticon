@@ -205,7 +205,6 @@ bool activityInterface_IDLServer_get3D::read(yarp::os::ConnectionReader& connect
 }
 
 void activityInterface_IDLServer_get3D::init(const std::string& objName) {
-  _return;
   this->objName = objName;
 }
 
@@ -278,7 +277,6 @@ bool activityInterface_IDLServer_underOf::read(yarp::os::ConnectionReader& conne
 }
 
 void activityInterface_IDLServer_underOf::init(const std::string& objName) {
-  _return;
   this->objName = objName;
 }
 

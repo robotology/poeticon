@@ -146,9 +146,9 @@ void pbCGTG(IplImage *im, IplImage* grad, IplImage* ori, yarp::os::Property &fil
 	for(int i=0; i<norient; i++)
 		cvReleaseMat(&orientedPb[i]);
 
-    delete cg;
-    delete tg;
-    delete orientedPb;
+    //delete cg;
+    //delete tg;
+    //delete orientedPb;
 	cvReleaseMat(&pb);
 	cvReleaseMat(&pbi);
     cvReleaseMat(&theta);

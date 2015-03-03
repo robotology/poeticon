@@ -863,8 +863,8 @@ int segLayer::deallocateMemForContours()
     if (storage != NULL)
   	cvReleaseMemStorage(&storage);
 
-    cvReleaseImage(&edgeGrad);
-    cvReleaseImage(&edgeOri);
+    //cvReleaseImage(&edgeGrad);
+    //cvReleaseImage(&edgeOri);
     return 1;
 }
 //5)
