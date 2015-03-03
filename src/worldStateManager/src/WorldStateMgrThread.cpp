@@ -138,6 +138,7 @@ bool WorldStateMgrThread::dumpWorldState()
 
     if (!playbackMode)
     {
+        // perception mode
         mergeMaps(opcMap, trackMap, wsMap);
         if (trackerInit)
         {
@@ -147,6 +148,11 @@ bool WorldStateMgrThread::dumpWorldState()
             dumpMap(opcMap);
             dumpMap(trackMap);
         }
+    }
+    else
+    {
+        // playback mode
+        mergeMaps(opcMap, wsMap, wsMap);
     }
 
     yInfo("world state map:");
@@ -714,10 +720,10 @@ bool WorldStateMgrThread::doPopulateDB()
 
         // common properties
         Bottle bName;
-        Bottle bPos;
         Bottle bIsHand;
 
         // object properties
+        Bottle bPos;
         Bottle bOffset;
         Bottle bDesc;
         Bottle bInHand;
@@ -754,24 +760,6 @@ bool WorldStateMgrThread::doPopulateDB()
             bNameValue = "default";
         }
 
-        // prepare position property
-        bPos.addString("pos");
-        Bottle &bPosValue = bPos.addList();
-        double x=0.0, y=0.0, z=0.0;
-        if (!bIsHandValue)
-        {
-            // object -> ask ActivityIF
-            mono2stereo(u, v, x, y, z);
-            bPosValue.addDouble(x);
-            bPosValue.addDouble(y);
-            bPosValue.addDouble(z);
-        }
-        else
-        {
-            // robot hand -> TODO
-            yWarning("cannot update 3D position of robot hand (to be implemented)");
-        }
-
         // prepare is_hand property
         bIsHand.addString("is_hand");
         bIsHand.addInt(bIsHandValue); // 1=true, 0=false
@@ -779,6 +767,15 @@ bool WorldStateMgrThread::doPopulateDB()
         if (!bIsHandValue)
         {
             // object properties
+
+            // prepare position property
+            bPos.addString("pos");
+            Bottle &bPosValue = bPos.addList();
+            double x=0.0, y=0.0, z=0.0;
+            mono2stereo(u, v, x, y, z);
+            bPosValue.addDouble(x);
+            bPosValue.addDouble(y);
+            bPosValue.addDouble(z);
 
             // prepare offset property (end-effector transform when grasping tools)
             bOffset.addString("offset");
@@ -1255,8 +1252,7 @@ bool WorldStateMgrThread::isHandFree(const string &handName)
         return false;
     }
 
-    // TODO: use consistent names everywhere (incl. RPC): left or left_hand or lefthand
-    if ((handName != "left_hand") && (handName != "right_hand"))
+    if ((handName != "left") && (handName != "right"))
     {
         yWarning() << __func__ << "argument handName must be left or right";
     }
@@ -1288,8 +1284,7 @@ string WorldStateMgrThread::inWhichHand(const string &objName)
         yWarning() << __func__ << "not connected to ActivityIF";
     }
 
-    // TODO: use consistent names everywhere (incl. RPC): left or left_hand or lefthand
-    if ((objName == "left_hand") || (objName == "right_hand"))
+    if ((objName == "left") || (objName == "right"))
     {
         yWarning() << __func__ << "argument objName must be an object name, not a hand name";
     }
@@ -1306,7 +1301,6 @@ string WorldStateMgrThread::inWhichHand(const string &objName)
                       activityReply.get(0).isString() &&
                       activityReply.get(0).asString().size()>0 );
 
-    // TODO: use consistent names everywhere (incl. RPC): left or left_hand or lefthand
     if (validResponse)
     {
         if ( activityReply.get(0).asString()=="left" ||
