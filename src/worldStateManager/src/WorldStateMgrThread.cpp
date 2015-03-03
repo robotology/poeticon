@@ -886,10 +886,10 @@ bool WorldStateMgrThread::doPopulateDB()
             opcCmdContent.addList() = bID;
 
             opcCmdContent.addList() = bName;
-            opcCmdContent.addList() = bPos;
             opcCmdContent.addList() = bIsHand;
             if (!bIsHandValue)
             {
+                opcCmdContent.addList() = bPos;
                 opcCmdContent.addList() = bOffset;
                 opcCmdContent.addList() = bDesc;
                 opcCmdContent.addList() = bInHand;
@@ -915,10 +915,10 @@ bool WorldStateMgrThread::doPopulateDB()
             opcCmd.addVocab(Vocab::encode("add"));
 
             opcCmdContent.addList() = bName;
-            opcCmdContent.addList() = bPos;
             opcCmdContent.addList() = bIsHand;
             if (!bIsHandValue)
             {
+                opcCmdContent.addList() = bPos;
                 opcCmdContent.addList() = bOffset;
                 opcCmdContent.addList() = bDesc;
                 opcCmdContent.addList() = bInHand;
