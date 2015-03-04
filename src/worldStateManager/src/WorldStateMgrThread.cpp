@@ -523,6 +523,7 @@ void WorldStateMgrThread::refreshOPCIDs()
 
 void WorldStateMgrThread::refreshOPCNames()
 {
+    // inserts in opcMap
     // assume opcPort.getOutputCount()>0
 
     // adapted from iolHelper by Ugo Pattacini
@@ -561,11 +562,7 @@ void WorldStateMgrThread::refreshOPCNames()
 
 void WorldStateMgrThread::refreshTrackNames()
 {
-    if (activityPort.getOutputCount() < 1)
-    {
-        yWarning() << __func__ << "not connected to ActivityIF";
-        return;
-    }
+    // inserts in trackMap
 
     // cycle over items
     for (int i=0; i<trackIDs.size(); i++)
@@ -575,6 +572,12 @@ void WorldStateMgrThread::refreshTrackNames()
         if ( trackMap.find(id)==trackMap.end() )
         {
             // name not found -> ask ActivityIF for label
+            if (activityPort.getOutputCount() < 1)
+            {
+                yWarning() << __func__ << "cannot ask for label, not connected to ActivityIF!";
+                return;
+            }
+
             // assume names cannot change -> use insert(), not operator[]
             // http://stackoverflow.com/questions/326062/in-stl-maps-is-it-better-to-use-mapinsert-than
             // TODO: make sure id corresponds to get(i)
@@ -642,6 +645,14 @@ void WorldStateMgrThread::refreshTracker()
         }
         //else
         //    yDebug() << __func__ << "trackIDs did not change, no need to refresh names";
+
+        // TODO: update uncertainty, if below threshold -> pause thread
+        for (int t=0; t<sizeTargets; t++)
+        {
+        //    trackUnc.push_back( inTargets->get(t).asList()->get(#).asDouble() );
+        }
+
+
     }
     else
     {
@@ -697,7 +708,6 @@ bool WorldStateMgrThread::doPopulateDB()
         iter != wsMap.end();
         ++iter)
     {
-        yDebug();
         int wsID = iter->first;
         yDebug("going to update world state id %d", wsID);
 
@@ -795,7 +805,6 @@ bool WorldStateMgrThread::doPopulateDB()
 
             if (offset.size()>1)
             {
-                cout << offset.size() << endl;
                 for (int o=0; o<offset.size(); o++)
                 {
                     bOffsetValue.addDouble(offset[o]);
@@ -956,10 +965,8 @@ bool WorldStateMgrThread::doPopulateDB()
                 yWarning() << __func__ << "did not receive ack from WSOPC";
         }
     }
-    //yDebug() << __func__ << "out of cycle";
 
     yInfo("updating world state map");
-    // TODO: check that invisible objects are not discarded
     mergeMaps(opcMap, trackMap, wsMap);
     dumpMap(wsMap);
 
@@ -990,7 +997,6 @@ bool WorldStateMgrThread::getTrackerBottleIndexFromID(const int &id, int &tbi)
     {
         // key not found
         yWarning() << __func__ << "did not find key id" << id << "in wsMap";
-        //tbi = -1;
     }
     else
     {
@@ -1267,6 +1273,7 @@ bool WorldStateMgrThread::isHandFree(const string &handName)
     if ((handName != "left") && (handName != "right"))
     {
         yWarning() << __func__ << "argument handName must be left or right";
+        return false;
     }
 
     Bottle activityCmd, activityReply;
@@ -1291,14 +1298,18 @@ bool WorldStateMgrThread::isHandFree(const string &handName)
 
 string WorldStateMgrThread::inWhichHand(const string &objName)
 {
+    string ret = "error";
+
     if (activityPort.getOutputCount() < 1)
     {
         yWarning() << __func__ << "not connected to ActivityIF";
+        return ret;
     }
 
     if ((objName == "left") || (objName == "right"))
     {
         yWarning() << __func__ << "argument objName must be an object name, not a hand name";
+        return ret;
     }
 
     Bottle activityCmd, activityReply;
@@ -1320,7 +1331,7 @@ string WorldStateMgrThread::inWhichHand(const string &objName)
              activityReply.get(0).asString()=="none" )
         {
             yDebug() << __func__ <<  "obtained valid response:" << activityReply.toString().c_str();
-            return activityReply.get(0).asString();
+            ret = activityReply.get(0).asString();
         }
         else
             yWarning() << __func__ << "obtained invalid response (it is a string but not a valid one):" << activityReply.toString().c_str();
@@ -1328,8 +1339,7 @@ string WorldStateMgrThread::inWhichHand(const string &objName)
     else
         yWarning() << __func__ << "obtained invalid response:" << activityReply.toString().c_str();
 
-    // default
-    return "none";
+    return ret;
 }
 
 /* ************************************************************************** */
@@ -1521,5 +1531,4 @@ void WorldStateMgrThread::fsmPlayback()
 bool WorldStateMgrThread::setPlaybackFile(const string &file)
 {
     playbackFile = file;
-    //yDebug("going to read from playback file %s", playbackFile.c_str());
 }

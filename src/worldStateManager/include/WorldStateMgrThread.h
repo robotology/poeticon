@@ -135,8 +135,8 @@ class WorldStateMgrThread : public RateThread
         void fsmPerception();
         void refreshOPC();
         void refreshOPCIDs();
-        void refreshOPCNames(); // inserts in opcMap
-        void refreshTrackNames(); // inserts in trackMap
+        void refreshOPCNames();
+        void refreshTrackNames();
         void dumpMap(const idLabelMap &m);
         void refreshBlobs();
         void refreshTracker();
