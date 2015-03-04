@@ -144,9 +144,9 @@ bool WorldStateMgrThread::dumpWorldState()
         {
             refreshTracker();
 
-            yDebug("opcMap, trackMap:");
-            dumpMap(opcMap);
-            dumpMap(trackMap);
+            //yDebug("opcMap, trackMap:");
+            //dumpMap(opcMap);
+            //dumpMap(trackMap);
         }
     }
     else
@@ -577,7 +577,6 @@ void WorldStateMgrThread::refreshTrackNames()
             // name not found -> ask ActivityIF for label
             // assume names cannot change -> use insert(), not operator[]
             // http://stackoverflow.com/questions/326062/in-stl-maps-is-it-better-to-use-mapinsert-than
-            yDebug() << __func__ << "name not found -> asking ActivityIF";
             // TODO: make sure id corresponds to get(i)
             double u = inTargets->get(i).asList()->get(1).asDouble();
             double v = inTargets->get(i).asList()->get(2).asDouble();
@@ -630,14 +629,19 @@ void WorldStateMgrThread::refreshTracker()
         // number of tracked objects
         sizeTargets = inTargets->size();
 
-        // get current track IDs, update container, no duplicates
+        // update trackIDs and trackMap labels (if IDs changed)
+        std::vector<int> old_trackIDs(trackIDs);
         updateTrackIDsNoDupes();
-
-        if (activityPort.getOutputCount()>=1)
+        if ( vectorsDiffer(old_trackIDs,trackIDs) )
         {
-            // get labels, update map container
-            refreshTrackNames();
+            if (activityPort.getOutputCount()>=1)
+            {
+                // get labels, update trackMap
+                refreshTrackNames();
+            }
         }
+        //else
+        //    yDebug() << __func__ << "trackIDs did not change, no need to refresh names";
     }
     else
     {
@@ -693,7 +697,7 @@ bool WorldStateMgrThread::doPopulateDB()
         iter != wsMap.end();
         ++iter)
     {
-        yDebug("----");
+        yDebug();
         int wsID = iter->first;
         yDebug("going to update world state id %d", wsID);
 
@@ -703,7 +707,7 @@ bool WorldStateMgrThread::doPopulateDB()
         {
             if (opcMap.count(wsID) && !trackMap.count(wsID))
             {
-                yDebug("probably a robot hand because it is present in WSOPC but not in tracker");
+                //yDebug("probably a robot hand because it is present in WSOPC but not in tracker");
                 bIsHandValue = true; // robot hand
             }
             else
@@ -736,20 +740,23 @@ bool WorldStateMgrThread::doPopulateDB()
 
         // prepare name property
         string bNameValue;
-        double u=0.0, v=0.0;
         if (!bIsHandValue)
         {
-            // object -> ask ActivityIF
-            u = inTargets->get(tbi).asList()->get(1).asDouble();
-            v = inTargets->get(tbi).asList()->get(2).asDouble();
-            bName.addString("name");
-            if (!getLabel(u, v, bNameValue))
-                yWarning() << __func__ << "got invalid label";
+            // object
+            bNameValue = iter->second;
+            yDebug("name found in short-term memory (from tracker): %s", bNameValue.c_str());
+
+            // in theory this should never happen!
+            // if name not found in wsMap -> ask ActivityIF
+            //bName.addString("name");
+            //if (!getLabel(u, v, bNameValue))
+            //    yWarning() << __func__ << "got invalid label";
         }
         else
         {
-             // robot hand -> ask WSOPC
-             bNameValue = opcMap[wsID];
+            // robot hand -> get name from WSOPC
+            bNameValue = opcMap[wsID];
+            yDebug("name found in short-term memory (from WSOPC): %s", bNameValue.c_str());
         }
         bName.addString(bNameValue.c_str());
         // override empty labels - prevents error
@@ -767,6 +774,10 @@ bool WorldStateMgrThread::doPopulateDB()
         if (!bIsHandValue)
         {
             // object properties
+
+            double u=0.0, v=0.0;
+            u = inTargets->get(tbi).asList()->get(1).asDouble();
+            v = inTargets->get(tbi).asList()->get(2).asDouble();
 
             // prepare position property
             bPos.addString("pos");
@@ -941,13 +952,8 @@ bool WorldStateMgrThread::doPopulateDB()
         // process WSOPC response
         if (opcReply.size() > 1)
         {
-            if (opcReply.get(0).asVocab()==Vocab::encode("ack"))
-            {
-                yDebug() << __func__ << "received ack from WSOPC";
-                // TODO: check that newly added object are stored in opcMap
-            }
-            else
-                yDebug() << __func__ << "did not receive ack from WSOPC";
+            if (! opcReply.get(0).asVocab()==Vocab::encode("ack"))
+                yWarning() << __func__ << "did not receive ack from WSOPC";
         }
     }
     //yDebug() << __func__ << "out of cycle";
@@ -958,6 +964,12 @@ bool WorldStateMgrThread::doPopulateDB()
     dumpMap(wsMap);
 
     return true;
+}
+
+bool WorldStateMgrThread::vectorsDiffer(const std::vector<int> &v1, const std::vector<int> &v2)
+{
+    return std::lexicographical_compare(v1.begin(),v1.end(),
+                                        v2.begin(),v2.end());
 }
 
 bool WorldStateMgrThread::mergeMaps(const idLabelMap &map1, const idLabelMap &map2, idLabelMap &result)

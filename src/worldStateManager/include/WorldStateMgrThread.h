@@ -144,6 +144,7 @@ class WorldStateMgrThread : public RateThread
         void refreshPerception();
         bool refreshPerceptionAndValidate();
         bool doPopulateDB();
+        bool vectorsDiffer(const std::vector<int> &v1, const std::vector<int> &v2);
         bool mergeMaps(const idLabelMap &map1, const idLabelMap &map2, idLabelMap &result);
         bool getTrackerBottleIndexFromID(const int &id, int &tbi);
         int label2id(const string &label);
