@@ -701,6 +701,12 @@ bool WorldStateMgrThread::refreshPerceptionAndValidate()
     return true;
 }
 
+// http://stackoverflow.com/a/29798
+inline const char * const BoolToString(bool &b)
+{
+    return b ? "true" : "false";
+}
+
 bool WorldStateMgrThread::doPopulateDB()
 {
     // cycle over wsMap key IDs
@@ -749,6 +755,7 @@ bool WorldStateMgrThread::doPopulateDB()
         Bottle bIsFree;
 
         // prepare name property
+        bName.addString("name");
         string bNameValue;
         if (!bIsHandValue)
         {
@@ -758,7 +765,6 @@ bool WorldStateMgrThread::doPopulateDB()
 
             // in theory this should never happen!
             // if name not found in wsMap -> ask ActivityIF
-            //bName.addString("name");
             //if (!getLabel(u, v, bNameValue))
             //    yWarning() << __func__ << "got invalid label";
         }
@@ -779,7 +785,7 @@ bool WorldStateMgrThread::doPopulateDB()
 
         // prepare is_hand property
         bIsHand.addString("is_hand");
-        bIsHand.addInt(bIsHandValue); // 1=true, 0=false
+        bIsHand.addString( BoolToString(bIsHandValue) );
 
         if (!bIsHandValue)
         {
@@ -872,7 +878,7 @@ bool WorldStateMgrThread::doPopulateDB()
             // prepare is_free property
             bIsFree.addString("is_free");
             bool bIsFreeValue = isHandFree(bNameValue.c_str());
-            bIsFree.addInt(bIsFreeValue); // 1=true, 0=false
+            bIsFree.addString( BoolToString(bIsFreeValue) );
         }
 
         // going to ask WSOPC whether entry already exists
