@@ -114,10 +114,16 @@ using namespace yarp::os;
 using namespace yarp::sig;
 
 /* OpenCV */
-// TODO: use OpenCV 2 APIs
-#include <opencv/cv.h>
-#include <opencv/cxcore.h>
-#include <opencv/highgui.h>
+// OpenCV 2
+#include <opencv2/opencv.hpp>
+#include <opencv2/core/core.hpp>
+#include <opencv2/highgui/highgui.hpp>
+#include <opencv2/legacy/compat.hpp> // cvCopyImage
+// OpenCV 1
+//#include <opencv/cv.h>
+//#include <opencv/cxcore.h>
+//#include <opencv/highgui.h>
+
 #include "cvSeqLabel.h"
 
 /* system */
@@ -133,8 +139,8 @@ class SequentialLabellerModule : public RFModule
 
     string                            rawImgInputPortName;
     string                            rawImgOutputPortName;
-      string                            binaryImgInputPortName;
-      string                            labeledImgOutputPortName;
+    string                            binaryImgInputPortName;
+    string                            labeledImgOutputPortName;
     /* yarp image pointers to access image ports */
     ImageOf<PixelRgb>                *yarpRawInputPtr;
     ImageOf<PixelMono>               *yarpBinaryInputPtr;
@@ -147,9 +153,9 @@ class SequentialLabellerModule : public RFModule
     CvSize                            sz;
     
     BufferedPort<ImageOf<PixelRgb> >  rawImgInputPort;
-      BufferedPort<ImageOf<PixelMono> > binaryImgInputPort;
+    BufferedPort<ImageOf<PixelMono> > binaryImgInputPort;
     BufferedPort<ImageOf<PixelRgb> >  rawImgOutputPort;
-      BufferedPort<ImageOf<PixelMono> >  labeledImgOutputPort;
+    BufferedPort<ImageOf<PixelMono> >  labeledImgOutputPort;
 
 public:
     virtual bool configure(ResourceFinder &rf); /* configure module parameters, return true if successful */

@@ -5,9 +5,8 @@
  *
  */
 
-#include <stdio.h>
+#include <cstdio>
 
-//#include <cvSeqLabel.h>
 #include "cvSeqLabel.h"
 
 #define MAX_LABELS 100000

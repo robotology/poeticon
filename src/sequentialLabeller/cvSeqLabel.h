@@ -7,6 +7,9 @@
 
 #pragma once
 
-#include <cxcore.h> //OpenCv header file
+// OpenCV 2
+#include <opencv2/core/core.hpp>
+// OpenCV 1
+//#include <cxcore.h> //OpenCv header file
 
 int cvSeqLabel( IplImage *in, IplImage *out, IplImage *tmp);

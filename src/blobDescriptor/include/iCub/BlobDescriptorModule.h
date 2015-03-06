@@ -24,11 +24,15 @@ using namespace yarp::sig;
 #include <iCub/BlobDescriptorSupport.h>
 
 /* OpenCV */
-// TODO: full transition to OpenCV 2 C++ APIs
-#include <opencv/cv.h>
-#include <opencv/cxcore.h>
-#include <opencv/highgui.h>
+// OpenCV 2
+#include <opencv2/opencv.hpp>
+#include <opencv2/core/core.hpp>
+#include <opencv2/highgui/highgui.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
+// OpenCV 1
+//#include <opencv/cv.h>
+//#include <opencv/cxcore.h>
+//#include <opencv/highgui.h>
 
 /* system */
 #include <string>
