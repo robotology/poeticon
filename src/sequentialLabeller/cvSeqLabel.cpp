@@ -1,3 +1,10 @@
+/*
+ * Copyright (C) 2012-2015 POETICON++, European Commission FP7 project ICT-288382
+ * Author: Giovanni Saponaro <gsaponaro@isr.ist.utl.pt>
+ * CopyPolicy: Released under the terms of the GNU GPL v2.0
+ *
+ */
+
 #include <stdio.h>
 
 //#include <cvSeqLabel.h>
@@ -8,22 +15,22 @@
 //private function
 int getLeaf(int label, int *equiv_array)
 {
-	int minlabel;
+    int minlabel;
 
-	if(label>=MAX_LABELS || label<1)
-		printf("getleaf%d\n",label-1);
+    if(label>=MAX_LABELS || label<1)
+        printf("getleaf%d\n",label-1);
              
-	if(equiv_array[label-1])
-	{
-		minlabel = label;
-		while(equiv_array[minlabel-1])
-			minlabel = equiv_array[minlabel-1];
-	}
-	else //original leaf
-	{
-		minlabel = 0;
-	}
-	return minlabel;
+    if(equiv_array[label-1])
+    {
+        minlabel = label;
+        while(equiv_array[minlabel-1])
+            minlabel = equiv_array[minlabel-1];
+    }
+    else //original leaf
+    {
+        minlabel = 0;
+    }
+    return minlabel;
 }
 
 
@@ -40,175 +47,175 @@ Author: Alex 03/01/2006
 */
 int cvSeqLabel( IplImage *in, IplImage *out, IplImage *tmp)
 {
-	int i, j, label = 0, minlabel, originalb, originalc, equiv_array[MAX_LABELS];
-	int width, height, stride;
-	unsigned char *input, *output;
-	int *temp;
-	unsigned char *pai, *pbi, *pci, *pdi;
-	int *pao, *pbo, *pco, *pdo;
-	
-	memset( equiv_array, 0, sizeof(int)*MAX_LABELS );
+    int i, j, label = 0, minlabel, originalb, originalc, equiv_array[MAX_LABELS];
+    int width, height, stride;
+    unsigned char *input, *output;
+    int *temp;
+    unsigned char *pai, *pbi, *pci, *pdi;
+    int *pao, *pbo, *pco, *pdo;
+    
+    memset( equiv_array, 0, sizeof(int)*MAX_LABELS );
 
-	input=(unsigned char*)in->imageData;
-	output=(unsigned char*)out->imageData;
-	temp=(int*)tmp->imageData;
-		
-	//fprintf(stdout, "initial temp[]=%d\n", temp[0]);
-	
-	width = out->width;
-	height = out->height;
-	stride = tmp->widthStep/sizeof(int);
-	
-	
-	// first pixel
-	if(input[0])
-		temp[0] = ++label;
+    input=(unsigned char*)in->imageData;
+    output=(unsigned char*)out->imageData;
+    temp=(int*)tmp->imageData;
+        
+    //fprintf(stdout, "initial temp[]=%d\n", temp[0]);
+    
+    width = out->width;
+    height = out->height;
+    stride = tmp->widthStep/sizeof(int);
+    
+    
+    // first pixel
+    if(input[0])
+        temp[0] = ++label;
 
-	//first line
-	for(i = 1; i < width; i++)
-	{
-		if(input[i])
-		{
-			if(input[i-1])   // test left neighbor
-			{
-				temp[i] = temp[i-1];  //preserve connected label
-			}
-			else
-			{
-				if(label == MAX_LABELS-1)
-				         return MAX_LABELS-1; // end of free labels
-				temp[i] = ++label; //new label
-			}
-		}
-	}
+    //first line
+    for(i = 1; i < width; i++)
+    {
+        if(input[i])
+        {
+            if(input[i-1])   // test left neighbor
+            {
+                temp[i] = temp[i-1];  //preserve connected label
+            }
+            else
+            {
+                if(label == MAX_LABELS-1)
+                         return MAX_LABELS-1; // end of free labels
+                temp[i] = ++label; //new label
+            }
+        }
+    }
 
-	pai = input + stride;	pci = input;
-	pao = temp + stride;	pco = temp;
-	
+    pai = input + stride;    pci = input;
+    pao = temp + stride;    pco = temp;
+    
 
-	//remaining lines
-	for(i = 1; i < height; i++)
-	{
+    //remaining lines
+    for(i = 1; i < height; i++)
+    {
         //first column
-		if(*pai)
-		{
-			if(*pci) //test up neighbor
-			{
-				*pao = *pco; //preserve connected label
-			}
-			else
-			{
-				//label+=4;
-				if(label == MAX_LABELS - 1)
-				         return -2;
-				*pao = ++label; //new label
-			}
-		}
-		pbi = pai++; pbo = pao++; pdi = pci++; pdo = pco++;
+        if(*pai)
+        {
+            if(*pci) //test up neighbor
+            {
+                *pao = *pco; //preserve connected label
+            }
+            else
+            {
+                //label+=4;
+                if(label == MAX_LABELS - 1)
+                         return -2;
+                *pao = ++label; //new label
+            }
+        }
+        pbi = pai++; pbo = pao++; pdi = pci++; pdo = pco++;
 
-		// remaining columns
-		for(j = 1; j < width; j++)
-		{
-			if(*pai)
-			{
-				if(*pbi)
-				{
-					*pao = *pbo;
-					if(*pci)				// resolving equivalences
-						if( *pco != *pbo )
-						{
-							//if (originalb==-1)
-							//	return -1;
-							if( originalb = getLeaf(*pbo, equiv_array) )
-							{
-								//if (originalc = getLeaf(*pco, equiv_array))
-								//	return -1;
-								if( originalc = getLeaf(*pco, equiv_array) )
-								{
-									if( originalc != originalb)
+        // remaining columns
+        for(j = 1; j < width; j++)
+        {
+            if(*pai)
+            {
+                if(*pbi)
+                {
+                    *pao = *pbo;
+                    if(*pci)                // resolving equivalences
+                        if( *pco != *pbo )
+                        {
+                            //if (originalb==-1)
+                            //    return -1;
+                            if( originalb = getLeaf(*pbo, equiv_array) )
+                            {
+                                //if (originalc = getLeaf(*pco, equiv_array))
+                                //    return -1;
+                                if( originalc = getLeaf(*pco, equiv_array) )
+                                {
+                                    if( originalc != originalb)
                                         equiv_array[originalc-1] = originalb;
-								}
-								else  // c is leaf
-								{
-									if(*pco != originalb)
-										equiv_array[*pco-1] = originalb;
-								}
-								*pco = originalb;
-							}
-							else // b is leaf
-							{
-								//originalc = getLeaf(*pco, equiv_array);
-								//if (originalc==-1)
-								//	return -1;
-								if( originalc = getLeaf(*pco, equiv_array) )
-								{
-									if(originalc != *pbo) {
-										equiv_array[originalc-1] = *pbo;
+                                }
+                                else  // c is leaf
+                                {
+                                    if(*pco != originalb)
+                                        equiv_array[*pco-1] = originalb;
+                                }
+                                *pco = originalb;
+                            }
+                            else // b is leaf
+                            {
+                                //originalc = getLeaf(*pco, equiv_array);
+                                //if (originalc==-1)
+                                //    return -1;
+                                if( originalc = getLeaf(*pco, equiv_array) )
+                                {
+                                    if(originalc != *pbo) {
+                                        equiv_array[originalc-1] = *pbo;
                                   }
-								}
-								else  // c is leaf
-								{
-									equiv_array[*pco-1] = *pbo;
-								}
-								*pco = *pbo;
-							}
-						}
-				}
-				else if(*pdi)
-				{
-					*pao = *pdo;
-				}
-				else if(*pci)
-				{
-					*pao = *pco;
-				}
-				else
-				{
-					//label+=4;
-					if(label == MAX_LABELS-1)
-				         return -3;
-					*pao = ++label;  // new label
-//					if(label > MAX_LABELS)
-//						return -1;  //ran out of labels
-				}
-			}
-			pai++; pbi++; pci++; pdi++; pao++; pbo++; pco++; pdo++;
-		}
-	}
-	
-	// fusing labels
-	for( i = 1; i <= label; i++ )
-	{
-		minlabel = getLeaf(i, equiv_array);
-		//if (minlabel==-1)
-		//	return -1;
-		if( minlabel )
-		{
-			equiv_array[i-1] = minlabel;
-		}
-	}
-	
-	// processing image
-	for( i = 0; i < height; i++ )
-	{
-		for( j = 0; j < width; j++ )
-		{
-			if( temp[i*stride+j] )
-			{
-				
-				if( equiv_array[ temp[i*stride+j] -1 ] )
-				{
-					temp[i*stride+j] = equiv_array[ temp[i*stride+j] -1 ];
-				}
-			}
-		}
-	}
-	
-	//convert from label image (integer) to output image (unsigned char)
-	for( i = 0; i < height; i++ )
-		for( j = 0; j < width; j++ )
-			output[i*stride+j]  = (unsigned char)temp[i*stride+j];
-			
+                                }
+                                else  // c is leaf
+                                {
+                                    equiv_array[*pco-1] = *pbo;
+                                }
+                                *pco = *pbo;
+                            }
+                        }
+                }
+                else if(*pdi)
+                {
+                    *pao = *pdo;
+                }
+                else if(*pci)
+                {
+                    *pao = *pco;
+                }
+                else
+                {
+                    //label+=4;
+                    if(label == MAX_LABELS-1)
+                         return -3;
+                    *pao = ++label;  // new label
+//                    if(label > MAX_LABELS)
+//                        return -1;  //ran out of labels
+                }
+            }
+            pai++; pbi++; pci++; pdi++; pao++; pbo++; pco++; pdo++;
+        }
+    }
+    
+    // fusing labels
+    for( i = 1; i <= label; i++ )
+    {
+        minlabel = getLeaf(i, equiv_array);
+        //if (minlabel==-1)
+        //    return -1;
+        if( minlabel )
+        {
+            equiv_array[i-1] = minlabel;
+        }
+    }
+    
+    // processing image
+    for( i = 0; i < height; i++ )
+    {
+        for( j = 0; j < width; j++ )
+        {
+            if( temp[i*stride+j] )
+            {
+                
+                if( equiv_array[ temp[i*stride+j] -1 ] )
+                {
+                    temp[i*stride+j] = equiv_array[ temp[i*stride+j] -1 ];
+                }
+            }
+        }
+    }
+    
+    //convert from label image (integer) to output image (unsigned char)
+    for( i = 0; i < height; i++ )
+        for( j = 0; j < width; j++ )
+            output[i*stride+j]  = (unsigned char)temp[i*stride+j];
+            
 
-	return label;						
+    return label;                        
 }

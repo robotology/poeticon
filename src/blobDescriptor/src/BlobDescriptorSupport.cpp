@@ -12,18 +12,18 @@ using namespace std;
 ObjectDescriptor::ObjectDescriptor()
 {
 
-	valid = 0;	 // Objects that can be considered candidates for manipulation
+    valid = 0;     // Objects that can be considered candidates for manipulation
 
 /*  Segmentation masks */
-	mask_image = NULL;
-	mask_data = NULL;
-	
+    mask_image = NULL;
+    mask_data = NULL;
+    
 
 /* Variables to define the histograms - both for the affordances and for the tracker*/
-	h_bins = 16;
-	s_bins = 16;
-	v_bins = 16;
-	_hist_size[0] = h_bins;
+    h_bins = 16;
+    s_bins = 16;
+    v_bins = 16;
+    _hist_size[0] = h_bins;
     _hist_size[1] = s_bins;
     _h_ranges[0]  =   0;     //in 8 bit images hue varies from 0 to 180
     _h_ranges[1]  = 180;
@@ -31,70 +31,70 @@ ObjectDescriptor::ObjectDescriptor()
     _s_ranges[1]  = 255;
     _v_ranges[0]  =   0;
     _v_ranges[1]  = 255;
-	objHist = NULL;
-	
+    objHist = NULL;
+    
 /* Variables to initialize the tracker */
-	roi_x = 0;
-	roi_y = 0;
-	roi_width = 0;
-	roi_height = 0;
-	v_min = 0;
-	v_max = 0;
-	s_min = 0;
-	s_max = 0;
+    roi_x = 0;
+    roi_y = 0;
+    roi_width = 0;
+    roi_height = 0;
+    v_min = 0;
+    v_max = 0;
+    s_min = 0;
+    s_max = 0;
 
 /* variables for the countours */
     storage = NULL;
-	contours = NULL;
-	affcontours = NULL;
-	convexhull = NULL; 
+    contours = NULL;
+    affcontours = NULL;
+    convexhull = NULL; 
 
 /* variables to define the shape */
-	contour_area = 0;
-	contour_perimeter = 0;
-	convex_perimeter = 0;
-	major_axis = 0;
-	minor_axis = 0;
-	rect_area = 0;
-	enclosing_rect.angle = 0;
-	enclosing_rect.center.x = 0;
-	enclosing_rect.center.y = 0;
-	enclosing_rect.size.height = 0;
-	enclosing_rect.size.width = 0;
+    contour_area = 0;
+    contour_perimeter = 0;
+    convex_perimeter = 0;
+    major_axis = 0;
+    minor_axis = 0;
+    rect_area = 0;
+    enclosing_rect.angle = 0;
+    enclosing_rect.center.x = 0;
+    enclosing_rect.center.y = 0;
+    enclosing_rect.size.height = 0;
+    enclosing_rect.size.width = 0;
 
 /* shape descriptors for the affordances */
-	convexity = 0;
-	eccentricity = 0;
-	compactness = 0;
-	circleness = 0;
-	squareness = 0;
+    convexity = 0;
+    eccentricity = 0;
+    compactness = 0;
+    circleness = 0;
+    squareness = 0;
     // TODO: add elongatedness
 }
 
 bool ObjectDescriptor::Create(int width, int height)
 {
-	_w = width;
-	_h = height; 
-	_sz = cvSize(width, height);
-	mask_image = cvCreateImage(_sz, IPL_DEPTH_8U, 1);
-	mask_data = (unsigned char *)mask_image->imageData;
-	float *ranges[] = { _h_ranges, _s_ranges, _v_ranges };
+    _w = width;
+    _h = height; 
+    _sz = cvSize(width, height);
+    mask_image = cvCreateImage(_sz, IPL_DEPTH_8U, 1);
+    mask_data = (unsigned char *)mask_image->imageData;
+    float *ranges[] = { _h_ranges, _s_ranges, _v_ranges };
     objHist = cvCreateHist(1, _hist_size, CV_HIST_ARRAY, ranges, 1); //only use hue
-	storage = cvCreateMemStorage(0);
-	contours = 0;
-	affcontours = 0;
-	convexhull = 0; 
-	return true;
+    storage = cvCreateMemStorage(0);
+    contours = 0;
+    affcontours = 0;
+    convexhull = 0; 
+    return true;
 }
 
 ObjectDescriptor::~ObjectDescriptor()
 {
-	if(mask_image)
-		cvReleaseImage(&mask_image);
-	if(objHist)
-		cvReleaseHist(&objHist);
-	if(storage)
-		cvReleaseMemStorage(&storage);
+    if(mask_image)
+        cvReleaseImage(&mask_image);
+    if(objHist)
+        cvReleaseHist(&objHist);
+    if(storage)
+        cvReleaseMemStorage(&storage);
 }
 
 /*
@@ -155,13 +155,13 @@ Arguments:    labeledImage - integer labeled image
 */
 int selectObjects(IplImage *labeledImage, IplImage *out, int numLabels, int areaThres)
 {
-	int numObjects = 0;
+    int numObjects = 0;
 
     int *area, *labels;
     area = new int[numLabels];
-	labels = new int[numLabels];
+    labels = new int[numLabels];
     memset(area, 0, sizeof(int)*numLabels);
-	memset(labels, -1, sizeof(int)*numLabels);
+    memset(labels, -1, sizeof(int)*numLabels);
 
     int *labeledData;
     labeledData = (int*)labeledImage->imageData;
@@ -177,13 +177,13 @@ int selectObjects(IplImage *labeledImage, IplImage *out, int numLabels, int area
             {
                 int k = labeledData[i * width + j];
                 if (k >= 0 && k < numLabels)
-				{
+                {
                     area[k] += 1;
-				}
-				else
-				{
-					printf("WARNING. PROBLEM IN SELECTOBJECTS: LABEL DIFFERENT THAN EXPECTED\n"); 
-				}
+                }
+                else
+                {
+                    printf("WARNING. PROBLEM IN SELECTOBJECTS: LABEL DIFFERENT THAN EXPECTED\n"); 
+                }
             }
 
     //canceling the areas smaller than threshold and getting new labels
@@ -191,24 +191,24 @@ int selectObjects(IplImage *labeledImage, IplImage *out, int numLabels, int area
         if (area[i] < areaThres)
             area[i] = 0;
         else 
-		{
-			labels[i] = numObjects++;
-		};
+        {
+            labels[i] = numObjects++;
+        };
 
 
     //relabeling objects (start at zero and unit increments)
     for (int i = 0; i < height; i++)
         for (int j = 0; j < width; j++)
             {
-				int k = labeledData[i * width + j];
-				labeledData[i * width + j] = labels[k];
+                int k = labeledData[i * width + j];
+                labeledData[i * width + j] = labels[k];
             }
-			
+            
     //convert from label image (integer) to output image (unsigned char)
     //int32ToInt8Image(labeledImage, out);
 
-	delete [] area;
-	delete [] labels;
+    delete [] area;
+    delete [] labels;
 
     return numObjects;
 }
@@ -305,28 +305,28 @@ void extractObj(IplImage *labeledImage, int numObjects, ObjectDescriptor *objDes
     //initialization of the area and labels of the objectDescriptors
     for (int i = 0; i < numObjects; i++)
     {
-		objDescTable[i].no = i;
+        objDescTable[i].no = i;
         objDescTable[i].area = 0;
         //objDescTable[i].mask_image = cvCreateImage(cvSize(width, height),8,1);
         //objDescTable[i].mask_data = (unsigned char*)objDescTable[i].mask_image->imageData;
-	    //TODO: Optimize this with memset
+        //TODO: Optimize this with memset
         for( int k = 0; k < height; k++ )
-			for( int j = 0; j < width; j++ )
-				objDescTable[i].mask_data[k*stride+j]  = 0; //set all the pixels black
+            for( int j = 0; j < width; j++ )
+                objDescTable[i].mask_data[k*stride+j]  = 0; //set all the pixels black
         objDescTable[i].center = cvPoint(0,0); //default center of the object
 
-		//optimize this - 
+        //optimize this - 
         objDescTable[i].label = -1;
     }
     //calculating the area and the mask images for the histogram for each object
     for (int i = 0; i < height; i++)
-    {			
-		for (int j = 0; j < width; j++)
+    {            
+        for (int j = 0; j < width; j++)
         {
-			int label = labeledData[i*stride+j];
+            int label = labeledData[i*stride+j];
             if ( (label != -1) && label < numObjects )
-			{
-				int ind = indexOfL(label, objDescTable, numObjects);
+            {
+                int ind = indexOfL(label, objDescTable, numObjects);
                 int a = objDescTable[ind].area;
                 objDescTable[ind].mask_data[i*stride+j] = 255;
                 objDescTable[ind].area++;
@@ -405,7 +405,7 @@ void printImgLabels(IplImage *img, int numObjects)
 
             }
     printf("\n");
-	delete [] labelsList;
+    delete [] labelsList;
 }
 
 /* for POETICON++ */
