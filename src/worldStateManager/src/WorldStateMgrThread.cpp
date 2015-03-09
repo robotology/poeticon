@@ -37,6 +37,9 @@ bool WorldStateMgrThread::openPorts()
     inAffPortName = "/" + moduleName + "/affDescriptor:i";
     inAffPort.open(inAffPortName.c_str());
 
+    inToolAffPortName = "/" + moduleName + "/toolAffDescriptor:i";
+    inToolAffPort.open(inToolAffPortName.c_str());
+
     activityPortName = "/" + moduleName + "/activity:rpc";
     activityPort.open(activityPortName.c_str());
 
@@ -57,6 +60,7 @@ void WorldStateMgrThread::close()
     // perception mode only
     inTargetsPort.close();
     inAffPort.close();
+    inToolAffPort.close();
     activityPort.close();
     trackerPort.close();
 }
@@ -73,6 +77,7 @@ void WorldStateMgrThread::interrupt()
     // perception mode only
     inTargetsPort.interrupt();
     inAffPort.interrupt();
+    inToolAffPort.interrupt();
     activityPort.interrupt();
     trackerPort.interrupt();
 }
@@ -199,6 +204,7 @@ bool WorldStateMgrThread::updateWorldState()
 bool WorldStateMgrThread::initPerceptionVars()
 {
     inAff = NULL;
+    inToolAff = NULL;
     inTargets = NULL;
     needUpdate = false;
     trackerInit = false;
@@ -359,14 +365,15 @@ void WorldStateMgrThread::fsmPerception()
             // acquire initial entries (robot hands) from WSOPC database
             refreshOPC();
 
-            if (!toldUserWaitBlobs && inAffPort.getInputCount()<1)
+            if (!toldUserWaitBlobs && (inAffPort.getInputCount()<1 || inToolAffPort.getInputCount()<1))
             {
-                yInfo("waiting for %s to be connected to /blobDescriptor/affDescriptor:o",
-                      inAffPortName.c_str());
+                yInfo("waiting for connections to BlobDescriptor:");
+                yInfo("/blobDescriptor/affDescriptor:o %s", inAffPortName.c_str());
+                yInfo("/blobDescriptor/toolAffDescriptor:o %s", inToolAffPortName.c_str());
                 toldUserWaitBlobs = true;
             }
 
-            if (!toldUserBlobsConnected && inAffPort.getInputCount()>=1)
+            if (!toldUserBlobsConnected && inAffPort.getInputCount()>=1 && inToolAffPort.getInputCount()>=1)
             {
                 yInfo("connected to BlobDescriptor, waiting for shape data - requires segmentation");
                 toldUserBlobsConnected = true;
@@ -892,6 +899,14 @@ bool WorldStateMgrThread::doPopulateDB()
             bDescValue.addDouble(inAff->get(tbi+1).asList()->get(areaIdx+3).asDouble()); // comp
             bDescValue.addDouble(inAff->get(tbi+1).asList()->get(areaIdx+4).asDouble()); // circ
             bDescValue.addDouble(inAff->get(tbi+1).asList()->get(areaIdx+5).asDouble()); // sq
+
+            // TODO
+            // prepare object parts (top and bottom) property:
+            // part centre + 2D shape description
+
+
+
+
 
             // prepare in_hand property (none/left/right)
             bInHand.addString("in_hand");

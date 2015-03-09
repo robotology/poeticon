@@ -69,12 +69,14 @@ class WorldStateMgrThread : public RateThread
         string opcPortName;
         string inTargetsPortName;
         string inAffPortName;
+        string inToolAffPortName;
         string activityPortName;
         string trackerPortName;
 
         RpcClient opcPort;
         BufferedPort<Bottle> inTargetsPort;
         BufferedPort<Bottle> inAffPort;
+        BufferedPort<Bottle> inToolAffPort;
         RpcClient activityPort;
         RpcClient trackerPort;
 
@@ -97,6 +99,7 @@ class WorldStateMgrThread : public RateThread
         bool toldUserWaitActivityIF;
         bool toldUserActivityIFConnected;
         Bottle *inAff;
+        Bottle *inToolAff;
         Bottle *inTargets;
         int sizeTargets, sizeAff;
         std::vector<int> opcIDs;

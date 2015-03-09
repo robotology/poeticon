@@ -141,6 +141,10 @@
     <to>/wsm/affDescriptor:i</to>
 </connection>
 <connection>
+    <from>/blobDescriptor/toolAffDescriptor:o</from>
+    <to>/wsm/toolAffDescriptor:i</to>
+</connection>
+<connection>
     <from>/wsm/opc:io</from>
     <to>/wsopc/rpc</to>
 </connection>
