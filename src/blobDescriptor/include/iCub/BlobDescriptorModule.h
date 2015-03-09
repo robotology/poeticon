@@ -35,6 +35,7 @@ using namespace yarp::sig;
 //#include <opencv/highgui.h>
 
 /* system */
+#include <cmath>
 #include <string>
 #include <stdio.h>
 using namespace std;

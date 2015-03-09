@@ -59,11 +59,11 @@ bool BlobDescriptorModule::configure(ResourceFinder &rf)
     // RobotCub: 1; POETICON++: 0
     synch_inputs = rf.check("synch_inputs",Value(0),"Flag to ensure synchronization of input images").asInt();
 
-    elongatedness_thr = (float) rf.check("elongatedness_thr", Value(0.6), "Minimum elongatedness required to display tool parts (only affects display image, not computation of top & bottom descriptors, which is performed anyway)").asDouble();
+    elongatedness_thr = (float) rf.check("elongatedness_thr", Value(0.8), "Minimum elongatedness required to display tool parts (only affects display image, not computation of descriptors)").asDouble();
     if( (elongatedness_thr<0.0) || (elongatedness_thr>1.0) )
     {
-        cout << getName() << " WARNING: Invalid elongatedness_thr. Will use default (0.6) instead." << endl;
-        elongatedness_thr = 0.6;
+        cout << getName() << " WARNING: Invalid elongatedness_thr. Will use default (0.8) instead." << endl;
+        elongatedness_thr = 0.8;
     }
 
     // RobotCub: 1; First-MM,POETICON++: 0
@@ -473,12 +473,10 @@ bool BlobDescriptorModule::updateModule()
             */
 
             /* POETICON++ elongatedness descriptor */
-            if (_objDescTable[i].eccentricity > 0)
-            {
-                _objDescTable[i].elongatedness = 1 - _objDescTable[i].eccentricity + _objDescTable[i].compactness*5;
-            }
+            if (_objDescTable[i].eccentricity>0.0 && _objDescTable[i].eccentricity<1.0)
+                _objDescTable[i].elongatedness = 1.0 - _objDescTable[i].eccentricity + _objDescTable[i].compactness*5;
             else
-                _objDescTable[i].elongatedness = 0;
+                _objDescTable[i].elongatedness = 0.0;
         }
     }
 
@@ -559,14 +557,14 @@ bool BlobDescriptorModule::updateModule()
             /*29*/objbot.addDouble((double)_objDescTable[i].elongatedness);
 
             // moments
-            const double MOM_NORMALIZATION = 1000.0;
-            /*30*/objbot.addDouble((double)_objDescTable[i].moments.nu20 * MOM_NORMALIZATION);
-            /*31*/objbot.addDouble((double)_objDescTable[i].moments.nu11 * MOM_NORMALIZATION);
-            /*32*/objbot.addDouble((double)_objDescTable[i].moments.nu02 * MOM_NORMALIZATION);
-            /*33*/objbot.addDouble((double)_objDescTable[i].moments.nu30 * MOM_NORMALIZATION);
-            /*34*/objbot.addDouble((double)_objDescTable[i].moments.nu21 * MOM_NORMALIZATION);
-            /*35*/objbot.addDouble((double)_objDescTable[i].moments.nu12 * MOM_NORMALIZATION);
-            /*36*/objbot.addDouble((double)_objDescTable[i].moments.nu03 * MOM_NORMALIZATION);
+            //const double MOM_NORMALIZATION = 1000.0;
+            // /*30*/objbot.addDouble((double)_objDescTable[i].moments.nu20 * MOM_NORMALIZATION);
+            // /*31*/objbot.addDouble((double)_objDescTable[i].moments.nu11 * MOM_NORMALIZATION);
+            // /*32*/objbot.addDouble((double)_objDescTable[i].moments.nu02 * MOM_NORMALIZATION);
+            // /*33*/objbot.addDouble((double)_objDescTable[i].moments.nu30 * MOM_NORMALIZATION);
+            // /*34*/objbot.addDouble((double)_objDescTable[i].moments.nu21 * MOM_NORMALIZATION);
+            // /*35*/objbot.addDouble((double)_objDescTable[i].moments.nu12 * MOM_NORMALIZATION);
+            // /*36*/objbot.addDouble((double)_objDescTable[i].moments.nu03 * MOM_NORMALIZATION);
         }
     }
     _affDescriptorOutputPort.setEnvelope(writestamp);
@@ -824,7 +822,7 @@ bool BlobDescriptorModule::updateModule()
             cv::Point2f top_tl( cvRound(cx+sa*half_size.height-ca*half_size.width/2.), cvRound(cy-ca*half_size.height-sa*half_size.width/2.) );
             cv::Point2f bot_tl( cvRound(cx-ca*half_size.width/2.), cvRound(cy-sa*half_size.width/2.) );
             //cvCircle(opencvViewImg, top_tl, 3, CV_RGB(255,255,255), -1, CV_AA, 0);
-            //cvCircle(opencvViewImg, bot_tl, 3, CV_R(255,255,255), -1, CV_AA, 0);
+            //cvCircle(opencvViewImg, bot_tl, 3, CV_RGB(255,255,255), -1, CV_AA, 0);
 
             /*
             cout << "\n\tTool Top largest contour (#" << top_largest_cnt_index << "): area=" << top_area;
@@ -981,7 +979,7 @@ bool BlobDescriptorModule::updateModule()
             cout << ", elongatedness=" << bot_elongatedness << endl;
             */
 
-            if (_objDescTable[i].elongatedness > elongatedness_thr )
+            if (_objDescTable[i].elongatedness > elongatedness_thr)
             {
                 // draw centers of halves of original rectangle (whole object)
                 //cvCircle(opencvViewImg, top_center, 2, CV_BGR(0,255,0), -1, CV_AA, 0);
@@ -989,7 +987,7 @@ bool BlobDescriptorModule::updateModule()
 
                 // draw centers of newly-estimated part rectangles, more likely to belong to contour
                 cvCircle(opencvViewImg, top_new, 5, CV_RGB(0,255,0), -1, CV_AA, 0);
-                cvCircle(opencvViewImg, bot_new, 5, CV_RGB(255,0,0), -1, CV_AA, 0);
+                cvCircle(opencvViewImg, bot_new, 5, CV_RGB(0,255,0), -1, CV_AA, 0);
             }
 
             // draw centre of mass (converted to integer)
@@ -1044,7 +1042,7 @@ bool BlobDescriptorModule::updateModule()
     for( int i=0; i < _numObjects; i++)
     {
         if( _objDescTable[i].valid ) 
-        //if( _objDescTable[i].valid && _objDescTable[i].elongatedness > elongatedness_thr )
+        //if( _objDescTable[i].valid && _objDescTable[i].elongatedness < elongatedness_thr )
         {
             cvDrawContours(
                 opencvViewImg,
