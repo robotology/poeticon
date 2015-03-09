@@ -287,8 +287,8 @@ bool BlobDescriptorModule::updateModule()
     IplImage *opencvTempImg    = (IplImage *) _yarpTempImg.getIplImage();
     //IplImage *opencvBothParts;//  = (IplImage *) imgBothParts.getIplImage(); // for image with top & bottom tool parts
 
-    /* convert from RGB to HSV and get the Hue plane - to compute the histograms */
-    cvCvtColor(opencvRawImg, opencvHSVImg, CV_RGB2HSV);
+    /* convert to HSV and get the Hue plane - to compute the histograms */
+    cvCvtColor(opencvRawImg, opencvHSVImg, CV_BGR2HSV);
     cvSplit(opencvHSVImg, opencvHueImg, opencvSatImg, opencvValImg, NULL);
     IplImage *planes[] = { opencvHueImg }; //compute histogram of hue only
 
@@ -735,7 +735,7 @@ bool BlobDescriptorModule::updateModule()
                     cvWaitKey(0);
                 }
                 //cv::cvtColor(matBothParts, matBothParts, CV_BGR2RGB);
-                ImageOf<PixelRgb> imgBothParts;
+                ImageOf<PixelBgr> imgBothParts;
                 imgBothParts.resize(matBothParts.cols, matBothParts.rows);
                 IplImage tempBothParts = matBothParts;
                 cvCopyImage( &tempBothParts, (IplImage *)imgBothParts.getIplImage() );
@@ -824,7 +824,7 @@ bool BlobDescriptorModule::updateModule()
             cv::Point2f top_tl( cvRound(cx+sa*half_size.height-ca*half_size.width/2.), cvRound(cy-ca*half_size.height-sa*half_size.width/2.) );
             cv::Point2f bot_tl( cvRound(cx-ca*half_size.width/2.), cvRound(cy-sa*half_size.width/2.) );
             //cvCircle(opencvViewImg, top_tl, 3, CV_RGB(255,255,255), -1, CV_AA, 0);
-            //cvCircle(opencvViewImg, bot_tl, 3, CV_RGB(255,255,255), -1, CV_AA, 0);
+            //cvCircle(opencvViewImg, bot_tl, 3, CV_R(255,255,255), -1, CV_AA, 0);
 
             /*
             cout << "\n\tTool Top largest contour (#" << top_largest_cnt_index << "): area=" << top_area;
@@ -916,7 +916,7 @@ bool BlobDescriptorModule::updateModule()
             else
                 bot_elongatedness = 0;
 
-            //cv::rectangle(botRectCroppedCopy, bot_bounding_rect, CV_RGB(0,0,255), 2, CV_AA, 0);
+            //cv::rectangle(botRectCroppedCopy, bot_bounding_rect, CV_BGR(0,0,255), 2, CV_AA, 0);
             //cv::imshow("bot", botRectCroppedCopy);
             //cv::waitKey(0);
 
@@ -984,8 +984,8 @@ bool BlobDescriptorModule::updateModule()
             if (_objDescTable[i].elongatedness > elongatedness_thr )
             {
                 // draw centers of halves of original rectangle (whole object)
-                //cvCircle(opencvViewImg, top_center, 2, CV_RGB(0,255,0), -1, CV_AA, 0);
-                //cvCircle(opencvViewImg, bot_center, 2, CV_RGB(255,0,0), -1, CV_AA, 0);
+                //cvCircle(opencvViewImg, top_center, 2, CV_BGR(0,255,0), -1, CV_AA, 0);
+                //cvCircle(opencvViewImg, bot_center, 2, CV_BGR(255,0,0), -1, CV_AA, 0);
 
                 // draw centers of newly-estimated part rectangles, more likely to belong to contour
                 cvCircle(opencvViewImg, top_new, 5, CV_RGB(0,255,0), -1, CV_AA, 0);
@@ -1002,7 +1002,7 @@ bool BlobDescriptorModule::updateModule()
             {
                 cout << "WARNING: blob "<< i << ", centroid outside contour" << endl;
             }
-            //cvCircle(opencvViewImg, com, 5, CV_RGB(0,0,255), -1, CV_AA, 0);
+            //cvCircle(opencvViewImg, com, 5, CV_BGR(0,0,255), -1, CV_AA, 0);
 
             // new list for current object
             Bottle &bothPartsBot = toolAffBot.addList();
@@ -1043,21 +1043,35 @@ bool BlobDescriptorModule::updateModule()
     // drawing of overlay edges
     for( int i=0; i < _numObjects; i++)
     {
-        // changed in jan. 2014 to display non-elongated vs elongated blobs differently 
-        //if( _objDescTable[i].valid ) 
-        if( _objDescTable[i].valid && _objDescTable[i].elongatedness > elongatedness_thr )
+        if( _objDescTable[i].valid ) 
+        //if( _objDescTable[i].valid && _objDescTable[i].elongatedness > elongatedness_thr )
         {
             cvDrawContours(
                 opencvViewImg,
                 _objDescTable[i].contours,
-                //CV_RGB(0,0,255), // RED
-                CV_RGB(0,255,255), // YELLOW
-                CV_RGB(0,255,255),
+                //CV_RGB(0,0,255),
+                CV_RGB(100,255,255),
+                CV_RGB(100,255,255),
                 0, // 0: don't draw holes. was: 2
-                1,
+                2,
                 CV_AA,
                 cvPoint(0, 0)       // ROI offset
             );
+
+            if (_objDescTable[i].elongatedness > elongatedness_thr)
+            {
+                cvDrawContours(
+                    opencvViewImg,
+                    _objDescTable[i].contours,
+                    CV_RGB(0,0,255),
+                    CV_RGB(0,0,255),
+                    0, // 0: don't draw holes. was: 2
+                    2,
+                    CV_AA,
+                    cvPoint(0, 0)       // ROI offset
+                );
+            }
+
             //Draw also center point in table for debug
             //double x = _objDescTable[i].enclosing_rect.center.x;
             //double y = _objDescTable[i].enclosing_rect.center.y + _objDescTable[i].enclosing_rect.size.height/2;
@@ -1075,15 +1089,17 @@ bool BlobDescriptorModule::updateModule()
         }
         else // invalid objects
         {
+            if (_objDescTable[i].area > _maxAreaThreshold)
+                continue; // skip drawing this; next iteration
+
             cvDrawContours(
                 opencvViewImg,
                 _objDescTable[i].contours,
-                //CV_RGB(128,128,128), // GRAY
                 //CV_RGB(128,128,128),
-                CV_RGB(230,216,173), // light blue
+                CV_RGB(230,216,173),
                 CV_RGB(230,216,173),
                 0, // 0: don't draw holes. was: 2
-                1,
+                2,
                 CV_AA,
                 cvPoint(0, 0) // ROI offset
             );
@@ -1091,7 +1107,7 @@ bool BlobDescriptorModule::updateModule()
     }
 
     // output the original image
-    ImageOf<PixelRgb> &yarpRawOutputImage = _rawImgOutputPort.prepare();
+    ImageOf<PixelBgr> &yarpRawOutputImage = _rawImgOutputPort.prepare();
     yarpRawOutputImage = _yarpRawImg;
     _rawImgOutputPort.setEnvelope(writestamp);
     _rawImgOutputPort.write();
@@ -1102,7 +1118,7 @@ bool BlobDescriptorModule::updateModule()
         // convert from OpenCV to yarp format
         cvCopyImage( opencvViewImg, (IplImage *)_yarpViewImg.getIplImage() );
     }
-    ImageOf<PixelRgb> &yarpViewOutputImg = _viewImgOutputPort.prepare();
+    ImageOf<PixelBgr> &yarpViewOutputImg = _viewImgOutputPort.prepare();
     yarpViewOutputImg = _yarpViewImg;
     _viewImgOutputPort.setEnvelope(writestamp);
     _viewImgOutputPort.write();
