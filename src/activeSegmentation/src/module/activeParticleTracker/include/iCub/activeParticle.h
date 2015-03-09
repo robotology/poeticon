@@ -99,18 +99,23 @@ public:
      */
     TRACKERManager( const std::string &moduleName, yarp::os::ResourceFinder &rf );
     ~TRACKERManager();
-    bool                    disParticles;
-    bool                    flag;
-    bool                    deleted;
+    
+    bool                disParticles;
+    bool                flag;
+    bool                deleted;
 
-    bool    open();
-    void    close();
-    void    onRead( yarp::sig::ImageOf<yarp::sig::PixelRgb> &img );
-    void    interrupt();
-    int     processFixationPoint(yarp::os::Bottle &b);
-    bool    stopTracker(int id);
-    bool    stopTrackers();
-    bool    countFrom(int index);
+    bool                open();
+    void                close();
+    void                onRead( yarp::sig::ImageOf<yarp::sig::PixelRgb> &img );
+    void                interrupt();
+    int                 processFixationPoint(yarp::os::Bottle &b);
+    
+    bool                stopTracker(int id);
+    bool                resumeTracker(int id);
+    bool                pauseTracker(int id);
+    bool                stopTrackers();
+    bool                countFrom(int index);
+    yarp::os::Bottle    getIDs();
 
     void afterStart(bool s)
     {
@@ -139,13 +144,16 @@ public:
     bool close();                                 // close and shut down the module
     //bool respond(const yarp::os::Bottle& command, yarp::os::Bottle& reply);
 
-    bool attach(yarp::os::RpcServer &source);
-    bool display(const std::string &value);
-    int  track(const double fix_x, const double fix_y);
-    bool untrack(const int32_t id);
-    bool countFrom(const int32_t index);
-    bool reset();
-    bool quit();
+    bool                attach(yarp::os::RpcServer &source);
+    bool                display(const std::string &value);
+    int                 track(const double fix_x, const double fix_y);
+    bool                untrack(const int32_t id);
+    bool                pause(const int32_t id);
+    bool                resume(const int32_t id);
+    bool                countFrom(const int32_t index);
+    yarp::os::Bottle    getIDs();
+    bool                reset();
+    bool                quit();
 
     double getPeriod();
     bool updateModule();

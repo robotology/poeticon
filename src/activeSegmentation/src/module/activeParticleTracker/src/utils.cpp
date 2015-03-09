@@ -195,7 +195,6 @@ void ParticleThread::run()
 
             retreive_particle( particles );
             
-            
             cvReleaseImage(&image);
         }
         cvReleaseImage(&img_hsv);

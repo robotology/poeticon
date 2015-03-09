@@ -126,11 +126,33 @@ bool TRACKERModule::untrack(const int32_t id)
 }
 
 /**********************************************************/
+bool TRACKERModule::pause(const int32_t id)
+{
+    trackerManager->pauseTracker(id);
+    return true;
+}
+
+/**********************************************************/
+bool TRACKERModule::resume(const int32_t id)
+{
+    trackerManager->resumeTracker(id);
+    return true;
+}
+
+/**********************************************************/
 bool TRACKERModule::reset()
 {
     trackerManager->stopTrackers();
     trackerManager->flag = false;
     return true;
+}
+
+/**********************************************************/
+Bottle TRACKERModule::getIDs()
+{
+    Bottle List;
+    List = trackerManager->getIDs();
+    return List;
 }
 
 /************************************************************************/
@@ -252,6 +274,54 @@ bool TRACKERManager::stopTracker(int id)
     workerThreads.erase(id);
     mutex.post();
     return true;
+}
+
+/**********************************************************/
+bool TRACKERManager::pauseTracker(int id)
+{
+    mutex.wait();
+    fprintf(stdout,"attempting to pause tracker id %d\n", id);
+    if (workerThreads[id]->isRunning())
+    {
+        fprintf(stdout,"in id running %d \n", id);
+        workerThreads[id]->stop();
+        fprintf(stdout,"done stopping id running %d \n", id);
+    }
+    else
+        fprintf(stdout,"failed to pause tracker id %d - Not running..\n", id);
+    
+    mutex.post();
+    return true;
+}
+
+/**********************************************************/
+bool TRACKERManager::resumeTracker(int id)
+{
+    mutex.wait();
+    fprintf(stdout,"attempting to resume tracker id %d\n", id);
+    
+    if (!workerThreads[id]->isRunning())
+    {
+        fprintf(stdout,"thread ID should not be running %d \n", id);
+        workerThreads[id]->start();
+    }
+    else
+        fprintf(stdout,"failed to resume tracker id %d - Aleady running..\n", id);
+    
+    mutex.post();
+    return true;
+}
+
+/**********************************************************/
+Bottle TRACKERManager::getIDs()
+{
+    Bottle listID;
+    std::map< unsigned int, ParticleThread* >::iterator itr;
+    for (itr = workerThreads.begin(); itr!=workerThreads.end(); itr++)
+        listID.addInt(itr->first);
+    
+
+    return listID;
 }
 
 /**********************************************************/
