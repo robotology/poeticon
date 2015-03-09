@@ -216,7 +216,8 @@ bool WorldStateMgrThread::initTracker()
 {
     if (trackerPort.getOutputCount() < 1)
     {
-        yWarning() << __func__ << ("exiting, %s not connected to /activeParticleTrack/rpc:i", trackerPortName.c_str());
+        yWarning() << __func__ << "exiting," << trackerPortName.c_str()
+                   << "not connected to /activeParticleTrack/rpc:i";
         return false;
     }
 
@@ -250,6 +251,76 @@ bool WorldStateMgrThread::initTracker()
                 u, v, trackerReply.toString().c_str(), countFrom+a);
     }
     yInfo("done initializing tracker");
+
+    return true;
+}
+
+bool WorldStateMgrThread::pauseTrack(const string &objName)
+{
+    if (trackerPort.getOutputCount() < 1)
+    {
+        yWarning("not connected to /activeParticleTrack/rpc:i");
+        return false;
+    }
+
+    if (!trackerInit)
+        yWarning("tracker was not initialized by WSM, was it initialized before?");
+
+    int id;
+    id = label2id(objName);
+    if (id==-1)
+    {
+        yWarning() << __func__ << "did not find tracker ID corresponding to label" << objName.c_str();
+        return false;
+    }
+
+    Bottle trackerCmd, trackerReply;
+    trackerCmd.addString("pause");
+    trackerCmd.addInt(id);
+    trackerPort.write(trackerCmd, trackerReply);
+    yDebug() << __func__ <<  "sending query to activeParticleTracker:" << trackerCmd.toString().c_str();
+    bool validResponse = false;
+    validResponse = ( (trackerReply.size()>0) &&
+                      (trackerReply.get(0).asVocab()==Vocab::encode("ok")) );
+    if (validResponse)
+        yDebug() << __func__ <<  "obtained valid response:" << trackerReply.toString().c_str();
+    else
+        yWarning() << __func__ <<  "obtained invalid response:" << trackerReply.toString().c_str();
+
+    return true;
+}
+
+bool WorldStateMgrThread::resumeTrack(const string &objName)
+{
+    if (trackerPort.getOutputCount() < 1)
+    {
+        yWarning("not connected to /activeParticleTrack/rpc:i");
+        return false;
+    }
+
+    if (!trackerInit)
+        yWarning("tracker was not initialized by WSM, was it initialized before?");
+
+    int id;
+    id = label2id(objName);
+    if (id==-1)
+    {
+        yWarning() << __func__ << "did not find tracker ID corresponding to label" << objName.c_str();
+        return false;
+    }
+
+    Bottle trackerCmd, trackerReply;
+    trackerCmd.addString("resume");
+    trackerCmd.addInt(id);
+    trackerPort.write(trackerCmd, trackerReply);
+    yDebug() << __func__ <<  "sending query to activeParticleTracker:" << trackerCmd.toString().c_str();
+    bool validResponse = false;
+    validResponse = ( (trackerReply.size()>0) &&
+                      (trackerReply.get(0).asVocab()==Vocab::encode("ok")) );
+    if (validResponse)
+        yDebug() << __func__ <<  "obtained valid response:" << trackerReply.toString().c_str();
+    else
+        yWarning() << __func__ <<  "obtained invalid response:" << trackerReply.toString().c_str();
 
     return true;
 }
@@ -645,11 +716,6 @@ void WorldStateMgrThread::refreshTracker()
         }
         //else
         //    yDebug() << __func__ << "trackIDs did not change, no need to refresh names";
-
-        // TODO: uncomment when implemented in activityInterface
-        //updateTrackUncertanties();
-        //pauseResumeTracks(0.5);
-
     }
     else
     {
@@ -670,62 +736,6 @@ void WorldStateMgrThread::updateTrackIDsNoDupes()
     std::sort( trackIDs.begin(),trackIDs.end() );
     trackIDs.erase( std::unique(trackIDs.begin(),trackIDs.end()), trackIDs.end() );
     */
-}
-
-void WorldStateMgrThread::updateTrackUncertainties()
-{
-    trackUnc.clear();
-    for (int t=0; t<sizeTargets; t++)
-    {
-        trackUnc.push_back( inTargets->get(t).asList()->get(8).asDouble() );
-    }
-}
-
-void WorldStateMgrThread::pauseResumeTracks(const double &thr)
-{
-    if (activityPort.getOutputCount() < 1)
-        return;
-
-    for (std::vector<double>::const_iterator iter = trackUnc.begin();
-        iter != trackUnc.end();
-        ++iter)
-    {
-        int idx = iter - trackUnc.begin();
-        if (*iter < thr)
-        {
-            yDebug() << __func__ << "pausing tracker thread" << trackIDs[idx];
-            Bottle activityCmd, activityReply;
-            activityCmd.addString("pause");
-            activityCmd.addInt(trackIDs[idx]);
-            activityPort.write(activityCmd, activityReply);
-            yDebug() << __func__ <<  "sending query to activityIF:" << activityCmd.toString().c_str();
-            activityPort.write(activityCmd, activityReply);
-            bool validResponse = false;
-            validResponse = ( (activityReply.size()>0) &&
-                              (activityReply.get(0).asVocab()==Vocab::encode("ok")) );
-            if (validResponse)
-                yDebug() << __func__ <<  "obtained valid response:" << activityReply.toString().c_str();
-            else
-                yWarning() << __func__ <<  "obtained invalid response:" << activityReply.toString().c_str();
-        }
-        else
-        {
-            yDebug() << __func__ << "resuming (or doing nothing) to tracker thread" << trackIDs[idx];
-            Bottle activityCmd, activityReply;
-            activityCmd.addString("resume");
-            activityCmd.addInt(trackIDs[idx]);
-            activityPort.write(activityCmd, activityReply);
-            yDebug() << __func__ <<  "sending query to activityIF:" << activityCmd.toString().c_str();
-            activityPort.write(activityCmd, activityReply);
-            bool validResponse = false;
-            validResponse = ( (activityReply.size()>0) &&
-                              (activityReply.get(0).asVocab()==Vocab::encode("ok")) );
-            if (validResponse)
-                yDebug() << __func__ <<  "obtained valid response:" << activityReply.toString().c_str();
-            else
-                yWarning() << __func__ <<  "obtained invalid response:" << activityReply.toString().c_str();
-        }
-    }
 }
 
 void WorldStateMgrThread::refreshPerception()

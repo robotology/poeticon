@@ -101,7 +101,6 @@ class WorldStateMgrThread : public RateThread
         int sizeTargets, sizeAff;
         std::vector<int> opcIDs;
         std::vector<int> trackIDs;
-        std::vector<double> trackUnc;
         idLabelMap opcMap;
         idLabelMap trackMap;
         idLabelMap wsMap;
@@ -133,6 +132,8 @@ class WorldStateMgrThread : public RateThread
         // perception mode
         bool initPerceptionVars();
         bool initTracker();
+        bool pauseTrack(const string &objName);
+        bool resumeTrack(const string &objName);
         void fsmPerception();
         void refreshOPC();
         void refreshOPCIDs();
@@ -142,8 +143,6 @@ class WorldStateMgrThread : public RateThread
         void refreshBlobs();
         void refreshTracker();
         void updateTrackIDsNoDupes();
-        void updateTrackUncertainties();
-        void pauseResumeTracks(const double &thr);
         void refreshPerception();
         bool refreshPerceptionAndValidate();
         bool doPopulateDB();

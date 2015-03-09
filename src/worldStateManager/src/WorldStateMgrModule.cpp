@@ -89,7 +89,6 @@ double WorldStateMgrModule::getPeriod()
     return 0.0;
 }
 
-
 bool WorldStateMgrModule::attach(RpcServer &source)
 {
     return this->yarp().attachAsServer(source);
@@ -103,6 +102,16 @@ bool WorldStateMgrModule::dump()
 bool WorldStateMgrModule::update()
 {
     return thread->updateWorldState();
+}
+
+bool WorldStateMgrModule::pause(const string &objName)
+{
+    return thread->pauseTrack(objName);
+}
+
+bool WorldStateMgrModule::resume(const string &objName)
+{
+    return thread->resumeTrack(objName);
 }
 
 bool WorldStateMgrModule::quit()

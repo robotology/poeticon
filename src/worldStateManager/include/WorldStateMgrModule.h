@@ -47,6 +47,8 @@ class WorldStateMgrModule : public RFModule, public WorldStateMgr_IDL
         bool attach(yarp::os::RpcServer &source);
         bool dump();
         bool update();
+        bool pause(const string &objName);
+        bool resume(const string &objName);
         bool quit();
 };
 

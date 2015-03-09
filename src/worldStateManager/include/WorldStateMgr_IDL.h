@@ -28,6 +28,24 @@ public:
    */
   virtual bool update();
   /**
+   * Pauses a specific stacking thread. This will
+   * pause the required tracking thread with the name
+   * provided by the user.
+   * @param objName specifies the label of the tracking thread
+   * to be paused
+   * @return true/false on success/failure
+   */
+  virtual bool pause(const std::string& objName);
+  /**
+   * Resumes a specific stacking thread. This will
+   * resume the required tracking thread with the name
+   * provided by the user.
+   * @param objName specifies the label of the tracking thread
+   * to be resumed
+   * @return true/false on success/failure
+   */
+  virtual bool resume(const std::string& objName);
+  /**
    * Quit the module.
    * @return true/false on success/failure
    */
