@@ -27,6 +27,11 @@ public:
    */
   virtual yarp::os::Bottle getIDs();
   /**
+   * Gets the list of ID actually being paused
+   * @return true/false on success/failure
+   */
+  virtual yarp::os::Bottle getPausedIDs();
+  /**
    * Track a fixation point. This initializes the
    * segmentation of the area of interest for subsequent
    * tracking.
@@ -37,6 +42,15 @@ public:
    * @return i32 of thread index
    */
   virtual int32_t track(const double fix_x, const double fix_y);
+  /**
+   * Deletes a specific stacking thread. This will
+   * delete the required tracking thread with the id
+   * provided by the user.
+   * @param id specifies the id of the tracking thread
+   * to be deleted
+   * @return true/false on success/failure
+   */
+  virtual bool untrack(const int32_t id);
   /**
    * Pauses a specific stacking thread. This will
    * pause the required tracking thread with the id

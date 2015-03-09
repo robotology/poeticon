@@ -67,28 +67,30 @@ private:
     yarp::os::BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelBgr> >    imageTplOutPort;        //output port Image
     yarp::os::BufferedPort<yarp::os::Bottle>                            targetOutPort;          //output port containing targets
 
-    bool                    checkClosure;
+    bool                        checkClosure;
+    int                         iter;
 
-    int                     iter;
+    yarp::sig::Vector           toDel;
 
-    yarp::sig::Vector       toDel;
+    yarp::os::Mutex             mutexPoints;
+    yarp::os::Semaphore         mutex;
+    IplImage                    *orig;
 
-    yarp::os::Mutex         mutexPoints;
-    yarp::os::Semaphore     mutex;
-    IplImage                *orig;
-
-    FixationPoint           fixationPoint;      //class to receive points from fixation point
+    FixationPoint               fixationPoint;      //class to receive points from fixation point
     
     yarp::os::ResourceFinder    rf;
 
-    friend class            FixationPoint;
+    friend class                FixationPoint;
 
-    TargetObjectRecord      &container;
+    TargetObjectRecord          &container;
 
+    double                      fix_x, fix_y, cropSizeWidth, cropSizeHeight;
+    
+    std::vector<int>            pausedThreads;
+    
+    
     std::map< unsigned int, ParticleThread* >  workerThreads;
-
-    double fix_x, fix_y, cropSizeWidth, cropSizeHeight;
-
+    
     void cloneTracker(TargetObject *obj, cv::Point *pt);
 
 public:
@@ -116,6 +118,7 @@ public:
     bool                stopTrackers();
     bool                countFrom(int index);
     yarp::os::Bottle    getIDs();
+    yarp::os::Bottle    getPausedIDs();
 
     void afterStart(bool s)
     {
@@ -152,6 +155,7 @@ public:
     bool                resume(const int32_t id);
     bool                countFrom(const int32_t index);
     yarp::os::Bottle    getIDs();
+    yarp::os::Bottle    getPausedIDs();
     bool                reset();
     bool                quit();
 

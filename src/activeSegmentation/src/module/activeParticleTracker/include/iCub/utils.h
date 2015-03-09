@@ -94,7 +94,7 @@ public:
 };
 
 /**********************************************************/
-class ParticleThread : public yarp::os::Thread
+class ParticleThread : public yarp::os::RateThread
 {
 public:
 

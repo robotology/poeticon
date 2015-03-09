@@ -23,12 +23,29 @@ public:
   virtual bool read(yarp::os::ConnectionReader& connection);
 };
 
+class activeParticleTrack_IDLServer_getPausedIDs : public yarp::os::Portable {
+public:
+  yarp::os::Bottle _return;
+  void init();
+  virtual bool write(yarp::os::ConnectionWriter& connection);
+  virtual bool read(yarp::os::ConnectionReader& connection);
+};
+
 class activeParticleTrack_IDLServer_track : public yarp::os::Portable {
 public:
   double fix_x;
   double fix_y;
   int32_t _return;
   void init(const double fix_x, const double fix_y);
+  virtual bool write(yarp::os::ConnectionWriter& connection);
+  virtual bool read(yarp::os::ConnectionReader& connection);
+};
+
+class activeParticleTrack_IDLServer_untrack : public yarp::os::Portable {
+public:
+  int32_t id;
+  bool _return;
+  void init(const int32_t id);
   virtual bool write(yarp::os::ConnectionWriter& connection);
   virtual bool read(yarp::os::ConnectionReader& connection);
 };
@@ -119,6 +136,26 @@ bool activeParticleTrack_IDLServer_getIDs::read(yarp::os::ConnectionReader& conn
 void activeParticleTrack_IDLServer_getIDs::init() {
 }
 
+bool activeParticleTrack_IDLServer_getPausedIDs::write(yarp::os::ConnectionWriter& connection) {
+  yarp::os::idl::WireWriter writer(connection);
+  if (!writer.writeListHeader(1)) return false;
+  if (!writer.writeTag("getPausedIDs",1,1)) return false;
+  return true;
+}
+
+bool activeParticleTrack_IDLServer_getPausedIDs::read(yarp::os::ConnectionReader& connection) {
+  yarp::os::idl::WireReader reader(connection);
+  if (!reader.readListReturn()) return false;
+  if (!reader.read(_return)) {
+    reader.fail();
+    return false;
+  }
+  return true;
+}
+
+void activeParticleTrack_IDLServer_getPausedIDs::init() {
+}
+
 bool activeParticleTrack_IDLServer_track::write(yarp::os::ConnectionWriter& connection) {
   yarp::os::idl::WireWriter writer(connection);
   if (!writer.writeListHeader(3)) return false;
@@ -142,6 +179,29 @@ void activeParticleTrack_IDLServer_track::init(const double fix_x, const double 
   _return = 0;
   this->fix_x = fix_x;
   this->fix_y = fix_y;
+}
+
+bool activeParticleTrack_IDLServer_untrack::write(yarp::os::ConnectionWriter& connection) {
+  yarp::os::idl::WireWriter writer(connection);
+  if (!writer.writeListHeader(2)) return false;
+  if (!writer.writeTag("untrack",1,1)) return false;
+  if (!writer.writeI32(id)) return false;
+  return true;
+}
+
+bool activeParticleTrack_IDLServer_untrack::read(yarp::os::ConnectionReader& connection) {
+  yarp::os::idl::WireReader reader(connection);
+  if (!reader.readListReturn()) return false;
+  if (!reader.readBool(_return)) {
+    reader.fail();
+    return false;
+  }
+  return true;
+}
+
+void activeParticleTrack_IDLServer_untrack::init(const int32_t id) {
+  _return = false;
+  this->id = id;
 }
 
 bool activeParticleTrack_IDLServer_pause::write(yarp::os::ConnectionWriter& connection) {
@@ -278,12 +338,32 @@ yarp::os::Bottle activeParticleTrack_IDLServer::getIDs() {
   bool ok = yarp().write(helper,helper);
   return ok?helper._return:_return;
 }
+yarp::os::Bottle activeParticleTrack_IDLServer::getPausedIDs() {
+  yarp::os::Bottle _return;
+  activeParticleTrack_IDLServer_getPausedIDs helper;
+  helper.init();
+  if (!yarp().canWrite()) {
+    fprintf(stderr,"Missing server method '%s'?\n","yarp::os::Bottle activeParticleTrack_IDLServer::getPausedIDs()");
+  }
+  bool ok = yarp().write(helper,helper);
+  return ok?helper._return:_return;
+}
 int32_t activeParticleTrack_IDLServer::track(const double fix_x, const double fix_y) {
   int32_t _return = 0;
   activeParticleTrack_IDLServer_track helper;
   helper.init(fix_x,fix_y);
   if (!yarp().canWrite()) {
     fprintf(stderr,"Missing server method '%s'?\n","int32_t activeParticleTrack_IDLServer::track(const double fix_x, const double fix_y)");
+  }
+  bool ok = yarp().write(helper,helper);
+  return ok?helper._return:_return;
+}
+bool activeParticleTrack_IDLServer::untrack(const int32_t id) {
+  bool _return = false;
+  activeParticleTrack_IDLServer_untrack helper;
+  helper.init(id);
+  if (!yarp().canWrite()) {
+    fprintf(stderr,"Missing server method '%s'?\n","bool activeParticleTrack_IDLServer::untrack(const int32_t id)");
   }
   bool ok = yarp().write(helper,helper);
   return ok?helper._return:_return;
@@ -375,6 +455,17 @@ bool activeParticleTrack_IDLServer::read(yarp::os::ConnectionReader& connection)
       reader.accept();
       return true;
     }
+    if (tag == "getPausedIDs") {
+      yarp::os::Bottle _return;
+      _return = getPausedIDs();
+      yarp::os::idl::WireWriter writer(reader);
+      if (!writer.isNull()) {
+        if (!writer.writeListHeader(1)) return false;
+        if (!writer.write(_return)) return false;
+      }
+      reader.accept();
+      return true;
+    }
     if (tag == "track") {
       double fix_x;
       double fix_y;
@@ -392,6 +483,22 @@ bool activeParticleTrack_IDLServer::read(yarp::os::ConnectionReader& connection)
       if (!writer.isNull()) {
         if (!writer.writeListHeader(1)) return false;
         if (!writer.writeI32(_return)) return false;
+      }
+      reader.accept();
+      return true;
+    }
+    if (tag == "untrack") {
+      int32_t id;
+      if (!reader.readI32(id)) {
+        reader.fail();
+        return false;
+      }
+      bool _return;
+      _return = untrack(id);
+      yarp::os::idl::WireWriter writer(reader);
+      if (!writer.isNull()) {
+        if (!writer.writeListHeader(1)) return false;
+        if (!writer.writeBool(_return)) return false;
       }
       reader.accept();
       return true;
@@ -502,7 +609,9 @@ std::vector<std::string> activeParticleTrack_IDLServer::help(const std::string& 
     helpString.push_back("*** Available commands:");
     helpString.push_back("display");
     helpString.push_back("getIDs");
+    helpString.push_back("getPausedIDs");
     helpString.push_back("track");
+    helpString.push_back("untrack");
     helpString.push_back("pause");
     helpString.push_back("resume");
     helpString.push_back("countFrom");
@@ -523,6 +632,11 @@ std::vector<std::string> activeParticleTrack_IDLServer::help(const std::string& 
       helpString.push_back("Gets the list of ID being tracked ");
       helpString.push_back("@return true/false on success/failure ");
     }
+    if (functionName=="getPausedIDs") {
+      helpString.push_back("yarp::os::Bottle getPausedIDs() ");
+      helpString.push_back("Gets the list of ID actually being paused ");
+      helpString.push_back("@return true/false on success/failure ");
+    }
     if (functionName=="track") {
       helpString.push_back("int32_t track(const double fix_x, const double fix_y) ");
       helpString.push_back("Track a fixation point. This initializes the ");
@@ -533,6 +647,15 @@ std::vector<std::string> activeParticleTrack_IDLServer::help(const std::string& 
       helpString.push_back("@param fix_x specifies the y coordinate of the ");
       helpString.push_back("required fixation point for segmentation ");
       helpString.push_back("@return i32 of thread index ");
+    }
+    if (functionName=="untrack") {
+      helpString.push_back("bool untrack(const int32_t id) ");
+      helpString.push_back("Deletes a specific stacking thread. This will ");
+      helpString.push_back("delete the required tracking thread with the id ");
+      helpString.push_back("provided by the user. ");
+      helpString.push_back("@param id specifies the id of the tracking thread ");
+      helpString.push_back("to be deleted ");
+      helpString.push_back("@return true/false on success/failure ");
     }
     if (functionName=="pause") {
       helpString.push_back("bool pause(const int32_t id) ");

@@ -27,6 +27,12 @@ service activeParticleTrack_IDLServer
   * @return true/false on success/failure
   */
   Bottle getIDs();
+  
+  /**
+   * Gets the list of ID actually being paused
+   * @return true/false on success/failure
+   */
+  Bottle getPausedIDs();
 
   /**
   * Track a fixation point. This initializes the
@@ -41,13 +47,23 @@ service activeParticleTrack_IDLServer
   i32 track(1:double fix_x, 2:double fix_y);
   
   /**
-  * Pauses a specific stacking thread. This will
-  * pause the required tracking thread with the id
+  * Deletes a specific stacking thread. This will
+  * delete the required tracking thread with the id
   * provided by the user.
   * @param id specifies the id of the tracking thread 
-  * to be paused
+  * to be deleted
   * @return true/false on success/failure
   */
+  bool untrack(1:i32 id);
+  
+  /**
+   * Pauses a specific stacking thread. This will
+   * pause the required tracking thread with the id
+   * provided by the user.
+   * @param id specifies the id of the tracking thread
+   * to be paused
+   * @return true/false on success/failure
+   */
   bool pause(1:i32 id);
   
   /**
