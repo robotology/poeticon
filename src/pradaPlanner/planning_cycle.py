@@ -78,6 +78,7 @@ class ActionExecutorCommunication:
         return ans.size() == 1 and ans.get(0).asVocab() == 27503
     
 def update_state(PathName):
+    print "updating state"
     symbol_file = open(''.join(PathName +"/symbols.dat"))
     symbols = symbol_file.read()
     symbol_file.close()
@@ -97,9 +98,12 @@ def update_state(PathName):
         if symbols[j][0] not in data and symbols[j][1] == 'primitive':
             state = '-'.join((state,''.join((symbols[j][0],'() '))))
     state = ''.join((state,'\n'))
+    print state
     state_file = open(''.join(PathName +"/state.dat"),'w')
+    print state_file
     state_file.write(state)
     state_file.close()
+    print "done"
         
 
 def planning_cycle():
@@ -127,7 +131,7 @@ def planning_cycle():
     prax_yarp = yarp.BufferedPortBottle()##
     prax_yarp.open("/planner/prax_inst:io")
 
-    Aff_yarp = yarp.BufferedPortBottle()
+    Aff_yarp = yarp.BufferedPortBottle()##
     Aff_yarp.open("/planner/Aff_cmd:io")
 
 
@@ -176,7 +180,7 @@ def planning_cycle():
                     if state_flag == 1:
                         break
                     yarp.Time.delay(1)
-                yarp.Time.delay(1)
+            yarp.Time.delay(0.1)
     ###################
         
         print 'state updated'
@@ -189,9 +193,10 @@ def planning_cycle():
             if goal_yarp.getOutputCount() != 0:
                 break
         print 'goal connection done'
+        instructions = '((hand,grasp,cheese),(cheese,reach,bun-bottom),(hand,put,cheese),(hand,grasp,bun-top),(bun-top,reach,cheese),(hand,put,bun-top))'
         goal_bottle_out = goal_yarp.prepare()
         goal_bottle_out.clear()
-        goal_bottle_out.addString('start')
+        goal_bottle_out.addString(instructions)
         goal_yarp.write()
         while 1:
             goal_bottle_in = goal_yarp.read(False)
@@ -257,9 +262,6 @@ def planning_cycle():
             cont = 0
             if mode != 3:
                 while 1:
-##                    choice_var = raw_input("update state? y/n")
-##                    if choice_var == 'n':
-##                        break
                     print "communicating..."
                     state_flag = 0
                     State_bottle_out = State_yarp.prepare()
@@ -283,8 +285,10 @@ def planning_cycle():
                     if state_flag == 1:
                         break
                     yarp.Time.delay(1)
+            yarp.Time.delay(0.1)
                    
             update_state(PathName)
+            raw_input("press enter to continue")
             
 ################# function under construction, updating when objects change ################
 ## requires the geometric grounding to change, to ground object by object
@@ -405,6 +409,8 @@ def planning_cycle():
             goal = subgoal_file.read().split(' ')
             subgoal_file.close()
             print 'goals not met:'
+            print state
+            print goal
             for t in range(len(goal)):
                 if goal[t] not in state:
                     print goal[t]
