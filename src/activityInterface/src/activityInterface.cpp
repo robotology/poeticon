@@ -782,7 +782,7 @@ Bottle ActivityInterface::underOf(const std::string &objName)
     Bottle replyList;
     
     replyList.clear();
-    Bottle &list=replyList.addList();
+    //Bottle &list=replyList.addList();
     
     int id = -1;
     
@@ -793,7 +793,7 @@ Bottle ActivityInterface::underOf(const std::string &objName)
     
     for (std::map<int, string>::reverse_iterator rit=onTopElements.rbegin(); rit!=onTopElements.rend(); ++rit)
         if (strcmp (objName.c_str(), rit->second.c_str() ) != 0 && id >= 0 && rit->first <= id)
-            list.addString(rit->second.c_str());
+            replyList.addString(rit->second.c_str());
     
     return replyList;
 }
