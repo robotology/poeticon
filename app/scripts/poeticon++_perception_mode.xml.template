@@ -129,6 +129,10 @@
     <to>/activityInterface/rpc:i</to>
 </connection>
 <connection>
+    <from>/activityInterface/worldState:rpc</from>
+    <to>/wsm/rpc:i</to>
+</connection>
+<connection>
     <from>/wsm/tracker:rpc</from>
     <to>/activeParticleTrack/rpc:i</to>
 </connection>
