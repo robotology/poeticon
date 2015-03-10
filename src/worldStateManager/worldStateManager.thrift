@@ -25,6 +25,26 @@ service WorldStateMgr_IDL
   bool update();
 
   /**
+   * Pauses a specific stacking thread. This will
+   * pause the required tracking thread with the name
+   * provided by the user.
+   * @param objName specifies the label of the tracking thread
+   * to be paused
+   * @return true/false on success/failure
+   */
+  bool pause(1:string objName);
+  
+  /**
+   * Resumes a specific stacking thread. This will
+   * resume the required tracking thread with the name
+   * provided by the user.
+   * @param objName specifies the label of the tracking thread
+   * to be resumed
+   * @return true/false on success/failure
+   */
+  bool resume(1:string objName);
+
+  /**
   * Quit the module.
   * @return true/false on success/failure
   */

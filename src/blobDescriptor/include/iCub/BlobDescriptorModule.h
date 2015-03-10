@@ -24,13 +24,18 @@ using namespace yarp::sig;
 #include <iCub/BlobDescriptorSupport.h>
 
 /* OpenCV */
-// TODO: full transition to OpenCV 2 C++ APIs
-#include <opencv/cv.h>
-#include <opencv/cxcore.h>
-#include <opencv/highgui.h>
+// OpenCV 2
+#include <opencv2/opencv.hpp>
+#include <opencv2/core/core.hpp>
+#include <opencv2/highgui/highgui.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
+// OpenCV 1
+//#include <opencv/cv.h>
+//#include <opencv/cxcore.h>
+//#include <opencv/highgui.h>
 
 /* system */
+#include <cmath>
 #include <string>
 #include <stdio.h>
 using namespace std;
@@ -50,11 +55,11 @@ class BlobDescriptorModule : public RFModule
     string                            bothPartsImgOutputPortName;
     string                            _handlerPortName;
     Port                              _handlerPort; /* rpc port to handle messages */
-    BufferedPort<ImageOf<PixelRgb> >  _rawImgInputPort;
-    BufferedPort<ImageOf<PixelRgb> >  binaryImgInputPort;
+    BufferedPort<ImageOf<PixelBgr> >  _rawImgInputPort;
+    BufferedPort<ImageOf<PixelBgr> >  binaryImgInputPort;
     BufferedPort<ImageOf<PixelInt> >  _labeledImgInputPort;
-    BufferedPort<ImageOf<PixelRgb> >  _rawImgOutputPort;
-    BufferedPort<ImageOf<PixelRgb> >  _viewImgOutputPort;
+    BufferedPort<ImageOf<PixelBgr> >  _rawImgOutputPort;
+    BufferedPort<ImageOf<PixelBgr> >  _viewImgOutputPort;
     BufferedPort<Bottle>              _affDescriptorOutputPort;
     BufferedPort<Bottle>              toolAffDescriptorOutputPort;
 
@@ -62,21 +67,21 @@ class BlobDescriptorModule : public RFModule
     //BufferedPort<ImageOf<PixelRgb> >  bothPartsImgOutputPort;
 
     /* yarp image pointers to access image ports */
-    ImageOf<PixelRgb>                *_yarpRawInputPtr;
-    ImageOf<PixelRgb>                *yarpBinaryInputPtr;
+    ImageOf<PixelBgr>                *_yarpRawInputPtr;
+    ImageOf<PixelBgr>                *yarpBinaryInputPtr;
     ImageOf<PixelInt>                *_yarpLabeledInputPtr;
     /* yarp internal image buffers */
-    ImageOf<PixelRgb>                 _yarpRawImg;
-    ImageOf<PixelRgb>                 yarpBinaryImg;
-    ImageOf<PixelRgb>                 _yarpViewImg;
-    ImageOf<PixelRgb>                 _yarpHSVImg;
+    ImageOf<PixelBgr>                 _yarpRawImg;
+    ImageOf<PixelBgr>                 yarpBinaryImg;
+    ImageOf<PixelBgr>                 _yarpViewImg;
+    ImageOf<PixelBgr>                 _yarpHSVImg;
     ImageOf<PixelMono>                _yarpHueImg;
     ImageOf<PixelMono>                _yarpSatImg;
     ImageOf<PixelMono>                _yarpValImg;
     ImageOf<PixelInt>                 _yarpLabeledImg;
     ImageOf<PixelMono>                _yarpTempImg;
 
-    //ImageOf<PixelRgb>                 imgBothParts;
+    //ImageOf<PixelBgr>                 imgBothParts;
 
     Bottle                            _affDescriptor;
     Bottle                            toolAffDescriptor;
@@ -96,14 +101,14 @@ class BlobDescriptorModule : public RFModule
 
     ObjectDescriptor                 *_objDescTable;
     int                               _numObjects;
-	
+    
     /* other parameters that can be user-specified */
     int _minAreaThreshold; /* min. number of pixels allowed for foreground objects */
     int _maxAreaThreshold; /* min. number of pixels allowed for foreground objects */
     int _maxObjects;       /* maximum number of object to process */
-    int	_invalidate_boundary_objects; /*  Flag to invalidate objects touching the image boundaries */
+    int _invalidate_boundary_objects; /*  Flag to invalidate objects touching the image boundaries */
     int _draw_holes;       /* Flag to draw the holes of the valid objects in the display image */
-	
+    
     // added for First-MM, Jan. 2011
     bool normalized_coords;
 

@@ -67,28 +67,30 @@ private:
     yarp::os::BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelBgr> >    imageTplOutPort;        //output port Image
     yarp::os::BufferedPort<yarp::os::Bottle>                            targetOutPort;          //output port containing targets
 
-    bool                    checkClosure;
+    bool                        checkClosure;
+    int                         iter;
 
-    int                     iter;
+    yarp::sig::Vector           toDel;
 
-    yarp::sig::Vector       toDel;
+    yarp::os::Mutex             mutexPoints;
+    yarp::os::Semaphore         mutex;
+    IplImage                    *orig;
 
-    yarp::os::Mutex         mutexPoints;
-    yarp::os::Semaphore     mutex;
-    IplImage                *orig;
-
-    FixationPoint           fixationPoint;      //class to receive points from fixation point
+    FixationPoint               fixationPoint;      //class to receive points from fixation point
     
     yarp::os::ResourceFinder    rf;
 
-    friend class            FixationPoint;
+    friend class                FixationPoint;
 
-    TargetObjectRecord      &container;
+    TargetObjectRecord          &container;
 
+    double                      fix_x, fix_y, cropSizeWidth, cropSizeHeight;
+    
+    std::vector<int>            pausedThreads;
+    
+    
     std::map< unsigned int, ParticleThread* >  workerThreads;
-
-    double fix_x, fix_y, cropSizeWidth, cropSizeHeight;
-
+    
     void cloneTracker(TargetObject *obj, cv::Point *pt);
 
 public:
@@ -99,18 +101,24 @@ public:
      */
     TRACKERManager( const std::string &moduleName, yarp::os::ResourceFinder &rf );
     ~TRACKERManager();
-    bool                    disParticles;
-    bool                    flag;
-    bool                    deleted;
+    
+    bool                disParticles;
+    bool                flag;
+    bool                deleted;
 
-    bool    open();
-    void    close();
-    void    onRead( yarp::sig::ImageOf<yarp::sig::PixelRgb> &img );
-    void    interrupt();
-    int     processFixationPoint(yarp::os::Bottle &b);
-    bool    stopTracker(int id);
-    bool    stopTrackers();
-    bool    countFrom(int index);
+    bool                open();
+    void                close();
+    void                onRead( yarp::sig::ImageOf<yarp::sig::PixelRgb> &img );
+    void                interrupt();
+    int                 processFixationPoint(yarp::os::Bottle &b);
+    
+    bool                stopTracker(int id);
+    bool                resumeTracker(int id);
+    bool                pauseTracker(int id);
+    bool                stopTrackers();
+    bool                countFrom(int index);
+    yarp::os::Bottle    getIDs();
+    yarp::os::Bottle    getPausedIDs();
 
     void afterStart(bool s)
     {
@@ -139,13 +147,17 @@ public:
     bool close();                                 // close and shut down the module
     //bool respond(const yarp::os::Bottle& command, yarp::os::Bottle& reply);
 
-    bool attach(yarp::os::RpcServer &source);
-    bool display(const std::string &value);
-    int  track(const double fix_x, const double fix_y);
-    bool untrack(const int32_t id);
-    bool countFrom(const int32_t index);
-    bool reset();
-    bool quit();
+    bool                attach(yarp::os::RpcServer &source);
+    bool                display(const std::string &value);
+    int                 track(const double fix_x, const double fix_y);
+    bool                untrack(const int32_t id);
+    bool                pause(const int32_t id);
+    bool                resume(const int32_t id);
+    bool                countFrom(const int32_t index);
+    yarp::os::Bottle    getIDs();
+    yarp::os::Bottle    getPausedIDs();
+    bool                reset();
+    bool                quit();
 
     double getPeriod();
     bool updateModule();

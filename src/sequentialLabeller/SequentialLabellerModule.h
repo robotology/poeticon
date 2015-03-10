@@ -95,7 +95,7 @@
  *
  * \author Giovanni Saponaro <gsaponaro@isr.ist.utl.pt>
  *
- * Copyright (C) 2013 POETICON++, European Commission FP7 project ICT-288382
+ * Copyright (C) 2012-2015 POETICON++, European Commission FP7 project ICT-288382
  * CopyPolicy: Released under the terms of the GNU GPL v2.0 
  *
  */
@@ -114,10 +114,16 @@ using namespace yarp::os;
 using namespace yarp::sig;
 
 /* OpenCV */
-// TODO: use OpenCV 2 APIs
-#include <opencv/cv.h>
-#include <opencv/cxcore.h>
-#include <opencv/highgui.h>
+// OpenCV 2
+#include <opencv2/opencv.hpp>
+#include <opencv2/core/core.hpp>
+#include <opencv2/highgui/highgui.hpp>
+#include <opencv2/legacy/compat.hpp> // cvCopyImage
+// OpenCV 1
+//#include <opencv/cv.h>
+//#include <opencv/cxcore.h>
+//#include <opencv/highgui.h>
+
 #include "cvSeqLabel.h"
 
 /* system */
@@ -126,38 +132,38 @@ using namespace std;
 
 class SequentialLabellerModule : public RFModule
 {
-	/* private class variables and module parameters */
-	string                            _moduleName;
-	string                            _handlerPortName;
+    /* private class variables and module parameters */
+    string                            _moduleName;
+    string                            _handlerPortName;
     Port                              _handlerPort; /* a port to handle messages */
 
-	string                            rawImgInputPortName;
+    string                            rawImgInputPortName;
     string                            rawImgOutputPortName;
-  	string                            binaryImgInputPortName;
-  	string                            labeledImgOutputPortName;
-	/* yarp image pointers to access image ports */
-	ImageOf<PixelRgb>                *yarpRawInputPtr;
-	ImageOf<PixelMono>               *yarpBinaryInputPtr;
-	/* yarp internal image buffers */ 
+    string                            binaryImgInputPortName;
+    string                            labeledImgOutputPortName;
+    /* yarp image pointers to access image ports */
+    ImageOf<PixelRgb>                *yarpRawInputPtr;
+    ImageOf<PixelMono>               *yarpBinaryInputPtr;
+    /* yarp internal image buffers */ 
     ImageOf<PixelRgb>                 yarpRawImg;
     ImageOf<PixelMono>                yarpBinaryImg;
     ImageOf<PixelMono>                 yarpLabeledImg;
 
-	int                               w, h;
-	CvSize                            sz;
+    int                               w, h;
+    CvSize                            sz;
     
-	BufferedPort<ImageOf<PixelRgb> >  rawImgInputPort;
-  	BufferedPort<ImageOf<PixelMono> > binaryImgInputPort;    
-	BufferedPort<ImageOf<PixelRgb> >  rawImgOutputPort;
-  	BufferedPort<ImageOf<PixelMono> >  labeledImgOutputPort;
+    BufferedPort<ImageOf<PixelRgb> >  rawImgInputPort;
+    BufferedPort<ImageOf<PixelMono> > binaryImgInputPort;
+    BufferedPort<ImageOf<PixelRgb> >  rawImgOutputPort;
+    BufferedPort<ImageOf<PixelMono> >  labeledImgOutputPort;
 
 public:
-	virtual bool configure(ResourceFinder &rf); /* configure module parameters, return true if successful */
-	virtual bool interruptModule();             /* interrupt, e.g., ports */
-	virtual bool close();                       /* close and shut down module */
-	virtual bool respond(const Bottle &command, Bottle &reply);
-	virtual bool updateModule();
-	virtual double getPeriod();
+    virtual bool configure(ResourceFinder &rf); /* configure module parameters, return true if successful */
+    virtual bool interruptModule();             /* interrupt, e.g., ports */
+    virtual bool close();                       /* close and shut down module */
+    virtual bool respond(const Bottle &command, Bottle &reply);
+    virtual bool updateModule();
+    virtual double getPeriod();
 };
 
 #endif // __SEQUENTIAL_LABELLER_MODULE_H__

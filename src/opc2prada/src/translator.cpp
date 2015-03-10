@@ -21,6 +21,7 @@ double TranslatorModule::getPeriod() {
 TranslatorModule::switchCase TranslatorModule::hashtable(string command){
 	if(command=="name")  return name;
 	if(command=="desc2d")  return desc;
+	if(command=="tooldesc2d")  return tooldesc2d;
 	if(command=="is_hand")  return is_h;
 	if(command=="in_hand")  return in_h;
 	if(command=="on_top_of")  return on_t;
@@ -94,6 +95,9 @@ bool   TranslatorModule::updateModule() {
                             case desc: {
                                 break;
                             }
+                            case tooldesc2d: {
+                                break;
+                            }
                             case pos: {
                                 break;
                             }
@@ -118,13 +122,6 @@ bool   TranslatorModule::updateModule() {
                                 }
                                 break;
                             }
-                           /* case touch: {
-                                Bottle *touch = propriedade->get(1).asList();
-                                for(int k=0; k < touch->size(); k++){
-                                    myfile2 << idsp->get((i-1)).asInt() <<"_touch_" <<touch->get(k).asInt() <<"() ";
-                                }
-                                break;
-                            }*/
                             case is_h: {
                                 if(propriedade->get(1).asString() == "true") {
                                     myfile2 << idsp->get((i-1)).asInt() <<"_ishand" <<"() ";
@@ -167,8 +164,8 @@ bool   TranslatorModule::updateModule() {
             send.addString("ACK");
             cout << "DONE" << endl;
             translatorPort.write();
-        }
-        else if(receive->get(0).asString() == "query" && receive->get(1).isInt()) {
+        } // end "update"
+        else if(receive->get(0).asString() == "querydesc2d" && receive->get(1).isInt()) {
             /*cout << "query received" << endl;*/
             readingThread->guard.lock();
             dataBase = readingThread->_data;
@@ -264,7 +261,41 @@ bool   TranslatorModule::updateModule() {
                     }
                 }
             }
-        }
+        } // end "querydesc2d"
+        else if(receive->get(0).asString() == "querytooldesc2d" && receive->get(1).isInt()) {
+
+            /*cout << "query received" << endl;*/
+            readingThread->guard.lock();
+            dataBase = readingThread->_data;
+            ids2 = readingThread->_ids;
+            readingThread->guard.unlock();
+            idsp = ids2.get(1).asList();
+            idsp = idsp->get(1).asList();
+            ObjectID = receive->get(1).asInt();
+            for(int i=0;i<idsp->size();i++) {
+                if(idsp->get(i).asInt() == ObjectID) {
+                    ObjectID = i;
+                    break;
+                }
+            }
+            Bottle *objecto = dataBase.get(ObjectID+1).asList();
+            /*cout << ObjectID << endl;*/
+            for(int j=0;j<objecto->size();j++) { // for each properties
+                Bottle *propriedade = objecto->get(j).asList();
+                switchCase r = hashtable(propriedade->get(0).asString());
+                /*cout << propriedade->get(0).asString().c_str() << endl;*/
+                switch(r) {
+                    case tooldesc2d: {
+                        Bottle &send = translatorPort.prepare();
+                        send.clear();
+                        send.addList()=*propriedade->get(1).asList();
+                        translatorPort.write();
+                        break;
+                    }
+                }
+            }
+
+        } // end "querytooldesc2d"
         else {
             Bottle &send = translatorPort.prepare();
             send.clear();

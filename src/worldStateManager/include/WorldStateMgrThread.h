@@ -69,12 +69,14 @@ class WorldStateMgrThread : public RateThread
         string opcPortName;
         string inTargetsPortName;
         string inAffPortName;
+        string inToolAffPortName;
         string activityPortName;
         string trackerPortName;
 
         RpcClient opcPort;
         BufferedPort<Bottle> inTargetsPort;
         BufferedPort<Bottle> inAffPort;
+        BufferedPort<Bottle> inToolAffPort;
         RpcClient activityPort;
         RpcClient trackerPort;
 
@@ -97,11 +99,11 @@ class WorldStateMgrThread : public RateThread
         bool toldUserWaitActivityIF;
         bool toldUserActivityIFConnected;
         Bottle *inAff;
+        Bottle *inToolAff;
         Bottle *inTargets;
         int sizeTargets, sizeAff;
         std::vector<int> opcIDs;
         std::vector<int> trackIDs;
-        std::vector<double> trackUnc;
         idLabelMap opcMap;
         idLabelMap trackMap;
         idLabelMap wsMap;
@@ -133,6 +135,8 @@ class WorldStateMgrThread : public RateThread
         // perception mode
         bool initPerceptionVars();
         bool initTracker();
+        bool pauseTrack(const string &objName);
+        bool resumeTrack(const string &objName);
         void fsmPerception();
         void refreshOPC();
         void refreshOPCIDs();
@@ -142,14 +146,13 @@ class WorldStateMgrThread : public RateThread
         void refreshBlobs();
         void refreshTracker();
         void updateTrackIDsNoDupes();
-        void updateTrackUncertainties();
-        void pauseResumeTracks(const double &thr);
         void refreshPerception();
         bool refreshPerceptionAndValidate();
         bool doPopulateDB();
         bool vectorsDiffer(const std::vector<int> &v1, const std::vector<int> &v2);
         bool mergeMaps(const idLabelMap &map1, const idLabelMap &map2, idLabelMap &result);
         bool getTrackerBottleIndexFromID(const int &id, int &tbi);
+        bool getAffBottleIndexFromTrackROI(const int &u, const int &v, int &abi);
         int label2id(const string &label);
         bool getLabel(const double &u, const double &v, string &label);
         bool mono2stereo(const double &u, const double &v, double &x, double &y, double &z);

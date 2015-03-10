@@ -226,25 +226,25 @@
 
 int main(int argc, char *argv[])
 {
-        /* initialize YARP network */
-        Network yarp;
-        if(! yarp.checkNetwork() )
-        {
-            fprintf(stdout,"Error: yarp server does not seem available\n");
-            return -1; // EXIT_FAILURE
-        }
+    /* initialize YARP network */
+    Network yarp;
+    if(! yarp.checkNetwork() )
+    {
+        fprintf(stdout,"Error: yarp server does not seem available\n");
+        return -1; // EXIT_FAILURE
+    }
 
-	/* create module */
-	BlobDescriptorModule bdm;
+    /* create module */
+    BlobDescriptorModule bdm;
 
-        /* prepare and configure Resource Finder */
-        ResourceFinder rf;
-        rf.setVerbose(true);
-        rf.setDefaultContext("blobDescriptor");    // overridden by --context parameter
-        rf.setDefaultConfigFile("blobDescriptor.ini");  // overridden by --from parameter
-        rf.configure(argc, argv);
+    /* prepare and configure Resource Finder */
+    ResourceFinder rf;
+    rf.setVerbose(true);
+    rf.setDefaultContext("poeticon");
+    rf.setDefaultConfigFile("blobDescriptor.ini");
+    rf.configure(argc, argv);
 
-	/* runModule calls configure first and, if successful, it then runs the module */
-	bdm.runModule(rf);
-	return 0; // EXIT_SUCCESS
+    /* runModule calls configure first and, if successful, it then runs the module */
+    bdm.runModule(rf);
+    return 0; // EXIT_SUCCESS
 }

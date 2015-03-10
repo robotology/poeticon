@@ -126,11 +126,41 @@ bool TRACKERModule::untrack(const int32_t id)
 }
 
 /**********************************************************/
+bool TRACKERModule::pause(const int32_t id)
+{
+    trackerManager->pauseTracker(id);
+    return true;
+}
+
+/**********************************************************/
+bool TRACKERModule::resume(const int32_t id)
+{
+    trackerManager->resumeTracker(id);
+    return true;
+}
+
+/**********************************************************/
 bool TRACKERModule::reset()
 {
     trackerManager->stopTrackers();
     trackerManager->flag = false;
     return true;
+}
+
+/**********************************************************/
+Bottle TRACKERModule::getIDs()
+{
+    Bottle List;
+    List = trackerManager->getIDs();
+    return List;
+}
+
+/**********************************************************/
+Bottle TRACKERModule::getPausedIDs()
+{
+    Bottle List;
+    List = trackerManager->getPausedIDs();
+    return List;
 }
 
 /************************************************************************/
@@ -154,14 +184,7 @@ double TRACKERModule::getPeriod()
 /**********************************************************/
 TRACKERManager::~TRACKERManager()
 {
-    fprintf(stdout, "Going to stop %d Threads\n",(int)workerThreads.size());
-
-    std::map< unsigned int, ParticleThread* >::iterator itr;
-    for (itr = workerThreads.begin(); itr!=workerThreads.end(); itr++)
-    {
-        itr->second->stop();
-        delete itr->second;
-    }
+    
 }
 
 /**********************************************************/
@@ -210,6 +233,18 @@ bool TRACKERManager::open()
 void TRACKERManager::close()
 {
     fprintf(stdout,"now closing ports...\n");
+    
+    
+    fprintf(stdout, "Going to stop %d Threads\n",(int)workerThreads.size());
+    
+    std::map< unsigned int, ParticleThread* >::iterator itr;
+    for (itr = workerThreads.begin(); itr!=workerThreads.end(); itr++)
+    {
+        itr->second->stop();
+        delete itr->second;
+    }
+    fprintf(stdout,"done stopping the threads port...\n");
+    
     mutex.wait();
     imageOutPort.close();
 	fixationPoint.close();
@@ -253,6 +288,69 @@ bool TRACKERManager::stopTracker(int id)
     mutex.post();
     return true;
 }
+
+/**********************************************************/
+bool TRACKERManager::pauseTracker(int id)
+{
+    mutex.wait();
+    fprintf(stdout,"attempting to pause tracker id %d\n", id);
+    if (workerThreads[id]->isRunning())
+    {
+        workerThreads[id]->suspend();
+        pausedThreads.push_back(id);
+        fprintf(stdout,"done pausing the tracker id %d\n", id);
+    }
+    else
+        fprintf(stdout,"failed to pause tracker id %d - Not running..\n", id);
+    
+    mutex.post();
+    return true;
+}
+
+/**********************************************************/
+bool TRACKERManager::resumeTracker(int id)
+{
+    mutex.wait();
+    fprintf(stdout,"attempting to resume tracker id %d\n", id);
+    
+    if (workerThreads[id]->isSuspended())
+    {
+        workerThreads[id]->resume();
+        
+        pausedThreads.erase(std::remove(pausedThreads.begin(), pausedThreads.end(), id), pausedThreads.end());
+        
+        fprintf(stdout,"done resuming the tracker id %d\n", id);
+    }
+    else
+        fprintf(stdout,"failed to resume tracker id %d - Aleady running..\n", id);
+    
+    mutex.post();
+    return true;
+}
+
+/**********************************************************/
+Bottle TRACKERManager::getIDs()
+{
+    Bottle listID;
+    std::map< unsigned int, ParticleThread* >::iterator itr;
+    for (itr = workerThreads.begin(); itr!=workerThreads.end(); itr++)
+        listID.addInt(itr->first);
+    
+
+    return listID;
+}
+
+/**********************************************************/
+Bottle TRACKERManager::getPausedIDs()
+{
+    Bottle listID;
+
+    for (int i = 0; i < pausedThreads.size(); i++  )
+        listID.addInt(pausedThreads[i]);
+    
+    return listID;
+}
+
 
 /**********************************************************/
 bool TRACKERManager::stopTrackers()
@@ -388,75 +486,83 @@ void TRACKERManager::onRead(ImageOf<yarp::sig::PixelRgb> &img)
         }
         if (obj->boundingBox.size())
         {
-            Bottle &t = b.addList();
-            t.addDouble(obj->owner);
-            for (int i=0; i<obj->boundingBox.size(); i++)
-                t.addDouble(obj->boundingBox[i]);
-
-            t.addInt(obj->group);
-
-            int x0 = obj->boundingBox[2];
-            int y0 = obj->boundingBox[3];
-            int x1 = obj->boundingBox[4];
-            int y1 = obj->boundingBox[5];
-            int cx = obj->boundingBox[0];
-            int cy = obj->boundingBox[1];
-
-            if (disParticles)
+            bool send = true;
+            for (int i = 0; i < pausedThreads.size(); i++  )
+                if (obj->owner == pausedThreads[i])
+                    send = false;
+            
+            if (send)
             {
-                for (int j = 0; j < obj->particlePoints.size(); j++ )
-                    cvCircle ((IplImage*)outImg.getIplImage(), obj->particlePoints[j], 3,  obj->colour, 1);
-            }
+                Bottle &t = b.addList();
+                t.addDouble(obj->owner);
+                for (int i=0; i<obj->boundingBox.size(); i++)
+                    t.addDouble(obj->boundingBox[i]);
 
-            cvRectangle( (IplImage*)outImg.getIplImage(), cvPoint( x0, y0 ), cvPoint( x1, y1 ), obj->colour, 1, 8, 0 );
+                t.addInt(obj->group);
 
-            cvCircle ( (IplImage*)outImg.getIplImage(), cvPoint( cx, cy ), 3, CV_RGB(255, 0 , 0), 1 );
-            cvCircle ( (IplImage*)outImg.getIplImage(), cvPoint( x0, y0 ), 3, CV_RGB(0, 255 , 0), 1 );
-            cvCircle ( (IplImage*)outImg.getIplImage(), cvPoint( x1, y1 ), 3, CV_RGB(0, 255 , 0), 1 );
+                int x0 = obj->boundingBox[2];
+                int y0 = obj->boundingBox[3];
+                int x1 = obj->boundingBox[4];
+                int y1 = obj->boundingBox[5];
+                int cx = obj->boundingBox[0];
+                int cy = obj->boundingBox[1];
 
-            int sampleCount = obj->particlePoints.size();
-            int dimensions = 2;
-            int clusterCount = 2;
-            cv::Mat points(sampleCount, dimensions, CV_32F);
-            cv::Mat labels;
-            cv::Mat centers(clusterCount, dimensions, points.type());
-            for(int i = 0; i<sampleCount;i++)
-            {
-                points.at<float>(i,0) = obj->particlePoints[i].x;
-                points.at<float>(i,1) = obj->particlePoints[i].y;
-            }
-
-#ifdef KMEANS_WITH_POINTER
-
-            cv::kmeans(points, clusterCount, labels, cv::TermCriteria( cv::TermCriteria::EPS+cv::TermCriteria::COUNT, 1, 10.0), 3, cv::KMEANS_PP_CENTERS, &centers);
-#else
-            cv::kmeans(points, clusterCount, labels, cv::TermCriteria( cv::TermCriteria::EPS+cv::TermCriteria::COUNT, 1, 10.0), 3, cv::KMEANS_PP_CENTERS, centers);
-#endif
-            cv::Point pts[3];
-
-            for (int i = 0; i < clusterCount; i++)
-            {
-                cv::Point ipt;
-                ipt.x = (int) centers.at<float>(i,0);
-                ipt.y = (int) centers.at<float>(i,1);
-
-                pts[i] = ipt;
-
-                //cvCircle ((IplImage*)outImg.getIplImage(), ipt, 5,  CV_RGB(0, 0 , 255), CV_FILLED, CV_AA);//obj->colour,  CV_FILLED, CV_AA);
-            }
-            int limits_x = abs(pts[0].x - pts[1].x );
-            int limits_y = abs(pts[0].y - pts[1].y );
-
-            int mutationThres = 30;
-
-            if ( limits_x > mutationThres || limits_y > mutationThres)
-            {
-                if (!flag)
+                if (disParticles)
                 {
-                    cvCircle ((IplImage*)outImg.getIplImage(), pts[0], 5,  CV_RGB(255, 0 , 255), CV_FILLED, CV_AA);
-                    cvCircle ((IplImage*)outImg.getIplImage(), pts[1], 5,  CV_RGB(255, 0 , 255), CV_FILLED, CV_AA);
-                    //cvSaveImage("output.png", (IplImage*)outImg.getIplImage());
-                    cloneTracker(obj, pts);
+                    for (int j = 0; j < obj->particlePoints.size(); j++ )
+                        cvCircle ((IplImage*)outImg.getIplImage(), obj->particlePoints[j], 3,  obj->colour, 1);
+                }
+
+                cvRectangle( (IplImage*)outImg.getIplImage(), cvPoint( x0, y0 ), cvPoint( x1, y1 ), obj->colour, 1, 8, 0 );
+
+                cvCircle ( (IplImage*)outImg.getIplImage(), cvPoint( cx, cy ), 3, CV_RGB(255, 0 , 0), 1 );
+                cvCircle ( (IplImage*)outImg.getIplImage(), cvPoint( x0, y0 ), 3, CV_RGB(0, 255 , 0), 1 );
+                cvCircle ( (IplImage*)outImg.getIplImage(), cvPoint( x1, y1 ), 3, CV_RGB(0, 255 , 0), 1 );
+
+                int sampleCount = obj->particlePoints.size();
+                int dimensions = 2;
+                int clusterCount = 2;
+                cv::Mat points(sampleCount, dimensions, CV_32F);
+                cv::Mat labels;
+                cv::Mat centers(clusterCount, dimensions, points.type());
+                for(int i = 0; i<sampleCount;i++)
+                {
+                    points.at<float>(i,0) = obj->particlePoints[i].x;
+                    points.at<float>(i,1) = obj->particlePoints[i].y;
+                }
+
+    #ifdef KMEANS_WITH_POINTER
+
+                cv::kmeans(points, clusterCount, labels, cv::TermCriteria( cv::TermCriteria::EPS+cv::TermCriteria::COUNT, 1, 10.0), 3, cv::KMEANS_PP_CENTERS, &centers);
+    #else
+                cv::kmeans(points, clusterCount, labels, cv::TermCriteria( cv::TermCriteria::EPS+cv::TermCriteria::COUNT, 1, 10.0), 3, cv::KMEANS_PP_CENTERS, centers);
+    #endif
+                cv::Point pts[3];
+
+                for (int i = 0; i < clusterCount; i++)
+                {
+                    cv::Point ipt;
+                    ipt.x = (int) centers.at<float>(i,0);
+                    ipt.y = (int) centers.at<float>(i,1);
+
+                    pts[i] = ipt;
+
+                    //cvCircle ((IplImage*)outImg.getIplImage(), ipt, 5,  CV_RGB(0, 0 , 255), CV_FILLED, CV_AA);//obj->colour,  CV_FILLED, CV_AA);
+                }
+                int limits_x = abs(pts[0].x - pts[1].x );
+                int limits_y = abs(pts[0].y - pts[1].y );
+
+                int mutationThres = 30;
+
+                if ( limits_x > mutationThres || limits_y > mutationThres)
+                {
+                    if (!flag)
+                    {
+                        cvCircle ((IplImage*)outImg.getIplImage(), pts[0], 5,  CV_RGB(255, 0 , 255), CV_FILLED, CV_AA);
+                        cvCircle ((IplImage*)outImg.getIplImage(), pts[1], 5,  CV_RGB(255, 0 , 255), CV_FILLED, CV_AA);
+                        //cvSaveImage("output.png", (IplImage*)outImg.getIplImage());
+                        cloneTracker(obj, pts);
+                    }
                 }
             }
         }

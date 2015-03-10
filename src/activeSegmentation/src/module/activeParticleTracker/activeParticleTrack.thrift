@@ -6,6 +6,12 @@
 * Interface. 
 */
 
+struct Bottle { }
+(
+yarp.name = "yarp::os::Bottle"
+yarp.includefile="yarp/os/Bottle.h"
+)
+
 service activeParticleTrack_IDLServer
 {
   /**
@@ -17,7 +23,19 @@ service activeParticleTrack_IDLServer
   bool display(1:string value);
 
   /**
-  * Track a fixation point. This initializes the 
+  * Gets the list of ID being tracked
+  * @return true/false on success/failure
+  */
+  Bottle getIDs();
+  
+  /**
+   * Gets the list of ID actually being paused
+   * @return true/false on success/failure
+   */
+  Bottle getPausedIDs();
+
+  /**
+  * Track a fixation point. This initializes the
   * segmentation of the area of interest for subsequent
   * tracking.
   * @param fix_x specifies the x coordinate of the 
@@ -29,14 +47,34 @@ service activeParticleTrack_IDLServer
   i32 track(1:double fix_x, 2:double fix_y);
   
   /**
-  * Stops a specific stacking thread. This will 
-  * delete the required tracking thread with the id 
+  * Deletes a specific stacking thread. This will
+  * delete the required tracking thread with the id
   * provided by the user.
   * @param id specifies the id of the tracking thread 
-  * to be stopped
+  * to be deleted
   * @return true/false on success/failure
   */
   bool untrack(1:i32 id);
+  
+  /**
+   * Pauses a specific stacking thread. This will
+   * pause the required tracking thread with the id
+   * provided by the user.
+   * @param id specifies the id of the tracking thread
+   * to be paused
+   * @return true/false on success/failure
+   */
+  bool pause(1:i32 id);
+  
+  /**
+   * Resumes a specific stacking thread. This will
+   * resume the required tracking thread with the id
+   * provided by the user.
+   * @param id specifies the id of the tracking thread
+   * to be resumed
+   * @return true/false on success/failure
+   */
+  bool resume(1:i32 id);
   
   /**
   * Sets the tracker to the user desired index. 

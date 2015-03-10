@@ -11,18 +11,7 @@
 
 #ifndef TRANSLATOR_H
 #define TRANSLATOR_H
-/*
-#define CMD_NAME                         VOCAB4('n','a','m','e')
-#define CMD_DESC                         VOCAB4('d','e','s','c')
-#define CMD_POS							 VOCAB3('p','o','s')
-#define CMD_IN_H                         VOCAB4('i','n','_','h')
-#define CMD_ON_T						 VOCAB4('o','n','_','t')
-#define CMD_REAW						 VOCAB4('r','e','_','w')
-#define CMD_PULW						 VOCAB4('p','u','_','w')
-#define CMD_ISH							 VOCAB4('i','s','_','h')
-#define CMD_FREE						 VOCAB4('f','r','e','e')
-#define CMD_TOUC						 VOCAB4('t','o','u','c')
-*/
+
 #include <yarp/os/Bottle.h>
 #include <yarp/os/BufferedPort.h>
 #include <yarp/os/Mutex.h>
@@ -62,7 +51,7 @@ private:
 
 class TranslatorModule: public RFModule {
     string moduleName;
-    enum switchCase {name,pos,desc,is_h,free,in_h,on_t,re_w,pu_w,touch};
+    enum switchCase {name,pos,desc,tooldesc2d,is_h,free,in_h,on_t,re_w,pu_w,touch};
     string translatorPortName;
     BufferedPort<Bottle> translatorPort;
 

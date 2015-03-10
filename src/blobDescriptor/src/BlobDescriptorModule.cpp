@@ -27,13 +27,13 @@ using namespace std;
  */
 bool BlobDescriptorModule::configure(ResourceFinder &rf)
 {
-	/* module name that will form the prefix of all module port names */
-	_moduleName = rf.check( "name",
-							Value("blobDescriptor"),
-							"Module name (string)" ).asString();
-	setName( ("/"+_moduleName).c_str() );
+    /* module name that will form the prefix of all module port names */
+    _moduleName = rf.check( "name",
+                            Value("blobDescriptor"),
+                            "Module name (string)" ).asString();
+    setName( ("/"+_moduleName).c_str() );
 
-	_rawImgInputPortName = getName( rf.check("raw_image_input_port",Value("/rawImg:i"),"Raw image input port (string)" ).asString() );
+    _rawImgInputPortName = getName( rf.check("raw_image_input_port",Value("/rawImg:i"),"Raw image input port (string)" ).asString() );
     binaryImgInputPortName = getName( rf.check("binary_image_input_port",Value("/binImg:i"),"Binary image input port (string)" ).asString() );
     _labeledImgInputPortName = getName( rf.check( "labeled_image_input_port",Value("/labeledImg:i"),"Labeled image input port (string)" ).asString() );
     _rawImgOutputPortName = getName( rf.check( "raw_image_output_port",Value("/rawImg:o"),"Raw image output port (string)" ).asString() );
@@ -43,14 +43,14 @@ bool BlobDescriptorModule::configure(ResourceFinder &rf)
     bothPartsImgOutputPortName = getName( rf.check( "tool_parts_image_output_port",Value("/toolParts:o"),"Both tool parts image output port (string)" ).asString() );
     _handlerPortName = getName( rf.check( "conf_port",Value("/conf"),"Configuration and message handling port (string)" ).asString() );
     _minAreaThreshold = rf.check( "min_area_threshold",Value(200),"Minimum number of pixels allowed for foreground objects" ).asInt();
-	_maxAreaThreshold = rf.check( "max_area_threshold",Value(20000),"Maximum number of pixels allowed for foreground objects" ).asInt();
+    _maxAreaThreshold = rf.check( "max_area_threshold",Value(20000),"Maximum number of pixels allowed for foreground objects" ).asInt();
 
-	_maxObjects = rf.check( "max_objects",Value(20),"Maximum number of objects to process" ).asInt();
+    _maxObjects = rf.check( "max_objects",Value(20),"Maximum number of objects to process" ).asInt();
     if( _maxObjects <= 0)
     {
         cout << getName() << " WARNING: Invalid number of objects parameter. Will use default (20) instead." << endl;
         _maxObjects = 20;
-	}
+    }
 
     _invalidate_boundary_objects = rf.check("invalidate_boundary_objects",Value(0),"Flag to invalidate objects touching the image boundaries" ).asInt();
 
@@ -59,34 +59,34 @@ bool BlobDescriptorModule::configure(ResourceFinder &rf)
     // RobotCub: 1; POETICON++: 0
     synch_inputs = rf.check("synch_inputs",Value(0),"Flag to ensure synchronization of input images").asInt();
 
-    elongatedness_thr = (float) rf.check("elongatedness_thr", Value(0.6), "Minimum elongatedness required to display tool parts (only affects display image, not computation of top & bottom descriptors, which is performed anyway)").asDouble();
+    elongatedness_thr = (float) rf.check("elongatedness_thr", Value(0.8), "Minimum elongatedness required to display tool parts (only affects display image, not computation of descriptors)").asDouble();
     if( (elongatedness_thr<0.0) || (elongatedness_thr>1.0) )
     {
-        cout << getName() << " WARNING: Invalid elongatedness_thr. Will use default (0.6) instead." << endl;
-        elongatedness_thr = 0.6;
+        cout << getName() << " WARNING: Invalid elongatedness_thr. Will use default (0.8) instead." << endl;
+        elongatedness_thr = 0.8;
     }
 
     // RobotCub: 1; First-MM,POETICON++: 0
     normalized_coords = (bool) rf.check("normalized_coords", Value(0), "Normalize rectangle x,y,w,h?").asInt();
 
     //Network::init();
-	
+
     /* open ports */
     if(! _handlerPort.open(_handlerPortName.c_str()) )
     {
         cout << getName() << ": unable to open port" << _handlerPortName << endl;
         return false;
     }
-	if(! _rawImgInputPort.open(_rawImgInputPortName.c_str()) )
-	{
-		cout << getName() << ": unable to open port" << _rawImgInputPortName << endl;
-		return false;
-	}
-	if(! binaryImgInputPort.open(binaryImgInputPortName.c_str()) )
-	{
-		cout << getName() << ": unable to open port" << binaryImgInputPortName << endl;
-		return false;
-	}
+    if(! _rawImgInputPort.open(_rawImgInputPortName.c_str()) )
+    {
+        cout << getName() << ": unable to open port" << _rawImgInputPortName << endl;
+        return false;
+    }
+    if(! binaryImgInputPort.open(binaryImgInputPortName.c_str()) )
+    {
+        cout << getName() << ": unable to open port" << binaryImgInputPortName << endl;
+        return false;
+    }
     if(! _labeledImgInputPort.open(_labeledImgInputPortName.c_str()) )
     {
         cout << getName() << ": unable to open port" << _labeledImgInputPortName << endl;
@@ -130,44 +130,44 @@ bool BlobDescriptorModule::configure(ResourceFinder &rf)
     }
 
     /* check that input image dimensions are equal */
-	if( (_yarpRawInputPtr->width()  != _yarpLabeledInputPtr->width())  || 
-		(_yarpRawInputPtr->height() != _yarpLabeledInputPtr->height()) ||
-        (_yarpRawInputPtr->width()  != yarpBinaryInputPtr->width())    || 
-		(_yarpRawInputPtr->height() != yarpBinaryInputPtr->height()) )  
-	{
-		cout << getName() << ": input image dimensions differ. Exiting..." << endl;
+    if( (_yarpRawInputPtr->width()  != _yarpLabeledInputPtr->width())  ||
+        (_yarpRawInputPtr->height() != _yarpLabeledInputPtr->height()) ||
+        (_yarpRawInputPtr->width()  != yarpBinaryInputPtr->width())    ||
+        (_yarpRawInputPtr->height() != yarpBinaryInputPtr->height()) )
+    {
+        cout << getName() << ": input image dimensions differ. Exiting..." << endl;
         return false;
-	}
-	
+    }
+
     _w   = _yarpRawInputPtr->width();
     _h   = _yarpRawInputPtr->height();
     _sz  = cvSize(_w, _h);
 
-	/* allocate internal image buffers */
-	_yarpRawImg.resize(_w,_h);
-	_yarpHSVImg.resize(_w,_h);
-	_yarpHueImg.resize(_w,_h);
-	_yarpSatImg.resize(_w,_h);
-	_yarpValImg.resize(_w,_h);
-	_yarpLabeledImg.resize(_w,_h);
-	_yarpViewImg.resize(_w,_h);
-	_yarpTempImg.resize(_w,_h);
-    
-	/* initialize object descriptor list */
-	_objDescTable = new ObjectDescriptor[_maxObjects];
-	for(int i = 0; i < _maxObjects; i++)	
-		_objDescTable[i].Create(_w,_h);
+    /* allocate internal image buffers */
+    _yarpRawImg.resize(_w,_h);
+    _yarpHSVImg.resize(_w,_h);
+    _yarpHueImg.resize(_w,_h);
+    _yarpSatImg.resize(_w,_h);
+    _yarpValImg.resize(_w,_h);
+    _yarpLabeledImg.resize(_w,_h);
+    _yarpViewImg.resize(_w,_h);
+    _yarpTempImg.resize(_w,_h);
 
-	return true; /* tell RFModule that everything went well, so that it will run the module */
+    /* initialize object descriptor list */
+    _objDescTable = new ObjectDescriptor[_maxObjects];
+    for(int i = 0; i < _maxObjects; i++)
+        _objDescTable[i].Create(_w,_h);
+
+    return true; /* tell RFModule that everything went well, so that it will run the module */
 }
-	
+
 /**
  * Try to halt operations by threads managed by the module. Called asynchronously
  * after a quit command is received.
  */
 bool BlobDescriptorModule::interruptModule()
 {
-	cout << getName() << ": interrupting module, for port cleanup." << endl;
+    cout << getName() << ": interrupting module, for port cleanup." << endl;
 
     _rawImgInputPort.interrupt();
     binaryImgInputPort.interrupt();
@@ -177,16 +177,16 @@ bool BlobDescriptorModule::interruptModule()
     _affDescriptorOutputPort.interrupt();
     toolAffDescriptorOutputPort.interrupt();
     bothPartsImgOutputPort.interrupt();
-	return true;
+    return true;
 }
-	
+
 /**
  * Close function. Called automatically when the module closes, after the last
  * updateModule call.
  */
 bool BlobDescriptorModule::close()
 {
-	cout << getName() << ": closing module." << endl;
+    cout << getName() << ": closing module." << endl;
 
     _rawImgInputPort.close();
     binaryImgInputPort.close();
@@ -197,10 +197,10 @@ bool BlobDescriptorModule::close()
     toolAffDescriptorOutputPort.close();
     bothPartsImgOutputPort.close();
 
-	delete [] _objDescTable;
+    delete [] _objDescTable;
 
-	// Network::fini();
-	return true;
+    // Network::fini();
+    return true;
 }
  
 /**
@@ -208,12 +208,12 @@ bool BlobDescriptorModule::close()
  */
 bool BlobDescriptorModule::respond(const Bottle &command, Bottle &reply)
 {
-  	cout << getName() << ": echoing received command." << endl;
-  	reply = command;
-  	if(command.get(0).asString() == "quit")
-		return false;
-  	else
-  		return true;
+    cout << getName() << ": echoing received command." << endl;
+    reply = command;
+    if(command.get(0).asString() == "quit")
+        return false;
+    else
+        return true;
 }
    
 /**
@@ -221,21 +221,21 @@ bool BlobDescriptorModule::respond(const Bottle &command, Bottle &reply)
  */
 bool BlobDescriptorModule::updateModule()
 {
-	Stamp rawstamp, labeledstamp, binstamp, writestamp; 
+    Stamp rawstamp, labeledstamp, binstamp, writestamp; 
 
     // TODO: remove one of the inputs, change verification checks
     _yarpRawInputPtr = _rawImgInputPort.read(true);
-	yarpBinaryInputPtr = binaryImgInputPort.read(true);
-	_yarpLabeledInputPtr = _labeledImgInputPort.read(true);
+    yarpBinaryInputPtr = binaryImgInputPort.read(true);
+    _yarpLabeledInputPtr = _labeledImgInputPort.read(true);
 
-	if( !_rawImgInputPort.getEnvelope(rawstamp) || !binaryImgInputPort.getEnvelope(binstamp) || !_labeledImgInputPort.getEnvelope(labeledstamp) )
-	{
+    if( !_rawImgInputPort.getEnvelope(rawstamp) || !binaryImgInputPort.getEnvelope(binstamp) || !_labeledImgInputPort.getEnvelope(labeledstamp) )
+    {
         cout << "WARNING: timestamp missing from one or more input ports!" << endl;
         if (synch_inputs) {
             // also quit
-		    return false;
+            return false;
         }
-	}
+    }
 
     if (synch_inputs)
     {
@@ -258,9 +258,9 @@ bool BlobDescriptorModule::updateModule()
 
     }
 
-	// now all stamps are equal
+    // now all stamps are equal
 
-	writestamp = rawstamp;
+    writestamp = rawstamp;
 
     // FIXME: graceful quit on ctrl+c. the following ifs solve the memory leaks, but the program hangs
 
@@ -275,66 +275,65 @@ bool BlobDescriptorModule::updateModule()
     //if (_yarpLabeledInputPtr != NULL)
         _yarpLabeledImg = *_yarpLabeledInputPtr;
 
-	/* get OpenCV pointers to images, to more easily call OpenCV functions */
+    /* get OpenCV pointers to images, to more easily call OpenCV functions */
     IplImage *opencvRawImg     = (IplImage *) _yarpRawImg.getIplImage();
-	IplImage *opencvHSVImg     = (IplImage *) _yarpHSVImg.getIplImage();
-	IplImage *opencvHueImg     = (IplImage *) _yarpHueImg.getIplImage();
-	IplImage *opencvSatImg     = (IplImage *) _yarpSatImg.getIplImage();
-	IplImage *opencvValImg     = (IplImage *) _yarpValImg.getIplImage();
+    IplImage *opencvHSVImg     = (IplImage *) _yarpHSVImg.getIplImage();
+    IplImage *opencvHueImg     = (IplImage *) _yarpHueImg.getIplImage();
+    IplImage *opencvSatImg     = (IplImage *) _yarpSatImg.getIplImage();
+    IplImage *opencvValImg     = (IplImage *) _yarpValImg.getIplImage();
     IplImage *opencvBinaryImg  = (IplImage *) yarpBinaryImg.getIplImage();
     IplImage *opencvLabeledImg = (IplImage *) _yarpLabeledImg.getIplImage();
-	IplImage *opencvViewImg    = (IplImage *) _yarpViewImg.getIplImage();
-	IplImage *opencvTempImg    = (IplImage *) _yarpTempImg.getIplImage();
+    IplImage *opencvViewImg    = (IplImage *) _yarpViewImg.getIplImage();
+    IplImage *opencvTempImg    = (IplImage *) _yarpTempImg.getIplImage();
     //IplImage *opencvBothParts;//  = (IplImage *) imgBothParts.getIplImage(); // for image with top & bottom tool parts
 
-    /* convert from RGB to HSV and get the Hue plane - to compute the histograms */
-	cvCvtColor(opencvRawImg, opencvHSVImg, CV_RGB2HSV);
-	cvSplit(opencvHSVImg, opencvHueImg, opencvSatImg, opencvValImg, NULL);
+    /* convert to HSV and get the Hue plane - to compute the histograms */
+    cvCvtColor(opencvRawImg, opencvHSVImg, CV_BGR2HSV);
+    cvSplit(opencvHSVImg, opencvHueImg, opencvSatImg, opencvValImg, NULL);
     IplImage *planes[] = { opencvHueImg }; //compute histogram of hue only
 
-	/* for cvMaxMinLoc */
-	double max_val, min_val;
+    /* for cvMaxMinLoc */
+    double max_val, min_val;
 
     /* compute numLabels as the max value within opencvLabeledImg */
     cvMinMaxLoc(opencvLabeledImg, &min_val, &max_val, NULL, NULL, NULL);
-	if(min_val != 0)
-		cout << "WARNING: min_val of labeled image is different from zero !!!!" << endl;
-	
-	int numLabels = (int)max_val + 1;
+    if(min_val != 0)
+        cout << "WARNING: min_val of labeled image is different from zero !!!!" << endl;
 
-	/* TODO: different selection criteria should be accepted here */
+    int numLabels = (int)max_val + 1;
+
+    /* TODO: different selection criteria should be accepted here */
     _numObjects = selectObjects( opencvLabeledImg, opencvTempImg, numLabels, _minAreaThreshold);
-	if(_numObjects > _maxObjects )
-	{
+    if(_numObjects > _maxObjects )
+    {
         cout << getName() << ": more objects (" << _numObjects << ") than the permitted maximum. Only " << _maxObjects << " will be processed." << endl;
-		_numObjects = _maxObjects;
-	}
+        _numObjects = _maxObjects;
+    }
 
     /* extract characteristics of objects */
     extractObj(opencvLabeledImg, _numObjects, _objDescTable);
 
-	/* here, all objects have been segmented and are stored independently
-	in _objDescTable structure. The fields mask, area, center and label are set. */
+    /* here, all objects have been segmented and are stored independently
+    in _objDescTable structure. The fields mask, area, center and label are set. */
 
-	/* contour extraction */
-	for( int i=0; i < _numObjects; i++)
-	{
-		cvFindContours(_objDescTable[i].mask_image, 
-		               _objDescTable[i].storage, 
-					   &(_objDescTable[i].contours),
-					   sizeof(CvContour),
-					   CV_RETR_CCOMP, 
-					   CV_CHAIN_APPROX_SIMPLE, 
-				       cvPoint(0,0)
-					   );
+    /* contour extraction */
+    for( int i=0; i < _numObjects; i++)
+    {
+        cvFindContours(_objDescTable[i].mask_image, 
+                       _objDescTable[i].storage, 
+                       &(_objDescTable[i].contours),
+                       sizeof(CvContour),
+                       CV_RETR_CCOMP, 
+                       CV_CHAIN_APPROX_SIMPLE, 
+                       cvPoint(0,0)
+                       );
 
-		if(_objDescTable[i].contours == NULL)
-			cout << "Something very wrong happened. Object without edges" << endl;
+        if(_objDescTable[i].contours == NULL)
+            cout << "Something very wrong happened. Object without edges" << endl;
 
-        // moments - Giovanni 2014
         _objDescTable[i].moments = cv::moments(cv::Mat(_objDescTable[i].mask_image), false);
-	}
-	
+    }
+
     /* compute histogram of each object */
     for(int i = 0; i < _numObjects; i++)
     {
@@ -344,28 +343,28 @@ bool BlobDescriptorModule::updateModule()
         cvConvertScale(_objDescTable[i].objHist->bins, _objDescTable[i].objHist->bins, ohmax ? 255. / ohmax : 0., 0);
     }
 
-	/* compute saturation and value/intensity bounds for each object - not used anymore in POETICON++ */
-	for(int i = 0; i < _numObjects; i++)
+    /* compute saturation and value/intensity bounds for each object - not used anymore in POETICON++ */
+    for(int i = 0; i < _numObjects; i++)
     {
-		cvMinMaxLoc(opencvSatImg, &min_val, &max_val, 0, 0, _objDescTable[i].mask_image);
-		_objDescTable[i].s_min = (int)min_val;
-		_objDescTable[i].s_max = (int)max_val;
-		cvMinMaxLoc(opencvValImg, &min_val, &max_val, 0, 0, _objDescTable[i].mask_image);
-		_objDescTable[i].v_min = (int)min_val;
-		_objDescTable[i].v_max = (int)max_val;
+        cvMinMaxLoc(opencvSatImg, &min_val, &max_val, 0, 0, _objDescTable[i].mask_image);
+        _objDescTable[i].s_min = (int)min_val;
+        _objDescTable[i].s_max = (int)max_val;
+        cvMinMaxLoc(opencvValImg, &min_val, &max_val, 0, 0, _objDescTable[i].mask_image);
+        _objDescTable[i].v_min = (int)min_val;
+        _objDescTable[i].v_max = (int)max_val;
     }
 
-	/* compute the roi for each object to set the target roi - not used anymore in POETICON++*/
-	for(int i = 0; i < _numObjects; i++)
+    /* compute the roi for each object to set the target roi - not used anymore in POETICON++*/
+    for(int i = 0; i < _numObjects; i++)
     {
-		//MUST FIND A GOOD WAY TO DO IT
-		//MAYBE USE FITELLIPSE ON THE CONTOUR
-		//TRACKER COULD ALSO RECEIVE THE ANGLE
-		//THE FOLLOWING INITIALIZATION IS JUST FOR EARLY TESTING
-		_objDescTable[i].roi_height = 30;
-		_objDescTable[i].roi_width = 30;
-		_objDescTable[i].roi_x = _objDescTable[i].center.x - 15;
-		_objDescTable[i].roi_y = _objDescTable[i].center.y - 15;
+        //MUST FIND A GOOD WAY TO DO IT
+        //MAYBE USE FITELLIPSE ON THE CONTOUR
+        //TRACKER COULD ALSO RECEIVE THE ANGLE
+        //THE FOLLOWING INITIALIZATION IS JUST FOR EARLY TESTING
+        _objDescTable[i].roi_height = 30;
+        _objDescTable[i].roi_width = 30;
+        _objDescTable[i].roi_x = _objDescTable[i].center.x - 15;
+        _objDescTable[i].roi_y = _objDescTable[i].center.y - 15;
     }
 
     /*
@@ -373,214 +372,212 @@ bool BlobDescriptorModule::updateModule()
      *
      */
 
-	// by default, all are valid
-	for(int i = 0; i < _numObjects; i++ )
-	{
-		_objDescTable[i].valid = true;
-	}
+    // by default, all are valid
+    for(int i = 0; i < _numObjects; i++ )
+    {
+        _objDescTable[i].valid = true;
+    }
 
-	// invalidate objects exceeding a maximum area
-	for(int i = 0; i < _numObjects; i++ )
-	{
-		if(_objDescTable[i].area > _maxAreaThreshold)
-		{
-			_objDescTable[i].valid = false;  
-		}
-	}
+    // invalidate objects exceeding a maximum area
+    for(int i = 0; i < _numObjects; i++ )
+    {
+        if(_objDescTable[i].area > _maxAreaThreshold)
+        {
+            _objDescTable[i].valid = false;  
+        }
+    }
 
-	if(_invalidate_boundary_objects)
-	{
-		CvPoint* pt;
-		for(int i = 0; i < _numObjects; i++ )
-		{
-			for(int j = 0; j < _objDescTable[i].contours->total; j++) 
-			{
-				pt = (CvPoint*)cvGetSeqElem( _objDescTable[i].contours, j );
+    if(_invalidate_boundary_objects)
+    {
+        CvPoint* pt;
+        for(int i = 0; i < _numObjects; i++ )
+        {
+            for(int j = 0; j < _objDescTable[i].contours->total; j++)
+            {
+                pt = (CvPoint*)cvGetSeqElem( _objDescTable[i].contours, j );
 
-				if( (pt->x <= 1) || (pt->x >= (_w-2)) || (pt->y <= 1) || (pt->y >= (_h-2)))
-				{
-					_objDescTable[i].valid = false;
-					break;
-				}
-			}
-		}
-	}
+                if( (pt->x <= 1) || (pt->x >= (_w-2)) || (pt->y <= 1) || (pt->y >= (_h-2)))
+                {
+                    _objDescTable[i].valid = false;
+                    break;
+                }
+            }
+        }
+    }
  
-	/* Count the number of valid objects */
-	int valid_objs = 0;
-	for(int i = 0; i < _numObjects; i++)
-		if( _objDescTable[i].valid)
-			valid_objs++;
+    /* Count the number of valid objects */
+    int valid_objs = 0;
+    for(int i = 0; i < _numObjects; i++)
+        if( _objDescTable[i].valid)
+            valid_objs++;
 
-	// only for valid objects: approximate contours and compute shape descriptors (whole blobs).
-	for( int i=0; i < _numObjects; i++)
-	{
-		if(_objDescTable[i].valid)
-		{
-			_objDescTable[i].affcontours = cvApproxPoly( 
-				_objDescTable[i].contours, 
-				sizeof(CvContour), 
-				_objDescTable[i].storage, 
-				CV_POLY_APPROX_DP, 
-				cvContourPerimeter(_objDescTable[i].contours)*0.02, 
-				1);
+    // only for valid objects: approximate contours and compute shape descriptors (whole blobs).
+    for( int i=0; i < _numObjects; i++)
+    {
+        if(_objDescTable[i].valid)
+        {
+            _objDescTable[i].affcontours = cvApproxPoly( 
+                                           _objDescTable[i].contours,
+                                           sizeof(CvContour),
+                                           _objDescTable[i].storage,
+                                           CV_POLY_APPROX_DP,
+                                           cvContourPerimeter(_objDescTable[i].contours)*0.02,
+                                           1);
 
-			_objDescTable[i].convexhull = cvConvexHull2( _objDescTable[i].affcontours, _objDescTable[i].storage, CV_CLOCKWISE, 1 );
+            _objDescTable[i].convexhull = cvConvexHull2( _objDescTable[i].affcontours, _objDescTable[i].storage, CV_CLOCKWISE, 1 );
 
-			// measurements of the contour
-			_objDescTable[i].contour_area = fabs(cvContourArea( _objDescTable[i].affcontours, CV_WHOLE_SEQ ));
-			_objDescTable[i].contour_perimeter = cvArcLength( _objDescTable[i].affcontours, CV_WHOLE_SEQ, 1 );
-			_objDescTable[i].convex_perimeter = cvArcLength( _objDescTable[i].convexhull, CV_WHOLE_SEQ, 1 );
-			_objDescTable[i].enclosing_rect = cvMinAreaRect2( _objDescTable[i].convexhull, _objDescTable[i].storage );
-			_objDescTable[i].major_axis = (_objDescTable[i].enclosing_rect.size.width > _objDescTable[i].enclosing_rect.size.height ? _objDescTable[i].enclosing_rect.size.width : _objDescTable[i].enclosing_rect.size.height);
-			_objDescTable[i].minor_axis = (_objDescTable[i].enclosing_rect.size.width > _objDescTable[i].enclosing_rect.size.height ? _objDescTable[i].enclosing_rect.size.height : _objDescTable[i].enclosing_rect.size.width);
-			_objDescTable[i].rect_area = _objDescTable[i].major_axis*_objDescTable[i].minor_axis;
-			_objDescTable[i].bounding_rect = cvBoundingRect(_objDescTable[i].contours,0);
-		
-			CvPoint2D32f center;
-			float radius;
-			cvMinEnclosingCircle( _objDescTable[i].affcontours, &center, &radius );
+            // measurements of the contour
+            _objDescTable[i].contour_area = fabs(cvContourArea( _objDescTable[i].affcontours, CV_WHOLE_SEQ ));
+            _objDescTable[i].contour_perimeter = cvArcLength( _objDescTable[i].affcontours, CV_WHOLE_SEQ, 1 );
+            _objDescTable[i].convex_perimeter = cvArcLength( _objDescTable[i].convexhull, CV_WHOLE_SEQ, 1 );
+            _objDescTable[i].enclosing_rect = cvMinAreaRect2( _objDescTable[i].convexhull, _objDescTable[i].storage );
+            _objDescTable[i].major_axis = (_objDescTable[i].enclosing_rect.size.width > _objDescTable[i].enclosing_rect.size.height ? _objDescTable[i].enclosing_rect.size.width : _objDescTable[i].enclosing_rect.size.height);
+            _objDescTable[i].minor_axis = (_objDescTable[i].enclosing_rect.size.width > _objDescTable[i].enclosing_rect.size.height ? _objDescTable[i].enclosing_rect.size.height : _objDescTable[i].enclosing_rect.size.width);
+            _objDescTable[i].rect_area = _objDescTable[i].major_axis*_objDescTable[i].minor_axis;
+            _objDescTable[i].bounding_rect = cvBoundingRect(_objDescTable[i].contours,0);
+        
+            CvPoint2D32f center;
+            float radius;
+            cvMinEnclosingCircle( _objDescTable[i].affcontours, &center, &radius );
 
-			// shape descriptors
-			if(_objDescTable[i].contour_perimeter > 0)
-				_objDescTable[i].convexity = _objDescTable[i].convex_perimeter/_objDescTable[i].contour_perimeter;
-			else
-				_objDescTable[i].convexity = 0;
+            // shape descriptors
+            if(_objDescTable[i].contour_perimeter > 0)
+                _objDescTable[i].convexity = _objDescTable[i].convex_perimeter/_objDescTable[i].contour_perimeter;
+            else
+                _objDescTable[i].convexity = 0;
 
-			if(_objDescTable[i].major_axis > 0)
-				_objDescTable[i].eccentricity = _objDescTable[i].minor_axis/_objDescTable[i].major_axis;
-			else
-				_objDescTable[i].eccentricity = 0;
+            if(_objDescTable[i].major_axis > 0)
+                _objDescTable[i].eccentricity = _objDescTable[i].minor_axis/_objDescTable[i].major_axis;
+            else
+                _objDescTable[i].eccentricity = 0;
 
-			if(_objDescTable[i].contour_perimeter > 0)
-				_objDescTable[i].compactness = _objDescTable[i].contour_area/(_objDescTable[i].contour_perimeter*_objDescTable[i].contour_perimeter);
+            if(_objDescTable[i].contour_perimeter > 0)
+                _objDescTable[i].compactness = _objDescTable[i].contour_area/(_objDescTable[i].contour_perimeter*_objDescTable[i].contour_perimeter);
 
-			if( radius > 0)
-				_objDescTable[i].circleness = _objDescTable[i].contour_area/(3.1415*radius*radius);
+            if( radius > 0)
+                _objDescTable[i].circleness = _objDescTable[i].contour_area/(3.1415*radius*radius);
 
-			if(_objDescTable[i].rect_area > 0)
-				_objDescTable[i].squareness = _objDescTable[i].contour_area/_objDescTable[i].rect_area;
+            if(_objDescTable[i].rect_area > 0)
+                _objDescTable[i].squareness = _objDescTable[i].contour_area/_objDescTable[i].rect_area;
 
-			/*printf("\nArea: %f\n", contour_area);			// 1
-			printf("Convexity: %f\n", convexity);			// 2
-			printf("Eccentricity: %f\n", eccentricity);		// 3
-			printf("Compactness: %f\n", compactness);		// 4
-			printf("Circleness: %f\n", circleness);			// 5
-			printf("Squareness: %f\n\n", squareness);		// 6
-			
+            /*printf("\nArea: %f\n", contour_area);            // 1
+            printf("Convexity: %f\n", convexity);            // 2
+            printf("Eccentricity: %f\n", eccentricity);        // 3
+            printf("Compactness: %f\n", compactness);        // 4
+            printf("Circleness: %f\n", circleness);            // 5
+            printf("Squareness: %f\n\n", squareness);        // 6
+            
             printf("\nminor_axis = %f, major_axis = %f, ", _objDescTable[i].minor_axis, _objDescTable[i].major_axis);
             printf("eccentricity = %f, ", _objDescTable[i].eccentricity);
             printf("compactness*10 = %f, ", _objDescTable[i].compactness*10);
             */
 
             /* POETICON++ elongatedness descriptor */
-            if (_objDescTable[i].eccentricity > 0)
-            {
-                _objDescTable[i].elongatedness = 1 - _objDescTable[i].eccentricity + _objDescTable[i].compactness*5;
-            }
+            if (_objDescTable[i].eccentricity>0.0 && _objDescTable[i].eccentricity<1.0)
+                _objDescTable[i].elongatedness = 1.0 - _objDescTable[i].eccentricity + _objDescTable[i].compactness*5;
             else
-                _objDescTable[i].elongatedness = 0;
-		}
-	}
+                _objDescTable[i].elongatedness = 0.0;
+        }
+    }
 
-	// output shape descriptors (of whole blobs)
-	Bottle &affbot = _affDescriptorOutputPort.prepare();
-	affbot.clear();
-	affbot.addInt(valid_objs);
-	/* output affordance descriptors */
-	for(int i = 0; i < _numObjects; i++)
-	{
-		if( _objDescTable[i].valid)
-		{
-			Bottle &objbot = affbot.addList();
-			objbot.clear();
+    // output shape descriptors (of whole blobs)
+    Bottle &affbot = _affDescriptorOutputPort.prepare();
+    affbot.clear();
+    affbot.addInt(valid_objs);
+    /* output affordance descriptors */
+    for(int i = 0; i < _numObjects; i++)
+    {
+        if( _objDescTable[i].valid)
+        {
+            Bottle &objbot = affbot.addList();
+            objbot.clear();
             //objbot.addInt(i);
 
             // note: poeticonManager calls these roi.x, roi.y
-			double x = _objDescTable[i].enclosing_rect.center.x;
-			double y = _objDescTable[i].enclosing_rect.center.y;
-			double w = _objDescTable[i].enclosing_rect.size.width;
-			double h = _objDescTable[i].enclosing_rect.size.height;
+            double x = _objDescTable[i].enclosing_rect.center.x;
+            double y = _objDescTable[i].enclosing_rect.center.y;
+            double w = _objDescTable[i].enclosing_rect.size.width;
+            double h = _objDescTable[i].enclosing_rect.size.height;
 
             if (normalized_coords)
             {
                 // RobotCub
-			    double norm_x = (x-_w/2)/(_w/2); //between -1 and 1 
-			    double norm_y = (y-_h/2)/(_h/2); //between -1 and 1 
-			    double norm_w = (w/_w);        //between 0 and 1 
-			    double norm_h = (h/_h);		   //between 0 and 1 	
-			    /*0*/objbot.addDouble(norm_x);
-			    /*1*/objbot.addDouble(-norm_y);
-			    /*2*/objbot.addDouble(norm_w);
-			    /*3*/objbot.addDouble(norm_h);
+                double norm_x = (x-_w/2)/(_w/2); //between -1 and 1 
+                double norm_y = (y-_h/2)/(_h/2); //between -1 and 1 
+                double norm_w = (w/_w);        //between 0 and 1 
+                double norm_h = (h/_h);           //between 0 and 1     
+                /*0*/objbot.addDouble(norm_x);
+                /*1*/objbot.addDouble(-norm_y);
+                /*2*/objbot.addDouble(norm_w);
+                /*3*/objbot.addDouble(norm_h);
             } else {
                 // First-MM,POETICON++
-			    /*0*/objbot.addDouble(x);
-			    /*1*/objbot.addDouble(y);
-			    /*2*/objbot.addDouble(w);
-			    /*3*/objbot.addDouble(h);
+                /*0*/objbot.addDouble(x);
+                /*1*/objbot.addDouble(y);
+                /*2*/objbot.addDouble(w);
+                /*3*/objbot.addDouble(h);
             }
 
-			/*4*/objbot.addDouble(_objDescTable[i].enclosing_rect.angle);
-			double br_x, br_y, br_w, br_h;
-			br_x = _objDescTable[i].bounding_rect.x;
-			br_y = _objDescTable[i].bounding_rect.y;
-			br_w = _objDescTable[i].bounding_rect.width;
-			br_h = _objDescTable[i].bounding_rect.height;
-			//estimate of the point over the table
-			//coordinates of the bounding rectangle
-			/*5*/objbot.addDouble(br_x+br_w/2);
-			/*6*/objbot.addDouble(br_y+br_h);
+            /*4*/objbot.addDouble(_objDescTable[i].enclosing_rect.angle);
+            double br_x, br_y, br_w, br_h;
+            br_x = _objDescTable[i].bounding_rect.x;
+            br_y = _objDescTable[i].bounding_rect.y;
+            br_w = _objDescTable[i].bounding_rect.width;
+            br_h = _objDescTable[i].bounding_rect.height;
+            //estimate of the point over the table
+            //coordinates of the bounding rectangle
+            /*5*/objbot.addDouble(br_x+br_w/2);
+            /*6*/objbot.addDouble(br_y+br_h);
 
             // TODO: increase number of bins (this will break backwards compatibility)
 
-			/*7*/objbot.addDouble((double)cvQueryHistValue_1D(_objDescTable[i].objHist, 0));
-			/*8*/objbot.addDouble((double)cvQueryHistValue_1D(_objDescTable[i].objHist, 1));
-			/*9*/objbot.addDouble((double)cvQueryHistValue_1D(_objDescTable[i].objHist, 2));
-			/*10*/objbot.addDouble((double)cvQueryHistValue_1D(_objDescTable[i].objHist, 3));
-			/*11*/objbot.addDouble((double)cvQueryHistValue_1D(_objDescTable[i].objHist, 4));
-			/*12*/objbot.addDouble((double)cvQueryHistValue_1D(_objDescTable[i].objHist, 5));
-			/*13*/objbot.addDouble((double)cvQueryHistValue_1D(_objDescTable[i].objHist, 6));
-			/*14*/objbot.addDouble((double)cvQueryHistValue_1D(_objDescTable[i].objHist, 7));
-			/*15*/objbot.addDouble((double)cvQueryHistValue_1D(_objDescTable[i].objHist, 8));
-			/*16*/objbot.addDouble((double)cvQueryHistValue_1D(_objDescTable[i].objHist, 9));
-			/*17*/objbot.addDouble((double)cvQueryHistValue_1D(_objDescTable[i].objHist, 10));
-			/*18*/objbot.addDouble((double)cvQueryHistValue_1D(_objDescTable[i].objHist, 11));
-			/*19*/objbot.addDouble((double)cvQueryHistValue_1D(_objDescTable[i].objHist, 12));
-			/*20*/objbot.addDouble((double)cvQueryHistValue_1D(_objDescTable[i].objHist, 13));
-			/*21*/objbot.addDouble((double)cvQueryHistValue_1D(_objDescTable[i].objHist, 14));
-			/*22*/objbot.addDouble((double)cvQueryHistValue_1D(_objDescTable[i].objHist, 15));
-			/*23*/objbot.addDouble((double)_objDescTable[i].contour_area);
-			/*24*/objbot.addDouble((double)_objDescTable[i].convexity);
-			/*25*/objbot.addDouble((double)_objDescTable[i].eccentricity);
-			/*26*/objbot.addDouble((double)_objDescTable[i].compactness);
-			/*27*/objbot.addDouble((double)_objDescTable[i].circleness);
-			/*28*/objbot.addDouble((double)_objDescTable[i].squareness);
+            /*7*/objbot.addDouble((double)cvQueryHistValue_1D(_objDescTable[i].objHist, 0));
+            /*8*/objbot.addDouble((double)cvQueryHistValue_1D(_objDescTable[i].objHist, 1));
+            /*9*/objbot.addDouble((double)cvQueryHistValue_1D(_objDescTable[i].objHist, 2));
+            /*10*/objbot.addDouble((double)cvQueryHistValue_1D(_objDescTable[i].objHist, 3));
+            /*11*/objbot.addDouble((double)cvQueryHistValue_1D(_objDescTable[i].objHist, 4));
+            /*12*/objbot.addDouble((double)cvQueryHistValue_1D(_objDescTable[i].objHist, 5));
+            /*13*/objbot.addDouble((double)cvQueryHistValue_1D(_objDescTable[i].objHist, 6));
+            /*14*/objbot.addDouble((double)cvQueryHistValue_1D(_objDescTable[i].objHist, 7));
+            /*15*/objbot.addDouble((double)cvQueryHistValue_1D(_objDescTable[i].objHist, 8));
+            /*16*/objbot.addDouble((double)cvQueryHistValue_1D(_objDescTable[i].objHist, 9));
+            /*17*/objbot.addDouble((double)cvQueryHistValue_1D(_objDescTable[i].objHist, 10));
+            /*18*/objbot.addDouble((double)cvQueryHistValue_1D(_objDescTable[i].objHist, 11));
+            /*19*/objbot.addDouble((double)cvQueryHistValue_1D(_objDescTable[i].objHist, 12));
+            /*20*/objbot.addDouble((double)cvQueryHistValue_1D(_objDescTable[i].objHist, 13));
+            /*21*/objbot.addDouble((double)cvQueryHistValue_1D(_objDescTable[i].objHist, 14));
+            /*22*/objbot.addDouble((double)cvQueryHistValue_1D(_objDescTable[i].objHist, 15));
+            /*23*/objbot.addDouble((double)_objDescTable[i].contour_area);
+            /*24*/objbot.addDouble((double)_objDescTable[i].convexity);
+            /*25*/objbot.addDouble((double)_objDescTable[i].eccentricity);
+            /*26*/objbot.addDouble((double)_objDescTable[i].compactness);
+            /*27*/objbot.addDouble((double)_objDescTable[i].circleness);
+            /*28*/objbot.addDouble((double)_objDescTable[i].squareness);
             // for POETICON++
-			/*29*/objbot.addDouble((double)_objDescTable[i].elongatedness);
+            /*29*/objbot.addDouble((double)_objDescTable[i].elongatedness);
 
             // moments
-            const double MOM_NORMALIZATION = 1000.0;
-            /*30*/objbot.addDouble((double)_objDescTable[i].moments.nu20 * MOM_NORMALIZATION);
-            /*31*/objbot.addDouble((double)_objDescTable[i].moments.nu11 * MOM_NORMALIZATION);
-            /*32*/objbot.addDouble((double)_objDescTable[i].moments.nu02 * MOM_NORMALIZATION);
-            /*33*/objbot.addDouble((double)_objDescTable[i].moments.nu30 * MOM_NORMALIZATION);
-            /*34*/objbot.addDouble((double)_objDescTable[i].moments.nu21 * MOM_NORMALIZATION);
-            /*35*/objbot.addDouble((double)_objDescTable[i].moments.nu12 * MOM_NORMALIZATION);
-            /*36*/objbot.addDouble((double)_objDescTable[i].moments.nu03 * MOM_NORMALIZATION);
-		}
-	}
-	_affDescriptorOutputPort.setEnvelope(writestamp);
-	_affDescriptorOutputPort.write();
+            //const double MOM_NORMALIZATION = 1000.0;
+            // /*30*/objbot.addDouble((double)_objDescTable[i].moments.nu20 * MOM_NORMALIZATION);
+            // /*31*/objbot.addDouble((double)_objDescTable[i].moments.nu11 * MOM_NORMALIZATION);
+            // /*32*/objbot.addDouble((double)_objDescTable[i].moments.nu02 * MOM_NORMALIZATION);
+            // /*33*/objbot.addDouble((double)_objDescTable[i].moments.nu30 * MOM_NORMALIZATION);
+            // /*34*/objbot.addDouble((double)_objDescTable[i].moments.nu21 * MOM_NORMALIZATION);
+            // /*35*/objbot.addDouble((double)_objDescTable[i].moments.nu12 * MOM_NORMALIZATION);
+            // /*36*/objbot.addDouble((double)_objDescTable[i].moments.nu03 * MOM_NORMALIZATION);
+        }
+    }
+    _affDescriptorOutputPort.setEnvelope(writestamp);
+    _affDescriptorOutputPort.write();
 
     // output Tool-Affordance descriptors = descriptors of two halves of each elongated blob
 
-	Bottle &toolAffBot = toolAffDescriptorOutputPort.prepare();
-	toolAffBot.clear();
-	toolAffBot.addInt(valid_objs);
+    Bottle &toolAffBot = toolAffDescriptorOutputPort.prepare();
+    toolAffBot.clear();
+    toolAffBot.addInt(valid_objs);
 
-	for(int i = 0; i < _numObjects; i++)
-	{
+    for(int i = 0; i < _numObjects; i++)
+    {
         // it is best NOT to check against the elongatedness threshold here.
         // this way, we guarantee that both affordance ports (whole object & tool parts)
         // carry information about the same N visible blobs, in the same order.
@@ -589,8 +586,8 @@ bool BlobDescriptorModule::updateModule()
         // (tool parts) and the two ports need to be coherent.
         //
         // in the future, this can be changed.
-		if( _objDescTable[i].valid )
-		{
+        if( _objDescTable[i].valid )
+        {
             // next we will compute the two halves of the i'th encl. rectangle,
             // corresponding to object top and object bottom
 
@@ -736,7 +733,7 @@ bool BlobDescriptorModule::updateModule()
                     cvWaitKey(0);
                 }
                 //cv::cvtColor(matBothParts, matBothParts, CV_BGR2RGB);
-                ImageOf<PixelRgb> imgBothParts;
+                ImageOf<PixelBgr> imgBothParts;
                 imgBothParts.resize(matBothParts.cols, matBothParts.rows);
                 IplImage tempBothParts = matBothParts;
                 cvCopyImage( &tempBothParts, (IplImage *)imgBothParts.getIplImage() );
@@ -917,7 +914,7 @@ bool BlobDescriptorModule::updateModule()
             else
                 bot_elongatedness = 0;
 
-            //cv::rectangle(botRectCroppedCopy, bot_bounding_rect, CV_RGB(0,0,255), 2, CV_AA, 0);
+            //cv::rectangle(botRectCroppedCopy, bot_bounding_rect, CV_BGR(0,0,255), 2, CV_AA, 0);
             //cv::imshow("bot", botRectCroppedCopy);
             //cv::waitKey(0);
 
@@ -982,15 +979,15 @@ bool BlobDescriptorModule::updateModule()
             cout << ", elongatedness=" << bot_elongatedness << endl;
             */
 
-            if (_objDescTable[i].elongatedness > elongatedness_thr )
+            if (_objDescTable[i].elongatedness > elongatedness_thr)
             {
                 // draw centers of halves of original rectangle (whole object)
-                //cvCircle(opencvViewImg, top_center, 2, CV_RGB(0,255,0), -1, CV_AA, 0);
-                //cvCircle(opencvViewImg, bot_center, 2, CV_RGB(255,0,0), -1, CV_AA, 0);
+                //cvCircle(opencvViewImg, top_center, 2, CV_BGR(0,255,0), -1, CV_AA, 0);
+                //cvCircle(opencvViewImg, bot_center, 2, CV_BGR(255,0,0), -1, CV_AA, 0);
 
                 // draw centers of newly-estimated part rectangles, more likely to belong to contour
                 cvCircle(opencvViewImg, top_new, 5, CV_RGB(0,255,0), -1, CV_AA, 0);
-                cvCircle(opencvViewImg, bot_new, 5, CV_RGB(255,0,0), -1, CV_AA, 0);
+                cvCircle(opencvViewImg, bot_new, 5, CV_RGB(0,255,0), -1, CV_AA, 0);
             }
 
             // draw centre of mass (converted to integer)
@@ -1003,13 +1000,13 @@ bool BlobDescriptorModule::updateModule()
             {
                 cout << "WARNING: blob "<< i << ", centroid outside contour" << endl;
             }
-            //cvCircle(opencvViewImg, com, 5, CV_RGB(0,0,255), -1, CV_AA, 0);
+            //cvCircle(opencvViewImg, com, 5, CV_BGR(0,0,255), -1, CV_AA, 0);
 
             // new list for current object
             Bottle &bothPartsBot = toolAffBot.addList();
             // sublist for current object's top half
-			Bottle &topBot = bothPartsBot.addList();
-			topBot.clear();
+            Bottle &topBot = bothPartsBot.addList();
+            topBot.clear();
             //topBot.addDouble(top_center.x);
             //topBot.addDouble(top_center.y);
             topBot.addDouble(top_new.x);
@@ -1037,77 +1034,93 @@ bool BlobDescriptorModule::updateModule()
             botBot.addDouble(bot_squareness);
             botBot.addDouble(bot_elongatedness);
         } // end if(..valid)
-	} // end for(..numObjects)
-	toolAffDescriptorOutputPort.setEnvelope(writestamp);
-	toolAffDescriptorOutputPort.write(); 
+    } // end for(..numObjects)
+    toolAffDescriptorOutputPort.setEnvelope(writestamp);
+    toolAffDescriptorOutputPort.write(); 
 
-	// drawing of overlay edges
-	for( int i=0; i < _numObjects; i++)
-	{
-        // changed in jan. 2014 to display non-elongated vs elongated blobs differently 
-        //if( _objDescTable[i].valid ) 
-        if( _objDescTable[i].valid && _objDescTable[i].elongatedness > elongatedness_thr )
-		{
-			cvDrawContours(
-				opencvViewImg, 
-				_objDescTable[i].contours, 
-				//CV_RGB(0,0,255), // RED
-				CV_RGB(0,255,255), // YELLOW
-				CV_RGB(0,255,255), 
-				0, // 0: don't draw holes. was: 2  
-				1, 
-				CV_AA, 
-				cvPoint(0, 0)	   // ROI offset
-			);
-			//Draw also center point in table for debug
-			//double x = _objDescTable[i].enclosing_rect.center.x;
-			//double y = _objDescTable[i].enclosing_rect.center.y + _objDescTable[i].enclosing_rect.size.height/2;
-			//CvRect r = cvBoundingRect(_objDescTable[i].contours,0);
-			//cvCircle(opencvViewImg, cvPoint(r.x+r.width/2, r.y+r.height), 5, cvScalar(255,255,255,255), 3 );
-			//cvCircle(opencvViewImg, cvPoint(r.x+r.width/2, r.y+r.height),10,CV_RGB(255,0,0),2,CV_AA,0);
-			//double br_x, br_y, br_w, br_h;
-			//br_x = _objDescTable[i].bounding_rect.x;
-			//br_y = _objDescTable[i].bounding_rect.y;
-			//br_w = _objDescTable[i].bounding_rect.width;
-			//br_h = _objDescTable[i].bounding_rect.height;
-			//cvCircle(opencvViewImg, cvPoint(br_x+br_w/2, br_y+br_h), 5, cvScalar(255,255,255,255), 3 );
-			//cvCircle(opencvViewImg, cvPoint(_objDescTable[i].roi_x, _objDescTable[i].roi_y), 5, cvScalar(255,255,255,255), 3 );
+    // drawing of overlay edges
+    for( int i=0; i < _numObjects; i++)
+    {
+        if( _objDescTable[i].valid ) 
+        //if( _objDescTable[i].valid && _objDescTable[i].elongatedness < elongatedness_thr )
+        {
+            cvDrawContours(
+                opencvViewImg,
+                _objDescTable[i].contours,
+                //CV_RGB(0,0,255),
+                CV_RGB(100,255,255),
+                CV_RGB(100,255,255),
+                0, // 0: don't draw holes. was: 2
+                2,
+                CV_AA,
+                cvPoint(0, 0)       // ROI offset
+            );
 
-		}
-		else // invalid objects
-		{
-			cvDrawContours(
-				opencvViewImg, 
-				_objDescTable[i].contours, 
-				//CV_RGB(128,128,128), // GRAY
-				//CV_RGB(128,128,128), 
-                CV_RGB(230,216,173), // light blue
-                CV_RGB(230,216,173), 
-				0, // 0: don't draw holes. was: 2
-				1, 
-				CV_AA, 
-				cvPoint(0, 0) // ROI offset
-			);
-		}
-	}
-	
-	// output the original image
-	ImageOf<PixelRgb> &yarpRawOutputImage = _rawImgOutputPort.prepare();
-	yarpRawOutputImage = _yarpRawImg;
-	_rawImgOutputPort.setEnvelope(writestamp);
-	_rawImgOutputPort.write();
-	
-	// output image to view results
+            if (_objDescTable[i].elongatedness > elongatedness_thr)
+            {
+                cvDrawContours(
+                    opencvViewImg,
+                    _objDescTable[i].contours,
+                    CV_RGB(0,0,255),
+                    CV_RGB(0,0,255),
+                    0, // 0: don't draw holes. was: 2
+                    2,
+                    CV_AA,
+                    cvPoint(0, 0)       // ROI offset
+                );
+            }
+
+            //Draw also center point in table for debug
+            //double x = _objDescTable[i].enclosing_rect.center.x;
+            //double y = _objDescTable[i].enclosing_rect.center.y + _objDescTable[i].enclosing_rect.size.height/2;
+            //CvRect r = cvBoundingRect(_objDescTable[i].contours,0);
+            //cvCircle(opencvViewImg, cvPoint(r.x+r.width/2, r.y+r.height), 5, cvScalar(255,255,255,255), 3 );
+            //cvCircle(opencvViewImg, cvPoint(r.x+r.width/2, r.y+r.height),10,CV_RGB(255,0,0),2,CV_AA,0);
+            //double br_x, br_y, br_w, br_h;
+            //br_x = _objDescTable[i].bounding_rect.x;
+            //br_y = _objDescTable[i].bounding_rect.y;
+            //br_w = _objDescTable[i].bounding_rect.width;
+            //br_h = _objDescTable[i].bounding_rect.height;
+            //cvCircle(opencvViewImg, cvPoint(br_x+br_w/2, br_y+br_h), 5, cvScalar(255,255,255,255), 3 );
+            //cvCircle(opencvViewImg, cvPoint(_objDescTable[i].roi_x, _objDescTable[i].roi_y), 5, cvScalar(255,255,255,255), 3 );
+
+        }
+        else // invalid objects
+        {
+            if (_objDescTable[i].area > _maxAreaThreshold)
+                continue; // skip drawing this; next iteration
+
+            cvDrawContours(
+                opencvViewImg,
+                _objDescTable[i].contours,
+                //CV_RGB(128,128,128),
+                CV_RGB(230,216,173),
+                CV_RGB(230,216,173),
+                0, // 0: don't draw holes. was: 2
+                2,
+                CV_AA,
+                cvPoint(0, 0) // ROI offset
+            );
+        }
+    }
+
+    // output the original image
+    ImageOf<PixelBgr> &yarpRawOutputImage = _rawImgOutputPort.prepare();
+    yarpRawOutputImage = _yarpRawImg;
+    _rawImgOutputPort.setEnvelope(writestamp);
+    _rawImgOutputPort.write();
+
+    // output image to view results
     if (opencvViewImg != NULL)
     {
         // convert from OpenCV to yarp format
         cvCopyImage( opencvViewImg, (IplImage *)_yarpViewImg.getIplImage() );
     }
-    ImageOf<PixelRgb> &yarpViewOutputImg = _viewImgOutputPort.prepare();
+    ImageOf<PixelBgr> &yarpViewOutputImg = _viewImgOutputPort.prepare();
     yarpViewOutputImg = _yarpViewImg;
     _viewImgOutputPort.setEnvelope(writestamp);
     _viewImgOutputPort.write();
- 
+
     /*
     if (opencvRawImg != NULL)
         cvReleaseImage(&opencvRawImg); // TODO: segfault, fix
@@ -1135,9 +1148,9 @@ bool BlobDescriptorModule::updateModule()
     if (valid_objs > 0)
         cout << "computed descriptors of frame with " << valid_objs << " valid blobs (out of " << _numObjects << ")" << endl;
 
-  	return true;
+      return true;
 } // end updateModule
 
 double BlobDescriptorModule::getPeriod() {
-  return 0.0;
+    return 0.0;
 }

@@ -22,6 +22,24 @@ public:
   virtual bool read(yarp::os::ConnectionReader& connection);
 };
 
+class WorldStateMgr_IDL_pause : public yarp::os::Portable {
+public:
+  std::string objName;
+  bool _return;
+  void init(const std::string& objName);
+  virtual bool write(yarp::os::ConnectionWriter& connection);
+  virtual bool read(yarp::os::ConnectionReader& connection);
+};
+
+class WorldStateMgr_IDL_resume : public yarp::os::Portable {
+public:
+  std::string objName;
+  bool _return;
+  void init(const std::string& objName);
+  virtual bool write(yarp::os::ConnectionWriter& connection);
+  virtual bool read(yarp::os::ConnectionReader& connection);
+};
+
 class WorldStateMgr_IDL_quit : public yarp::os::Portable {
 public:
   bool _return;
@@ -72,6 +90,52 @@ void WorldStateMgr_IDL_update::init() {
   _return = false;
 }
 
+bool WorldStateMgr_IDL_pause::write(yarp::os::ConnectionWriter& connection) {
+  yarp::os::idl::WireWriter writer(connection);
+  if (!writer.writeListHeader(2)) return false;
+  if (!writer.writeTag("pause",1,1)) return false;
+  if (!writer.writeString(objName)) return false;
+  return true;
+}
+
+bool WorldStateMgr_IDL_pause::read(yarp::os::ConnectionReader& connection) {
+  yarp::os::idl::WireReader reader(connection);
+  if (!reader.readListReturn()) return false;
+  if (!reader.readBool(_return)) {
+    reader.fail();
+    return false;
+  }
+  return true;
+}
+
+void WorldStateMgr_IDL_pause::init(const std::string& objName) {
+  _return = false;
+  this->objName = objName;
+}
+
+bool WorldStateMgr_IDL_resume::write(yarp::os::ConnectionWriter& connection) {
+  yarp::os::idl::WireWriter writer(connection);
+  if (!writer.writeListHeader(2)) return false;
+  if (!writer.writeTag("resume",1,1)) return false;
+  if (!writer.writeString(objName)) return false;
+  return true;
+}
+
+bool WorldStateMgr_IDL_resume::read(yarp::os::ConnectionReader& connection) {
+  yarp::os::idl::WireReader reader(connection);
+  if (!reader.readListReturn()) return false;
+  if (!reader.readBool(_return)) {
+    reader.fail();
+    return false;
+  }
+  return true;
+}
+
+void WorldStateMgr_IDL_resume::init(const std::string& objName) {
+  _return = false;
+  this->objName = objName;
+}
+
 bool WorldStateMgr_IDL_quit::write(yarp::os::ConnectionWriter& connection) {
   yarp::os::idl::WireWriter writer(connection);
   if (!writer.writeListHeader(1)) return false;
@@ -116,6 +180,26 @@ bool WorldStateMgr_IDL::update() {
   bool ok = yarp().write(helper,helper);
   return ok?helper._return:_return;
 }
+bool WorldStateMgr_IDL::pause(const std::string& objName) {
+  bool _return = false;
+  WorldStateMgr_IDL_pause helper;
+  helper.init(objName);
+  if (!yarp().canWrite()) {
+    fprintf(stderr,"Missing server method '%s'?\n","bool WorldStateMgr_IDL::pause(const std::string& objName)");
+  }
+  bool ok = yarp().write(helper,helper);
+  return ok?helper._return:_return;
+}
+bool WorldStateMgr_IDL::resume(const std::string& objName) {
+  bool _return = false;
+  WorldStateMgr_IDL_resume helper;
+  helper.init(objName);
+  if (!yarp().canWrite()) {
+    fprintf(stderr,"Missing server method '%s'?\n","bool WorldStateMgr_IDL::resume(const std::string& objName)");
+  }
+  bool ok = yarp().write(helper,helper);
+  return ok?helper._return:_return;
+}
 bool WorldStateMgr_IDL::quit() {
   bool _return = false;
   WorldStateMgr_IDL_quit helper;
@@ -150,6 +234,38 @@ bool WorldStateMgr_IDL::read(yarp::os::ConnectionReader& connection) {
     if (tag == "update") {
       bool _return;
       _return = update();
+      yarp::os::idl::WireWriter writer(reader);
+      if (!writer.isNull()) {
+        if (!writer.writeListHeader(1)) return false;
+        if (!writer.writeBool(_return)) return false;
+      }
+      reader.accept();
+      return true;
+    }
+    if (tag == "pause") {
+      std::string objName;
+      if (!reader.readString(objName)) {
+        reader.fail();
+        return false;
+      }
+      bool _return;
+      _return = pause(objName);
+      yarp::os::idl::WireWriter writer(reader);
+      if (!writer.isNull()) {
+        if (!writer.writeListHeader(1)) return false;
+        if (!writer.writeBool(_return)) return false;
+      }
+      reader.accept();
+      return true;
+    }
+    if (tag == "resume") {
+      std::string objName;
+      if (!reader.readString(objName)) {
+        reader.fail();
+        return false;
+      }
+      bool _return;
+      _return = resume(objName);
       yarp::os::idl::WireWriter writer(reader);
       if (!writer.isNull()) {
         if (!writer.writeListHeader(1)) return false;
@@ -205,6 +321,8 @@ std::vector<std::string> WorldStateMgr_IDL::help(const std::string& functionName
     helpString.push_back("*** Available commands:");
     helpString.push_back("dump");
     helpString.push_back("update");
+    helpString.push_back("pause");
+    helpString.push_back("resume");
     helpString.push_back("quit");
     helpString.push_back("help");
   }
@@ -221,6 +339,24 @@ std::vector<std::string> WorldStateMgr_IDL::help(const std::string& functionName
       helpString.push_back("be created from robot perception. If the module was started in playback ");
       helpString.push_back("mode, the new state will be created from the next time instant in the ");
       helpString.push_back("world state text file. ");
+      helpString.push_back("@return true/false on success/failure ");
+    }
+    if (functionName=="pause") {
+      helpString.push_back("bool pause(const std::string& objName) ");
+      helpString.push_back("Pauses a specific stacking thread. This will ");
+      helpString.push_back("pause the required tracking thread with the name ");
+      helpString.push_back("provided by the user. ");
+      helpString.push_back("@param objName specifies the label of the tracking thread ");
+      helpString.push_back("to be paused ");
+      helpString.push_back("@return true/false on success/failure ");
+    }
+    if (functionName=="resume") {
+      helpString.push_back("bool resume(const std::string& objName) ");
+      helpString.push_back("Resumes a specific stacking thread. This will ");
+      helpString.push_back("resume the required tracking thread with the name ");
+      helpString.push_back("provided by the user. ");
+      helpString.push_back("@param objName specifies the label of the tracking thread ");
+      helpString.push_back("to be resumed ");
       helpString.push_back("@return true/false on success/failure ");
     }
     if (functionName=="quit") {

@@ -4,9 +4,15 @@
 /* helper classes and functions - most are taken from Ivana Cingovska's 2008 work */
 
 /* OpenCV */
-#include <opencv/cv.h>
-#include <opencv/cxcore.h>
-#include <opencv/highgui.h>
+// OpenCV 2
+#include <opencv2/opencv.hpp>
+#include <opencv2/core/core.hpp>
+#include <opencv2/highgui/highgui.hpp>
+#include <opencv2/legacy/compat.hpp> // cvQueryHistValue_2D, cvCvtPixToPlane
+// OpenCV 1
+//#include <opencv/cv.h>
+//#include <opencv/cxcore.h>
+//#include <opencv/highgui.h>
 
 /* iCub */
 #include <iCub/BlobDescriptorModule.h>
