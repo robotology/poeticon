@@ -1187,8 +1187,8 @@ bool WorldStateMgrThread::getLabel(const int &u, const int &v, string &label)
 
     Bottle activityCmd, activityReply;
     activityCmd.addString("getLabel");
-    activityCmd.addDouble(u);
-    activityCmd.addDouble(v);
+    activityCmd.addInt(u);
+    activityCmd.addInt(v);
     yDebug() << __func__ <<  "sending query:" << activityCmd.toString().c_str();
     activityPort.write(activityCmd, activityReply);
 
