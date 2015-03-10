@@ -21,21 +21,21 @@ OUTCOMES:
 
 # Rule #3  (3 out of 5)
 ACTION:
-  grasp__obj_with__tool()
+  grasp__obj_with__hand()
 CONTEXT:
-  -_obj_ishand() _tool_clearhand() _tool_istool() _tool_ishand() _obj_isreachable_with__tool()
+  -_obj_ishand() _hand_clearhand() _hand_istool() _hand_ishand() _obj_isreachable_with__hand()
 OUTCOMES:
-  0.95 _obj_inhand__tool() _obj_istool() -_tool_clearhand() -_tool_istool()
+  0.95 _obj_inhand__hand() _obj_istool() -_hand_clearhand() -_hand_istool()
   0.05 <noise>
 
 
 # Rule #4  (4 out of 5)
 ACTION:
-  drop__obj_with__tool()
+  drop__obj_with__hand()
 CONTEXT:
-  -_obj_ishand() _obj_inhand__tool() _tool_ishand() _obj_istool()
+  -_obj_ishand() _obj_inhand__hand() _hand_ishand() _obj_istool()
 OUTCOMES:
-  0.95 -_obj_inhand__tool() _tool_clearhand() -_obj_istool() _tool_istool()
+  0.95 -_obj_inhand__hand() _hand_clearhand() -_obj_istool() _hand_istool()
   0.05 <noise>
 
 
