@@ -19,20 +19,24 @@
 clear;
 
 %% Initialize BN
-initPmtk3;
+% initPmtk3;
 
 %% Choice of network:
-bn = 'K2';
+bn = 'pca';
 
 switch bn
     case 'exp'
-        load('../PlannerServer/original_bn.mat');
+        load('./original_bn.mat');
     case 'K2'
-        load('../PlannerServer/k2_bn.mat');
-    case 'BDe'
-        load('../PlannerServer/BDe_bn.mat');
+        load('./k2_bn.mat');
+    case 'Bde'
+        load('./BDe_bn.mat');
+    case 'pca'
+        load('./PCA2_bn.mat'); 
+        load('./princomp.mat');
+        components = 2;
     otherwise
-        load('../PlannerServer/original_bn.mat');
+        load('./original_bn.mat');
 end
 
 %% YARP
@@ -45,7 +49,6 @@ query     = Bottle;
 prior     = Bottle;
 posterior = Bottle;
 answer    = Bottle;
-
 % Creating ports:
 portInput  = Port;
 portOutput = Port;
@@ -93,7 +96,7 @@ while(~done)
                     prior_nodes  = 1:13;
                     prior_values = zeros(1, size(prior_nodes, 2));
                     for n = 1:size(prior_nodes, 2)
-                        prior_values(n) = prior.asList.get(n-1).asDouble;
+                        prior_values(n) = discretizeAfonso(prior.get(0).asList().get(n-1).asDouble(),n);
                     end
                     posterior_nodes = [14 15];
                     
@@ -103,7 +106,7 @@ while(~done)
                     prior_values = zeros(1, size(prior_nodes, 2));
                     for n = 1:size(prior_values, 2)
                         prior_values(n) = ...
-                            prior.get(trans_nodes(n)-1).asDouble;
+                            discretizeAfonso(prior.get(0).asList().get(trans_nodes(n)-1).asDouble, trans_nodes(n));
                     end
                     posterior_nodes = [11 15];
                     
@@ -113,15 +116,28 @@ while(~done)
                     prior_values = zeros(1, size(prior_nodes,2));
                     for n = 1:size(prior_values, 2)
                         prior_values(n) = ...
-                            prior.asList.get(trans_nodes(n)-1).asDouble;
+                        discretizeAfonso(prior.get(0).asList().get(trans_nodes(n)-1).asDouble, trans_nodes(n));
                     end
-                    posterior_nodes = [12 13];
+                    posterior_nodes = [9 13];
+                case 'pca'
+                    
+                    prior_nodes  = [1 2 3]; % pca1 pca2 action
+                    %prior_values = zeros(1, size(prior_nodes,2));
+                    for n = 1:12 % features of the object and tool
+                        features(n) = prior.get(0).asList().get(n-1).asDouble;
+                    end
+                    action = prior.get(0).asList().get(12).asDouble;
+                    score =  discretize(features*pinv(pc(:,1:components)'), ranges); % convert 
+                                    % to pca - pc 12x12 matrix
+                    % discretize values
+                    prior_values = [ score action]; % and add the action to prior
+                    posterior_nodes = [4 5]; % X and Y effect
                     
                 otherwise
                     prior_nodes  = 1:13;
                     prior_values = zeros(1,size(prior_nodes,2));
-                    for n = 1:(prior.asList.size)
-                        prior_values(n) = prior.asList.get(n-1).asDouble;
+                    for n = 1:size(prior_nodes, 2)
+                        prior_values(n) = discretizeAfonso(prior.get(0).asList().get(n-1).asDouble(),n);
                     end
                     posterior_nodes = [14 15];
             end
@@ -132,54 +148,69 @@ while(~done)
             prob = dgmInferQuery(BN, posterior_nodes, 'clamped', clamped, ...
                 'doSlice', false);
             
-            B=reshape(prob.T,25,1);
-            IX=1:25;
-            
-            numberprob = 25;
-
-            prob_value = zeros( numberprob, 1 );
-            if size(prob.T,2) == 1
-                prob_arg = zeros( numberprob, 1 );
-            else
-                prob_arg = zeros( numberprob, size(size(prob.T), 2) );
-            end
-            prob_arg(:,1) = IX(1:numberprob);
-            
-            % Get the top probabilities (numberOfProb is the number of top
-            % answers):
-            for topprob_number = 1:numberprob
-                prob_value(topprob_number) = B(topprob_number);
-                % Convert the linear index into multidimensional indexes
-                % (the indexes are the arguments that maximize the
-                % probability queried):
-                if size(prob.T,2) > 1
-                    for parameter = 1:size(size(prob.T),2)-1
-                        [ prob_arg(topprob_number, parameter), ...
-                            prob_arg(topprob_number, parameter+1) ] = ...
-                            ind2sub(size(prob.T), ...
-                            prob_arg(topprob_number, parameter));
-                    end
-                end
-            end
-            
-            % Reply the top answers and correspondent probabilities to the
-            % query:
             answer.clear;
             answer_string = '';
-            
-            for ans_n = 1:numberprob
+            answer_string=[answer_string '('];
+            for k=1:size(prob.T,1)
                 answer_string=[answer_string '('];
-                answer_string=[answer_string num2str(prob_value(ans_n))];
-                for parameter = 1:size(prob_arg,2)
-                    answer_string=[answer_string ' ' num2str(prob_arg(ans_n, parameter))];
+                for j=1:size(prob.T,1)
+                     answer_string=[answer_string ' ' num2str(prob.T(k,j))];
                 end
-                answer_string=[answer_string ') '];
-            end
-            
-            answer_string(end) = '';
+               answer_string=[answer_string ') '];
+            end    
+            answer_string=[answer_string ')'];
+            %answer_string(end) = '';
             answer.fromString(answer_string);
             portOutput.write(answer);
+%             B=reshape(prob.T,25,1);
+%             IX=1:25;
+%             
+%             numberprob = 25;
+% 
+%             prob_value = zeros( numberprob, 1 );
+%             if size(prob.T,2) == 1
+%                 prob_arg = zeros( numberprob, 1 );
+%             else
+%                 prob_arg = zeros( numberprob, size(size(prob.T), 2) );
+%             end
+%             prob_arg(:,1) = IX(1:numberprob);
+%             
+%             % Get the top probabilities (numberOfProb is the number of top
+%             % answers):
+%             for topprob_number = 1:numberprob
+%                 prob_value(topprob_number) = B(topprob_number);
+%                 % Convert the linear index into multidimensional indexes
+%                 % (the indexes are the arguments that maximize the
+%                 % probability queried):
+%                 if size(prob.T,2) > 1
+%                     for parameter = 1:size(size(prob.T),2)-1
+%                         [ prob_arg(topprob_number, parameter), ...
+%                             prob_arg(topprob_number, parameter+1) ] = ...
+%                             ind2sub(size(prob.T), ...
+%                             prob_arg(topprob_number, parameter));
+%                     end
+%                 end
+%             end
+%             
+%             % Reply the top answers and correspondent probabilities to the
+%             % query:
+%             answer.clear;
+%             answer_string = '';
+%             
+%             for ans_n = 1:numberprob
+%                 answer_string=[answer_string '('];
+%                 answer_string=[answer_string num2str(prob_value(ans_n))];
+%                 for parameter = 1:size(prob_arg,2)
+%                     answer_string=[answer_string ' ' num2str(prob_arg(ans_n, parameter))];
+%                 end
+%                 answer_string=[answer_string ') '];
+%             end
+%             
+%             answer_string(end) = '';
+%             answer.fromString(answer_string);
+           
             
+
             disp('Done');            
         end
     end
