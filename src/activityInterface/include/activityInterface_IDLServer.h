@@ -71,6 +71,13 @@ public:
    */
   virtual bool drop(const std::string& objName, const std::string& targetName);
   /**
+   * Perform the take action on the particular tool with the particular hand
+   * @param objName specifies the name of the object in question
+   * @param handName specifies the name of the hand in question
+   * @return true/false on taking or not
+   */
+  virtual bool geto(const std::string& handName, const int32_t xpos, const int32_t ypos);
+  /**
    * Ask for the list of labels that are under ojbName
    * @param objName specifies the name of the object in question
    * @return Bottle containing list of labels that are under objName

@@ -766,6 +766,15 @@ bool ActivityInterface::drop(const string &objName, const string &targetName)
     return true;
 }
 
+/**********************************************************/
+bool ActivityInterface::geto(const std::string &handName, const int32_t pos_x, const int32_t pos_y)
+{
+    //here do two actions
+    //point on x and y
+    //and ask user to give tool in hand
+    
+    return true;
+}
 
 /**********************************************************/
 Bottle ActivityInterface::underOf(const std::string &objName)

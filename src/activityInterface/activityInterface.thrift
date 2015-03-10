@@ -78,6 +78,14 @@ service activityInterface_IDLServer
     bool drop(1:string objName, 2:string targetName)
     
     /**
+     * Perform the take action on the particular tool with the particular hand
+     * @param objName specifies the name of the object in question
+     * @param handName specifies the name of the hand in question
+     * @return true/false on taking or not
+     **/
+    bool geto(1:string handName, 2:i32 xpos, 3:i32 ypos)
+    
+    /**
      * Ask for the list of labels that are under ojbName
      * @param objName specifies the name of the object in question
      * @return Bottle containing list of labels that are under objName

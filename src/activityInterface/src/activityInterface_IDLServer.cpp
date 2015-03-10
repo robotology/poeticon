@@ -82,6 +82,17 @@ public:
   virtual bool read(yarp::os::ConnectionReader& connection);
 };
 
+class activityInterface_IDLServer_geto : public yarp::os::Portable {
+public:
+  std::string handName;
+  int32_t xpos;
+  int32_t ypos;
+  bool _return;
+  void init(const std::string& handName, const int32_t xpos, const int32_t ypos);
+  virtual bool write(yarp::os::ConnectionWriter& connection);
+  virtual bool read(yarp::os::ConnectionReader& connection);
+};
+
 class activityInterface_IDLServer_underOf : public yarp::os::Portable {
 public:
   std::string objName;
@@ -289,6 +300,33 @@ void activityInterface_IDLServer_drop::init(const std::string& objName, const st
   this->targetName = targetName;
 }
 
+bool activityInterface_IDLServer_geto::write(yarp::os::ConnectionWriter& connection) {
+  yarp::os::idl::WireWriter writer(connection);
+  if (!writer.writeListHeader(4)) return false;
+  if (!writer.writeTag("geto",1,1)) return false;
+  if (!writer.writeString(handName)) return false;
+  if (!writer.writeI32(xpos)) return false;
+  if (!writer.writeI32(ypos)) return false;
+  return true;
+}
+
+bool activityInterface_IDLServer_geto::read(yarp::os::ConnectionReader& connection) {
+  yarp::os::idl::WireReader reader(connection);
+  if (!reader.readListReturn()) return false;
+  if (!reader.readBool(_return)) {
+    reader.fail();
+    return false;
+  }
+  return true;
+}
+
+void activityInterface_IDLServer_geto::init(const std::string& handName, const int32_t xpos, const int32_t ypos) {
+  _return = false;
+  this->handName = handName;
+  this->xpos = xpos;
+  this->ypos = ypos;
+}
+
 bool activityInterface_IDLServer_underOf::write(yarp::os::ConnectionWriter& connection) {
   yarp::os::idl::WireWriter writer(connection);
   if (!writer.writeListHeader(2)) return false;
@@ -411,6 +449,16 @@ bool activityInterface_IDLServer::drop(const std::string& objName, const std::st
   helper.init(objName,targetName);
   if (!yarp().canWrite()) {
     fprintf(stderr,"Missing server method '%s'?\n","bool activityInterface_IDLServer::drop(const std::string& objName, const std::string& targetName)");
+  }
+  bool ok = yarp().write(helper,helper);
+  return ok?helper._return:_return;
+}
+bool activityInterface_IDLServer::geto(const std::string& handName, const int32_t xpos, const int32_t ypos) {
+  bool _return = false;
+  activityInterface_IDLServer_geto helper;
+  helper.init(handName,xpos,ypos);
+  if (!yarp().canWrite()) {
+    fprintf(stderr,"Missing server method '%s'?\n","bool activityInterface_IDLServer::geto(const std::string& handName, const int32_t xpos, const int32_t ypos)");
   }
   bool ok = yarp().write(helper,helper);
   return ok?helper._return:_return;
@@ -593,6 +641,32 @@ bool activityInterface_IDLServer::read(yarp::os::ConnectionReader& connection) {
       reader.accept();
       return true;
     }
+    if (tag == "geto") {
+      std::string handName;
+      int32_t xpos;
+      int32_t ypos;
+      if (!reader.readString(handName)) {
+        reader.fail();
+        return false;
+      }
+      if (!reader.readI32(xpos)) {
+        reader.fail();
+        return false;
+      }
+      if (!reader.readI32(ypos)) {
+        reader.fail();
+        return false;
+      }
+      bool _return;
+      _return = geto(handName,xpos,ypos);
+      yarp::os::idl::WireWriter writer(reader);
+      if (!writer.isNull()) {
+        if (!writer.writeListHeader(1)) return false;
+        if (!writer.writeBool(_return)) return false;
+      }
+      reader.accept();
+      return true;
+    }
     if (tag == "underOf") {
       std::string objName;
       if (!reader.readString(objName)) {
@@ -662,6 +736,7 @@ std::vector<std::string> activityInterface_IDLServer::help(const std::string& fu
     helpString.push_back("getTooltipOffset");
     helpString.push_back("take");
     helpString.push_back("drop");
+    helpString.push_back("geto");
     helpString.push_back("underOf");
     helpString.push_back("quit");
     helpString.push_back("help");
@@ -718,6 +793,13 @@ std::vector<std::string> activityInterface_IDLServer::help(const std::string& fu
       helpString.push_back("@param objName specifies the name of the object in question ");
       helpString.push_back("@param targetName specifies the name of target object to drop onto. ");
       helpString.push_back("@return true/false on droping or not ");
+    }
+    if (functionName=="geto") {
+      helpString.push_back("bool geto(const std::string& handName, const int32_t xpos, const int32_t ypos) ");
+      helpString.push_back("Perform the take action on the particular tool with the particular hand ");
+      helpString.push_back("@param objName specifies the name of the object in question ");
+      helpString.push_back("@param handName specifies the name of the hand in question ");
+      helpString.push_back("@return true/false on taking or not ");
     }
     if (functionName=="underOf") {
       helpString.push_back("yarp::os::Bottle underOf(const std::string& objName) ");
