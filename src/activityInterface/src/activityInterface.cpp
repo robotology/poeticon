@@ -47,7 +47,7 @@ ActivityInterface::~ActivityInterface()
 /**********************************************************/
 bool ActivityInterface::configure(yarp::os::ResourceFinder &rf)
 {
-    with_robot = false;
+    with_robot = true;
     
     moduleName = rf.check("name", Value("activityInterface"), "module name (string)").asString();
     Bottle bArm[2];
