@@ -49,8 +49,9 @@ def goal_imaginer():
             if goal_bottle_in:
                  command = goal_bottle_in.toString()
                  break
-        if command == 'start':
+        if command != 'kill':
             print 'starting'
+            instructions = command
             goal_file = open(''.join(PathName +"/goal.dat"),'w')
             sub_goal_file = open(''.join(PathName +"/subgoals.dat"),'w')
             actions_file = open(''.join(PathName +"/pre_rules.dat"))
@@ -64,7 +65,7 @@ def goal_imaginer():
             Objects.pop()
             for j in range(len(Objects)):
                 translat = translat + [Objects[j].replace('(','').replace(')','').split(',')] ## list of objects IDs+numbers
-
+            print translat
             actions = actions_file.read().split('\n')
 
             subgoals = [[]]
@@ -74,30 +75,31 @@ def goal_imaginer():
             ## ou seja, uma lista de listas, cada uma destas a ser uma accao
             ## 
             ## instructions = '((hand,grasp,cheese),(cheese,reach,bun-bottom),(hand,put,cheese),(hand,grasp,salami),(salami,reach,cheese),(hand,put,salami),(hand,grasp,bun-top),(bun-top,reach,salami),(hand,put,bun-top))'
-            instructions = '((hand,grasp,cheese),(cheese,reach,bun-bottom),(hand,put,cheese),(hand,grasp,bun-top),(bun-top,reach,cheese),(hand,put,bun-top))'
-            instructions = instructions.replace('hand','lefthand')
+            ## instructions = '((hand,grasp,cheese),(cheese,reach,bun-bottom),(hand,put,cheese),(hand,grasp,bun-top),(bun-top,reach,cheese),(hand,put,bun-top))'
+            instructions = instructions.replace('hand','left')
             ## state = verificar maos (query hand clearance), verificar objectos (query world state)
             ## objects = object name list
             ## we can create a state from here (replacing _obj with the name)
             instructions = instructions.split('),(')
-            first_inst = instructions[0].replace('((','').replace('))','').split(',')
+            first_inst = instructions[0].replace('"((','').replace('))"','').split(',')
             for i in range(0,len(actions)):
                 if actions[i].find("%s_" %first_inst[1]) != -1:
-                    aux_subgoal = actions[i+2].replace('_obj','%s' %first_inst[2]).replace('_tool','%s' %first_inst[0]).split(' ')
+                    aux_subgoal = actions[i+2].replace('_obj','%s' %first_inst[2]).replace('_tool','%s' %first_inst[0]).replace('_hand','left').split(' ')
                     aux_subgoal.pop(1)
                     aux_subgoal.pop(0)
                     subgoals = [aux_subgoal]
                     break
+            print instructions
             aux_subgoal = []
             for i in range(len(instructions)):
-                prax_action = instructions[i].replace('((','').replace('))','').split(',')
+                prax_action = instructions[i].replace('"((','').replace('))"','').split(',')
                 if prax_action[1] != 'reach':
                     for j in range(0,len(actions)):
                         if actions[j].find("%s_" %prax_action[1]) != -1:
                             if actions[j+4].find('_ALL') != -1:
                                 
-                                tool = prax_action[0] ## no final, isto nao vai ser o nome mas o ID
-                                obj = prax_action[2] ## no final, isto nao vai ser o nome mas o ID
+                                tool = prax_action[0] 
+                                obj = prax_action[2] 
                                     
                                 new_action = deepcopy(actions)
                                 aux_subgoal = actions[j+4].split(' ')
@@ -106,7 +108,7 @@ def goal_imaginer():
                                     if aux_subgoal[u].find('_ALL') != -1:
                                         temp_rule = new_action[j+4].replace('_obj','%s' %obj).replace('_tool','%s' %tool)
                                         if actions[j].find('_hand'):
-                                            temp_rule = temp_rule.replace('_hand','lefthand')
+                                            temp_rule = temp_rule.replace('_hand','left')
                                         temp_rule = temp_rule.split(' ')
                                         for k in range(len(translat)):
                                             if aux_subgoal[u].replace('_obj','%s' %obj).replace('_tool','%s' %tool).find(translat[k][1]) == -1:
@@ -132,58 +134,28 @@ def goal_imaginer():
                                 new_temp_rule.pop(0)
                                 aux_subgoal = new_temp_rule
                                 subgoals = subgoals + [subgoals[-1] + aux_subgoal]
-            ##                    print subgoals[-1], '\nall\n'
                             elif actions[j].find('put_') != -1:
-                                tool = prax_action[2] ## substituir com ID
+                                tool = prax_action[2] 
                                 tool2 = prax_action[0]
-            ##                    print subgoals[-1], '\n\n'
-##                                obj = re.findall(r'(.+?)_touch_(.+?) ', ' '.join(subgoals[-1]))
-##                                for q in range(len(obj)):
-##                                    if obj[q][1] == ''.join(tool+'()'):
-##                                        if obj[q][0].find('-')!=0:
-##                                            obj = obj[q][1].replace('()','')
-##                                            break
-##            ##                    print obj
-##                                for q in range(len(subgoals[-1])):
-##                                    if subgoals[-1][q].find('%s_touch' %tool) != -1 and subgoals[-1][q].find('-') != 0:
-##                                        obj = subgoals[-1][q].split('_')[2].replace('()','')
                                 aux_subgoal = actions[j+4].replace('_obj','%s' %obj).replace('_tool','%s' %tool)
-            ##                    print aux_subgoal
                                 if actions[j].find('_hand'):
-                                    aux_subgoal = aux_subgoal.replace('_hand','lefthand')
+                                    aux_subgoal = aux_subgoal.replace('_hand','left')
                                 aux_subgoal = aux_subgoal.split(' ')
                                 aux_subgoal.pop(2)
                                 aux_subgoal.pop(1)
                                 aux_subgoal.pop(0) ## para retirar a probabilidade
-            ##                    print aux_subgoal
                                 subgoals = subgoals + [subgoals[-1]+aux_subgoal]
-            ##                    print subgoals[-1], '\nput\n'
                             elif actions[j].find('_obj') and actions[j].find('_tool'):
-                                tool = prax_action[0] ## no final, isto nao vai ser o nome mas o ID
-                                obj = prax_action[2] ## no final, isto nao vai ser o nome mas o ID
+                                tool = prax_action[0] 
+                                obj = prax_action[2] 
                                 aux_subgoal = actions[j+4].replace('_obj','%s' %obj).replace('_tool','%s' %tool)
                                 if actions[j].find('_hand'):
-                                    aux_subgoal = aux_subgoal.replace('_hand','lefthand')
+                                    aux_subgoal = aux_subgoal.replace('_hand','left')
                                 aux_subgoal = aux_subgoal.split(' ')
                                 aux_subgoal.pop(2)
                                 aux_subgoal.pop(1)
                                 aux_subgoal.pop(0) ## para retirar a probabilidade
-            ##                    print aux_subgoal
                                 subgoals = subgoals + [subgoals[-1]+aux_subgoal]
-            ##                    print subgoals[-1], '\nother\n'
-            ##                elif actions[j].find('_tool') == -1:
-            ##                    obj = prax_action[2]
-            ##                    aux_subgoal = actions[j+4].replace('_obj','%s' %obj).replace('_tool','%s' %tool)
-            ##                    if actions[j].find('_hand'):
-            ##                        aux_subgoal = aux_subgoal.replace('_hand','lefthand')
-            ##                    aux_subgoal = aux_subgoal.split(' ')
-            ##                    aux_subgoal.pop(2)
-            ##                    aux_subgoal.pop(1)
-            ##                    aux_subgoal.pop(0) ## para retirar a probabilidade
-            ####                    print aux_subgoal
-            ##                    subgoals = subgoals + [subgoals[-1]+aux_subgoal]
-            ##                    print subgoals[-1], '\ndrop\n'
-
                                     
                             index_var = []
                             for g in range(len(aux_subgoal)):
