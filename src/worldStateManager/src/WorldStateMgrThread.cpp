@@ -1189,7 +1189,7 @@ bool WorldStateMgrThread::getLabel(const int &u, const int &v, string &label)
     activityCmd.addString("getLabel");
     activityCmd.addDouble(u);
     activityCmd.addDouble(v);
-    //yDebug() << __func__ <<  "sending query:" << activityCmd.toString().c_str();
+    yDebug() << __func__ <<  "sending query:" << activityCmd.toString().c_str();
     activityPort.write(activityCmd, activityReply);
 
     bool validResponse = false;
@@ -1199,7 +1199,7 @@ bool WorldStateMgrThread::getLabel(const int &u, const int &v, string &label)
 
     if (validResponse)
     {
-        //yDebug() << __func__ << "obtained valid response:" << activityReply.toString().c_str();
+        yDebug() << __func__ << "obtained valid response:" << activityReply.toString().c_str();
         label = activityReply.get(0).asString(); 
         return true;
     }
@@ -1223,7 +1223,7 @@ bool WorldStateMgrThread::mono2stereo(const double &u, const double &v,
     activityCmd.addString("get3D");
     activityCmd.addDouble(u);
     activityCmd.addDouble(v);
-    //yDebug() << __func__ <<  "sending query:" << activityCmd.toString().c_str();
+    yDebug() << __func__ <<  "sending query:" << activityCmd.toString().c_str();
     activityPort.write(activityCmd, activityReply);
 
     bool validResponse = false;
@@ -1233,7 +1233,7 @@ bool WorldStateMgrThread::mono2stereo(const double &u, const double &v,
 
     if (validResponse)
     {
-        //yDebug() << __func__ << "obtained valid response:" << activityReply.toString().c_str();
+        yDebug() << __func__ << "obtained valid response:" << activityReply.toString().c_str();
         x = activityReply.get(0).asList()->get(0).asDouble();
         y = activityReply.get(0).asList()->get(1).asDouble();
         z = activityReply.get(0).asList()->get(2).asDouble();
@@ -1258,7 +1258,7 @@ vector<double> WorldStateMgrThread::getTooltipOffset(const string &objName)
     Bottle activityCmd, activityReply;
     activityCmd.addString("getOffset");
     activityCmd.addString(objName.c_str());
-    //yDebug() << __func__ << "sending query:" << activityCmd.toString().c_str();
+    yDebug() << __func__ << "sending query:" << activityCmd.toString().c_str();
     activityPort.write(activityCmd, activityReply);
 
     bool validResponse = false;
@@ -1268,7 +1268,7 @@ vector<double> WorldStateMgrThread::getTooltipOffset(const string &objName)
 
     if (validResponse)
     {
-        //yDebug() << __func__ << "obtained valid response:" << activityReply.toString().c_str();
+        yDebug() << __func__ << "obtained valid response:" << activityReply.toString().c_str();
         Bottle *bOffset = activityReply.get(0).asList();
         vector<double> offset; // TODO: pre-allocate size
         for (int t=0; t<bOffset->size(); t++)
@@ -1295,7 +1295,7 @@ vector<string> WorldStateMgrThread::isUnderOf(const string &objName)
     Bottle activityCmd, activityReply;
     activityCmd.addString("underOf");
     activityCmd.addString(objName.c_str());
-    //yDebug() << __func__ << "sending query:" << activityCmd.toString().c_str();
+    yDebug() << __func__ << "sending query:" << activityCmd.toString().c_str();
     activityPort.write(activityCmd, activityReply);
 
     bool validResponse = false;
@@ -1304,7 +1304,7 @@ vector<string> WorldStateMgrThread::isUnderOf(const string &objName)
 
     if (validResponse)
     {
-        //yDebug() << __func__ << "obtained valid response:" << activityReply.toString().c_str();
+        yDebug() << __func__ << "obtained valid response:" << activityReply.toString().c_str();
         Bottle *bLabels = activityReply.get(0).asList();
         vector<string> lab; // TODO: pre-allocate size
         for (int o=0; o<bLabels->size(); o++)
@@ -1331,7 +1331,7 @@ vector<string> WorldStateMgrThread::isReachableWith(const string &objName)
     Bottle activityCmd, activityReply;
     activityCmd.addString("reachableWith");
     activityCmd.addString(objName.c_str());
-    //yDebug() << __func__ << "sending query:" << activityCmd.toString().c_str();
+    yDebug() << __func__ << "sending query:" << activityCmd.toString().c_str();
     activityPort.write(activityCmd, activityReply);
 
     bool validResponse = false;
@@ -1340,7 +1340,7 @@ vector<string> WorldStateMgrThread::isReachableWith(const string &objName)
 
     if (validResponse)
     {
-        //yDebug() << __func__ << "obtained valid response:" << activityReply.toString().c_str();
+        yDebug() << __func__ << "obtained valid response:" << activityReply.toString().c_str();
         Bottle *bLabels = activityReply.get(0).asList();
         vector<string> lab; // TODO: pre-allocate size
         for (int o=0; o<bLabels->size(); o++)
@@ -1367,7 +1367,7 @@ vector<string> WorldStateMgrThread::isPullableWith(const string &objName)
     Bottle activityCmd, activityReply;
     activityCmd.addString("pullableWith");
     activityCmd.addString(objName.c_str());
-    //yDebug() << __func__ <<  "sending query:" << activityCmd.toString().c_str();
+    yDebug() << __func__ <<  "sending query:" << activityCmd.toString().c_str();
     activityPort.write(activityCmd, activityReply);
 
     bool validResponse = false;
@@ -1376,7 +1376,7 @@ vector<string> WorldStateMgrThread::isPullableWith(const string &objName)
 
     if (validResponse)
     {
-        //yDebug() << __func__ << "obtained valid response:" << activityReply.toString().c_str();
+        yDebug() << __func__ << "obtained valid response:" << activityReply.toString().c_str();
         Bottle *bLabels = activityReply.get(0).asList();
         vector<string> lab; // TODO: pre-allocate size
         for (int o=0; o<bLabels->size(); o++)
@@ -1409,7 +1409,7 @@ bool WorldStateMgrThread::isHandFree(const string &handName)
     Bottle activityCmd, activityReply;
     activityCmd.addString("handStat");
     activityCmd.addString(handName.c_str());
-    //yDebug() << __func__ << "sending query:" << activityCmd.toString().c_str();
+    yDebug() << __func__ << "sending query:" << activityCmd.toString().c_str();
     activityPort.write(activityCmd, activityReply);
 
     bool validResponse = false;
@@ -1418,7 +1418,7 @@ bool WorldStateMgrThread::isHandFree(const string &handName)
 
     if (validResponse)
     {
-        //yDebug() << __func__ << "obtained valid response:" << activityReply.toString().c_str();
+        yDebug() << __func__ << "obtained valid response:" << activityReply.toString().c_str();
         return activityReply.get(0).asBool();
     }
     else
@@ -1445,7 +1445,7 @@ string WorldStateMgrThread::inWhichHand(const string &objName)
     Bottle activityCmd, activityReply;
     activityCmd.addString("inHand");
     activityCmd.addString(objName.c_str());
-    //yDebug() << __func__ << "sending query:" << activityCmd.toString().c_str();
+    yDebug() << __func__ << "sending query:" << activityCmd.toString().c_str();
     activityPort.write(activityCmd, activityReply);
 
     bool validResponse = false;
@@ -1459,7 +1459,7 @@ string WorldStateMgrThread::inWhichHand(const string &objName)
              activityReply.get(0).asString()=="right" ||
              activityReply.get(0).asString()=="none" )
         {
-            //yDebug() << __func__ <<  "obtained valid response:" << activityReply.toString().c_str();
+            yDebug() << __func__ <<  "obtained valid response:" << activityReply.toString().c_str();
             ret = activityReply.get(0).asString();
         }
         else
