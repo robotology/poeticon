@@ -659,8 +659,8 @@ void WorldStateMgrThread::refreshTrackNames()
             // assume names cannot change -> use insert(), not operator[]
             // http://stackoverflow.com/questions/326062/in-stl-maps-is-it-better-to-use-mapinsert-than
             // TODO: make sure id corresponds to get(i)
-            double u = inTargets->get(i).asList()->get(1).asDouble();
-            double v = inTargets->get(i).asList()->get(2).asDouble();
+            int u = static_cast<int>( inTargets->get(i).asList()->get(1).asDouble() );
+            int v = static_cast<int>( inTargets->get(i).asList()->get(2).asDouble() );
             string label;
             if (!getLabel(u, v, label))
                 yWarning() << __func__ << "got invalid label";
@@ -1177,7 +1177,7 @@ int WorldStateMgrThread::label2id(const string &label)
     return key;
 }
 
-bool WorldStateMgrThread::getLabel(const double &u, const double &v, string &label)
+bool WorldStateMgrThread::getLabel(const int &u, const int &v, string &label)
 {
     if (activityPort.getOutputCount() < 1)
     {
