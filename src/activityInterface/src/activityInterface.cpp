@@ -277,7 +277,6 @@ string ActivityInterface::getMemoryNameBottle(int id)
                 name = nameValues->get(1).asString().c_str();
         }
     }
-    
     return name;
 }
 
@@ -367,7 +366,6 @@ bool ActivityInterface::handleTrackers()
                 pausedThreads.erase(std::remove(pausedThreads.begin(), pausedThreads.end(), id), pausedThreads.end());
             }
         }
-        //fprintf(stdout,"position size is %d and increment size is %d \n", position.size(), incrementSize[i]);
     }
     return true;
 }
@@ -436,7 +434,6 @@ Bottle ActivityInterface::getMemoryBottle()
             }
         }
     }
-    
     return memoryReply;
 }
 
@@ -552,7 +549,7 @@ string ActivityInterface::getLabel(const int32_t pos_x, const int32_t pos_y)
                 int diffx = abs(cog.get(0).asInt() - pos_x);
                 int diffy = abs(cog.get(1).asInt() - pos_y);
                 
-                if ( diffx < 10 && diffy < 10)
+                if ( diffx < 20 && diffy < 20)
                 {
                     if (propField->check("name"))
                     {
@@ -645,7 +642,6 @@ double ActivityInterface::getManip(const string &objName, const std::string &han
                 manip = 0.0;
             
         }
-        
         //manip = max(manip_left, manip_right);
     }
     else
@@ -657,7 +653,6 @@ double ActivityInterface::getManip(const string &objName, const std::string &han
         else
             manip = 0.0;
     }
-    
     return manip;
 }
 
