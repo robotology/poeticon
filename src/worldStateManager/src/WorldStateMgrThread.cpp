@@ -365,7 +365,7 @@ void WorldStateMgrThread::fsmPerception()
             // acquire initial entries (robot hands) from WSOPC database
             refreshOPC();
 
-            if (!toldUserWaitBlobs && (inAffPort.getInputCount()<1 || inToolAffPort.getInputCount()<1))
+            if (!toldUserWaitBlobs || inAffPort.getInputCount()<1 || inToolAffPort.getInputCount()<1)
             {
                 yInfo("waiting for connections to BlobDescriptor:");
                 yInfo("/blobDescriptor/affDescriptor:o %s", inAffPortName.c_str());
@@ -690,12 +690,24 @@ void WorldStateMgrThread::dumpMap(const idLabelMap &m)
 
 void WorldStateMgrThread::refreshBlobs()
 {
+    // update whole object descriptors
     inAff = inAffPort.read();
 
     if (inAff != NULL)
     {
         // number of blobs
         sizeAff = static_cast<int>( inAff->get(0).asDouble() );
+    }
+
+    // update object parts descriptors
+    inToolAff = inToolAffPort.read();
+    if (inToolAff != NULL)
+    {
+        if ( static_cast<int>(inToolAff->get(0).asDouble()) != sizeAff )
+        {
+            // BlobDescriptor design prevents this to happen, but just in case:
+            yWarning("number of whole object descriptors differ from number of object parts descriptors!");
+        }
     }
 
     //yDebug("successfully refreshed blob descriptor input");
@@ -793,20 +805,26 @@ bool WorldStateMgrThread::doPopulateDB()
         {
             if (opcMap.count(wsID) && !trackMap.count(wsID))
             {
-                //yDebug("probably a robot hand because it is present in WSOPC but not in tracker");
-                bIsHandValue = true; // robot hand
+                // present in WSOPC but not in tracker -> robot hand
+                bIsHandValue = true;
             }
             else
             {
                 yDebug() << __func__ << "did not find track id" << wsID
-                         << "in tracker Bottle, why is it not tracked? did it disappear?"
-                         << "ignoring and continuing to next id";
+                         << "in tracker Bottle -> continuing to next id";
                 continue; // next for cycle iteration
             }
-        };
-
-        if (tbi > 0)
+        }
+        else
+        {
+            // present in WSOPC and in tracker -> currently tracker object
             yDebug("corresponds to tracker Bottle index %d", tbi);
+        }
+
+        // TODO: uncomment when implemented
+        //int abi = 0;
+        //getAffBottleIndexFromTrackROI(u, v, abi);
+        int abi = tbi+1; // remove
 
         // common properties
         Bottle bName;
@@ -816,6 +834,7 @@ bool WorldStateMgrThread::doPopulateDB()
         Bottle bPos;
         Bottle bOffset;
         Bottle bDesc;
+        Bottle bToolDesc;
         Bottle bInHand;
         Bottle bOnTopOf;
         Bottle bReachW;
@@ -831,7 +850,7 @@ bool WorldStateMgrThread::doPopulateDB()
         {
             // object
             bNameValue = iter->second;
-            yDebug("name found in short-term memory (from tracker): %s", bNameValue.c_str());
+            //yDebug("name found in short-term memory (from tracker): %s", bNameValue.c_str());
 
             // in theory this should never happen!
             // if name not found in wsMap -> ask ActivityIF
@@ -842,14 +861,14 @@ bool WorldStateMgrThread::doPopulateDB()
         {
             // robot hand -> get name from WSOPC
             bNameValue = opcMap[wsID];
-            yDebug("name found in short-term memory (from WSOPC): %s", bNameValue.c_str());
+            //yDebug("name found in short-term memory (from WSOPC): %s", bNameValue.c_str());
         }
         bName.addString(bNameValue.c_str());
         // override empty labels - prevents error
         // yarp: BottleImpl reader failed, unrecognized object code 25
         if (bNameValue=="")
         {
-            yDebug("overriding empty label with default value");
+            yWarning("overriding empty label with default value");
             bNameValue = "default";
         }
 
@@ -891,22 +910,29 @@ bool WorldStateMgrThread::doPopulateDB()
             bDesc.addString("desc2d");
             Bottle &bDescValue = bDesc.addList();
             int areaIdx = 23;
-            // TODO: in general inAff->get(tbi+1) does not correspond to inTargets->get(tbi)
-            //       make it more robust
-            bDescValue.addDouble(inAff->get(tbi+1).asList()->get(areaIdx).asDouble()); // area
-            bDescValue.addDouble(inAff->get(tbi+1).asList()->get(areaIdx+1).asDouble()); // conv
-            bDescValue.addDouble(inAff->get(tbi+1).asList()->get(areaIdx+2).asDouble()); // ecc
-            bDescValue.addDouble(inAff->get(tbi+1).asList()->get(areaIdx+3).asDouble()); // comp
-            bDescValue.addDouble(inAff->get(tbi+1).asList()->get(areaIdx+4).asDouble()); // circ
-            bDescValue.addDouble(inAff->get(tbi+1).asList()->get(areaIdx+5).asDouble()); // sq
 
-            // TODO
-            // prepare object parts (top and bottom) property:
-            // part centre + 2D shape description
+            if ((inAff != NULL) && (abi >= 1) && (abi <= sizeAff))
+            {
+                bDescValue.addDouble(inAff->get(abi).asList()->get(areaIdx).asDouble()); // area
+                bDescValue.addDouble(inAff->get(abi).asList()->get(areaIdx+1).asDouble()); // conv
+                bDescValue.addDouble(inAff->get(abi).asList()->get(areaIdx+2).asDouble()); // ecc
+                bDescValue.addDouble(inAff->get(abi).asList()->get(areaIdx+3).asDouble()); // comp
+                bDescValue.addDouble(inAff->get(abi).asList()->get(areaIdx+4).asDouble()); // circ
+                bDescValue.addDouble(inAff->get(abi).asList()->get(areaIdx+5).asDouble()); // sq
+            }
+            else
+                yWarning("problem reading descriptors of whole object");
 
-
-
-
+            // prepare 2D tool-object parts (top and bottom) property
+            bToolDesc.addString("tooldesc2d");
+            if ((inToolAff != NULL) && (abi >= 1) && (abi <= sizeAff))
+            {
+                // add list with 2 lists containing top half and bottom half
+                // descriptors, each having: x y ar con ecc com cir sq el
+                bToolDesc.add( inToolAff->get(abi) );
+            }
+            else
+                yWarning("problem reading descriptors of object parts");
 
             // prepare in_hand property (none/left/right)
             bInHand.addString("in_hand");
@@ -969,15 +995,16 @@ bool WorldStateMgrThread::doPopulateDB()
         opcCmdContent.addString("id");
         opcCmdContent.addInt(wsID);
         opcCmd.addList() = opcCmdContent;
-        yDebug() << __func__ << "sending query:" << opcCmd.toString().c_str();
+        //yDebug() << __func__ << "sending query:" << opcCmd.toString().c_str();
         opcPort.write(opcCmd, opcReply);
-        yDebug() << __func__ << "obtained response:" << opcReply.toString().c_str();
+        //yDebug() << __func__ << "obtained response:" << opcReply.toString().c_str();
 
+        // TODO: factorize common parts inside the next two cases
         if (opcReply.get(0).asVocab() == Vocab::encode("ack"))
         {
             // yes -> just update entry's properties
             // [set] (("id" <num>) ("prop0" <val0>) ...) 
-            yDebug("modifying existing entry %d in database", wsID);
+            //yDebug("modifying existing entry %d in database", wsID);
             opcCmd.clear();
             opcCmdContent.clear();
             opcReply.clear();
@@ -996,6 +1023,7 @@ bool WorldStateMgrThread::doPopulateDB()
                 opcCmdContent.addList() = bPos;
                 opcCmdContent.addList() = bOffset;
                 opcCmdContent.addList() = bDesc;
+                opcCmdContent.addList() = bToolDesc;
                 opcCmdContent.addList() = bInHand;
                 opcCmdContent.addList() = bOnTopOf;
                 opcCmdContent.addList() = bReachW;
@@ -1012,7 +1040,7 @@ bool WorldStateMgrThread::doPopulateDB()
         {
             // no -> add entry
             // [add] (("prop0" <val0>) ("prop1" <val1>) ...)
-            yDebug("adding new entry %d to database", wsID);
+            //yDebug("adding new entry %d to database", wsID);
             opcCmd.clear();
             opcCmdContent.clear();
             opcReply.clear();
@@ -1025,6 +1053,7 @@ bool WorldStateMgrThread::doPopulateDB()
                 opcCmdContent.addList() = bPos;
                 opcCmdContent.addList() = bOffset;
                 opcCmdContent.addList() = bDesc;
+                opcCmdContent.addList() = bToolDesc;
                 opcCmdContent.addList() = bInHand;
                 opcCmdContent.addList() = bOnTopOf;
                 opcCmdContent.addList() = bReachW;
@@ -1038,9 +1067,9 @@ bool WorldStateMgrThread::doPopulateDB()
             opcCmd.addList() = opcCmdContent;
         }
 
-        yDebug() << __func__ << "sending command to WSOPC:" << opcCmd.toString().c_str();
+        //yDebug() << __func__ << "sending command to WSOPC:" << opcCmd.toString().c_str();
         opcPort.write(opcCmd, opcReply);
-        yDebug() << __func__ << "received response:" << opcReply.toString().c_str();
+        //yDebug() << __func__ << "received response:" << opcReply.toString().c_str();
 
         // process WSOPC response
         if (opcReply.size() > 1)
@@ -1109,6 +1138,23 @@ bool WorldStateMgrThread::getTrackerBottleIndexFromID(const int &id, int &tbi)
     return false;
 }
 
+bool WorldStateMgrThread::getAffBottleIndexFromTrackROI(const int &u, const int &v, int &abi)
+{
+    // Finds the AffBottleIndex of inTargets->get(tbi) corresponding to
+    // the TrackerBottleIndex inAff->get(abi).
+    // Current implementation: from tracker ROI centre, detect the most likely
+    // blob index within blobDescriptor Bottle, using Euclidean distance.
+    // Future, more robust implementation: cv::pointPolygonTest.
+
+    // TODO:
+    // iterate over pairs
+    //bPosValue.addDouble(inAff->get(*+1).asList()->get(0).asDouble());
+    //bPosValue.addDouble(inAff->get(*+1).asList()->get(1).asDouble());
+    // and return closest one to u,v
+
+    return false;
+}
+
 int WorldStateMgrThread::label2id(const string &label)
 {
     //yDebug() << __func__ << "looking for label" << label.c_str();
@@ -1143,7 +1189,7 @@ bool WorldStateMgrThread::getLabel(const double &u, const double &v, string &lab
     activityCmd.addString("getLabel");
     activityCmd.addDouble(u);
     activityCmd.addDouble(v);
-    yDebug() << __func__ <<  "sending query:" << activityCmd.toString().c_str();
+    //yDebug() << __func__ <<  "sending query:" << activityCmd.toString().c_str();
     activityPort.write(activityCmd, activityReply);
 
     bool validResponse = false;
@@ -1153,7 +1199,7 @@ bool WorldStateMgrThread::getLabel(const double &u, const double &v, string &lab
 
     if (validResponse)
     {
-        yDebug() << __func__ << "obtained valid response:" << activityReply.toString().c_str();
+        //yDebug() << __func__ << "obtained valid response:" << activityReply.toString().c_str();
         label = activityReply.get(0).asString(); 
         return true;
     }
@@ -1177,7 +1223,7 @@ bool WorldStateMgrThread::mono2stereo(const double &u, const double &v,
     activityCmd.addString("get3D");
     activityCmd.addDouble(u);
     activityCmd.addDouble(v);
-    yDebug() << __func__ <<  "sending query:" << activityCmd.toString().c_str();
+    //yDebug() << __func__ <<  "sending query:" << activityCmd.toString().c_str();
     activityPort.write(activityCmd, activityReply);
 
     bool validResponse = false;
@@ -1187,7 +1233,7 @@ bool WorldStateMgrThread::mono2stereo(const double &u, const double &v,
 
     if (validResponse)
     {
-        yDebug() << __func__ << "obtained valid response:" << activityReply.toString().c_str();
+        //yDebug() << __func__ << "obtained valid response:" << activityReply.toString().c_str();
         x = activityReply.get(0).asList()->get(0).asDouble();
         y = activityReply.get(0).asList()->get(1).asDouble();
         z = activityReply.get(0).asList()->get(2).asDouble();
@@ -1212,7 +1258,7 @@ vector<double> WorldStateMgrThread::getTooltipOffset(const string &objName)
     Bottle activityCmd, activityReply;
     activityCmd.addString("getOffset");
     activityCmd.addString(objName.c_str());
-    yDebug() << __func__ << "sending query:" << activityCmd.toString().c_str();
+    //yDebug() << __func__ << "sending query:" << activityCmd.toString().c_str();
     activityPort.write(activityCmd, activityReply);
 
     bool validResponse = false;
@@ -1222,7 +1268,7 @@ vector<double> WorldStateMgrThread::getTooltipOffset(const string &objName)
 
     if (validResponse)
     {
-        yDebug() << __func__ << "obtained valid response:" << activityReply.toString().c_str();
+        //yDebug() << __func__ << "obtained valid response:" << activityReply.toString().c_str();
         Bottle *bOffset = activityReply.get(0).asList();
         vector<double> offset; // TODO: pre-allocate size
         for (int t=0; t<bOffset->size(); t++)
@@ -1247,9 +1293,9 @@ vector<string> WorldStateMgrThread::isUnderOf(const string &objName)
     }
 
     Bottle activityCmd, activityReply;
-    activityCmd.addString("isUnderOf");
+    activityCmd.addString("underOf");
     activityCmd.addString(objName.c_str());
-    yDebug() << __func__ << "sending query:" << activityCmd.toString().c_str();
+    //yDebug() << __func__ << "sending query:" << activityCmd.toString().c_str();
     activityPort.write(activityCmd, activityReply);
 
     bool validResponse = false;
@@ -1258,7 +1304,7 @@ vector<string> WorldStateMgrThread::isUnderOf(const string &objName)
 
     if (validResponse)
     {
-        yDebug() << __func__ << "obtained valid response:" << activityReply.toString().c_str();
+        //yDebug() << __func__ << "obtained valid response:" << activityReply.toString().c_str();
         Bottle *bLabels = activityReply.get(0).asList();
         vector<string> lab; // TODO: pre-allocate size
         for (int o=0; o<bLabels->size(); o++)
@@ -1285,7 +1331,7 @@ vector<string> WorldStateMgrThread::isReachableWith(const string &objName)
     Bottle activityCmd, activityReply;
     activityCmd.addString("reachableWith");
     activityCmd.addString(objName.c_str());
-    yDebug() << __func__ << "sending query:" << activityCmd.toString().c_str();
+    //yDebug() << __func__ << "sending query:" << activityCmd.toString().c_str();
     activityPort.write(activityCmd, activityReply);
 
     bool validResponse = false;
@@ -1294,7 +1340,7 @@ vector<string> WorldStateMgrThread::isReachableWith(const string &objName)
 
     if (validResponse)
     {
-        yDebug() << __func__ << "obtained valid response:" << activityReply.toString().c_str();
+        //yDebug() << __func__ << "obtained valid response:" << activityReply.toString().c_str();
         Bottle *bLabels = activityReply.get(0).asList();
         vector<string> lab; // TODO: pre-allocate size
         for (int o=0; o<bLabels->size(); o++)
@@ -1321,7 +1367,7 @@ vector<string> WorldStateMgrThread::isPullableWith(const string &objName)
     Bottle activityCmd, activityReply;
     activityCmd.addString("pullableWith");
     activityCmd.addString(objName.c_str());
-    yDebug() << __func__ <<  "sending query:" << activityCmd.toString().c_str();
+    //yDebug() << __func__ <<  "sending query:" << activityCmd.toString().c_str();
     activityPort.write(activityCmd, activityReply);
 
     bool validResponse = false;
@@ -1330,7 +1376,7 @@ vector<string> WorldStateMgrThread::isPullableWith(const string &objName)
 
     if (validResponse)
     {
-        yDebug() << __func__ << "obtained valid response:" << activityReply.toString().c_str();
+        //yDebug() << __func__ << "obtained valid response:" << activityReply.toString().c_str();
         Bottle *bLabels = activityReply.get(0).asList();
         vector<string> lab; // TODO: pre-allocate size
         for (int o=0; o<bLabels->size(); o++)
@@ -1363,7 +1409,7 @@ bool WorldStateMgrThread::isHandFree(const string &handName)
     Bottle activityCmd, activityReply;
     activityCmd.addString("handStat");
     activityCmd.addString(handName.c_str());
-    yDebug() << __func__ << "sending query:" << activityCmd.toString().c_str();
+    //yDebug() << __func__ << "sending query:" << activityCmd.toString().c_str();
     activityPort.write(activityCmd, activityReply);
 
     bool validResponse = false;
@@ -1372,7 +1418,7 @@ bool WorldStateMgrThread::isHandFree(const string &handName)
 
     if (validResponse)
     {
-        yDebug() << __func__ << "obtained valid response:" << activityReply.toString().c_str();
+        //yDebug() << __func__ << "obtained valid response:" << activityReply.toString().c_str();
         return activityReply.get(0).asBool();
     }
     else
@@ -1399,9 +1445,8 @@ string WorldStateMgrThread::inWhichHand(const string &objName)
     Bottle activityCmd, activityReply;
     activityCmd.addString("inHand");
     activityCmd.addString(objName.c_str());
-    yDebug() << __func__ << "sending query:" << activityCmd.toString().c_str();
+    //yDebug() << __func__ << "sending query:" << activityCmd.toString().c_str();
     activityPort.write(activityCmd, activityReply);
-    yDebug() << __func__ <<  "obtained response:" << activityReply.toString().c_str();
 
     bool validResponse = false;
     validResponse = ( activityReply.size()>0 &&
@@ -1414,7 +1459,7 @@ string WorldStateMgrThread::inWhichHand(const string &objName)
              activityReply.get(0).asString()=="right" ||
              activityReply.get(0).asString()=="none" )
         {
-            yDebug() << __func__ <<  "obtained valid response:" << activityReply.toString().c_str();
+            //yDebug() << __func__ <<  "obtained valid response:" << activityReply.toString().c_str();
             ret = activityReply.get(0).asString();
         }
         else
