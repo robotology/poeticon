@@ -53,7 +53,7 @@ public:
   virtual bool read(yarp::os::ConnectionReader& connection);
 };
 
-class activityInterface_IDLServer_getTooltipOffset : public yarp::os::Portable {
+class activityInterface_IDLServer_getOffset : public yarp::os::Portable {
 public:
   std::string objName;
   yarp::os::Bottle _return;
@@ -228,15 +228,15 @@ void activityInterface_IDLServer_get3D::init(const std::string& objName) {
   this->objName = objName;
 }
 
-bool activityInterface_IDLServer_getTooltipOffset::write(yarp::os::ConnectionWriter& connection) {
+bool activityInterface_IDLServer_getOffset::write(yarp::os::ConnectionWriter& connection) {
   yarp::os::idl::WireWriter writer(connection);
   if (!writer.writeListHeader(2)) return false;
-  if (!writer.writeTag("getTooltipOffset",1,1)) return false;
+  if (!writer.writeTag("getOffset",1,1)) return false;
   if (!writer.writeString(objName)) return false;
   return true;
 }
 
-bool activityInterface_IDLServer_getTooltipOffset::read(yarp::os::ConnectionReader& connection) {
+bool activityInterface_IDLServer_getOffset::read(yarp::os::ConnectionReader& connection) {
   yarp::os::idl::WireReader reader(connection);
   if (!reader.readListReturn()) return false;
   if (!reader.read(_return)) {
@@ -246,7 +246,7 @@ bool activityInterface_IDLServer_getTooltipOffset::read(yarp::os::ConnectionRead
   return true;
 }
 
-void activityInterface_IDLServer_getTooltipOffset::init(const std::string& objName) {
+void activityInterface_IDLServer_getOffset::init(const std::string& objName) {
   this->objName = objName;
 }
 
@@ -423,12 +423,12 @@ yarp::os::Bottle activityInterface_IDLServer::get3D(const std::string& objName) 
   bool ok = yarp().write(helper,helper);
   return ok?helper._return:_return;
 }
-yarp::os::Bottle activityInterface_IDLServer::getTooltipOffset(const std::string& objName) {
+yarp::os::Bottle activityInterface_IDLServer::getOffset(const std::string& objName) {
   yarp::os::Bottle _return;
-  activityInterface_IDLServer_getTooltipOffset helper;
+  activityInterface_IDLServer_getOffset helper;
   helper.init(objName);
   if (!yarp().canWrite()) {
-    fprintf(stderr,"Missing server method '%s'?\n","yarp::os::Bottle activityInterface_IDLServer::getTooltipOffset(const std::string& objName)");
+    fprintf(stderr,"Missing server method '%s'?\n","yarp::os::Bottle activityInterface_IDLServer::getOffset(const std::string& objName)");
   }
   bool ok = yarp().write(helper,helper);
   return ok?helper._return:_return;
@@ -583,14 +583,14 @@ bool activityInterface_IDLServer::read(yarp::os::ConnectionReader& connection) {
       reader.accept();
       return true;
     }
-    if (tag == "getTooltipOffset") {
+    if (tag == "getOffset") {
       std::string objName;
       if (!reader.readString(objName)) {
         reader.fail();
         return false;
       }
       yarp::os::Bottle _return;
-      _return = getTooltipOffset(objName);
+      _return = getOffset(objName);
       yarp::os::idl::WireWriter writer(reader);
       if (!writer.isNull()) {
         if (!writer.writeListHeader(1)) return false;
@@ -733,7 +733,7 @@ std::vector<std::string> activityInterface_IDLServer::help(const std::string& fu
     helpString.push_back("getLabel");
     helpString.push_back("inHand");
     helpString.push_back("get3D");
-    helpString.push_back("getTooltipOffset");
+    helpString.push_back("getOffset");
     helpString.push_back("take");
     helpString.push_back("drop");
     helpString.push_back("geto");
@@ -774,8 +774,8 @@ std::vector<std::string> activityInterface_IDLServer::help(const std::string& fu
       helpString.push_back("@param objName specifies the name of the object ");
       helpString.push_back("@return Bottle containing 3D position ");
     }
-    if (functionName=="getTooltipOffset") {
-      helpString.push_back("yarp::os::Bottle getTooltipOffset(const std::string& objName) ");
+    if (functionName=="getOffset") {
+      helpString.push_back("yarp::os::Bottle getOffset(const std::string& objName) ");
       helpString.push_back("Get the tool offset position of the object requested by the user. ");
       helpString.push_back("@param objName specifies the name of the object (typically tool) ");
       helpString.push_back("@return Bottle containing 3D offset ");

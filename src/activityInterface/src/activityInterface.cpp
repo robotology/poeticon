@@ -468,7 +468,7 @@ Bottle ActivityInterface::get3D(const string &objName)
 }
 
 /**********************************************************/
-Bottle ActivityInterface::getTooltipOffset(const string &objName)
+Bottle ActivityInterface::getOffset(const string &objName)
 {
     Bottle toolOffset;
     toolOffset.clear();

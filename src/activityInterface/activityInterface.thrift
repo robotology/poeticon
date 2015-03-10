@@ -59,7 +59,7 @@ service activityInterface_IDLServer
      * @param objName specifies the name of the object (typically tool)
      * @return Bottle containing 3D offset
      **/
-    Bottle getTooltipOffset(1:string objName)
+    Bottle getOffset(1:string objName)
     
     /**
      * Perform the take action on the particular object with the particular hand
