@@ -1395,13 +1395,13 @@ bool WorldStateMgrThread::isHandFree(const string &handName)
     if (activityPort.getOutputCount() < 1)
     {
         yWarning() << __func__ << "not connected to ActivityIF";
-        return false;
+        return true; // hand free
     }
 
     if ((handName != "left") && (handName != "right"))
     {
         yWarning() << __func__ << "argument handName must be left or right";
-        return false;
+        return true; // hand free
     }
 
     Bottle activityCmd, activityReply;
@@ -1412,16 +1412,21 @@ bool WorldStateMgrThread::isHandFree(const string &handName)
 
     bool validResponse = false;
     validResponse = ( activityReply.size()>0 &&
-                      activityReply.get(0).isBool() );
+                      activityReply.get(0).isVocab() ); // isBool()?
 
     if (validResponse)
     {
         yDebug() << __func__ << "obtained valid response:" << activityReply.toString().c_str();
-        return activityReply.get(0).asBool();
+        if (activityReply.get(0).asVocab() == Vocab::encode("ok"))
+            return false; // hand occupied
+        else if (activityReply.get(0).asVocab() == Vocab::encode("nack"))
+            return true; // hand free
     }
     else
-        yWarning() << __func__ << "obtained invalid response:" << activityReply.toString().c_str();
-        return false;
+    {
+        yWarning() << __func__ << "obtained invalid response:" << activityReply.toString().c_str() << "assuming [nack] -> hand free";
+        return true; // hand free
+    }
 }
 
 string WorldStateMgrThread::inWhichHand(const string &objName)
