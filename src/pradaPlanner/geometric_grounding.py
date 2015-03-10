@@ -31,7 +31,7 @@ import time, sys, os
 from multiprocessing import Pipe, Process
 
 
-def create_rules(objects, pre_rules):
+def create_rules(objects, pre_rules, tools):
     pre_rules = pre_rules.split('\n')
     new_rule = []
     hands = []
@@ -43,20 +43,45 @@ def create_rules(objects, pre_rules):
         k=0
         if pre_rules[3].find('_tool') != -1 or pre_rules[3].find('_obj') != -1:
             if pre_rules[3].find('_hand') != -1:
-                for t in range(len(hands)):
-                    for j in range(len(objects)):                        
+                if pre_rules[3].find('_tool') != -1:
+                    for t in range(len(hands)):
+                        for j in range(len(objects)):                        
+                            for c in range(len(objects)):
+                                if c != j and objects[c] not in hands and objects[j] not in hands:
+                                    new_rule = new_rule + pre_rules
+                                    for i in range(len(pre_rules)):
+                                        new_rule[k] = new_rule[k].replace('_obj', str(objects[c]))
+                                        new_rule[k] = new_rule[k].replace('_tool', str(objects[j]))
+                                        new_rule[k] = new_rule[k].replace('_hand', str(hands[t]))
+                                        k = k+1
+                else:
+                    for t in range(len(hands)):                       
                         for c in range(len(objects)):
-                            if c != j and objects[c] not in hands and objects[j] not in hands:
+                            if objects[c] not in hands:
                                 new_rule = new_rule + pre_rules
                                 for i in range(len(pre_rules)):
                                     new_rule[k] = new_rule[k].replace('_obj', str(objects[c]))
-                                    new_rule[k] = new_rule[k].replace('_tool', str(objects[j]))
                                     new_rule[k] = new_rule[k].replace('_hand', str(hands[t]))
                                     k = k+1
+            ## hard coded method to make it run faster
+            elif pre_rules[3].find('push') != -1 or pre_rules[3].find('pull') != -1:
+                print "checking for push/pull"
+                for j in range(len(tools)):
+                    print tools[j]
+                    for c in range(len(objects)):
+                        print objects[c]
+                        if objects[c] != tools[j] and objects[c] not in hands:
+                            print "working"
+                            new_rule = new_rule + pre_rules
+                            for i in range(len(pre_rules)):
+                                new_rule[k] = new_rule[k].replace('_obj', str(objects[c]))
+                                new_rule[k] = new_rule[k].replace('_tool', str(tools[j]))
+                                k = k+1
+            ##########################################
             else:
                 for j in range(len(objects)):
                     for c in range(len(objects)):
-                        if c != j:
+                        if (c != j and (objects[c] not in hands or objects[j] not in hands)):
                             new_rule = new_rule + pre_rules
                             for i in range(len(pre_rules)):
                                 new_rule[k] = new_rule[k].replace('_obj', str(objects[c]))
@@ -94,12 +119,13 @@ def create_rules(objects, pre_rules):
                     new_temp_rule.pop(h)
             new_rule[j] = ''.join([' '] +[' '.join(new_temp_rule)])
                     
-            aux_rule = []           
+            aux_rule = []
+    print new_rule
     return new_rule
 
 ##################################################################################
 
-def create_symbols(objects, symbols):
+def create_symbols(objects, symbols, tools):
     symbols = symbols.split('\n')
     new_symbol = []
     hands = []
@@ -107,23 +133,43 @@ def create_symbols(objects, symbols):
         hands = hands + ['11']
     if '12' in objects:
         hands = hands + ['12']
-    if symbols[0].find('_tool') != -1:
+    if symbols[0].find('_obj') != -1:
         if symbols[0].find('_hand') != -1:
             i=0
-            for g in range(len(hands)):
-                for j in range(len(objects)):
+            if symbols[0].find('_tool') != -1:
+                for g in range(len(hands)):
+                    for j in range(len(objects)):
+                        for k in range(len(objects)):
+                            if k!=j and objects[k] not in hands and objects[j] not in hands:
+                                new_symbol = new_symbol + symbols
+                                new_symbol[i] = new_symbol[i].replace('_tool', str(objects[j]))
+                                new_symbol[i] = new_symbol[i].replace('_obj', str(objects[k]))
+                                new_symbol[i] = new_symbol[i].replace('_hand', str(hands[g]))
+                                i = i+1
+            else:
+                for g in range(len(hands)):
                     for k in range(len(objects)):
-                        if k!=j and objects[k] not in hands and objects[j] not in hands:
+                        if objects[k] not in hands:
                             new_symbol = new_symbol + symbols
-                            new_symbol[i] = new_symbol[i].replace('_tool', str(objects[j]))
                             new_symbol[i] = new_symbol[i].replace('_obj', str(objects[k]))
                             new_symbol[i] = new_symbol[i].replace('_hand', str(hands[g]))
                             i = i+1
+        ## method implemented to make the process go faster
+        elif symbols[0].find('push') != -1 or symbols[0].find('pull') != -1:
+            i=0
+            for j in range(len(tools)):
+                for k in range(len(objects)):
+                    if objects[k] != tools[j] and objects[k] not in hands:
+                        new_symbol = new_symbol + symbols
+                        new_symbol[i] = new_symbol[i].replace('_tool', str(tools[j]))
+                        new_symbol[i] = new_symbol[i].replace('_obj', str(objects[k]))
+                        i = i+1
+        ###################################################
         else:
             i=0
             for j in range(len(objects)):
                 for k in range(len(objects)):
-                    if k!=j:
+                    if (k!=j and (objects[k] not in hands or objects[j] not in hands)):
                         new_symbol = new_symbol + symbols
                         new_symbol[i] = new_symbol[i].replace('_tool', str(objects[j]))
                         new_symbol[i] = new_symbol[i].replace('_obj', str(objects[k]))
@@ -131,7 +177,7 @@ def create_symbols(objects, symbols):
     else:
         for j in range(len(objects)):
             new_symbol = new_symbol + symbols
-            new_symbol[j] = new_symbol[j].replace('_obj', str(objects[j]))
+            new_symbol[j] = new_symbol[j].replace('_hand', str(objects[j]))
     return new_symbol
 
 #############################################################################
@@ -171,6 +217,7 @@ def geometric_grounding():
                 rule_file = open(''.join(PathName + "/rules.dat"),'w')
                 symbol_file = open(''.join(PathName + "/symbols.dat"),'w')
                 newrule_file = open(''.join(PathName + "/new_rules.dat"),'w')
+                objects_file = open(''.join(PathName + "/Object_names-IDs.dat"),'r')
                 
 ## reads objects in world
                 lines = world_file.read()
@@ -181,12 +228,25 @@ def geometric_grounding():
                     if objects[i] not in temp_obj:
                         temp_obj = temp_obj + [objects[i]]
                 objects = temp_obj
+
+## reads tools in the world
+                lines = objects_file.read()
+                objects_file.close()
+                temp_data = lines.replace('((','').replace('))','').split(');(')
+                tools = []
+                for i in range(len(temp_data)):
+                    temp_data[i] = temp_data[i].split(',')
+                for i in range(len(temp_data)):
+                    if temp_data[i][1] == 'stick' or temp_data[i][1] == 'rake':
+                        tools = tools + [temp_data[i][0]]
+                print tools
                         
 ## reads pre_rules
                 rules = []
                 prerules = prerule_file.read().split('\n\n')
                 for i in range(len(prerules)):
-                    rules = rules + create_rules(objects, prerules[i])                    
+                    rules = rules + create_rules(objects, prerules[i], tools)
+
 
 ## grounding geometrico
                 l = 0
@@ -245,7 +305,7 @@ def geometric_grounding():
                 tempsymbols = []
                 newsymbols = []
                 for i in range(len(symbols)-1):
-                    tempsymbols = tempsymbols+create_symbols(objects,symbols[i])
+                    tempsymbols = tempsymbols+create_symbols(objects,symbols[i], tools)
                 for i in range(len(tempsymbols)):
                     if tempsymbols[i] not in newsymbols:
                         newsymbols = newsymbols + [tempsymbols[i]]

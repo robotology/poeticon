@@ -71,6 +71,9 @@ class ActionQueryCommunication:
         return ans.size() == 1 ## and ans.get(0).asVocab() == 27503
 
 def Affordance_comm():
+
+    mode = 0
+    ## set mode  = 0 for no motor engine, 1 for motor engine active 
     yarp.Network.init()
     geo_yarp = yarp.BufferedPortBottle()
     geo_yarp.open("/AffordanceComm/ground_cmd:io")##
@@ -137,8 +140,6 @@ def Affordance_comm():
                     break
         descriptors = descriptors + [[Obj_ID[i], data]]
     print descriptors
-##    Aff_yarp = yarp.BufferedPortBottle()
-##    Aff_yarp.open("/Aff_query:io")
     
     translation_file = open(''.join(PathName +"/Action_Affordance_Translation.dat"))
     aux_translation = translation_file.read().split('\n')
@@ -179,22 +180,27 @@ def Affordance_comm():
 
 
 ## Se for grasp ask ARE/Karma
-                    if translation[i][2] == 'grasp':
-                        probability = ActionQuery._execute(PathName, rule)
-                        if ActionQuery._is_success(probability):
-                            new_outcome = outcome.split(' ')
-                            new_outcome[2] = str(probability)
-                            new_outcome = ' '.join(new_outcome)
-                            new_outcome2 = outcome2.split(' ')
-                            new_outcome2[2] = str(1-probability)
-                            new_outcome2 = ' '.join(new_outcome2)
-                            Affor_bottle_out = geo_yarp.prepare()
-                            Affor_bottle_out.clear()
-                            Affor_bottle_out.addString(new_outcome)
-                            Affor_bottle_out.addString(new_outcome2)
-                            Affor_bottle_out.addString(outcome3)
-                            geo_yarp.write()
-                        else:
+                    print "checking probabilities"
+                    if translation[i][2].replace('\r','').replace(' ','') == 'grasp':
+                        print "grasp detected"
+                        if mode != 0:
+                            print "checking for motor executer"
+                            probability = ActionQuery._execute(PathName, rule)
+                            if ActionQuery._is_success(probability):
+                                new_outcome = outcome.split(' ')
+                                new_outcome[2] = str(probability)
+                                new_outcome = ' '.join(new_outcome)
+                                new_outcome2 = outcome2.split(' ')
+                                new_outcome2[2] = str(1-probability)
+                                new_outcome2 = ' '.join(new_outcome2)
+                                Affor_bottle_out = geo_yarp.prepare()
+                                Affor_bottle_out.clear()
+                                Affor_bottle_out.addString(new_outcome)
+                                Affor_bottle_out.addString(new_outcome2)
+                                Affor_bottle_out.addString(outcome3)
+                                geo_yarp.write()
+                        if mode == 0:
+                            print "going for default probability"
                             Affor_bottle_out = geo_yarp.prepare()
                             Affor_bottle_out.clear()
                             Affor_bottle_out.addString(outcome)
@@ -203,8 +209,9 @@ def Affordance_comm():
                             geo_yarp.write()
 
 ## Se for pull/push, -> ask Affordances
-                    if translation[i][2] == 'push':
+                    if translation[i][2].replace('\r','').replace(' ','') == 'push':
                         if affnet_yarp.getOutputCount() == 0:
+                            print "no affordance network detected. using default."
                             Affor_bottle_out = geo_yarp.prepare()
                             Affor_bottle_out.clear()
                             Affor_bottle_out.addString(outcome)
@@ -264,8 +271,9 @@ def Affordance_comm():
                                 Affor_bottle_out.addString(outcome3)
                                 geo_yarp.write()
                             
-                    if translation[i][2] == 'pull':
+                    if translation[i][2].replace('\r','').replace(' ','') == 'pull':
                         if affnet_yarp.getOutputCount() == 0:
+                            print "no affordance network detected. using default."
                             Affor_bottle_out = geo_yarp.prepare()
                             Affor_bottle_out.clear()
                             Affor_bottle_out.addString(outcome)
@@ -326,7 +334,7 @@ def Affordance_comm():
                                 geo_yarp.write()
 ## drop and put keep the "default" probabilities, as we don't have affordances for them yet.
 
-                    if translation[i][2] == 'drop':
+                    if translation[i][2].replace('\r','').replace(' ','') == 'drop':
                         Affor_bottle_out = geo_yarp.prepare()
                         Affor_bottle_out.clear()
                         Affor_bottle_out.addString(outcome)
@@ -334,7 +342,7 @@ def Affordance_comm():
                         Affor_bottle_out.addString(outcome3)
                         geo_yarp.write()
                         
-                    if translation[i][2] == 'put':
+                    if translation[i][2].replace('\r','').replace(' ','') == 'put':
                         Affor_bottle_out = geo_yarp.prepare()
                         Affor_bottle_out.clear()
                         Affor_bottle_out.addString(outcome)
