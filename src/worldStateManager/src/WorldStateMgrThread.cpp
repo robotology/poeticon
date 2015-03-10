@@ -888,7 +888,7 @@ bool WorldStateMgrThread::doPopulateDB()
             bPos.addString("pos");
             Bottle &bPosValue = bPos.addList();
             double x=0.0, y=0.0, z=0.0;
-            mono2stereo(u, v, x, y, z);
+            mono2stereo(bNameValue.c_str(), x, y, z);
             bPosValue.addDouble(x);
             bPosValue.addDouble(y);
             bPosValue.addDouble(z);
@@ -1210,8 +1210,7 @@ bool WorldStateMgrThread::getLabel(const int &u, const int &v, string &label)
     }
 }
 
-bool WorldStateMgrThread::mono2stereo(const double &u, const double &v,
-                                      double &x, double &y, double &z)
+bool WorldStateMgrThread::mono2stereo(const string &objName, double &x, double &y, double &z)
 {
     if (activityPort.getOutputCount() < 1)
     {
@@ -1221,8 +1220,7 @@ bool WorldStateMgrThread::mono2stereo(const double &u, const double &v,
 
     Bottle activityCmd, activityReply;
     activityCmd.addString("get3D");
-    activityCmd.addDouble(u);
-    activityCmd.addDouble(v);
+    activityCmd.addString(objName);
     yDebug() << __func__ <<  "sending query:" << activityCmd.toString().c_str();
     activityPort.write(activityCmd, activityReply);
 
