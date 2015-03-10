@@ -47,7 +47,7 @@ ActivityInterface::~ActivityInterface()
 /**********************************************************/
 bool ActivityInterface::configure(yarp::os::ResourceFinder &rf)
 {
-    with_robot = true;
+    with_robot = false;
     
     moduleName = rf.check("name", Value("activityInterface"), "module name (string)").asString();
     Bottle bArm[2];
@@ -100,11 +100,15 @@ bool ActivityInterface::configure(yarp::os::ResourceFinder &rf)
     rpcAREcmd.setReporter(memoryReporter);
     rpcAREcmd.open(("/"+moduleName+"/arecmd:rpc").c_str());
     
+    rpcWorldState.setReporter(memoryReporter);
+    rpcWorldState.open(("/"+moduleName+"/worldState:rpc").c_str());
+    
     robotStatus.open(("/"+moduleName+"/status:o").c_str());
     
     yarp::os::Network::connect("/activityInterface/arecmd:rpc", "/actionsRenderingEngine/cmd:io");
     yarp::os::Network::connect("/activityInterface/are:rpc", "/actionsRenderingEngine/get:io");
     yarp::os::Network::connect("/activityInterface/memory:rpc", "/memory/rpc");
+    yarp::os::Network::connect("/activityInterface/worldState:rpc", "/worldStateManager/rpc:i");
     
     if (with_robot)
     {
@@ -185,6 +189,9 @@ bool ActivityInterface::configure(yarp::os::ResourceFinder &rf)
     first = true;
     elements = 0;
     
+    for (int i=0; i<10; i++)
+        incrementSize[i] = 0;
+    
     return true ;
 }
 
@@ -195,6 +202,7 @@ bool ActivityInterface::interruptModule()
     rpcARE.interrupt();
     rpcAREcmd.interrupt();
     rpcPort.interrupt();
+    rpcWorldState.interrupt();
     robotStatus.interrupt();
     return true;
 }
@@ -210,6 +218,7 @@ bool ActivityInterface::close()
     rpcARE.close();
     rpcAREcmd.close();
     robotStatus.close();
+    rpcWorldState.close();
     return true;
 }
 
@@ -238,9 +247,136 @@ bool ActivityInterface::propagateStatus()
 }
 
 /**********************************************************/
+string ActivityInterface::getMemoryNameBottle(int id)
+{
+    string name;
+    name.clear();
+    
+    Bottle replyMemoryName, cmdMemory;
+    replyMemoryName.clear();
+    cmdMemory.clear();
+    cmdMemory.clear();
+    cmdMemory.addVocab(Vocab::encode("get"));
+    Bottle &content=cmdMemory.addList();
+    Bottle &list_bid=content.addList();
+    list_bid.addString("id");
+    list_bid.addInt(id);
+    
+    Bottle &list_propSet=content.addList();
+    list_propSet.addString("propSet");
+    Bottle &list_name=list_propSet.addList();
+    list_name.addString("name");
+    
+    rpcMemory.write(cmdMemory,replyMemoryName);
+    
+    if (replyMemoryName.get(0).asVocab()==Vocab::encode("ack"))
+    {
+        if (Bottle *nameField=replyMemoryName.get(1).asList())
+        {
+            if (Bottle *nameValues=nameField->get(0).asList())
+                name = nameValues->get(1).asString().c_str();
+        }
+    }
+    
+    return name;
+}
+
+/**********************************************************/
+Bottle ActivityInterface::getIDs()
+{
+    Bottle ids;
+    ids.clear();
+    Bottle memoryReply;
+    Bottle cmdMemory,replyMemory,replyMemoryProp;
+    cmdMemory.addVocab(Vocab::encode("ask"));
+    Bottle &cont=cmdMemory.addList().addList();
+    cont.addString("entity");
+    cont.addString("==");
+    cont.addString("object");
+    rpcMemory.write(cmdMemory,replyMemory);
+    
+    if (replyMemory.get(0).asVocab()==Vocab::encode("ack"))
+    {
+        if (Bottle *idField=replyMemory.get(1).asList())
+        {
+            if (Bottle *idValues=idField->get(1).asList())
+            {
+                //cycle over items
+                for (int i=0; i<idValues->size(); i++)
+                {
+                    int id=idValues->get(i).asInt();
+                    ids.addInt(id);
+                }
+            }
+        }
+    }
+    return ids;
+}
+
+/**********************************************************/
+bool ActivityInterface::handleTrackers()
+{
+    Bottle ids = getIDs();
+
+    for (int i=0; i<ids.size(); i++ )
+    {
+        int id = ids.get(i).asInt();
+        bool paused = false;
+        
+        for (int y = 0; y < pausedThreads.size(); y++  )
+            if (id == pausedThreads[y])
+                paused = true;
+        
+        string name = getMemoryNameBottle(id);
+        
+        Bottle position = get3D(name);
+    
+        if (position.size() < 1 )
+        {
+            if (incrementSize[i] < 3)
+                incrementSize[i]++;
+            
+            if (incrementSize[i] > 2 && !paused)
+            {
+                Bottle cmdPauseThread, replyPauseThread;
+                cmdPauseThread.clear();
+                cmdPauseThread.addString("pause");
+                cmdPauseThread.addString(name.c_str());
+                
+                fprintf(stdout, "will send: %s \n", cmdPauseThread.toString().c_str() );
+                
+                rpcWorldState.write(cmdPauseThread,replyPauseThread);
+                pausedThreads.push_back(id);
+            }
+        }
+        if (position.size() > 1 )
+        {
+            if (incrementSize[i] > 0 && incrementSize[i] !=-1)
+                incrementSize[i]--;
+            
+            if (incrementSize[i] == 0 && paused)
+            {
+                Bottle cmdPauseThread, replyPauseThread;
+                cmdPauseThread.clear();
+                cmdPauseThread.addString("resume");
+                cmdPauseThread.addString(name.c_str());
+                
+                fprintf(stdout, "will send: %s \n", cmdPauseThread.toString().c_str() );
+                
+                rpcWorldState.write(cmdPauseThread,replyPauseThread);
+                pausedThreads.erase(std::remove(pausedThreads.begin(), pausedThreads.end(), id), pausedThreads.end());
+            }
+        }
+        //fprintf(stdout,"position size is %d and increment size is %d \n", position.size(), incrementSize[i]);
+    }
+    return true;
+}
+
+/**********************************************************/
 bool ActivityInterface::updateModule()
 {
     propagateStatus();
+    handleTrackers();
     return !closing;
 }
 

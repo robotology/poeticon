@@ -57,16 +57,17 @@ class ActivityInterface : public yarp::os::RFModule, public activityInterface_ID
 protected:
     
     /* module parameters */
-    std::string                     moduleName;
-    std::string                     handlerPortName;
+    std::string                         moduleName;
+    std::string                         handlerPortName;
     
     /* module rpc interfaces */
-    yarp::os::RpcServer             rpcPort;
-    yarp::os::RpcClient             rpcARE;
-    yarp::os::RpcClient             rpcAREcmd;
-    yarp::os::RpcClient             rpcMemory;
+    yarp::os::RpcServer                 rpcPort;
+    yarp::os::RpcClient                 rpcARE;
+    yarp::os::RpcClient                 rpcAREcmd;
+    yarp::os::RpcClient                 rpcMemory;
+    yarp::os::RpcClient                 rpcWorldState;
     
-    yarp::os::Port                  robotStatus;
+    yarp::os::Port                      robotStatus;
     
     /* left & right cartesian interfaces */
     yarp::dev::PolyDriver               client_left;
@@ -104,6 +105,7 @@ protected:
     std::map<std::string, std::string>  inHandStatus;
     std::map<int, std::string>          onTopElements;
     int                                 elements;
+    std::vector<int>                    pausedThreads;
     
 public:
     
@@ -121,7 +123,12 @@ public:
     yarp::os::Bottle    getMemoryBottle();
     yarp::os::Bottle    getBlobCOG(const yarp::os::Bottle &blobs, const int i);
     bool                propagateStatus();
+    bool                handleTrackers();
+    std::string         getMemoryNameBottle(int id);
+    yarp::os::Bottle    getIDs();
     bool                with_robot;
+    
+    int                 incrementSize[10];
 
     /* rpc interface functions */
     bool                attach(yarp::os::RpcServer &source);
