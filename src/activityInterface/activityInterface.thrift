@@ -55,6 +55,13 @@ service activityInterface_IDLServer
     Bottle get3D(1:string objName)
     
     /**
+     * Get the tool offset position of the object requested by the user.
+     * @param objName specifies the name of the object (typically tool)
+     * @return Bottle containing 3D offset
+     **/
+    Bottle getTooltipOffset(1:string objName)
+    
+    /**
      * Perform the take action on the particular object with the particular hand
      * @param objName specifies the name of the object in question
      * @param handName specifies the name of the hand in question

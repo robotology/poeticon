@@ -51,6 +51,12 @@ public:
    */
   virtual yarp::os::Bottle get3D(const std::string& objName);
   /**
+   * Get the tool offset position of the object requested by the user.
+   * @param objName specifies the name of the object (typically tool)
+   * @return Bottle containing 3D offset
+   */
+  virtual yarp::os::Bottle getTooltipOffset(const std::string& objName);
+  /**
    * Perform the take action on the particular object with the particular hand
    * @param objName specifies the name of the object in question
    * @param handName specifies the name of the hand in question

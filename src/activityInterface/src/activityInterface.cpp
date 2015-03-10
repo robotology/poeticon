@@ -468,6 +468,35 @@ Bottle ActivityInterface::get3D(const string &objName)
 }
 
 /**********************************************************/
+Bottle ActivityInterface::getTooltipOffset(const string &objName)
+{
+    Bottle toolOffset;
+    toolOffset.clear();
+    
+    if (strcmp ("rake", objName.c_str() ) == 0)
+    {
+        toolOffset.addDouble(0.18);
+        toolOffset.addDouble(-0.18);
+        toolOffset.addDouble(0.04); //left hand should be negative
+    }
+    else if (strcmp ("stick", objName.c_str() ) == 0)
+    {
+        toolOffset.addDouble(0.18);
+        toolOffset.addDouble(-0.18);
+        toolOffset.addDouble(0.04);
+    }
+    else
+    {
+        toolOffset.addDouble(0.0);
+        toolOffset.addDouble(0.0);
+        toolOffset.addDouble(0.0);
+    }
+    
+    
+    return toolOffset;
+}
+
+/**********************************************************/
 bool ActivityInterface::attach(RpcServer &source)
 {
     return this->yarp().attachAsServer(source);

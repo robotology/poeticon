@@ -140,6 +140,7 @@ public:
     bool                take(const std::string &objName, const std::string &handName);
     bool                drop(const std::string &objName, const std::string &targetName);
     yarp::os::Bottle    underOf(const std::string &objName);
+    yarp::os::Bottle    getTooltipOffset(const std::string &objName);
     bool                quit();
 };
 
