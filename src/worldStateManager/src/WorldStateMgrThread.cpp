@@ -1226,12 +1226,15 @@ bool WorldStateMgrThread::mono2stereo(const string &objName, double &x, double &
 
     bool validResponse = false;
     validResponse = ( activityReply.size()>0 &&
-                      activityReply.get(0).isList() &&
-                      activityReply.get(0).asList()->size()==3 );
+                      activityReply.get(0).isList() );
 
-    if (validResponse)
+    if (validResponse && activityReply.get(0).asList()->size()==3)
     {
-        yDebug() << __func__ << "obtained valid response:" << activityReply.toString().c_str();
+        if (activityReply.get(0).asList()->size()==3)
+            yDebug() << __func__ << "obtained valid response:" << activityReply.toString().c_str();
+        else
+            yDebug() << __func__ << "obtained valid response (with unexpected length):" << activityReply.toString().c_str();
+
         x = activityReply.get(0).asList()->get(0).asDouble();
         y = activityReply.get(0).asList()->get(1).asDouble();
         z = activityReply.get(0).asList()->get(2).asDouble();
