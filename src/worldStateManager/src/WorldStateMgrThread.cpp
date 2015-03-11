@@ -279,7 +279,7 @@ bool WorldStateMgrThread::pauseTrack(const string &objName)
     id = label2id(objName);
     if (id==-1)
     {
-        yWarning() << __func__ << "did not find tracker ID corresponding to label" << objName.c_str();
+        yWarning() << __func__ << "did not find tracker ID corresponding to label, not going to pause" << objName.c_str();
         return false;
     }
 
@@ -287,12 +287,13 @@ bool WorldStateMgrThread::pauseTrack(const string &objName)
     trackerCmd.addString("pause");
     trackerCmd.addInt(id);
     trackerPort.write(trackerCmd, trackerReply);
-    yDebug() << __func__ <<  "sending query to activeParticleTracker:" << trackerCmd.toString().c_str();
+    //yDebug() << __func__ <<  "sending query to activeParticleTracker:" << trackerCmd.toString().c_str();
     bool validResponse = false;
     validResponse = ( (trackerReply.size()>0) &&
                       (trackerReply.get(0).asVocab()==Vocab::encode("ok")) );
     if (validResponse)
-        yDebug() << __func__ <<  "obtained valid response:" << trackerReply.toString().c_str();
+        //yDebug() << __func__ <<  "obtained valid response:" << trackerReply.toString().c_str();
+        ;
     else
         yWarning() << __func__ <<  "obtained invalid response:" << trackerReply.toString().c_str();
 
@@ -317,7 +318,7 @@ bool WorldStateMgrThread::resumeTrack(const string &objName)
     id = label2id(objName);
     if (id==-1)
     {
-        yWarning() << __func__ << "did not find tracker ID corresponding to label" << objName.c_str();
+        yWarning() << __func__ << "did not find tracker ID corresponding to label, not going to resume" << objName.c_str();
         return false;
     }
 
@@ -325,12 +326,13 @@ bool WorldStateMgrThread::resumeTrack(const string &objName)
     trackerCmd.addString("resume");
     trackerCmd.addInt(id);
     trackerPort.write(trackerCmd, trackerReply);
-    yDebug() << __func__ <<  "sending query to activeParticleTracker:" << trackerCmd.toString().c_str();
+    //yDebug() << __func__ <<  "sending query to activeParticleTracker:" << trackerCmd.toString().c_str();
     bool validResponse = false;
     validResponse = ( (trackerReply.size()>0) &&
                       (trackerReply.get(0).asVocab()==Vocab::encode("ok")) );
     if (validResponse)
-        yDebug() << __func__ <<  "obtained valid response:" << trackerReply.toString().c_str();
+        //yDebug() << __func__ <<  "obtained valid response:" << trackerReply.toString().c_str();
+        ;
     else
         yWarning() << __func__ <<  "obtained invalid response:" << trackerReply.toString().c_str();
 
