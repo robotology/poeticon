@@ -663,7 +663,9 @@ void WorldStateMgrThread::refreshTrackNames()
             int v = static_cast<int>( inTargets->get(i).asList()->get(2).asDouble() );
             string label;
             if (!getLabelMajorityVote(u, v, label))
-                yWarning() << __func__ << "got invalid label";
+                yWarning() << __func__ << "got invalid label from getLabelMajorityVote";
+            else
+                yDebug() << __func__ << "got valid label" << label << "from getLabelMajorityVote";
 
             trackMap.insert(make_pair(id,label));
         }
@@ -1193,13 +1195,15 @@ bool WorldStateMgrThread::getLabel(const int &u, const int &v, string &label)
     activityPort.write(activityCmd, activityReply);
 
     bool validResponse = false;
-    validResponse = ( activityReply.size()>0 &&
-                      activityReply.get(0).isString() &&
-                      activityReply.get(0).asString().size()>0 );
+    validResponse = ( //activityReply.size()>0 &&
+                      activityReply.get(0).isString() );
 
     if (validResponse)
     {
-        //yDebug() << __func__ << "obtained valid response:" << activityReply.toString().c_str();
+        if (activityReply.get(0).asString().size()==0)
+            yWarning() << __func__ << "obtained valid but empty response:" << activityReply.toString().c_str();
+        //else
+            //yDebug() << __func__ << "obtained valid response:" << activityReply.toString().c_str();
         label = activityReply.get(0).asString(); 
         return true;
     }
@@ -1235,17 +1239,22 @@ bool WorldStateMgrThread::getLabelMajorityVote(const int &u, const int &v, strin
         string thisVote;
         if (getLabel(u, v, thisVote))
         {
-            //yDebug("received: %s", thisVote.c_str());
-            votes.push_back(thisVote);
+            //yDebug("**** received: %s which has size %d, empty()=%d ******", thisVote.c_str(), thisVote.size(), thisVote.empty());
+            if (!thisVote.empty())
+                votes.push_back(thisVote);
         }
-        //else
-        //    yWarning("getLabel error");
     }
 
+    if (votes.empty())
+    {
+        yWarning("votes vector is empty!");
+        winnerLabel = "";
+        return false;
+    }
 
     // sort strings
     sort(votes.begin(), votes.end());
-    //yDebug() << "sorted votes:" << votes;
+    //yDebug() << "sorted votes:" << votes << "size =" << votes.size();
 
     // histogram with corresponding counts - http://stackoverflow.com/a/9616995
     typedef map<string, int> counts_t;
@@ -1268,16 +1277,16 @@ bool WorldStateMgrThread::getLabelMajorityVote(const int &u, const int &v, strin
     }
     */
 
-    // pick winner
+    // pick winner - http://stackoverflow.com/a/3798349
     std::pair<string, int> max_el = *std::max_element(histogram.begin(), histogram.end(), compareSecond());
     //yDebug() << "winner is" << max_el.first << "having count" << max_el.second;
     if (max_el.second < majority)
-        yWarning("selected winning label %s with %d/%d votes, despite being less than majority %d",
-                 max_el.first.c_str(), max_el.second, rounds, majority);
+        yWarning("selected winning label %s with %d/%d entries after %d queries, despite being less than majority %d",
+                 max_el.first.c_str(), max_el.second, votes.size(), rounds, majority);
     else
         yDebug("selected winning label %s", max_el.first.c_str());
 
-    winnerLabel = votes[max_el.second];
+    winnerLabel = max_el.first;
 
     return true;
 }
