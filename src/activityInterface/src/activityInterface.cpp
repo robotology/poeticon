@@ -277,7 +277,6 @@ string ActivityInterface::getMemoryNameBottle(int id)
                 name = nameValues->get(1).asString().c_str();
         }
     }
-    
     return name;
 }
 
@@ -367,7 +366,6 @@ bool ActivityInterface::handleTrackers()
                 pausedThreads.erase(std::remove(pausedThreads.begin(), pausedThreads.end(), id), pausedThreads.end());
             }
         }
-        //fprintf(stdout,"position size is %d and increment size is %d \n", position.size(), incrementSize[i]);
     }
     return true;
 }
@@ -436,7 +434,6 @@ Bottle ActivityInterface::getMemoryBottle()
             }
         }
     }
-    
     return memoryReply;
 }
 
@@ -468,6 +465,35 @@ Bottle ActivityInterface::get3D(const string &objName)
         }
     }
     return position3D;
+}
+
+/**********************************************************/
+Bottle ActivityInterface::getOffset(const string &objName)
+{
+    Bottle toolOffset;
+    toolOffset.clear();
+    
+    if (strcmp ("rake", objName.c_str() ) == 0)
+    {
+        toolOffset.addDouble(0.18);
+        toolOffset.addDouble(-0.18);
+        toolOffset.addDouble(0.04); //left hand should be negative
+    }
+    else if (strcmp ("stick", objName.c_str() ) == 0)
+    {
+        toolOffset.addDouble(0.18);
+        toolOffset.addDouble(-0.18);
+        toolOffset.addDouble(0.04);
+    }
+    else
+    {
+        toolOffset.addDouble(0.0);
+        toolOffset.addDouble(0.0);
+        toolOffset.addDouble(0.0);
+    }
+    
+    
+    return toolOffset;
 }
 
 /**********************************************************/
@@ -552,7 +578,7 @@ string ActivityInterface::getLabel(const int32_t pos_x, const int32_t pos_y)
                 int diffx = abs(cog.get(0).asInt() - pos_x);
                 int diffy = abs(cog.get(1).asInt() - pos_y);
                 
-                if ( diffx < 10 && diffy < 10)
+                if ( diffx < 20 && diffy < 20)
                 {
                     if (propField->check("name"))
                     {
@@ -645,7 +671,6 @@ double ActivityInterface::getManip(const string &objName, const std::string &han
                 manip = 0.0;
             
         }
-        
         //manip = max(manip_left, manip_right);
     }
     else
@@ -657,7 +682,6 @@ double ActivityInterface::getManip(const string &objName, const std::string &han
         else
             manip = 0.0;
     }
-    
     return manip;
 }
 
@@ -742,6 +766,15 @@ bool ActivityInterface::drop(const string &objName, const string &targetName)
     return true;
 }
 
+/**********************************************************/
+bool ActivityInterface::geto(const std::string &handName, const int32_t pos_x, const int32_t pos_y)
+{
+    //here do two actions
+    //point on x and y
+    //and ask user to give tool in hand
+    
+    return true;
+}
 
 /**********************************************************/
 Bottle ActivityInterface::underOf(const std::string &objName)
@@ -749,7 +782,7 @@ Bottle ActivityInterface::underOf(const std::string &objName)
     Bottle replyList;
     
     replyList.clear();
-    Bottle &list=replyList.addList();
+    //Bottle &list=replyList.addList();
     
     int id = -1;
     
@@ -760,7 +793,7 @@ Bottle ActivityInterface::underOf(const std::string &objName)
     
     for (std::map<int, string>::reverse_iterator rit=onTopElements.rbegin(); rit!=onTopElements.rend(); ++rit)
         if (strcmp (objName.c_str(), rit->second.c_str() ) != 0 && id >= 0 && rit->first <= id)
-            list.addString(rit->second.c_str());
+            replyList.addString(rit->second.c_str());
     
     return replyList;
 }

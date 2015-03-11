@@ -55,6 +55,13 @@ service activityInterface_IDLServer
     Bottle get3D(1:string objName)
     
     /**
+     * Get the tool offset position of the object requested by the user.
+     * @param objName specifies the name of the object (typically tool)
+     * @return Bottle containing 3D offset
+     **/
+    Bottle getOffset(1:string objName)
+    
+    /**
      * Perform the take action on the particular object with the particular hand
      * @param objName specifies the name of the object in question
      * @param handName specifies the name of the hand in question
@@ -69,6 +76,14 @@ service activityInterface_IDLServer
      * @return true/false on droping or not
      **/
     bool drop(1:string objName, 2:string targetName)
+    
+    /**
+     * Perform the take action on the particular tool with the particular hand
+     * @param objName specifies the name of the object in question
+     * @param handName specifies the name of the hand in question
+     * @return true/false on taking or not
+     **/
+    bool geto(1:string handName, 2:i32 xpos, 3:i32 ypos)
     
     /**
      * Ask for the list of labels that are under ojbName

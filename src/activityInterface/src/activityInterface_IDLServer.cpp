@@ -53,6 +53,15 @@ public:
   virtual bool read(yarp::os::ConnectionReader& connection);
 };
 
+class activityInterface_IDLServer_getOffset : public yarp::os::Portable {
+public:
+  std::string objName;
+  yarp::os::Bottle _return;
+  void init(const std::string& objName);
+  virtual bool write(yarp::os::ConnectionWriter& connection);
+  virtual bool read(yarp::os::ConnectionReader& connection);
+};
+
 class activityInterface_IDLServer_take : public yarp::os::Portable {
 public:
   std::string objName;
@@ -69,6 +78,17 @@ public:
   std::string targetName;
   bool _return;
   void init(const std::string& objName, const std::string& targetName);
+  virtual bool write(yarp::os::ConnectionWriter& connection);
+  virtual bool read(yarp::os::ConnectionReader& connection);
+};
+
+class activityInterface_IDLServer_geto : public yarp::os::Portable {
+public:
+  std::string handName;
+  int32_t xpos;
+  int32_t ypos;
+  bool _return;
+  void init(const std::string& handName, const int32_t xpos, const int32_t ypos);
   virtual bool write(yarp::os::ConnectionWriter& connection);
   virtual bool read(yarp::os::ConnectionReader& connection);
 };
@@ -208,6 +228,28 @@ void activityInterface_IDLServer_get3D::init(const std::string& objName) {
   this->objName = objName;
 }
 
+bool activityInterface_IDLServer_getOffset::write(yarp::os::ConnectionWriter& connection) {
+  yarp::os::idl::WireWriter writer(connection);
+  if (!writer.writeListHeader(2)) return false;
+  if (!writer.writeTag("getOffset",1,1)) return false;
+  if (!writer.writeString(objName)) return false;
+  return true;
+}
+
+bool activityInterface_IDLServer_getOffset::read(yarp::os::ConnectionReader& connection) {
+  yarp::os::idl::WireReader reader(connection);
+  if (!reader.readListReturn()) return false;
+  if (!reader.read(_return)) {
+    reader.fail();
+    return false;
+  }
+  return true;
+}
+
+void activityInterface_IDLServer_getOffset::init(const std::string& objName) {
+  this->objName = objName;
+}
+
 bool activityInterface_IDLServer_take::write(yarp::os::ConnectionWriter& connection) {
   yarp::os::idl::WireWriter writer(connection);
   if (!writer.writeListHeader(3)) return false;
@@ -256,6 +298,33 @@ void activityInterface_IDLServer_drop::init(const std::string& objName, const st
   _return = false;
   this->objName = objName;
   this->targetName = targetName;
+}
+
+bool activityInterface_IDLServer_geto::write(yarp::os::ConnectionWriter& connection) {
+  yarp::os::idl::WireWriter writer(connection);
+  if (!writer.writeListHeader(4)) return false;
+  if (!writer.writeTag("geto",1,1)) return false;
+  if (!writer.writeString(handName)) return false;
+  if (!writer.writeI32(xpos)) return false;
+  if (!writer.writeI32(ypos)) return false;
+  return true;
+}
+
+bool activityInterface_IDLServer_geto::read(yarp::os::ConnectionReader& connection) {
+  yarp::os::idl::WireReader reader(connection);
+  if (!reader.readListReturn()) return false;
+  if (!reader.readBool(_return)) {
+    reader.fail();
+    return false;
+  }
+  return true;
+}
+
+void activityInterface_IDLServer_geto::init(const std::string& handName, const int32_t xpos, const int32_t ypos) {
+  _return = false;
+  this->handName = handName;
+  this->xpos = xpos;
+  this->ypos = ypos;
 }
 
 bool activityInterface_IDLServer_underOf::write(yarp::os::ConnectionWriter& connection) {
@@ -354,6 +423,16 @@ yarp::os::Bottle activityInterface_IDLServer::get3D(const std::string& objName) 
   bool ok = yarp().write(helper,helper);
   return ok?helper._return:_return;
 }
+yarp::os::Bottle activityInterface_IDLServer::getOffset(const std::string& objName) {
+  yarp::os::Bottle _return;
+  activityInterface_IDLServer_getOffset helper;
+  helper.init(objName);
+  if (!yarp().canWrite()) {
+    fprintf(stderr,"Missing server method '%s'?\n","yarp::os::Bottle activityInterface_IDLServer::getOffset(const std::string& objName)");
+  }
+  bool ok = yarp().write(helper,helper);
+  return ok?helper._return:_return;
+}
 bool activityInterface_IDLServer::take(const std::string& objName, const std::string& handName) {
   bool _return = false;
   activityInterface_IDLServer_take helper;
@@ -370,6 +449,16 @@ bool activityInterface_IDLServer::drop(const std::string& objName, const std::st
   helper.init(objName,targetName);
   if (!yarp().canWrite()) {
     fprintf(stderr,"Missing server method '%s'?\n","bool activityInterface_IDLServer::drop(const std::string& objName, const std::string& targetName)");
+  }
+  bool ok = yarp().write(helper,helper);
+  return ok?helper._return:_return;
+}
+bool activityInterface_IDLServer::geto(const std::string& handName, const int32_t xpos, const int32_t ypos) {
+  bool _return = false;
+  activityInterface_IDLServer_geto helper;
+  helper.init(handName,xpos,ypos);
+  if (!yarp().canWrite()) {
+    fprintf(stderr,"Missing server method '%s'?\n","bool activityInterface_IDLServer::geto(const std::string& handName, const int32_t xpos, const int32_t ypos)");
   }
   bool ok = yarp().write(helper,helper);
   return ok?helper._return:_return;
@@ -494,6 +583,22 @@ bool activityInterface_IDLServer::read(yarp::os::ConnectionReader& connection) {
       reader.accept();
       return true;
     }
+    if (tag == "getOffset") {
+      std::string objName;
+      if (!reader.readString(objName)) {
+        reader.fail();
+        return false;
+      }
+      yarp::os::Bottle _return;
+      _return = getOffset(objName);
+      yarp::os::idl::WireWriter writer(reader);
+      if (!writer.isNull()) {
+        if (!writer.writeListHeader(1)) return false;
+        if (!writer.write(_return)) return false;
+      }
+      reader.accept();
+      return true;
+    }
     if (tag == "take") {
       std::string objName;
       std::string handName;
@@ -528,6 +633,32 @@ bool activityInterface_IDLServer::read(yarp::os::ConnectionReader& connection) {
       }
       bool _return;
       _return = drop(objName,targetName);
+      yarp::os::idl::WireWriter writer(reader);
+      if (!writer.isNull()) {
+        if (!writer.writeListHeader(1)) return false;
+        if (!writer.writeBool(_return)) return false;
+      }
+      reader.accept();
+      return true;
+    }
+    if (tag == "geto") {
+      std::string handName;
+      int32_t xpos;
+      int32_t ypos;
+      if (!reader.readString(handName)) {
+        reader.fail();
+        return false;
+      }
+      if (!reader.readI32(xpos)) {
+        reader.fail();
+        return false;
+      }
+      if (!reader.readI32(ypos)) {
+        reader.fail();
+        return false;
+      }
+      bool _return;
+      _return = geto(handName,xpos,ypos);
       yarp::os::idl::WireWriter writer(reader);
       if (!writer.isNull()) {
         if (!writer.writeListHeader(1)) return false;
@@ -602,8 +733,10 @@ std::vector<std::string> activityInterface_IDLServer::help(const std::string& fu
     helpString.push_back("getLabel");
     helpString.push_back("inHand");
     helpString.push_back("get3D");
+    helpString.push_back("getOffset");
     helpString.push_back("take");
     helpString.push_back("drop");
+    helpString.push_back("geto");
     helpString.push_back("underOf");
     helpString.push_back("quit");
     helpString.push_back("help");
@@ -641,6 +774,12 @@ std::vector<std::string> activityInterface_IDLServer::help(const std::string& fu
       helpString.push_back("@param objName specifies the name of the object ");
       helpString.push_back("@return Bottle containing 3D position ");
     }
+    if (functionName=="getOffset") {
+      helpString.push_back("yarp::os::Bottle getOffset(const std::string& objName) ");
+      helpString.push_back("Get the tool offset position of the object requested by the user. ");
+      helpString.push_back("@param objName specifies the name of the object (typically tool) ");
+      helpString.push_back("@return Bottle containing 3D offset ");
+    }
     if (functionName=="take") {
       helpString.push_back("bool take(const std::string& objName, const std::string& handName) ");
       helpString.push_back("Perform the take action on the particular object with the particular hand ");
@@ -654,6 +793,13 @@ std::vector<std::string> activityInterface_IDLServer::help(const std::string& fu
       helpString.push_back("@param objName specifies the name of the object in question ");
       helpString.push_back("@param targetName specifies the name of target object to drop onto. ");
       helpString.push_back("@return true/false on droping or not ");
+    }
+    if (functionName=="geto") {
+      helpString.push_back("bool geto(const std::string& handName, const int32_t xpos, const int32_t ypos) ");
+      helpString.push_back("Perform the take action on the particular tool with the particular hand ");
+      helpString.push_back("@param objName specifies the name of the object in question ");
+      helpString.push_back("@param handName specifies the name of the hand in question ");
+      helpString.push_back("@return true/false on taking or not ");
     }
     if (functionName=="underOf") {
       helpString.push_back("yarp::os::Bottle underOf(const std::string& objName) ");

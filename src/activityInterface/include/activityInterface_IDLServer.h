@@ -51,6 +51,12 @@ public:
    */
   virtual yarp::os::Bottle get3D(const std::string& objName);
   /**
+   * Get the tool offset position of the object requested by the user.
+   * @param objName specifies the name of the object (typically tool)
+   * @return Bottle containing 3D offset
+   */
+  virtual yarp::os::Bottle getOffset(const std::string& objName);
+  /**
    * Perform the take action on the particular object with the particular hand
    * @param objName specifies the name of the object in question
    * @param handName specifies the name of the hand in question
@@ -64,6 +70,13 @@ public:
    * @return true/false on droping or not
    */
   virtual bool drop(const std::string& objName, const std::string& targetName);
+  /**
+   * Perform the take action on the particular tool with the particular hand
+   * @param objName specifies the name of the object in question
+   * @param handName specifies the name of the hand in question
+   * @return true/false on taking or not
+   */
+  virtual bool geto(const std::string& handName, const int32_t xpos, const int32_t ypos);
   /**
    * Ask for the list of labels that are under ojbName
    * @param objName specifies the name of the object in question
