@@ -296,8 +296,8 @@ Bottle ActivityInterface::askPraxicon(const string &request)
     
     for (int i=0; i<objectsMemory.size(); i++)
     {
-        for (int i=0; i<toolLikeMemory.size(); i++)
-            passed[i] = 0;
+        for (int x=0; x<toolLikeMemory.size(); x++)
+            passed[x] = 0;
         
         for (int ii=0; ii<toolLikeMemory.size(); ii++)
             if (strcmp (objectsMemory.get(i).asString().c_str(), toolLikeMemory.get(ii).asString().c_str() ) != 0)
