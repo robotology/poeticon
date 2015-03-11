@@ -45,7 +45,7 @@ class ActionExecutorCommunication:
         self._rpc_client.open(self._port_name)
 ##        self._rpc_client.addOutput("/activityInterface/rpc:i") ## need to verify the port!!!!
 
-    def _execute(self, PathName, cmd):
+    def _execute(self, PathName, cmd, toolhandle):
         Objects_file = open(''.join(PathName +"/Object_names-IDs.dat"))
         Object_list = Objects_file.read().split(';')
         Objects_file.close()
@@ -56,10 +56,17 @@ class ActionExecutorCommunication:
             obj = cmd[3]
             hand = cmd[5].replace('()','')
             act = cmd[0]
+            
         else:
             act = cmd[0]
             obj = cmd[1]
             hand = cmd[3].replace('()','')
+            if act == 'grasp' and ( obj == 'rake' or obj == 'stick'):
+                for i in range(len(toolhandle)):
+                    if toolhandle[i][0] == obj:
+                        positx = toolhandle[i][1][int(toolhandle[i][2])][0]
+                        posity = toolhandle[i][1][int(toolhandle[i][2])][1]
+                        ind = i
         for k in range(len(Object_list)):
             if str(act) == Object_list[k][0]:
                 act = Object_list[k][1]
@@ -67,6 +74,11 @@ class ActionExecutorCommunication:
                 obj = Object_list[k][1]
             if str(hand) == Object_list[k][0]:
                 hand = Object_list[k][1].replace('hand','')
+        if act == 'grasp' and (obj == 'rake' or obj == 'stick'):
+            act = 'geto'
+            obj = hand
+            hand = ' '.join([positx]+[posity])
+            
         print act, obj, hand
         message = yarp.Bottle()
         message.clear()
@@ -141,7 +153,7 @@ def planning_cycle():
             while 1:
                 prax_bottle_in = prax_yarp.read(False)
                 if prax_bottle_in:
-                    prax_instr = prax_bottle_in.toString()
+                    instructions = prax_bottle_in.toString()
                     break
                 print 'waiting for praxicon...'
                     
@@ -256,6 +268,22 @@ def planning_cycle():
             config_file.write('\n')
         config_file.close()
         
+        Aff_bottle_out = Aff_yarp.prepare()
+        Aff_bottle_out.clear()
+        Aff_bottle_out.addString('query')
+        Aff_yarp.write()
+
+##        while 1:
+##            Aff_bottle_in = Aff_yarp.read(False)
+##            if Aff_bottle_in:
+##                yarp.Time.delay(0.2)
+##                toolhandle = Aff_bottle_in.asList().toString()
+##                break
+##        toolhandle = toolhandle.replace('((','').replace('))','').split(') (')
+##        for j in range(len(toolhandle)):
+##            toolhandle[j] = toolhandle[j].split(' ')
+##        print toolhandle
+            
         while(True):
             ## Plan!!!
             flag_kill = 0
@@ -472,8 +500,9 @@ def planning_cycle():
                 rules_file.close()
             act_check = '  %s' %next_action
             if act_check in rules:
+                toolhandle = ['16',['1','1']]
                 print 'action to be executed: ', next_action, '\n'
-                motor_rpc._is_success(motor_rpc._execute(PathName, next_action))
+                motor_rpc._is_success(motor_rpc._execute(PathName, next_action, toolhandle))
                 world_rpc._is_success(world_rpc._execute("update"))
                 raw_input("press any key")
 

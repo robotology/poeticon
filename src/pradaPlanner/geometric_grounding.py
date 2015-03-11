@@ -67,9 +67,7 @@ def create_rules(objects, pre_rules, tools):
             elif pre_rules[3].find('push') != -1 or pre_rules[3].find('pull') != -1:
                 print "checking for push/pull"
                 for j in range(len(tools)):
-                    print tools[j]
                     for c in range(len(objects)):
-                        print objects[c]
                         if objects[c] != tools[j] and objects[c] not in hands:
                             print "working"
                             new_rule = new_rule + pre_rules
@@ -120,7 +118,6 @@ def create_rules(objects, pre_rules, tools):
             new_rule[j] = ''.join([' '] +[' '.join(new_temp_rule)])
                     
             aux_rule = []
-    print new_rule
     return new_rule
 
 ##################################################################################
@@ -232,10 +229,14 @@ def geometric_grounding():
 ## reads tools in the world
                 lines = objects_file.read()
                 objects_file.close()
-                temp_data = lines.replace('((','').replace('))','').split(');(')
+                print lines
+                temp_data = lines.replace('(','').replace(')','').split(';')  ## problem! it's showing up blank.
+                temp_data.pop(-1)
+                print temp_data
                 tools = []
                 for i in range(len(temp_data)):
                     temp_data[i] = temp_data[i].split(',')
+                print temp_data
                 for i in range(len(temp_data)):
                     if temp_data[i][1] == 'stick' or temp_data[i][1] == 'rake':
                         tools = tools + [temp_data[i][0]]
