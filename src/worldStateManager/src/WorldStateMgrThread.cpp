@@ -1311,7 +1311,7 @@ bool WorldStateMgrThread::mono2stereo(const string &objName, double &x, double &
     Bottle activityCmd, activityReply;
     activityCmd.addString("get3D");
     activityCmd.addString(objName);
-    yDebug() << __func__ <<  "sending query:" << activityCmd.toString().c_str();
+    //yDebug() << __func__ <<  "sending query:" << activityCmd.toString().c_str();
     activityPort.write(activityCmd, activityReply);
 
     bool validResponse = false;
@@ -1321,9 +1321,13 @@ bool WorldStateMgrThread::mono2stereo(const string &objName, double &x, double &
     if (validResponse && activityReply.get(0).asList()->size()==3)
     {
         if (activityReply.get(0).asList()->size()==3)
-            yDebug() << __func__ << "obtained valid response:" << activityReply.toString().c_str();
+            //yDebug() << __func__ << "obtained valid response:" << activityReply.toString().c_str();
+            ;
         else
-            yDebug() << __func__ << "obtained valid response (with unexpected length):" << activityReply.toString().c_str();
+        {
+            yWarning() << __func__ << "obtained valid response (but unexpected length):" << activityReply.toString().c_str();
+            return false;
+        }
 
         x = activityReply.get(0).asList()->get(0).asDouble();
         y = activityReply.get(0).asList()->get(1).asDouble();
@@ -1349,7 +1353,7 @@ vector<double> WorldStateMgrThread::getTooltipOffset(const string &objName)
     Bottle activityCmd, activityReply;
     activityCmd.addString("getOffset");
     activityCmd.addString(objName.c_str());
-    yDebug() << __func__ << "sending query:" << activityCmd.toString().c_str();
+    //yDebug() << __func__ << "sending query:" << activityCmd.toString().c_str();
     activityPort.write(activityCmd, activityReply);
 
     bool validResponse = false;
@@ -1359,7 +1363,7 @@ vector<double> WorldStateMgrThread::getTooltipOffset(const string &objName)
 
     if (validResponse)
     {
-        yDebug() << __func__ << "obtained valid response:" << activityReply.toString().c_str();
+        //yDebug() << __func__ << "obtained valid response:" << activityReply.toString().c_str();
         Bottle *bOffset = activityReply.get(0).asList();
         vector<double> offset; // TODO: pre-allocate size
         for (int t=0; t<bOffset->size(); t++)
@@ -1386,7 +1390,7 @@ vector<string> WorldStateMgrThread::isUnderOf(const string &objName)
     Bottle activityCmd, activityReply;
     activityCmd.addString("underOf");
     activityCmd.addString(objName.c_str());
-    yDebug() << __func__ << "sending query:" << activityCmd.toString().c_str();
+    //yDebug() << __func__ << "sending query:" << activityCmd.toString().c_str();
     activityPort.write(activityCmd, activityReply);
 
     bool validResponse = false;
@@ -1395,7 +1399,7 @@ vector<string> WorldStateMgrThread::isUnderOf(const string &objName)
 
     if (validResponse)
     {
-        yDebug() << __func__ << "obtained valid response:" << activityReply.toString().c_str();
+        //yDebug() << __func__ << "obtained valid response:" << activityReply.toString().c_str();
         Bottle *bLabels = activityReply.get(0).asList();
         vector<string> lab; // TODO: pre-allocate size
         for (int o=0; o<bLabels->size(); o++)
@@ -1500,7 +1504,7 @@ bool WorldStateMgrThread::isHandFree(const string &handName)
     Bottle activityCmd, activityReply;
     activityCmd.addString("handStat");
     activityCmd.addString(handName.c_str());
-    yDebug() << __func__ << "sending query:" << activityCmd.toString().c_str();
+    //yDebug() << __func__ << "sending query:" << activityCmd.toString().c_str();
     activityPort.write(activityCmd, activityReply);
 
     bool validResponse = false;
@@ -1509,7 +1513,7 @@ bool WorldStateMgrThread::isHandFree(const string &handName)
 
     if (validResponse)
     {
-        yDebug() << __func__ << "obtained valid response:" << activityReply.toString().c_str();
+        //yDebug() << __func__ << "obtained valid response:" << activityReply.toString().c_str();
         if (activityReply.get(0).asVocab() == Vocab::encode("ok"))
             return false; // hand occupied
         else if (activityReply.get(0).asVocab() == Vocab::encode("nack"))
@@ -1541,7 +1545,7 @@ string WorldStateMgrThread::inWhichHand(const string &objName)
     Bottle activityCmd, activityReply;
     activityCmd.addString("inHand");
     activityCmd.addString(objName.c_str());
-    yDebug() << __func__ << "sending query:" << activityCmd.toString().c_str();
+    //yDebug() << __func__ << "sending query:" << activityCmd.toString().c_str();
     activityPort.write(activityCmd, activityReply);
 
     bool validResponse = false;
@@ -1555,11 +1559,11 @@ string WorldStateMgrThread::inWhichHand(const string &objName)
              activityReply.get(0).asString()=="right" ||
              activityReply.get(0).asString()=="none" )
         {
-            yDebug() << __func__ <<  "obtained valid response:" << activityReply.toString().c_str();
+            //yDebug() << __func__ <<  "obtained valid response:" << activityReply.toString().c_str();
             ret = activityReply.get(0).asString();
         }
         else
-            yWarning() << __func__ << "obtained invalid response (it is a string but not a valid one):" << activityReply.toString().c_str();
+            yWarning() << __func__ << "obtained valid response (but unexpected string):" << activityReply.toString().c_str();
     }
     else
         yWarning() << __func__ << "obtained invalid response:" << activityReply.toString().c_str();

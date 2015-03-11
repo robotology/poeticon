@@ -64,7 +64,7 @@ bool Manager::configure(ResourceFinder &rf)
     handNaturalPose=rf.check("handNaturalPose", Value(HAND_NATURAL_POSE_DEFAULT)).asInt();
     
     const ConstString icubContribEnvPath = yarp::os::getenv("ICUBcontrib_DIR");
-    const ConstString localPath = "/share/ICUBcontrib/contexts/poeticonManager/";
+    const ConstString localPath = "/share/ICUBcontrib/contexts/affExploreManager/";
     
     descdataFileName = rf.check("descdataFileName",Value("descData.txt")).asString();
     descdataFileName = icubContribEnvPath + localPath + descdataFileName;
@@ -132,9 +132,16 @@ bool Manager::configure(ResourceFinder &rf)
     toolId=1;   //default tool
 
     toolTransformDefault.resize(3);
-    toolTransformDefault[0] = TOOL_TRANSFORM_DEFAULT[0];
-    toolTransformDefault[1] = TOOL_TRANSFORM_DEFAULT[1];
-    toolTransformDefault[2] = TOOL_TRANSFORM_DEFAULT[2];
+    toolTransformDefault[0] = TOOL_LEFT_TRANSFORM_DEFAULT[0];
+    toolTransformDefault[1] = TOOL_LEFT_TRANSFORM_DEFAULT[1];
+    toolTransformDefault[2] = TOOL_LEFT_TRANSFORM_DEFAULT[2];
+
+    if (hand=="right")
+    {
+        toolTransformDefault[0] = TOOL_RIGHT_TRANSFORM_DEFAULT[0];
+        toolTransformDefault[1] = TOOL_RIGHT_TRANSFORM_DEFAULT[1];
+        toolTransformDefault[2] = TOOL_RIGHT_TRANSFORM_DEFAULT[2];
+    }
 
     return true;
 }
@@ -411,6 +418,8 @@ bool Manager::updateModule()
 
         get3DPosition(objImgPos,objectPosTracker);
 
+        fprintf(stderr,"\n\n***********Get FIRST object sample\n\n");
+
         effData << objectPosTracker[0] << " "
         << objectPosTracker[1] << " "
         << objectPosTracker[2] << " "
@@ -435,12 +444,22 @@ bool Manager::updateModule()
             << objImgPos.x << " "
             << objImgPos.y;
         }
+        
+        goHomeArmsHead();
+
+        Time::delay(0.5);
+
+        fprintf(stderr,"\n\n**********Get LAST object sample\n\n");
+
+        effData << " " <<  objectPosTracker[0] << " "
+        << objectPosTracker[1] << " "
+        << objectPosTracker[2] << " "
+        << objImgPos.x << " "
+        << objImgPos.y;
 
         effData << '\n';
         effData.close();
         effData.open(effdataFileName.c_str(), ofstream::out | ofstream::app);
-        
-        goHomeArmsHead();
 
         if (simMode.compare("on")==0) 
         {
@@ -474,6 +493,8 @@ bool Manager::updateModule()
             {
                 graspTool();
 
+                /*
+                // IF ALL TOOLS HAVE DIFFERENT TRANSFORMS
                 if (cmd.size()>1)
 		{
                     yarp::sig::Vector tTransform;
@@ -493,7 +514,14 @@ bool Manager::updateModule()
 		       fprintf(stderr,"\nTool attached \n");
 		    else
 		       fprintf(stderr,"\nERROR -- Problem in attaching the tool...\n");
-		}            
+		} 
+                */         
+
+                // IF ALL TOOLS HAVE THE SAME, DEFAULT, TRANSFORM
+                if (executeToolAttach(toolTransformDefault))
+		    fprintf(stderr,"\nTool attached (default transform)\n");
+		else
+		    fprintf(stderr,"\nERROR -- Problem in attaching the tool...\n");  
                 
             }
 
@@ -784,7 +812,8 @@ void Manager::performAction()
     }
     else 
     {
-        actPos[0]=objectPos[0] - objectSizeOffset;      // takes in consideration the object dimension, for an object of about objectSizeOffset radius. This might be taken from the object descriptors as well... (FUTURE WORKS)
+        //actPos[0]=objectPos[0] - objectSizeOffset;      // takes in consideration the object dimension, for an object of about objectSizeOffset radius. This might be taken from the object descriptors as well... (FUTURE WORKS)
+        actPos[0]=objectPos[0];
         actPos[1]=objectPos[1];
         actPos[2]=objectPos[2] + tableHeightOffset;     // define table offset
     }
@@ -812,13 +841,14 @@ void Manager::performAction()
             fprintf(stderr,"\n Tap from right \n");
 
             fprintf(stdout,"Will now send to karmaMotor:\n");
-            karmaMotor.addString("pusp");
-            karmaMotor.addInt(pose);
+            //karmaMotor.addString("pusp");  //when using this method, you should add the 'pose' parameter
+            karmaMotor.addString("push");
+            //karmaMotor.addInt(pose);
             karmaMotor.addDouble(actPos[0]);
             karmaMotor.addDouble(actPos[1]); 
             karmaMotor.addDouble(actPos[2]);
             karmaMotor.addDouble(90.0); // direction (from right)
-            karmaMotor.addDouble(objectSizeOffset*2.0); // Amount of the movement. It takes in consideration the object dimension, for an object of about objectSizeOffset radius. This might be taken from the object descriptors as well... (FUTURE WORKS)
+            karmaMotor.addDouble(objectSizeOffset); // Amount of the movement. It takes in consideration the object dimension, for an object of about objectSizeOffset radius. This might be taken from the object descriptors as well... (FUTURE WORKS)
 
             fprintf(stdout,"%s\n",karmaMotor.toString().c_str());
             actionStartTime=Time::now();
@@ -832,13 +862,14 @@ void Manager::performAction()
             fprintf(stderr,"\n Tap from left: \n");
 
             fprintf(stdout,"Will now send to karmaMotor:\n");
-            karmaMotor.addString("pusp");
-            karmaMotor.addInt(pose);
+            //karmaMotor.addString("pusp");  //when using this method, you should add the 'pose' parameter
+            karmaMotor.addString("push");
+            //karmaMotor.addInt(pose);
             karmaMotor.addDouble(actPos[0]);
             karmaMotor.addDouble(actPos[1]); 
             karmaMotor.addDouble(actPos[2]);
             karmaMotor.addDouble(270.0); // direction (from left)
-            karmaMotor.addDouble(objectSizeOffset*2.0); // Amount of the movement. It takes in consideration the object dimension, for an object of about objectSizeOffset radius. This might be taken from the object descriptors as well... (FUTURE WORKS)
+            karmaMotor.addDouble(objectSizeOffset); // Amount of the movement. It takes in consideration the object dimension, for an object of about objectSizeOffset radius. This might be taken from the object descriptors as well... (FUTURE WORKS)
 
             fprintf(stdout,"%s\n",karmaMotor.toString().c_str());
             actionStartTime=Time::now();
@@ -851,14 +882,15 @@ void Manager::performAction()
         case 3:
             fprintf(stderr,"\n Drawing simulation: \n");
 
-            karmaMotor.addString("vdrp");
-            karmaMotor.addInt(pose);
+            //karmaMotor.addString("vdrp");  //when using this method, you should add the 'pose' parameter
+            karmaMotor.addString("vdra");
+            //karmaMotor.addInt(pose);
             karmaMotor.addDouble(actPos[0]);
             karmaMotor.addDouble(actPos[1]);
             karmaMotor.addDouble(actPos[2]);
-            karmaMotor.addDouble(180.0); // direction
-            karmaMotor.addDouble(0.10); // initial tool-object distance
-            karmaMotor.addDouble(0.15); // movement lenght
+            karmaMotor.addDouble(90.0); // direction (before it was 180.0)
+            karmaMotor.addDouble(objectSizeOffset); // initial tool-object distance
+            karmaMotor.addDouble(MOVEMENT_LENGTH); // movement lenght
             fprintf(stdout,"Will now send to karmaMotor:\n");
             fprintf(stdout,"%s\n",karmaMotor.toString().c_str());
             rpcMotorKarma.write(karmaMotor, KarmaReply);
@@ -869,14 +901,15 @@ void Manager::performAction()
                 fprintf(stderr,"\n Draw: \n");
 
                 karmaMotor.clear();
-                karmaMotor.addString("drap");
-                karmaMotor.addInt(pose);
+                //karmaMotor.addString("drap");  //when using this method, you should add the 'pose' parameter
+                karmaMotor.addString("draw");
+                //karmaMotor.addInt(pose);
                 karmaMotor.addDouble(actPos[0]);
                 karmaMotor.addDouble(actPos[1]);
                 karmaMotor.addDouble(actPos[2]);
-                karmaMotor.addDouble(180.0); // direction
-                karmaMotor.addDouble(0.10); // initial tool-object distance
-                karmaMotor.addDouble(0.15); // movement lenght
+                karmaMotor.addDouble(90.0); // direction (before it was 180.0)
+                karmaMotor.addDouble(objectSizeOffset); // initial tool-object distance
+                karmaMotor.addDouble(MOVEMENT_LENGTH); // movement lenght
                 fprintf(stdout,"Will now send to karmaMotor:\n");
                 fprintf(stdout,"%s\n",karmaMotor.toString().c_str());
                 KarmaReply.clear();
@@ -895,14 +928,15 @@ void Manager::performAction()
         case 4:
             fprintf(stderr,"\n Pushing simulation: \n");
 
-            karmaMotor.addString("vdrp");
-            karmaMotor.addInt(pose);
+            //karmaMotor.addString("vdrp");  //when using this method, you should add the 'pose' parameter
+            karmaMotor.addString("vdra");
+            //karmaMotor.addInt(pose);
             karmaMotor.addDouble(actPos[0]);
             karmaMotor.addDouble(actPos[1]);
-            karmaMotor.addDouble(actPos[2]);
-            karmaMotor.addDouble(180.0); // direction
-            karmaMotor.addDouble(-0.10); // initial tool-object distance
-            karmaMotor.addDouble(-0.15); // movement lenght
+            karmaMotor.addDouble(actPos[2] + 0.03);
+            karmaMotor.addDouble(90.0); // direction (before it was 180.0)
+            karmaMotor.addDouble(-objectSizeOffset*2.0 - 0.05); // initial tool-object distance
+            karmaMotor.addDouble(-MOVEMENT_LENGTH); // movement lenght
             fprintf(stdout,"Will now send to karmaMotor:\n");
             fprintf(stdout,"%s\n",karmaMotor.toString().c_str());
             rpcMotorKarma.write(karmaMotor, KarmaReply);
@@ -913,14 +947,15 @@ void Manager::performAction()
                 fprintf(stderr,"\n Push (opposite draw) \n");
 
                 karmaMotor.clear();
-                karmaMotor.addString("drap");
-                karmaMotor.addInt(pose);
+                //karmaMotor.addString("drap"); //when using this method, you should add the 'pose' parameter
+                karmaMotor.addString("draw");
+                //karmaMotor.addInt(pose);
                 karmaMotor.addDouble(actPos[0]);
                 karmaMotor.addDouble(actPos[1]);
-                karmaMotor.addDouble(actPos[2]);
-                karmaMotor.addDouble(180.0); // direction
-                karmaMotor.addDouble(-0.10); // initial tool-object distance
-                karmaMotor.addDouble(-0.15); // movement lenght
+                karmaMotor.addDouble(actPos[2] + 0.03);  //table offset is bigger for the Push action
+                karmaMotor.addDouble(90.0); // direction (before it was 180.0)
+                karmaMotor.addDouble(-objectSizeOffset*2.0 - 0.05); // initial tool-object distance
+                karmaMotor.addDouble(-MOVEMENT_LENGTH); // movement lenght
                 fprintf(stdout,"Will now send to karmaMotor:\n");
                 fprintf(stdout,"%s\n",karmaMotor.toString().c_str());
                 KarmaReply.clear();
@@ -1223,14 +1258,14 @@ int Manager::executeToolAttach(const Vector &tool)
     Bottle karmaMotor, KarmaReply;
     Bottle toolFinderCmd, toolFinderRpl;
 
-    karmaMotor.addString("toop");
+    karmaMotor.addString("tool");
     karmaMotor.addString("remove");
     rpcMotorKarma.write(karmaMotor, KarmaReply);
     fprintf(stderr,"reply is %s:\n",KarmaReply.toString().c_str());
 
     karmaMotor.clear();
     KarmaReply.clear();
-    karmaMotor.addString("toop");
+    karmaMotor.addString("tool");
     karmaMotor.addString("attach");
     karmaMotor.addString(hand.c_str());
     karmaMotor.addDouble(tool[0]);
@@ -1243,7 +1278,7 @@ int Manager::executeToolAttach(const Vector &tool)
 
     karmaMotor.clear();
     KarmaReply.clear();
-    karmaMotor.addString("toop");
+    karmaMotor.addString("tool");
     karmaMotor.addString("get");
     fprintf(stdout,"%s\n",karmaMotor.toString().c_str());
     rpcMotorKarma.write(karmaMotor, KarmaReply);

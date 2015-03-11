@@ -40,16 +40,18 @@
 
 const int                       N_ACTIONS                    = 4;
 //const int                       N_TOOLS                      = 2;
-const double                    DEFAULT_ACTION_TIME          = 2.0;
-const int                       DEFAULT_MOTION_STEPS         = 4;
-const int                       DEFAULT_MOTION_STEPS_MIN     = 2;
+const double                    DEFAULT_ACTION_TIME          = 5.0;
+const int                       DEFAULT_MOTION_STEPS         = 3;
+const int                       DEFAULT_MOTION_STEPS_MIN     = 1;
 const int                       DEFAULT_MAX_OBJ              = 1;
 const double                    DEFAULT_CLOSE_THR            = 30.0;
 const double                    VDRAW_THR                    = 0.1;
-const double                    TOOL_TRANSFORM_DEFAULT[]     = {0.17, -0.17, 0.06};
-const double                    TABLE_HEIGHT_OFFSET_DEFAULT  = 0.06;
+const double                    TOOL_LEFT_TRANSFORM_DEFAULT[]      = {0.18, -0.18,  0.04};
+const double                    TOOL_RIGHT_TRANSFORM_DEFAULT[]     = {0.18, -0.18, -0.04};
+const double                    TABLE_HEIGHT_OFFSET_DEFAULT  = 0.05;
 const double                    OBJECT_SIZE_OFFSET_DEFAULT   = 0.04;
-const int                       HAND_NATURAL_POSE_DEFAULT    = 1; // 0 = straight pose (hand palms facing each others), 1 = pronated pose (hand palms facing the table).
+const int                       HAND_NATURAL_POSE_DEFAULT    = 0; // 0 = straight pose (hand palms facing each others), 1 = pronated pose (hand palms facing the table).
+const double                    MOVEMENT_LENGTH              = 0.10;
 
 /**********************************************************/
 
