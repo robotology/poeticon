@@ -11,6 +11,7 @@
 #define __WSM_THREAD_H__
 
 #include <algorithm>
+#include <cmath>
 #include <iomanip>
 #include <iostream> // __func__
 #include <map>
@@ -155,6 +156,7 @@ class WorldStateMgrThread : public RateThread
         bool getAffBottleIndexFromTrackROI(const int &u, const int &v, int &abi);
         int label2id(const string &label);
         bool getLabel(const int &u, const int &v, string &label);
+        bool getLabelMajorityVote(const int &u, const int &v, string &winnerLabel, const int &rounds=5);
         bool mono2stereo(const string &objName, double &x, double &y, double &z);
         // TODO: return Bottle instead of std::vector
         vector<double> getTooltipOffset(const string &objName);

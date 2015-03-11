@@ -662,7 +662,7 @@ void WorldStateMgrThread::refreshTrackNames()
             int u = static_cast<int>( inTargets->get(i).asList()->get(1).asDouble() );
             int v = static_cast<int>( inTargets->get(i).asList()->get(2).asDouble() );
             string label;
-            if (!getLabel(u, v, label))
+            if (!getLabelMajorityVote(u, v, label))
                 yWarning() << __func__ << "got invalid label";
 
             trackMap.insert(make_pair(id,label));
@@ -1189,7 +1189,7 @@ bool WorldStateMgrThread::getLabel(const int &u, const int &v, string &label)
     activityCmd.addString("getLabel");
     activityCmd.addInt(u);
     activityCmd.addInt(v);
-    yDebug() << __func__ <<  "sending query:" << activityCmd.toString().c_str();
+    //yDebug() << __func__ <<  "sending query:" << activityCmd.toString().c_str();
     activityPort.write(activityCmd, activityReply);
 
     bool validResponse = false;
@@ -1199,7 +1199,7 @@ bool WorldStateMgrThread::getLabel(const int &u, const int &v, string &label)
 
     if (validResponse)
     {
-        yDebug() << __func__ << "obtained valid response:" << activityReply.toString().c_str();
+        //yDebug() << __func__ << "obtained valid response:" << activityReply.toString().c_str();
         label = activityReply.get(0).asString(); 
         return true;
     }
@@ -1208,6 +1208,78 @@ bool WorldStateMgrThread::getLabel(const int &u, const int &v, string &label)
         yWarning() << __func__ << "obtained invalid response:" << activityReply.toString().c_str();
         return false;
     }
+}
+
+struct compareSecond
+{
+    template <typename Pair>
+    bool operator()(const Pair &a, const Pair &b)
+    {
+        return a.second < b.second;
+    }
+};
+
+bool WorldStateMgrThread::getLabelMajorityVote(const int &u, const int &v, string &winnerLabel, const int &rounds)
+{
+    // TODO: tidy this function
+
+    int majority = ceil( static_cast<double>(rounds/2.0) );
+    yDebug("getLabel (with majority vote) %d %d", u, v);
+    //yDebug("will make %d voting rounds -> needed majority: %d", rounds, majority);
+
+    // accumulate vote strings
+    vector<string> votes;
+    for (int r=0; r<rounds; ++r)
+    {
+        //yDebug("round %d", r);
+        string thisVote;
+        if (getLabel(u, v, thisVote))
+        {
+            //yDebug("received: %s", thisVote.c_str());
+            votes.push_back(thisVote);
+        }
+        //else
+        //    yWarning("getLabel error");
+    }
+
+
+    // sort strings
+    sort(votes.begin(), votes.end());
+    //yDebug() << "sorted votes:" << votes;
+
+    // histogram with corresponding counts - http://stackoverflow.com/a/9616995
+    typedef map<string, int> counts_t;
+    counts_t histogram;
+    for(vector<string>::const_iterator iter = votes.begin();
+        iter != votes.end();
+        ++iter)
+    {
+        ++histogram[*iter];
+    }
+
+    /*
+    // display histogram
+    for(counts_t::const_iterator iter = histogram.begin();
+        iter != histogram.end();
+        ++iter)
+    {
+        //int freq = static_cast<int>(iter->second) / histogram.size();
+        yDebug() << "histogram count for" << iter->first << ": " << static_cast<int>(iter->second);
+    }
+    */
+
+    // pick winner
+    std::pair<string, int> max_el = *std::max_element(histogram.begin(), histogram.end(), compareSecond());
+    //yDebug() << "winner is" << max_el.first << "having count" << max_el.second;
+    if (max_el.second < majority)
+        yWarning("selected winning label %s with %d/%d votes, despite being less than majority %d",
+                 max_el.first.c_str(), max_el.second, rounds, majority);
+    else
+        yDebug("selected winning label %s", max_el.first.c_str());
+
+    winnerLabel = votes[max_el.second];
+
+    return true;
 }
 
 bool WorldStateMgrThread::mono2stereo(const string &objName, double &x, double &y, double &z)
