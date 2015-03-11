@@ -51,7 +51,7 @@ private:
 
 class TranslatorModule: public RFModule {
     string moduleName;
-    enum switchCase {name,pos,desc,tooldesc2d,is_h,free,in_h,on_t,re_w,pu_w,touch};
+    enum switchCase {name,is_h, pos,offset,desc,tooldesc2d,in_h,on_t,re_w,pu_w, free};
     string translatorPortName;
     BufferedPort<Bottle> translatorPort;
 
