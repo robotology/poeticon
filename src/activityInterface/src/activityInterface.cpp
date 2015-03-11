@@ -105,10 +105,22 @@ bool ActivityInterface::configure(yarp::os::ResourceFinder &rf)
     
     robotStatus.open(("/"+moduleName+"/status:o").c_str());
     
-    yarp::os::Network::connect("/activityInterface/arecmd:rpc", "/actionsRenderingEngine/cmd:io");
-    yarp::os::Network::connect("/activityInterface/are:rpc", "/actionsRenderingEngine/get:io");
-    yarp::os::Network::connect("/activityInterface/memory:rpc", "/memory/rpc");
-    yarp::os::Network::connect("/activityInterface/worldState:rpc", "/worldStateManager/rpc:i");
+    rpcIolState.setReporter(memoryReporter);
+    rpcIolState.open(("/"+moduleName+"/iolState:rpc").c_str());
+    
+    inputBlobPortName = "/" + moduleName + "/blobs:i";
+    blobPortIn.open( inputBlobPortName.c_str() );
+    
+    rpcPraxiconInterface.setReporter(memoryReporter);
+    rpcPraxiconInterface.open(("/"+moduleName+"/praxicon:rpc").c_str());
+    
+    yarp::os::Network::connect(("/"+moduleName+"/arecmd:rpc").c_str(), "/actionsRenderingEngine/cmd:io");
+    yarp::os::Network::connect(("/"+moduleName+"/are:rpc").c_str(), "/actionsRenderingEngine/get:io");
+    yarp::os::Network::connect(("/"+moduleName+"/memory:rpc").c_str(), "/memory/rpc");
+    yarp::os::Network::connect(("/"+moduleName+"/iolState:rpc").c_str(), "/iolStateMachineHandler/human:rpc");
+
+    yarp::os::Network::connect("/blobSpotter/image:o", inputBlobPortName.c_str());
+    yarp::os::Network::connect(("/"+moduleName+"/praxicon:rpc").c_str(), "/praxInterface/speech:i");
     
     if (with_robot)
     {
@@ -192,6 +204,8 @@ bool ActivityInterface::configure(yarp::os::ResourceFinder &rf)
     for (int i=0; i<10; i++)
         incrementSize[i] = 0;
     
+    fprintf(stdout,"done initialization\n");
+    
     return true ;
 }
 
@@ -204,6 +218,9 @@ bool ActivityInterface::interruptModule()
     rpcPort.interrupt();
     rpcWorldState.interrupt();
     robotStatus.interrupt();
+    rpcIolState.interrupt();
+    blobPortIn.interrupt();
+    rpcPraxiconInterface.interrupt();
     return true;
 }
 
@@ -219,6 +236,9 @@ bool ActivityInterface::close()
     rpcAREcmd.close();
     robotStatus.close();
     rpcWorldState.close();
+    rpcIolState.close();
+    blobPortIn.close();
+    rpcPraxiconInterface.close();
     return true;
 }
 
@@ -244,6 +264,72 @@ bool ActivityInterface::propagateStatus()
     robotStatus.write(replyAre);
     
     return true;
+}
+
+/**********************************************************/
+bool ActivityInterface::executeSpeech (const string &speech)
+{
+    Bottle cmdIol;
+    Bottle replyIol;
+    cmdIol.clear(), replyIol.clear();
+    cmdIol.addString("say");
+    cmdIol.addString(speech.c_str());
+    rpcIolState.write(cmdIol,replyIol);
+    fprintf(stdout,"%s\n", replyIol.toString().c_str());
+    return true;
+}
+
+/**********************************************************/
+Bottle ActivityInterface::askPraxicon(const string &request)
+{
+    Bottle listOfGoals, cmdPrax, replyPrax;
+    
+    Bottle toolLikeMemory = getToolLikeNames();
+    Bottle objectsMemory = getNames();
+    
+    Bottle &listOfObjects = cmdPrax.addList();
+    
+    //create available list
+    listOfObjects.addString("available");
+    
+    int passed[toolLikeMemory.size()];
+    
+    for (int i=0; i<objectsMemory.size(); i++)
+    {
+        for (int i=0; i<toolLikeMemory.size(); i++)
+            passed[i] = 0;
+        
+        for (int ii=0; ii<toolLikeMemory.size(); ii++)
+            if (strcmp (objectsMemory.get(i).asString().c_str(), toolLikeMemory.get(ii).asString().c_str() ) != 0)
+                passed[ii] = 1;
+        
+        int total=0;
+        for (int i=0; i<toolLikeMemory.size(); i++)
+            total+=passed[i];
+        
+        if (total>1)
+            listOfObjects.addString(objectsMemory.get(i).asString().c_str());
+    }
+    
+    
+    
+    Bottle &query=cmdPrax.addList();
+    //create query list
+    query.addString("query");
+    query.addString(request.c_str());
+    
+    Bottle &missing=cmdPrax.addList();
+    //create query list
+    missing.addString("missing");
+    missing.addString("stirrer");
+    missing.addString("plate");
+    
+    //send it all to praxicon
+    rpcPraxiconInterface.write(cmdPrax,replyPrax);
+    
+    fprintf(stdout, "the size of the reply is: %d \n", replyPrax.size());
+
+    return replyPrax ; //listOfGoals
 }
 
 /**********************************************************/
@@ -332,10 +418,10 @@ bool ActivityInterface::handleTrackers()
     
         if (position.size() < 1 )
         {
-            if (incrementSize[i] < 3)
+            if (incrementSize[i] < 5)
                 incrementSize[i]++;
             
-            if (incrementSize[i] > 2 && !paused)
+            if (incrementSize[i] > 4 && !paused)
             {
                 Bottle cmdPauseThread, replyPauseThread;
                 cmdPauseThread.clear();
@@ -492,7 +578,6 @@ Bottle ActivityInterface::getOffset(const string &objName)
         toolOffset.addDouble(0.0);
     }
     
-    
     return toolOffset;
 }
 
@@ -512,7 +597,6 @@ bool ActivityInterface::quit()
 /**********************************************************/
 bool ActivityInterface::handStat(const string &handName)
 {
-    //FILL IN HAND AVAILABILITY
     Bottle are, replyAre;
     are.clear(),replyAre.clear();
     are.addString("get");
@@ -549,7 +633,6 @@ Bottle ActivityInterface::getBlobCOG(const Bottle &blobs, const int i)
     return cog;
 }
 
-
 /**********************************************************/
 string ActivityInterface::getLabel(const int32_t pos_x, const int32_t pos_y)
 {
@@ -578,7 +661,7 @@ string ActivityInterface::getLabel(const int32_t pos_x, const int32_t pos_y)
                 int diffx = abs(cog.get(0).asInt() - pos_x);
                 int diffy = abs(cog.get(1).asInt() - pos_y);
                 
-                if ( diffx < 20 && diffy < 20)
+                if ( diffx < 10 && diffy < 10)
                 {
                     if (propField->check("name"))
                     {
@@ -769,9 +852,67 @@ bool ActivityInterface::drop(const string &objName, const string &targetName)
 /**********************************************************/
 bool ActivityInterface::geto(const std::string &handName, const int32_t pos_x, const int32_t pos_y)
 {
-    //here do two actions
-    //point on x and y
-    //and ask user to give tool in hand
+
+    // Get the label of the object requested
+    int whichArm = 0;
+    string label = getLabel(pos_x, pos_y);
+    
+    Bottle cmdHome, cmdReply;
+    cmdHome.clear();
+    cmdReply.clear();
+    cmdHome.addString("home");
+    cmdHome.addString("head");
+    rpcAREcmd.write(cmdHome,cmdReply);
+    
+    executeSpeech ("can you give me the " + label + "please?");
+    
+    fprintf(stdout, "tool label is: %s \n",label.c_str());
+    
+    Bottle cmdAre, replyAre;
+    cmdAre.clear();
+    replyAre.clear();
+    cmdAre.addString("point");
+    Bottle &tmp=cmdAre.addList();
+    tmp.addInt (pos_x);
+    tmp.addInt (pos_y);
+    
+    if (pos_x > 0 && pos_y <= 160 )
+    {
+        whichArm = LEFT;
+        cmdAre.addString("left");
+        rpcAREcmd.write(cmdAre,replyAre);
+    }
+    else if (pos_x > 160 && pos_y < 320 )
+    {
+        whichArm = RIGHT;
+        cmdAre.addString("right");
+        rpcAREcmd.write(cmdAre, replyAre);
+    }
+    else
+        executeSpeech ("oh my...I seemed to have gotten confused...sorry");
+    
+    cmdAre.clear();
+    replyAre.clear();
+    cmdAre.addString("tato");
+    cmdAre.addString(handName.c_str());
+    rpcAREcmd.write(cmdAre, replyAre);
+    
+    printf("done requesting\n");
+    
+    cmdAre.clear();
+    replyAre.clear();
+    cmdAre.addString("close");
+    cmdAre.addString(handName.c_str());
+    rpcAREcmd.write(cmdAre, replyAre);
+    Time::delay(5.0);
+    printf("done closing\n");
+    
+    cmdAre.clear();
+    replyAre.clear();
+    cmdAre.addString("home");
+    cmdAre.addString("arms");
+    cmdAre.addString("head");
+    rpcAREcmd.write(cmdAre, replyAre);
     
     return true;
 }
@@ -798,5 +939,186 @@ Bottle ActivityInterface::underOf(const std::string &objName)
     return replyList;
 }
 
+/**********************************************************/
+Bottle ActivityInterface::getNames()
+{
+    Bottle Memory = getMemoryBottle();
+    Bottle names;
+    
+    for (int i=0; i<Memory.size(); i++)
+    {
+        if (Bottle *propField = Memory.get(i).asList())
+        {
+            if (propField->check("name"))
+            {
+                names.addString(propField->find("name").asString());
+            }
+        }
+    }
+    return names;
+}
 
+/**********************************************************/
+Bottle ActivityInterface::reachableWith(const string &objName)
+{
+    Bottle replyList, position, names;
+    position.clear();
+    names.clear();
+    replyList.clear();
+    
+    position = get3D(objName);
+    if (position.get(0).asDouble() < -0.47)
+    {
+        Bottle list = pullableWith(objName);
+        for (int i = 0; i<list.size(); i++)
+            replyList.addString(list.get(i).asString());
+    }
+    else
+    {
+        Bottle list = getNames();
+        for (int i = 0; i<list.size(); i++)
+        {
+            if (strcmp (objName.c_str(), list.get(i).asString().c_str() ) != 0)
+                replyList.addString(list.get(i).asString());
+        }
+    }
+    
+    return replyList;
+}
+/**********************************************************/
+Bottle ActivityInterface::pullableWith(const string &objName)
+{
+    return getToolLikeNames();
+}
 
+/**********************************************************/
+Bottle ActivityInterface::getToolLikeNames()
+{
+    Bottle names;
+    cv::Point res;
+    
+    IplImage *blob_in = (IplImage *) blobPortIn.read(true)->getIplImage();
+    
+    cv::Mat img(blob_in);
+    
+    cv::Mat temp(img.rows,img.cols,CV_8UC1);
+    cv::Mat dst(img.rows,img.cols,CV_8UC1,cv::Scalar::all(0));
+    img.copyTo(temp);
+    
+    std::vector<std::vector<cv::Point> > contours;
+    std::vector<cv::Vec4i> hierarchy;
+    
+    std::vector<cv::Point> convex_hull;
+    
+    findContours( temp, contours, hierarchy,CV_RETR_CCOMP, CV_CHAIN_APPROX_SIMPLE );
+    
+    //std::vector<double> allLenghts;
+    std::map<int, double> allLengths;
+    
+    for( int i = 0; i< contours.size(); i++ )
+    {
+        double area = cv::contourArea( contours[i],false);
+        
+        if (area > 1000 && area < 5000) //first screaning - only accept something big enough
+        {
+            double length = getAxes(contours[i], dst);
+            allLengths.insert(pair<int, double>(i, length));
+        }
+    }
+    
+    //make sure that the max diff is a bit smaller than only min (therefore min+min/2)
+    double max_diff = getPairMax(allLengths) - (getPairMin(allLengths) + getPairMin(allLengths)/2);
+    
+    //fprintf(stdout, "the diff is %lf \n", max_diff);
+    
+    std::vector<cv::Point > tempPoints;
+    
+    for (std::map<int, double>::iterator it=allLengths.begin(); it!=allLengths.end(); ++it)
+    {
+        int id = it->first;
+        
+        if (it->second > max_diff)
+        {
+            // convex hull
+            cv::convexHull(contours[id], convex_hull, false);
+            if (convex_hull.size() < 3 )
+                fprintf(stdout, "ERROR in getToolLikeNames with convexHull \n");
+            
+            // center of gravity
+            cv::Moments mo = cv::moments(convex_hull);
+            res = cv::Point(mo.m10/mo.m00 , mo.m01/mo.m00);
+            
+            bool shouldAdd = true;
+            for (int i = 0; i < tempPoints.size(); i++)
+            {
+                if ( abs(res.x - tempPoints[i].x)<10 && abs(res.y - tempPoints[i].y)<10)
+                    shouldAdd = false;
+            }
+            if (shouldAdd)
+            {
+                string label = getLabel(res.x, res.y);
+                names.addString(label.c_str());
+            }
+            tempPoints.push_back(res);
+        }
+    }
+    
+    return names;
+}
+
+/**********************************************************/
+double ActivityInterface::getAxes(vector<cv::Point> &pts, cv::Mat &img)
+{
+
+    cv::Mat data_pts = cv::Mat(pts.size(), 2, CV_64FC1);
+    for (int i = 0; i < data_pts.rows; ++i)
+    {
+        data_pts.at<double>(i, 0) = pts[i].x;
+        data_pts.at<double>(i, 1) = pts[i].y;
+    }
+    
+    //Perform PCA analysis
+    cv::PCA pca_analysis(data_pts, cv::Mat(), CV_PCA_DATA_AS_ROW);
+    
+    //Store the position of the object
+    cv::Point pos = cv::Point(pca_analysis.mean.at<double>(0, 0),
+                      pca_analysis.mean.at<double>(0, 1));
+    
+    //Store the eigenvalues and eigenvectors
+    vector<cv::Point2d> eigen_vecs(2);
+    vector<double> eigen_val(2);
+    for (int i = 0; i < 2; ++i)
+    {
+        eigen_vecs[i] = cv::Point2d(pca_analysis.eigenvectors.at<double>(i, 0),
+                                pca_analysis.eigenvectors.at<double>(i, 1));
+        
+        eigen_val[i] = pca_analysis.eigenvalues.at<double>(0, i);
+    }
+    
+    cv::Point ptaxe1 = pos;
+    cv::Point ptaxe2 = pos + 0.02 * cv::Point(eigen_vecs[0].x * eigen_val[0], eigen_vecs[0].y * eigen_val[0]);
+    
+    double res1 = cv::norm(ptaxe1-ptaxe2);
+    
+    //orientation just in case
+    //atan2(eigen_vecs[0].y, eigen_vecs[0].x);
+    
+    return res1;
+    
+}
+
+/**********************************************************/
+double ActivityInterface::getPairMin(std::map<int, double> pairmap)
+{
+    std::pair<int, double> min
+    = *min_element(pairmap.begin(), pairmap.end(), compare());
+    return min.second;
+}
+
+/**********************************************************/
+double ActivityInterface::getPairMax(std::map<int, double> pairmap)
+{
+    std::pair<int, double> min
+    = *max_element(pairmap.begin(), pairmap.end(), compare());
+    return min.second;
+}
