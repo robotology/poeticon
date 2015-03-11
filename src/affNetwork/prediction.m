@@ -35,6 +35,9 @@ switch bn
         load('./PCA2_bn.mat'); 
         load('./princomp.mat');
         components = 2;
+    case 'pca2'
+        load('pca2ndVersion.mat');
+        components = 2;
     otherwise
         load('./original_bn.mat');
 end
@@ -90,13 +93,14 @@ while(~done)
             % Get the query priors and posteriors:
             prior = query;
             %posterior = query.get(1);
-            
+            %% Test if yarp bottle is with a good structure/size
+            %%
             switch bn
                 case 'exp'
                     prior_nodes  = 1:13;
                     prior_values = zeros(1, size(prior_nodes, 2));
                     for n = 1:size(prior_nodes, 2)
-                        prior_values(n) = discretizeAfonso(prior.get(0).asList().get(n-1).asDouble(),n);
+                        prior_values(n) = discretizeAfonso(prior.get(n-1).asDouble(),n);
                     end
                     posterior_nodes = [14 15];
                     
@@ -106,7 +110,7 @@ while(~done)
                     prior_values = zeros(1, size(prior_nodes, 2));
                     for n = 1:size(prior_values, 2)
                         prior_values(n) = ...
-                            discretizeAfonso(prior.get(0).asList().get(trans_nodes(n)-1).asDouble, trans_nodes(n));
+                            discretizeAfonso(prior.get(trans_nodes(n)-1).asDouble, trans_nodes(n));
                     end
                     posterior_nodes = [11 15];
                     
@@ -116,23 +120,32 @@ while(~done)
                     prior_values = zeros(1, size(prior_nodes,2));
                     for n = 1:size(prior_values, 2)
                         prior_values(n) = ...
-                        discretizeAfonso(prior.get(0).asList().get(trans_nodes(n)-1).asDouble, trans_nodes(n));
+                        discretizeAfonso(prior.get(trans_nodes(n)-1).asDouble, trans_nodes(n));
                     end
                     posterior_nodes = [9 13];
                 case 'pca'
                     
                     prior_nodes  = [1 2 3]; % pca1 pca2 action
                     %prior_values = zeros(1, size(prior_nodes,2));
-                    for n = 1:12 % features of the object and tool
-                        features(n) = prior.get(0).asList().get(n-1).asDouble;
+                    for n = 1:12 % features of the tool and object
+                        features(n) = prior.get(n-1).asDouble;
                     end
-                    action = prior.get(0).asList().get(12).asDouble;
+                    action = prior.get(12).asDouble;
                     score =  discretize(features*pinv(pc(:,1:components)'), ranges); % convert 
-                                    % to pca - pc 12x12 matrix
-                    % discretize values
-                    prior_values = [ score action]; % and add the action to prior
+                                    % to pca - pc 12x12 matrix, discretize values
+                    prior_values = [score action]; % and add the action to prior
                     posterior_nodes = [4 5]; % X and Y effect
-                    
+                case 'pca2'
+                   prior_nodes  = [1 2 3]; % pca1 pca2 action
+                    %prior_values = zeros(1, size(prior_nodes,2));
+                    for n = 1:10 % features of the tool and object
+                        features(n) = prior.get(n-1).asDouble;
+                    end
+                    action = prior.get(0).asList().get(10).asDouble;
+                    score =  discretize(features*pinv(pc(:,1:components)'), ranges); % convert 
+                                    % to pca - pc 10x10 matrix, discretize values
+                    prior_values = [score action]; % and add the action to prior
+                    posterior_nodes = [4 5]; % X and Y effect 
                 otherwise
                     prior_nodes  = 1:13;
                     prior_values = zeros(1,size(prior_nodes,2));
