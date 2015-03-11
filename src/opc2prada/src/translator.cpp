@@ -72,6 +72,7 @@ bool   TranslatorModule::updateModule() {
             dataBase = readingThread->_data;
             ids2 = readingThread->_ids;
             readingThread->guard.unlock();
+            //cout << "dataBase = " << dataBase.toString().c_str() << endl;
 
             if(dataBase.size()>0 && (dataBase.get(1).asString()!="empty")) {
 	            //cout << "f1: " << objIDsFileName << "f2: " << stateFileName << endl;
@@ -92,7 +93,7 @@ bool   TranslatorModule::updateModule() {
                         switchCase r = hashtable(propriedade->get(0).asString());
                         switch(r) {
                             case name:{
-			    		        myfile <<"(" << idsp->get((i-1)).asInt() << "," << propriedade->get(1).asString().c_str() << ");";
+                                myfile <<"(" << idsp->get((i-1)).asInt() << "," << propriedade->get(1).asString().c_str() << ");";
                                 break;
                             }
                             case desc: {
