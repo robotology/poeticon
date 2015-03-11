@@ -270,7 +270,10 @@ bool WorldStateMgrThread::pauseTrack(const string &objName)
     }
 
     if (!trackerInit)
-        yWarning("tracker was not initialized by WSM, was it initialized before?");
+    {
+        yWarning("tracker was not initialized by WSM yet: not going to pause %s", objName.c_str());
+        return false;
+    }
 
     int id;
     id = label2id(objName);
@@ -305,7 +308,10 @@ bool WorldStateMgrThread::resumeTrack(const string &objName)
     }
 
     if (!trackerInit)
-        yWarning("tracker was not initialized by WSM, was it initialized before?");
+    {
+        yWarning("tracker was not initialized by WSM yet: not going to resume %s", objName.c_str());
+        return false;
+    }
 
     int id;
     id = label2id(objName);
@@ -663,9 +669,12 @@ void WorldStateMgrThread::refreshTrackNames()
             int v = static_cast<int>( inTargets->get(i).asList()->get(2).asDouble() );
             string label;
             if (!getLabelMajorityVote(u, v, label))
-                yWarning() << __func__ << "got invalid label from getLabelMajorityVote";
-            else
-                yDebug() << __func__ << "got valid label" << label << "from getLabelMajorityVote";
+            {
+                yWarning() << __func__ << "error calling getLabelMajorityVote";
+                // try again, another 10 times
+                //if (!getLabelMajorityVote(u, v, label, 10))
+                //    yWarning() << __func__ << "tried getLabelMajorityVote 5+10 times, no valid result";
+            }
 
             trackMap.insert(make_pair(id,label));
         }
@@ -1225,8 +1234,6 @@ struct compareSecond
 
 bool WorldStateMgrThread::getLabelMajorityVote(const int &u, const int &v, string &winnerLabel, const int &rounds)
 {
-    // TODO: tidy this function
-
     int majority = ceil( static_cast<double>(rounds/2.0) );
     yDebug("getLabel (with majority vote) %d %d", u, v);
     //yDebug("will make %d voting rounds -> needed majority: %d", rounds, majority);
@@ -1243,12 +1250,12 @@ bool WorldStateMgrThread::getLabelMajorityVote(const int &u, const int &v, strin
             if (!thisVote.empty())
                 votes.push_back(thisVote);
         }
+        yarp::os::Time::delay(0.1);
     }
 
     if (votes.empty())
     {
-        yWarning("votes vector is empty!");
-        winnerLabel = "";
+        yWarning() << "got" << rounds << "consecutive empty labels from object recognition!";
         return false;
     }
 
@@ -1281,10 +1288,10 @@ bool WorldStateMgrThread::getLabelMajorityVote(const int &u, const int &v, strin
     std::pair<string, int> max_el = *std::max_element(histogram.begin(), histogram.end(), compareSecond());
     //yDebug() << "winner is" << max_el.first << "having count" << max_el.second;
     if (max_el.second < majority)
-        yWarning("selected winning label %s with %d/%d entries after %d queries, despite being less than majority %d",
+        yWarning("selected winning label --> %s <-- with %d/%d entries after %d queries, despite being less than majority %d",
                  max_el.first.c_str(), max_el.second, votes.size(), rounds, majority);
     else
-        yDebug("selected winning label %s", max_el.first.c_str());
+        yDebug("selected winning label --> %s <--", max_el.first.c_str());
 
     winnerLabel = max_el.first;
 
