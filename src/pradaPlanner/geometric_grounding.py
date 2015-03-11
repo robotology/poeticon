@@ -217,18 +217,17 @@ def geometric_grounding():
                 objects_file = open(''.join(PathName + "/Object_names-IDs.dat"),'r')
                 
 ## reads objects in world
-                lines = world_file.read()
-                world_file.close()
+                lines = objects_file.read()
+                objects_file.close()
                 objects = re.findall(r'\d+',lines)
                 temp_obj = []
+                print '->',objects
                 for i in range(len(objects)):
                     if objects[i] not in temp_obj:
                         temp_obj = temp_obj + [objects[i]]
                 objects = temp_obj
 
 ## reads tools in the world
-                lines = objects_file.read()
-                objects_file.close()
                 print lines
                 temp_data = lines.replace('(','').replace(')','').split(';')  ## problem! it's showing up blank.
                 temp_data.pop(-1)
