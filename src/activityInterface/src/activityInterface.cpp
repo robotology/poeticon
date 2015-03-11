@@ -304,8 +304,8 @@ Bottle ActivityInterface::askPraxicon(const string &request)
                 passed[ii] = 1;
         
         int total=0;
-        for (int i=0; i<toolLikeMemory.size(); i++)
-            total+=passed[i];
+        for (int x=0; x<toolLikeMemory.size(); x++)
+            total+=passed[x];
         
         if (total>1)
             listOfObjects.addString(objectsMemory.get(i).asString().c_str());
