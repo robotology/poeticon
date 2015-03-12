@@ -757,6 +757,8 @@ void WorldStateMgrThread::refreshTracker()
 
 void WorldStateMgrThread::updateTrackIDsNoDupes()
 {
+    // TODO: simplify by using activityIF getIDs (including paused IDs)
+
     trackIDs.clear();
     for (int t=0; t<sizeTargets; t++)
     {
@@ -834,10 +836,21 @@ bool WorldStateMgrThread::doPopulateDB()
             yDebug("corresponds to tracker Bottle index %d", tbi);
         }
 
-        // TODO: uncomment when implemented
-        //int abi = 0;
-        //getAffBottleIndexFromTrackROI(u, v, abi);
-        int abi = tbi+1; // remove
+
+        int abi = 0; // affordance blobs Bottle index
+        if (!bIsHandValue)
+        {
+            double u=0.0, v=0.0;
+            u = inTargets->get(tbi).asList()->get(1).asDouble();
+            v = inTargets->get(tbi).asList()->get(2).asDouble();
+
+            if ( getAffBottleIndexFromTrackROI(u, v, abi) )
+                yDebug("corresponds to affordance blobs Bottle index %d", abi);
+            else
+                yWarning("problem with getAffBottleIndexFromTrackROI");
+        }
+        else
+            abi = tbi + 1; // wrong in general
 
         // common properties
         Bottle bName;
@@ -1155,17 +1168,62 @@ bool WorldStateMgrThread::getAffBottleIndexFromTrackROI(const int &u, const int 
 {
     // Finds the AffBottleIndex of inTargets->get(tbi) corresponding to
     // the TrackerBottleIndex inAff->get(abi).
+    //
     // Current implementation: from tracker ROI centre, detect the most likely
     // blob index within blobDescriptor Bottle, using Euclidean distance.
+    //
     // Future, more robust implementation: cv::pointPolygonTest.
 
-    // TODO:
-    // iterate over pairs
+    // iterates over pairs
     //bPosValue.addDouble(inAff->get(*+1).asList()->get(0).asDouble());
     //bPosValue.addDouble(inAff->get(*+1).asList()->get(1).asDouble());
-    // and return closest one to u,v
+    // and return closest one (in Euclidean distance sense) to u,v
 
-    return false;
+    yarp::sig::Vector trackerROI(2, 0.0);
+    trackerROI[0] = static_cast<double>( u );
+    trackerROI[1] = static_cast<double>( v );
+    //yDebug() << "trackerROI" << trackerROI.toString().c_str();
+
+    int minBlobIdx = -1;
+    float minDist = 1000.0;
+
+    for(int a=0; a<sizeAff; a++)
+    {
+        yarp::sig::Vector currentBlob(2, 0.0);
+        currentBlob[0] = inAff->get(a+1).asList()->get(0).asDouble();
+        currentBlob[1] = inAff->get(a+1).asList()->get(1).asDouble();
+        float dist = 0.0;
+        euclideanDistance(trackerROI, currentBlob, dist);
+
+        //yDebug() << "currentBlob" << a << currentBlob.toString().c_str();
+        //yDebug() << "dist" << dist;
+
+        if (dist < minDist)
+        {
+            minBlobIdx = a;
+            minDist = dist;
+        }
+    }
+    //yDebug("winner %d (dist=%f)", minBlobIdx, minDist);
+
+    abi = minBlobIdx;
+    return true;
+}
+
+bool WorldStateMgrThread::euclideanDistance(yarp::sig::Vector &v1, yarp::sig::Vector &v2, float &dist)
+{
+    if (v1.size() != v2.size())
+    {
+        yWarning() << __func__ << "inputs must have the same size";
+        return false;
+    }
+
+    if (v1.size()==2 && v2.size()==2)
+    {
+        dist = sqrt( pow(v1[0]-v2[0],2.0) + pow(v1[1]-v2[1],2.0) );
+    }
+
+    return true;
 }
 
 int WorldStateMgrThread::label2id(const string &label)
