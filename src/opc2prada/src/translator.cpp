@@ -64,9 +64,12 @@ bool   TranslatorModule::updateModule() {
     Bottle *receive,dataBase,ids2,*idsp;
     if(readingThread->_runit) {
         receive = translatorPort.read(false);  //non-block
+
         if(receive == NULL)
             return true;
+
         if(receive->get(0).asString() == "update") {
+
             cout << "Writing the world state to file..." << endl;
             readingThread->guard.lock();
             dataBase = readingThread->_data;
@@ -169,10 +172,12 @@ bool   TranslatorModule::updateModule() {
             Bottle &send = translatorPort.prepare();
             send.clear();
             send.addString("ACK");
-            cout << "DONE" << endl;
+            cout << "DONE update" << endl;
             translatorPort.write();
         } // end "update"
+
         else if(receive->get(0).asString() == "querydesc2d" && receive->get(1).isInt()) {
+
             cout << "querydesc2d " << receive->get(1).isInt() << " received" << endl;
             readingThread->guard.lock();
             dataBase = readingThread->_data;
@@ -206,6 +211,7 @@ bool   TranslatorModule::updateModule() {
                             send.addList()=*propriedade->get(1).asList();
     //                        cout << send.toString().c_str() << endl;
                             translatorPort.write();
+                            cout << "DONE querydesc2d" << endl;
                             break;
                         }
                     }
@@ -213,7 +219,9 @@ bool   TranslatorModule::updateModule() {
             
             }
         } // end "querydesc2d"
+
         else if(receive->get(0).asString() == "querytooldesc2d" && receive->get(1).isInt()) {
+
             cout << "querytooldesc2d " << receive->get(1).isInt() << " received" << endl;
             readingThread->guard.lock();
             dataBase = readingThread->_data;
@@ -246,6 +254,7 @@ bool   TranslatorModule::updateModule() {
                             send.clear();
                             send.addList()=*propriedade->get(1).asList();
                             translatorPort.write();
+                            cout << "DONE querytooldesc2d" << endl;
                             break;
                         }
                     }
@@ -254,6 +263,7 @@ bool   TranslatorModule::updateModule() {
             }
 
         } // end "querytooldesc2d"
+
         else {
             Bottle &send = translatorPort.prepare();
             send.clear();
