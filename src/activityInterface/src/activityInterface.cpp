@@ -337,8 +337,8 @@ Bottle ActivityInterface::askPraxicon(const string &request)
     Bottle &missing=cmdPrax.addList();
     //create query list
     missing.addString("missing");
-    missing.addString("stirrer");
-    missing.addString("plate");
+    //missing.addString("stirrer");
+    //missing.addString("plate");
     
     fprintf(stdout, "sending: \n %s \n", cmdPrax.toString().c_str());
     //send it all to praxicon
@@ -394,7 +394,7 @@ bool ActivityInterface::processPradaStatus(const Bottle &status)
         {
             for (int i=1; i< status.size(); i++)
             {
-                if (strcmp (status.get(i).asString().c_str(), "bun_bottom" ) != 0 && strcmp (status.get(i).asString().c_str(), "bun_top" ) )
+                if (strcmp (status.get(i).asString().c_str(), "bun_bottom" ) != 0 && strcmp (status.get(i).asString().c_str(), "bun_top" ) != 0)
                     objectsUsed.addString(status.get(i).asString().c_str());
 
             }
@@ -892,27 +892,50 @@ bool ActivityInterface::take(const string &objName, const string &handName)
 {
     //check for hand status beforehand to make sure that it is empty
     
-    //handStatus(handName);
-    
-    //talk to iolStateMachineHandler
-    //figure out if object is visible
-    
-    //if object is visible do the following
-    
-    for (std::map<int, string>::iterator it=onTopElements.begin(); it!=onTopElements.end(); ++it)
+    string handStatus = inHand(handName);
+    if (strcmp (handStatus.c_str(), "none" ) != 0 )
     {
-        if (strcmp (it->second.c_str(), objName.c_str() ) == 0)
+        //talk to iolStateMachineHandler
+        Bottle position = get3D(objName);
+    
+        if (position.size()>0)
         {
-            int id = it->first;
-            onTopElements.erase(id);
-            elements--;
+            fprintf(stdout, "object is visible at %s will do the take action \n", position.toString().c_str());
+            
+            executeSpeech("ok, I will take the " + objName);
+            //do the take actions
+            Bottle cmd, reply;
+            cmd.clear(), reply.clear();
+            cmd.addString("take");
+            cmd.addString(objName);
+            cmd.addString(handName);
+            rpcAREcmd.write(cmd, reply);
+            
+            for (std::map<int, string>::iterator it=onTopElements.begin(); it!=onTopElements.end(); ++it)
+            {
+                if (strcmp (it->second.c_str(), objName.c_str() ) == 0)
+                {
+                    int id = it->first;
+                    onTopElements.erase(id);
+                    elements--;
+                }
+            }
+        
+            //update inHandStatus map
+            inHandStatus.insert(pair<string, string>(objName.c_str(), handName.c_str()));
+        }
+        else
+        {
+            executeSpeech("I am sorry I cannot see the" + objName);
         }
     }
+    else
+    {
+        executeSpeech("I already have the " + handStatus + " in my hand");
+        fprintf(stdout, "Cannot grasp already have something in hand\n");
+    }
     
-    //do the take actions
     
-    //update inHandStatus map
-    inHandStatus.insert(pair<string, string>(objName.c_str(), handName.c_str()));
     return true;
 }
 
