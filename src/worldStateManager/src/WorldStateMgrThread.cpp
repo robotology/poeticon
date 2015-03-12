@@ -837,7 +837,7 @@ bool WorldStateMgrThread::doPopulateDB()
         }
 
 
-        int abi = 0; // affordance blobs Bottle index
+        int abi = tbi+1; // affordance blobs Bottle index, not always tbi+1
         if (!bIsHandValue)
         {
             double u=0.0, v=0.0;
@@ -849,8 +849,6 @@ bool WorldStateMgrThread::doPopulateDB()
             else
                 yWarning("problem with getAffBottleIndexFromTrackROI");
         }
-        else
-            abi = tbi + 1; // wrong in general
 
         // common properties
         Bottle bName;
@@ -1187,11 +1185,11 @@ bool WorldStateMgrThread::getAffBottleIndexFromTrackROI(const int &u, const int 
     int minBlobIdx = -1;
     float minDist = 1000.0;
 
-    for(int a=0; a<sizeAff; a++)
+    for(int a=1; a<=sizeAff; a++)
     {
         yarp::sig::Vector currentBlob(2, 0.0);
-        currentBlob[0] = inAff->get(a+1).asList()->get(0).asDouble();
-        currentBlob[1] = inAff->get(a+1).asList()->get(1).asDouble();
+        currentBlob[0] = inAff->get(a).asList()->get(0).asDouble();
+        currentBlob[1] = inAff->get(a).asList()->get(1).asDouble();
         float dist = 0.0;
         euclideanDistance(trackerROI, currentBlob, dist);
 
