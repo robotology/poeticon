@@ -117,6 +117,8 @@ bool ActivityInterface::configure(yarp::os::ResourceFinder &rf)
     pradaStatus.setManager(this);
     pradaStatus.open(("/"+moduleName+"/prada:i").c_str());
     
+    praxiconToPradaPort.open(("/"+moduleName+"/praxicon:o").c_str());
+    
     
     yarp::os::Network::connect(("/"+moduleName+"/arecmd:rpc").c_str(), "/actionsRenderingEngine/cmd:io");
     yarp::os::Network::connect(("/"+moduleName+"/are:rpc").c_str(), "/actionsRenderingEngine/get:io");
@@ -233,6 +235,7 @@ bool ActivityInterface::interruptModule()
     blobPortIn.interrupt();
     rpcPraxiconInterface.interrupt();
     pradaStatus.interrupt();
+    praxiconToPradaPort.interrupt();
     semaphore.post();
     return true;
 }
@@ -254,6 +257,7 @@ bool ActivityInterface::close()
     blobPortIn.close();
     rpcPraxiconInterface.close();
     pradaStatus.close();
+    praxiconToPradaPort.close();
     fprintf(stdout, "finished shutdown procedure\n");
     semaphore.post();
     return true;
@@ -366,7 +370,7 @@ Bottle ActivityInterface::askPraxicon(const string &request)
                   back_inserter(tokens));
         }
         
-        //adding this to prevent missing the last goal and going out of range
+        //adding this to prevent missing the last goal or going out of range
         tokens.push_back("endofstring");
         
         int inc = 0;
@@ -387,9 +391,13 @@ Bottle ActivityInterface::askPraxicon(const string &request)
     {
         executeSpeech("something went terribly wrong. I cannot " + request);
     }
+    
+    praxiconToPradaPort.write(listOfGoals);
+    
     return listOfGoals;
 }
 
+/**********************************************************/
 bool ActivityInterface::processPradaStatus(const Bottle &status)
 {
     Bottle objectsUsed;
@@ -879,8 +887,6 @@ string ActivityInterface::inHand(const string &objName)
 {
     string handName;
     
-    //handName = inHandStatus.find(objName.c_str())->second;
-    
     for (std::map<string, string>::iterator it=inHandStatus.begin(); it!=inHandStatus.end(); ++it)
     {
         if (strcmp (it->first.c_str(), objName.c_str() ) == 0)
@@ -897,7 +903,6 @@ string ActivityInterface::inHand(const string &objName)
 bool ActivityInterface::take(const string &objName, const string &handName)
 {
     //check for hand status beforehand to make sure that it is empty
-    
     string handStatus = inHand(objName);
     if (strcmp (handStatus.c_str(), "none" ) == 0 )
     {
@@ -952,10 +957,31 @@ bool ActivityInterface::take(const string &objName, const string &handName)
 }
 
 /**********************************************************/
-bool ActivityInterface::drop(const string &objName, const string &targetName)
+bool ActivityInterface::drop(const string &objName)
 {
-    string handStatus = inHand(objName);
-    if (strcmp (handStatus.c_str(), "none" ) != 0 )
+    string handName = inHand(objName);
+    if (strcmp (handName.c_str(), "none" ) != 0 )
+    {
+        executeSpeech("ok, I will drop the " + objName );
+        //do the take actions
+        Bottle cmd, reply;
+        cmd.clear(), reply.clear();
+        cmd.addString("drop");
+        cmd.addString(handName.c_str());
+        rpcAREcmd.write(cmd, reply);
+    }
+    else
+    {
+        fprintf(stdout, "I am not holding anything\n");
+    }
+    return true;
+}
+
+/**********************************************************/
+bool ActivityInterface::put(const string &objName, const string &targetName)
+{
+    string handName = inHand(objName);
+    if (strcmp (handName.c_str(), "none" ) != 0 )
     {
         //talk to iolStateMachineHandler
         Bottle position = get3D(targetName);
@@ -971,7 +997,7 @@ bool ActivityInterface::drop(const string &objName, const string &targetName)
             cmd.addString("over");
             cmd.addString(targetName.c_str());
             cmd.addString("gently");
-            cmd.addString(handStatus.c_str());
+            cmd.addString(handName.c_str());
             rpcAREcmd.write(cmd, reply);
             
             if (reply.get(0).asVocab()==Vocab::encode("ack"))
@@ -1072,6 +1098,22 @@ bool ActivityInterface::askForTool(const std::string &handName, const int32_t po
 }
 
 /**********************************************************/
+bool ActivityInterface::pull(const string &objName, const string &toolName)
+{
+    //ask for tool
+    //do the pulling action
+    return true;
+}
+
+/**********************************************************/
+bool ActivityInterface::push(const string &objName, const string &toolName)
+{
+    //ask for tool
+    //do the pushing action
+    return true;
+}
+
+/**********************************************************/
 Bottle ActivityInterface::underOf(const std::string &objName)
 {
     Bottle replyList;
@@ -1141,7 +1183,7 @@ Bottle ActivityInterface::reachableWith(const string &objName)
         //double rightManip = getManip(objName, "right");
         //fprintf(stdout, "\nleftManip: %lf and rightManip: %lf\n", leftManip, rightManip);
         
-        //using 3D for testing
+        //using 3D instead of manip for testing
         if(position.get(1).asDouble() < - 0.1 )
             replyList.addString("left");
         else if (position.get(1).asDouble() >  0.1)
@@ -1281,7 +1323,6 @@ double ActivityInterface::getAxes(vector<cv::Point> &pts, cv::Mat &img)
     //atan2(eigen_vecs[0].y, eigen_vecs[0].x);
     
     return axe1;
-    
 }
 
 /**********************************************************/

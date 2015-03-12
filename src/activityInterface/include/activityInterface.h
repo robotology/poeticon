@@ -89,6 +89,8 @@ protected:
     
     yarp::os::RpcClient                 rpcPraxiconInterface;
     
+    yarp::os::Port                      praxiconToPradaPort;
+    
     yarp::os::Port                      robotStatus;
     
     std::string                         inputBlobPortName;
@@ -177,7 +179,7 @@ public:
     std::string         getLabel(const int32_t pos_x, const int32_t pos_y);
     std::string         inHand(const std::string &objName);
     bool                take(const std::string &objName, const std::string &handName);
-    bool                drop(const std::string &objName, const std::string &targetName);
+    bool                put(const std::string &objName, const std::string &targetName);
     yarp::os::Bottle    underOf(const std::string &objName);
     yarp::os::Bottle    getOffset(const std::string &objName);
     bool                askForTool(const std::string &handName, const int32_t pos_x, const int32_t pos_y);
@@ -185,6 +187,9 @@ public:
     yarp::os::Bottle    pullableWith(const std::string &objName);
     yarp::os::Bottle    getNames();
     yarp::os::Bottle    askPraxicon(const std::string &request);
+    bool                drop(const std::string &objName);
+    bool                push(const std::string &objName, const std::string &toolName);
+    bool                pull(const std::string &objName, const std::string &toolName);
     
     bool                quit();
 };

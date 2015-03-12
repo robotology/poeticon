@@ -70,12 +70,36 @@ service activityInterface_IDLServer
     bool take(1:string objName, 2:string handName)
     
     /**
-     * Perform the drop action on the particular object with the particular hand
+     * Perform the drops action on the particular object with the particular hand
+     * @param objName specifies the name of the object in question
+     * @return true/false on droping or not
+     **/
+    bool drop(1:string objName)
+    
+    /**
+     * Perform the put action on the particular object with the particular hand
      * @param objName specifies the name of the object in question
      * @param targetName specifies the name of target object to drop onto.
      * @return true/false on droping or not
      **/
-    bool drop(1:string objName, 2:string targetName)
+    bool put(1:string objName, 2:string targetName)
+    
+    /**
+     * Perform the push action on the particular object with the particular tool
+     * @param objName specifies the name of the object in question
+     * @param toolName specifies the name of target tool.
+     * @return true/false on droping or not
+     **/
+    bool push(1:string objName, 2:string toolName)
+    
+    /**
+     * Perform the pull action on the particular object with the particular tool
+     * @param objName specifies the name of the object in question
+     * @param toolName specifies the name of target tool.
+     * @return true/false on droping or not
+     **/
+    bool pull(1:string objName, 2:string toolName)
+
     
     /**
      * Perform the take action on the particular tool with the particular hand
@@ -125,5 +149,4 @@ service activityInterface_IDLServer
      * @return true/false on success/failure
      */
     bool quit();
-
 }
