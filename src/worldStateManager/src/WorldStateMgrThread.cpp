@@ -1104,9 +1104,9 @@ bool WorldStateMgrThread::doPopulateDB()
         }
     }
 
-    yInfo("updating world state map");
+    //yInfo("updating world state map");
     mergeMaps(opcMap, trackMap, wsMap);
-    dumpMap(wsMap);
+    //dumpMap(wsMap);
 
     return true;
 }
