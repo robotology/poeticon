@@ -88,6 +88,12 @@ while(~done)
             prior = query;
             %posterior = query.get(1);
             %% Test if yarp bottle is with a good structure/size
+            if(query.size()~=11)
+                answer.fromString('nack')
+                portOutput.write(answer);
+                disp('Warning: Wrong Input size')
+                continue;
+            end
             %%
             switch bn
                case 'pca4merge'
