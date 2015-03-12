@@ -77,7 +77,7 @@ public:
    * @param ypos specifies the 2D position of the object on the Y axis
    * @return true/false on taking or not
    */
-  virtual bool geto(const std::string& handName, const int32_t xpos, const int32_t ypos);
+  virtual bool askForTool(const std::string& handName, const int32_t xpos, const int32_t ypos);
   /**
    * Ask for the list of labels that are under ojbName
    * @param objName specifies the name of the object in question

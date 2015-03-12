@@ -84,7 +84,7 @@ service activityInterface_IDLServer
      * @param ypos specifies the 2D position of the object on the Y axis
      * @return true/false on taking or not
      **/
-    bool geto(1:string handName, 2:i32 xpos, 3:i32 ypos)
+    bool askForTool(1:string handName, 2:i32 xpos, 3:i32 ypos)
     
     /**
      * Ask for the list of labels that are under ojbName

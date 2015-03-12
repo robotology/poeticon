@@ -950,7 +950,7 @@ bool ActivityInterface::drop(const string &objName, const string &targetName)
 }
 
 /**********************************************************/
-bool ActivityInterface::geto(const std::string &handName, const int32_t pos_x, const int32_t pos_y)
+bool ActivityInterface::askForTool(const std::string &handName, const int32_t pos_x, const int32_t pos_y)
 {
 
     // Get the label of the object requested

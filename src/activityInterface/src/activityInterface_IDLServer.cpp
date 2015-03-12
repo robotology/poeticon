@@ -82,7 +82,7 @@ public:
   virtual bool read(yarp::os::ConnectionReader& connection);
 };
 
-class activityInterface_IDLServer_geto : public yarp::os::Portable {
+class activityInterface_IDLServer_askForTool : public yarp::os::Portable {
 public:
   std::string handName;
   int32_t xpos;
@@ -335,17 +335,17 @@ void activityInterface_IDLServer_drop::init(const std::string& objName, const st
   this->targetName = targetName;
 }
 
-bool activityInterface_IDLServer_geto::write(yarp::os::ConnectionWriter& connection) {
+bool activityInterface_IDLServer_askForTool::write(yarp::os::ConnectionWriter& connection) {
   yarp::os::idl::WireWriter writer(connection);
   if (!writer.writeListHeader(4)) return false;
-  if (!writer.writeTag("geto",1,1)) return false;
+  if (!writer.writeTag("askForTool",1,1)) return false;
   if (!writer.writeString(handName)) return false;
   if (!writer.writeI32(xpos)) return false;
   if (!writer.writeI32(ypos)) return false;
   return true;
 }
 
-bool activityInterface_IDLServer_geto::read(yarp::os::ConnectionReader& connection) {
+bool activityInterface_IDLServer_askForTool::read(yarp::os::ConnectionReader& connection) {
   yarp::os::idl::WireReader reader(connection);
   if (!reader.readListReturn()) return false;
   if (!reader.readBool(_return)) {
@@ -355,7 +355,7 @@ bool activityInterface_IDLServer_geto::read(yarp::os::ConnectionReader& connecti
   return true;
 }
 
-void activityInterface_IDLServer_geto::init(const std::string& handName, const int32_t xpos, const int32_t ypos) {
+void activityInterface_IDLServer_askForTool::init(const std::string& handName, const int32_t xpos, const int32_t ypos) {
   _return = false;
   this->handName = handName;
   this->xpos = xpos;
@@ -574,12 +574,12 @@ bool activityInterface_IDLServer::drop(const std::string& objName, const std::st
   bool ok = yarp().write(helper,helper);
   return ok?helper._return:_return;
 }
-bool activityInterface_IDLServer::geto(const std::string& handName, const int32_t xpos, const int32_t ypos) {
+bool activityInterface_IDLServer::askForTool(const std::string& handName, const int32_t xpos, const int32_t ypos) {
   bool _return = false;
-  activityInterface_IDLServer_geto helper;
+  activityInterface_IDLServer_askForTool helper;
   helper.init(handName,xpos,ypos);
   if (!yarp().canWrite()) {
-    fprintf(stderr,"Missing server method '%s'?\n","bool activityInterface_IDLServer::geto(const std::string& handName, const int32_t xpos, const int32_t ypos)");
+    fprintf(stderr,"Missing server method '%s'?\n","bool activityInterface_IDLServer::askForTool(const std::string& handName, const int32_t xpos, const int32_t ypos)");
   }
   bool ok = yarp().write(helper,helper);
   return ok?helper._return:_return;
@@ -802,7 +802,7 @@ bool activityInterface_IDLServer::read(yarp::os::ConnectionReader& connection) {
       reader.accept();
       return true;
     }
-    if (tag == "geto") {
+    if (tag == "askForTool") {
       std::string handName;
       int32_t xpos;
       int32_t ypos;
@@ -819,7 +819,7 @@ bool activityInterface_IDLServer::read(yarp::os::ConnectionReader& connection) {
         return false;
       }
       bool _return;
-      _return = geto(handName,xpos,ypos);
+      _return = askForTool(handName,xpos,ypos);
       yarp::os::idl::WireWriter writer(reader);
       if (!writer.isNull()) {
         if (!writer.writeListHeader(1)) return false;
@@ -956,7 +956,7 @@ std::vector<std::string> activityInterface_IDLServer::help(const std::string& fu
     helpString.push_back("getOffset");
     helpString.push_back("take");
     helpString.push_back("drop");
-    helpString.push_back("geto");
+    helpString.push_back("askForTool");
     helpString.push_back("underOf");
     helpString.push_back("reachableWith");
     helpString.push_back("pullableWith");
@@ -1018,8 +1018,8 @@ std::vector<std::string> activityInterface_IDLServer::help(const std::string& fu
       helpString.push_back("@param targetName specifies the name of target object to drop onto. ");
       helpString.push_back("@return true/false on droping or not ");
     }
-    if (functionName=="geto") {
-      helpString.push_back("bool geto(const std::string& handName, const int32_t xpos, const int32_t ypos) ");
+    if (functionName=="askForTool") {
+      helpString.push_back("bool askForTool(const std::string& handName, const int32_t xpos, const int32_t ypos) ");
       helpString.push_back("Perform the take action on the particular tool with the particular hand ");
       helpString.push_back("@param handName specifies the name of the hand to use ");
       helpString.push_back("@param xpos specifies the 2D position of the object on the X axis ");
