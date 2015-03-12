@@ -68,7 +68,7 @@ class ActionQueryCommunication:
         self._rpc_client.write(message, ans)
         return ans
     def _is_success(self, ans):
-        return ans.size() == 1 ## and ans.get(0).asVocab() == 27503
+            return ans.size() == 1 ## and ans.get(0).asVocab() == 27503
 
 def Affordance_comm():
 
@@ -227,8 +227,9 @@ def Affordance_comm():
                         print "grasp detected"
                         if mode != 0:
                             print "checking for motor executer"
-                            probability = ActionQuery._execute(PathName, rule)
-                            if ActionQuery._is_success(probability):
+                            ans = ActionQuery._execute(PathName, rule)
+                            if ActionQuery._is_success(ans):
+                                probability = ans.get(0).asDouble()
                                 new_outcome = outcome.split(' ')
                                 new_outcome[2] = str(probability)
                                 new_outcome = ' '.join(new_outcome)
@@ -241,6 +242,15 @@ def Affordance_comm():
                                 Affor_bottle_out.addString(new_outcome2)
                                 Affor_bottle_out.addString(outcome3)
                                 geo_yarp.write()
+                            else:
+                                print "failed query, going for default"
+                                Affor_bottle_out = geo_yarp.prepare()
+                                Affor_bottle_out.clear()
+                                Affor_bottle_out.addString(outcome)
+                                Affor_bottle_out.addString(outcome2)
+                                Affor_bottle_out.addString(outcome3)
+                                geo_yarp.write()
+
                         if mode == 0:
                             print "going for default probability"
                             Affor_bottle_out = geo_yarp.prepare()
