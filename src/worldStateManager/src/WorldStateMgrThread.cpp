@@ -539,8 +539,8 @@ void WorldStateMgrThread::fsmPerception()
                 // read new data and ensure validity
                 refreshPerceptionAndValidate();
 
-                yInfo("current world state map");
-                dumpMap(wsMap);
+                //yInfo("current world state map");
+                //dumpMap(wsMap);
                 yInfo("updating world state map");
                 mergeMaps(opcMap, trackMap, wsMap);
                 dumpMap(wsMap);
@@ -790,8 +790,9 @@ bool WorldStateMgrThread::refreshPerceptionAndValidate()
 
     if (sizeAff != sizeTargets)
     {
-        yWarning("sizeAff=%d differs from sizeTargets=%d", sizeAff, sizeTargets);
-        return false;
+        // this happens, but is compensated by getAffBottleIndexFromTrackROI
+        //yWarning("sizeAff=%d differs from sizeTargets=%d", sizeAff, sizeTargets);
+        ;
     }
 
     //yDebug("successfully refreshed and validated perception");
@@ -1240,8 +1241,8 @@ int WorldStateMgrThread::label2id(const string &label)
         }
     }
 
-    if (key == -1)
-        yWarning() << __func__ << "did not find id corresponding to label" << label.c_str();
+    //if (key == -1)
+    //    yWarning() << __func__ << "did not find id corresponding to label" << label.c_str();
 
     return key;
 }
