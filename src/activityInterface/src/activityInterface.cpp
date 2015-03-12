@@ -212,6 +212,7 @@ bool ActivityInterface::configure(yarp::os::ResourceFinder &rf)
 /**********************************************************/
 bool ActivityInterface::interruptModule()
 {
+    semaphore.wait();
     rpcMemory.interrupt();
     rpcARE.interrupt();
     rpcAREcmd.interrupt();
@@ -221,12 +222,14 @@ bool ActivityInterface::interruptModule()
     rpcIolState.interrupt();
     blobPortIn.interrupt();
     rpcPraxiconInterface.interrupt();
+    semaphore.post();
     return true;
 }
 
 /**********************************************************/
 bool ActivityInterface::close()
 {
+    semaphore.wait();
     fprintf(stdout, "starting the shutdown procedure\n");
     rpcPort.close();
     client_left.close();
@@ -239,6 +242,8 @@ bool ActivityInterface::close()
     rpcIolState.close();
     blobPortIn.close();
     rpcPraxiconInterface.close();
+    fprintf(stdout, "finished shutdown procedure\n");
+    semaphore.post();
     return true;
 }
 
@@ -459,8 +464,12 @@ bool ActivityInterface::handleTrackers()
 /**********************************************************/
 bool ActivityInterface::updateModule()
 {
+    semaphore.wait();
+    
     propagateStatus();
     handleTrackers();
+    
+    semaphore.post();
     return !closing;
 }
 
@@ -967,6 +976,7 @@ Bottle ActivityInterface::reachableWith(const string &objName)
     replyList.clear();
     
     position = get3D(objName);
+
     if (position.get(0).asDouble() < -0.47)
     {
         Bottle list = pullableWith(objName);
@@ -981,6 +991,21 @@ Bottle ActivityInterface::reachableWith(const string &objName)
             if (strcmp (objName.c_str(), list.get(i).asString().c_str() ) != 0)
                 replyList.addString(list.get(i).asString());
         }
+        
+        //double leftManip = getManip(objName, "left");
+        //double rightManip = getManip(objName, "right");
+        //fprintf(stdout, "\nleftManip: %lf and rightManip: %lf\n", leftManip, rightManip);
+        
+        //using 3D for testing
+        if(position.get(1).asDouble() < - 0.1 )
+            replyList.addString("left");
+        else if (position.get(1).asDouble() >  0.1)
+            replyList.addString("right");
+        else
+        {
+            replyList.addString("left");
+            replyList.addString("right");
+        }
     }
     
     return replyList;
@@ -988,7 +1013,17 @@ Bottle ActivityInterface::reachableWith(const string &objName)
 /**********************************************************/
 Bottle ActivityInterface::pullableWith(const string &objName)
 {
-    return getToolLikeNames();
+    Bottle list = getToolLikeNames();
+    Bottle replyList;
+    replyList.clear();
+    for (int i = 0; i<list.size(); i++)
+    {
+        if (strcmp (objName.c_str(), list.get(i).asString().c_str() ) != 0)
+        {
+            replyList.addString(list.get(i).asString());
+        }
+    }
+    return replyList;
 }
 
 /**********************************************************/
@@ -1081,29 +1116,26 @@ double ActivityInterface::getAxes(vector<cv::Point> &pts, cv::Mat &img)
     cv::PCA pca_analysis(data_pts, cv::Mat(), CV_PCA_DATA_AS_ROW);
     
     //Store the position of the object
-    cv::Point pos = cv::Point(pca_analysis.mean.at<double>(0, 0),
-                      pca_analysis.mean.at<double>(0, 1));
+    cv::Point pos = cv::Point(pca_analysis.mean.at<double>(0, 0), pca_analysis.mean.at<double>(0, 1));
     
     //Store the eigenvalues and eigenvectors
     vector<cv::Point2d> eigen_vecs(2);
     vector<double> eigen_val(2);
     for (int i = 0; i < 2; ++i)
     {
-        eigen_vecs[i] = cv::Point2d(pca_analysis.eigenvectors.at<double>(i, 0),
-                                pca_analysis.eigenvectors.at<double>(i, 1));
-        
+        eigen_vecs[i] = cv::Point2d(pca_analysis.eigenvectors.at<double>(i, 0), pca_analysis.eigenvectors.at<double>(i, 1));
         eigen_val[i] = pca_analysis.eigenvalues.at<double>(0, i);
     }
     
     cv::Point ptaxe1 = pos;
     cv::Point ptaxe2 = pos + 0.02 * cv::Point(eigen_vecs[0].x * eigen_val[0], eigen_vecs[0].y * eigen_val[0]);
     
-    double res1 = cv::norm(ptaxe1-ptaxe2);
+    double axe1 = cv::norm(ptaxe1-ptaxe2);
     
     //orientation just in case
     //atan2(eigen_vecs[0].y, eigen_vecs[0].x);
     
-    return res1;
+    return axe1;
     
 }
 

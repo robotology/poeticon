@@ -131,6 +131,8 @@ protected:
     int                                 elements;
     std::vector<int>                    pausedThreads;
     
+    yarp::os::Semaphore                 semaphore;
+    
 public:
     
     ActivityInterface();
