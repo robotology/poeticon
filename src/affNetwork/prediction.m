@@ -7,11 +7,11 @@
 
 %% Effect prediction, queries server
 % Input:
-%    Bottle1x13 vector with prior
-%    6 desc for the tool
-%    6 desc for the object
+%    Bottle1x11 vector with prior - Just doubles
+%    5 desc for the tool
+%    5 desc for the object
 %    1 action
-
+%
 % Output:
 %   5x5 matrix of probabilities distribution
 %   p(EffectX, EffectY | nodeName1=nodeValue1, ... , nodeName12=nodeValue12)
@@ -22,7 +22,7 @@ clear;
 % initPmtk3;
 
 %% Choice of network:
-bn = 'pca4sep';
+bn = 'pca6merge';
 
 switch bn
     case 'pca4merge'
@@ -100,7 +100,7 @@ while(~done)
                     action = prior.get(10).asDouble;
                     score =  discretize(features*pinv(pc(:,1:components)'), ranges); % convert 
                                     % to pca - pc 10x10 matrix, discretize values
-                    prior_values = [score action] % and add the action to prior
+                    prior_values = [score action]; % and add the action to prior
                     posterior_nodes = [6 7]; % X and Y effect 
                case 'pca6merge'
                    prior_nodes  = [1 2 3 4 5 6 7]; % pca1 pca2 pca3 pca4 action
@@ -112,10 +112,10 @@ while(~done)
                     action = prior.get(10).asDouble;
                     score =  discretize(features*pinv(pc(:,1:components)'), ranges); % convert 
                                     % to pca - pc 10x10 matrix, discretize values
-                    prior_values = [score action] % and add the action to prior
+                    prior_values = [score action]; % and add the action to prior
                     posterior_nodes = [8 9]; % X and Y effect   
                 case 'pca4sep'
-                    prior_nodes  = [1 2 3 4 5]; % pca1 pca2 pca3 pca4 action
+                    prior_nodes  = [1 2 3 4 5]; % pca1_T pca2_T pca3_O pca4_O action
                     %prior_values = zeros(1, size(prior_nodes,2));
                     for n = 1:10 % features of the tool and object
                         features(n) = prior.get(n-1).asDouble;
@@ -130,12 +130,7 @@ while(~done)
                     posterior_nodes = [6 7]; % X and Y effect 
                     
                 otherwise
-                    prior_nodes  = 1:13;
-                    prior_values = zeros(1,size(prior_nodes,2));
-                    for n = 1:size(prior_nodes, 2)
-                        prior_values(n) = discretizeAfonso(prior.get(0).asList().get(n-1).asDouble(),n);
-                    end
-                    posterior_nodes = [14 15];
+                    error([bn ' is not a known Network']);
             end
 
             
@@ -157,55 +152,7 @@ while(~done)
             answer_string=[answer_string ')'];
             %answer_string(end) = '';
             answer.fromString(answer_string);
-            portOutput.write(answer);
-%             B=reshape(prob.T,25,1);
-%             IX=1:25;
-%             
-%             numberprob = 25;
-% 
-%             prob_value = zeros( numberprob, 1 );
-%             if size(prob.T,2) == 1
-%                 prob_arg = zeros( numberprob, 1 );
-%             else
-%                 prob_arg = zeros( numberprob, size(size(prob.T), 2) );
-%             end
-%             prob_arg(:,1) = IX(1:numberprob);
-%             
-%             % Get the top probabilities (numberOfProb is the number of top
-%             % answers):
-%             for topprob_number = 1:numberprob
-%                 prob_value(topprob_number) = B(topprob_number);
-%                 % Convert the linear index into multidimensional indexes
-%                 % (the indexes are the arguments that maximize the
-%                 % probability queried):
-%                 if size(prob.T,2) > 1
-%                     for parameter = 1:size(size(prob.T),2)-1
-%                         [ prob_arg(topprob_number, parameter), ...
-%                             prob_arg(topprob_number, parameter+1) ] = ...
-%                             ind2sub(size(prob.T), ...
-%                             prob_arg(topprob_number, parameter));
-%                     end
-%                 end
-%             end
-%             
-%             % Reply the top answers and correspondent probabilities to the
-%             % query:
-%             answer.clear;
-%             answer_string = '';
-%             
-%             for ans_n = 1:numberprob
-%                 answer_string=[answer_string '('];
-%                 answer_string=[answer_string num2str(prob_value(ans_n))];
-%                 for parameter = 1:size(prob_arg,2)
-%                     answer_string=[answer_string ' ' num2str(prob_arg(ans_n, parameter))];
-%                 end
-%                 answer_string=[answer_string ') '];
-%             end
-%             
-%             answer_string(end) = '';
-%             answer.fromString(answer_string);
-           
-            
+            portOutput.write(answer);        
 
             disp('Done');            
         end
