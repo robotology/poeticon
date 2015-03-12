@@ -1484,7 +1484,7 @@ vector<string> WorldStateMgrThread::isReachableWith(const string &objName)
     Bottle activityCmd, activityReply;
     activityCmd.addString("reachableWith");
     activityCmd.addString(objName.c_str());
-    yDebug() << __func__ << "sending query:" << activityCmd.toString().c_str();
+    //yDebug() << __func__ << "sending query:" << activityCmd.toString().c_str();
     activityPort.write(activityCmd, activityReply);
 
     bool validResponse = false;
@@ -1493,7 +1493,7 @@ vector<string> WorldStateMgrThread::isReachableWith(const string &objName)
 
     if (validResponse)
     {
-        yDebug() << __func__ << "obtained valid response:" << activityReply.toString().c_str();
+        //yDebug() << __func__ << "obtained valid response:" << activityReply.toString().c_str();
         Bottle *bLabels = activityReply.get(0).asList();
         vector<string> lab; // TODO: pre-allocate size
         for (int o=0; o<bLabels->size(); o++)
@@ -1520,7 +1520,7 @@ vector<string> WorldStateMgrThread::isPullableWith(const string &objName)
     Bottle activityCmd, activityReply;
     activityCmd.addString("pullableWith");
     activityCmd.addString(objName.c_str());
-    yDebug() << __func__ <<  "sending query:" << activityCmd.toString().c_str();
+    //yDebug() << __func__ <<  "sending query:" << activityCmd.toString().c_str();
     activityPort.write(activityCmd, activityReply);
 
     bool validResponse = false;
@@ -1529,7 +1529,7 @@ vector<string> WorldStateMgrThread::isPullableWith(const string &objName)
 
     if (validResponse)
     {
-        yDebug() << __func__ << "obtained valid response:" << activityReply.toString().c_str();
+        //yDebug() << __func__ << "obtained valid response:" << activityReply.toString().c_str();
         Bottle *bLabels = activityReply.get(0).asList();
         vector<string> lab; // TODO: pre-allocate size
         for (int o=0; o<bLabels->size(); o++)
