@@ -813,45 +813,6 @@ bool WorldStateMgrThread::doPopulateDB()
         iter != wsMap.end();
         ++iter)
     {
-        int wsID = iter->first;
-        yDebug("going to update world state id %d", wsID);
-
-        bool bIsHandValue = false; // by default it is an object
-        int tbi = 0; // tracker Bottle index
-        if (! getTrackerBottleIndexFromID(wsID, tbi) )
-        {
-            if (opcMap.count(wsID) && !trackMap.count(wsID))
-            {
-                // present in WSOPC but not in tracker -> robot hand
-                bIsHandValue = true;
-            }
-            else
-            {
-                yDebug() << __func__ << "did not find track id" << wsID
-                         << "in tracker Bottle -> continuing to next id";
-                continue; // next for cycle iteration
-            }
-        }
-        else
-        {
-            // present in WSOPC and in tracker -> currently tracker object
-            yDebug("corresponds to tracker Bottle index %d", tbi);
-        }
-
-
-        int abi = tbi+1; // affordance blobs Bottle index, not always tbi+1
-        if (!bIsHandValue)
-        {
-            double u=0.0, v=0.0;
-            u = inTargets->get(tbi).asList()->get(1).asDouble();
-            v = inTargets->get(tbi).asList()->get(2).asDouble();
-
-            if ( getAffBottleIndexFromTrackROI(u, v, abi) )
-                yDebug("corresponds to affordance blobs Bottle index %d", abi);
-            else
-                yWarning("problem with getAffBottleIndexFromTrackROI");
-        }
-
         // common properties
         Bottle bName;
         Bottle bIsHand;
@@ -868,6 +829,48 @@ bool WorldStateMgrThread::doPopulateDB()
 
         // hand properties
         Bottle bIsFree;
+
+        int wsID = iter->first;
+        yDebug("going to update world state id %d", wsID);
+
+        bool bIsHandValue = false; // by default it is an object
+        bool currentlySeen = true; // by default it is tracked/blobbed thus we will compute all symbols
+        int tbi = 0; // tracker Bottle index
+        int abi = tbi+1; // affordance blobs Bottle index
+        if ( getTrackerBottleIndexFromID(wsID, tbi) )
+        {
+            // present in WSOPC and in tracker -> currently tracker object
+            yDebug("corresponds to tracker Bottle index %d", tbi);
+        }
+        else
+        {
+            if (opcMap.count(wsID) && !trackMap.count(wsID))
+            {
+                // present in WSOPC but not in tracker -> robot hand
+                bIsHandValue = true;
+            }
+            else
+            {
+                yDebug() << __func__ << "did not find track id" << wsID
+                         << "in tracker Bottle -> going to update the ActivityIF symbols only, then skip to next id";
+                currentlySeen = false;
+            }
+        }
+
+        if (currentlySeen)
+        {
+            if (!bIsHandValue)
+            {
+                double u=0.0, v=0.0;
+                u = inTargets->get(tbi).asList()->get(1).asDouble();
+                v = inTargets->get(tbi).asList()->get(2).asDouble();
+
+                if ( getAffBottleIndexFromTrackROI(u, v, abi) )
+                    yDebug("corresponds to affordance blobs Bottle index %d", abi);
+                else
+                    yWarning("problem with getAffBottleIndexFromTrackROI");
+            }
+        }
 
         // prepare name property
         bName.addString("name");
@@ -907,8 +910,11 @@ bool WorldStateMgrThread::doPopulateDB()
             // object properties
 
             double u=0.0, v=0.0;
-            u = inTargets->get(tbi).asList()->get(1).asDouble();
-            v = inTargets->get(tbi).asList()->get(2).asDouble();
+            if (currentlySeen)
+            {
+                u = inTargets->get(tbi).asList()->get(1).asDouble();
+                v = inTargets->get(tbi).asList()->get(2).asDouble();
+            }
 
             // prepare position property
             bPos.addString("pos");
@@ -932,33 +938,36 @@ bool WorldStateMgrThread::doPopulateDB()
                 }
             }
 
-            // prepare 2D shape descriptors property
-            bDesc.addString("desc2d");
-            Bottle &bDescValue = bDesc.addList();
-            int areaIdx = 23;
-
-            if ((inAff != NULL) && (abi >= 1) && (abi <= sizeAff))
+            if (currentlySeen)
             {
-                bDescValue.addDouble(inAff->get(abi).asList()->get(areaIdx).asDouble()); // area
-                bDescValue.addDouble(inAff->get(abi).asList()->get(areaIdx+1).asDouble()); // conv
-                bDescValue.addDouble(inAff->get(abi).asList()->get(areaIdx+2).asDouble()); // ecc
-                bDescValue.addDouble(inAff->get(abi).asList()->get(areaIdx+3).asDouble()); // comp
-                bDescValue.addDouble(inAff->get(abi).asList()->get(areaIdx+4).asDouble()); // circ
-                bDescValue.addDouble(inAff->get(abi).asList()->get(areaIdx+5).asDouble()); // sq
-            }
-            else
-                yWarning("problem reading descriptors of whole object");
+                // prepare 2D shape descriptors property
+                bDesc.addString("desc2d");
+                Bottle &bDescValue = bDesc.addList();
+                int areaIdx = 23;
 
-            // prepare 2D tool-object parts (top and bottom) property
-            bToolDesc.addString("tooldesc2d");
-            if ((inToolAff != NULL) && (abi >= 1) && (abi <= sizeAff))
-            {
-                // add list with 2 lists containing top half and bottom half
-                // descriptors, each having: x y ar con ecc com cir sq el
-                bToolDesc.add( inToolAff->get(abi) );
+                if ((inAff != NULL) && (abi >= 1) && (abi <= sizeAff))
+                {
+                    bDescValue.addDouble(inAff->get(abi).asList()->get(areaIdx).asDouble()); // area
+                    bDescValue.addDouble(inAff->get(abi).asList()->get(areaIdx+1).asDouble()); // conv
+                    bDescValue.addDouble(inAff->get(abi).asList()->get(areaIdx+2).asDouble()); // ecc
+                    bDescValue.addDouble(inAff->get(abi).asList()->get(areaIdx+3).asDouble()); // comp
+                    bDescValue.addDouble(inAff->get(abi).asList()->get(areaIdx+4).asDouble()); // circ
+                    bDescValue.addDouble(inAff->get(abi).asList()->get(areaIdx+5).asDouble()); // sq
+                }
+                else
+                    yWarning("problem reading descriptors of whole object");
+
+                // prepare 2D tool-object parts (top and bottom) property
+                bToolDesc.addString("tooldesc2d");
+                if ((inToolAff != NULL) && (abi >= 1) && (abi <= sizeAff))
+                {
+                    // add list with 2 lists containing top half and bottom half
+                    // descriptors, each having: x y ar con ecc com cir sq el
+                    bToolDesc.add( inToolAff->get(abi) );
+                }
+                else
+                    yWarning("problem reading descriptors of object parts");
             }
-            else
-                yWarning("problem reading descriptors of object parts");
 
             // prepare in_hand property (none/left/right)
             bInHand.addString("in_hand");
@@ -1048,8 +1057,11 @@ bool WorldStateMgrThread::doPopulateDB()
             {
                 opcCmdContent.addList() = bPos;
                 opcCmdContent.addList() = bOffset;
-                opcCmdContent.addList() = bDesc;
-                opcCmdContent.addList() = bToolDesc;
+                if (currentlySeen)
+                {
+                    opcCmdContent.addList() = bDesc;
+                    opcCmdContent.addList() = bToolDesc;
+                }
                 opcCmdContent.addList() = bInHand;
                 opcCmdContent.addList() = bOnTopOf;
                 opcCmdContent.addList() = bReachW;
@@ -1078,8 +1090,11 @@ bool WorldStateMgrThread::doPopulateDB()
             {
                 opcCmdContent.addList() = bPos;
                 opcCmdContent.addList() = bOffset;
-                opcCmdContent.addList() = bDesc;
-                opcCmdContent.addList() = bToolDesc;
+                if (currentlySeen)
+                {
+                    opcCmdContent.addList() = bDesc;
+                    opcCmdContent.addList() = bToolDesc;
+                }
                 opcCmdContent.addList() = bInHand;
                 opcCmdContent.addList() = bOnTopOf;
                 opcCmdContent.addList() = bReachW;
@@ -1579,7 +1594,7 @@ bool WorldStateMgrThread::isHandFree(const string &handName)
     }
     else
     {
-        yWarning() << __func__ << "obtained invalid response:" << activityReply.toString().c_str() << "assuming [nack] -> hand free";
+        yWarning() << __func__ << "obtained invalid response:" << activityReply.toString().c_str() << "-> assuming [nack] i.e. hand free";
         return true; // hand free
     }
 }
