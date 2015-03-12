@@ -893,7 +893,7 @@ bool ActivityInterface::take(const string &objName, const string &handName)
     //check for hand status beforehand to make sure that it is empty
     
     string handStatus = inHand(handName);
-    if (strcmp (handStatus.c_str(), "none" ) != 0 )
+    if (strcmp (handStatus.c_str(), "none" ) == 0 )
     {
         //talk to iolStateMachineHandler
         Bottle position = get3D(objName);
@@ -911,18 +911,25 @@ bool ActivityInterface::take(const string &objName, const string &handName)
             cmd.addString(handName);
             rpcAREcmd.write(cmd, reply);
             
-            for (std::map<int, string>::iterator it=onTopElements.begin(); it!=onTopElements.end(); ++it)
+            if (reply.get(0).asVocab()==Vocab::encode("ack"))
             {
-                if (strcmp (it->second.c_str(), objName.c_str() ) == 0)
+                for (std::map<int, string>::iterator it=onTopElements.begin(); it!=onTopElements.end(); ++it)
                 {
-                    int id = it->first;
-                    onTopElements.erase(id);
-                    elements--;
+                    if (strcmp (it->second.c_str(), objName.c_str() ) == 0)
+                    {
+                        int id = it->first;
+                        onTopElements.erase(id);
+                        elements--;
+                    }
                 }
+                
+                //update inHandStatus map
+                inHandStatus.insert(pair<string, string>(objName.c_str(), handName.c_str()));
             }
-        
-            //update inHandStatus map
-            inHandStatus.insert(pair<string, string>(objName.c_str(), handName.c_str()));
+            else
+            {
+                executeSpeech("I have failed to take the" + objName);
+            }
         }
         else
         {
