@@ -76,9 +76,12 @@ class ActionExecutorCommunication:
             if str(hand) == Object_list[k][0]:
                 hand = Object_list[k][1].replace('hand','')
         if act == 'grasp' and (obj == 'rake' or obj == 'stick'):
-            act = 'geto'
+            act = 'askForTool'
             obj = hand
             hand = ' '.join([positx]+[posity])
+        elif act == 'grasp' and (obj != 'rake' and obj != 'stick'):
+            act = 'take'
+            
             
         print act, obj, hand
         message = yarp.Bottle()
