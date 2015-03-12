@@ -129,12 +129,17 @@ def Affordance_comm():
             print "waiting for reply..."
             if desc_bottle_in:
                 data = desc_bottle_in.toString()
-                if data != 'ACK':
+                if data != 'ACK' and data != 'NACK' and data != '()' and data != '':
                     data = desc_bottle_in.get(0).asList()
                     data = data.toString().split(' ')
                     for t in range(len(data)):
                         data[t] = float(data[t])
                     break
+                desc_bottle_out = desc_yarp.prepare()
+                desc_bottle_out.clear()
+                desc_bottle_out.addString("querydesc2d")
+                desc_bottle_out.addInt(int(Obj_ID[i]))
+                desc_yarp.write()
         descriptors = descriptors + [[Obj_ID[i], data]]
     tooldesc = []
     tools = []
@@ -154,8 +159,9 @@ def Affordance_comm():
             print "waiting for reply..."
             if desc_bottle_in:
                 data = desc_bottle_in.toString()
-                if data != 'ACK':
+                if data != 'ACK' and data != 'NACK' and data != '()' and data != '':
                     data = desc_bottle_in.toString()
+                    print data
                     data = data.replace('((','').replace('))','').split(') (')
                     data[0] = data[0].split(' ')
                     data[1] = data[1].split(' ')
@@ -165,6 +171,11 @@ def Affordance_comm():
                     data[0] = data[0][2:-1]
                     data[1] = data[1][2:-1]
                     break
+                desc_bottle_out = desc_yarp.prepare()
+                desc_bottle_out.clear()
+                desc_bottle_out.addString("querytooldesc2d")
+                desc_bottle_out.addInt(int(tools[i]))
+                desc_yarp.write()
         tooldesc = tooldesc + [[tools[i], data]]
     translation_file = open(''.join(PathName +"/Action_Affordance_Translation.dat"))
     aux_translation = translation_file.read().split('\n')
@@ -230,6 +241,8 @@ def Affordance_comm():
                             ans = ActionQuery._execute(PathName, rule)
                             if ActionQuery._is_success(ans):
                                 probability = ans.get(0).asDouble()
+                                if float(probability) == 1.0:
+                                    probability = 0.95
                                 new_outcome = outcome.split(' ')
                                 new_outcome[2] = str(probability)
                                 new_outcome = ' '.join(new_outcome)
