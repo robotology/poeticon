@@ -99,7 +99,7 @@ def Affordance_comm():
 ## waits for instruction from the planner to update
     while 1:
         planner_bottle_in = planner_yarp.read(False)
-        yarp.Time.delay(0.2)
+        yarp.Time.delay(0.1)
         if planner_bottle_in:
             command = planner_bottle_in.toString()
             if command == 'update':
@@ -125,7 +125,7 @@ def Affordance_comm():
 
         while 1:
             desc_bottle_in = desc_yarp.read(False)
-            yarp.Time.delay(0.2)
+            yarp.Time.delay(0.1)
             print "waiting for reply..."
             if desc_bottle_in:
                 data = desc_bottle_in.toString()
@@ -150,7 +150,7 @@ def Affordance_comm():
 
         while 1:
             desc_bottle_in = desc_yarp.read(False)
-            yarp.Time.delay(0.2)
+            yarp.Time.delay(0.1)
             print "waiting for reply..."
             if desc_bottle_in:
                 data = desc_bottle_in.toString()
@@ -175,7 +175,7 @@ def Affordance_comm():
         command = ''
         while 1:
             Affor_bottle_in = geo_yarp.read(False)
-            yarp.Time.delay(0.2)
+            yarp.Time.delay(0.1)
             if Affor_bottle_in:
                 command = Affor_bottle_in.toString()
                 print "updating rule..."
@@ -203,7 +203,7 @@ def Affordance_comm():
         elif command == 'update':
             while 1:
                 Affor_bottle_in = geo_yarp.read(False)
-                yarp.Time.delay(0.2)
+                yarp.Time.delay(0.1)
                 if Affor_bottle_in:
                     data = Affor_bottle_in.toString()
                     break
@@ -275,16 +275,18 @@ def Affordance_comm():
                                         tool_desc2 = tooldesc[o][1][1]
                                         toolhandle[o] = [tool] + [tooldesc[o]]
                                         toolnum = o
-                                message = tool_desc1 + obj_desc + [3]
+                                message = tool_desc1[1:] + obj_desc[1:] + [2]
+                                print '******', message
                                 mess_list = []
                                 for t in range(len(message)):
                                     mess_num = float(message[t])
                                     mess_list = mess_list + [mess_num]
                                     affnet_bottle_out.addDouble(mess_num)
+                                print '*****',affnet_bottle_out.toString()
                                 affnet_yarp.write()
                                 while 1:
                                     affnet_bottle_in = affnet_yarp.read(False)
-                                    yarp.Time.delay(0.2)
+                                    yarp.Time.delay(0.1)
                                     if affnet_bottle_in:
                                         data = affnet_bottle_in.toString().replace('((','').replace('))','').split(') (')
                                         for j in range(len(data)):
@@ -298,17 +300,20 @@ def Affordance_comm():
                                     if g > 3:
                                         for j in range(len(data[g])):
                                             prob_succ1 = prob_succ1 + data[g][j]
+                                if prob_succ1 == 1.0:
+                                    prob_succ1 = 0.95
 
-                                message = tool_desc2 + obj_desc + [3]
+                                message = tool_desc2[1:] + obj_desc[1:] + [2]
                                 affnet_bottle_out = affnet_yarp.prepare()
                                 affnet_bottle_out.clear()
                                 for t in range(len(message)):
                                     mess_num = float(message[t])
+                                    mess_list = mess_list + [mess_num]
                                     affnet_bottle_out.addDouble(mess_num)
                                 affnet_yarp.write()
                                 while 1:
                                     affnet_bottle_in = affnet_yarp.read(False)
-                                    yarp.Time.delay(0.2)
+                                    yarp.Time.delay(0.1)
                                     if affnet_bottle_in:
                                         data = affnet_bottle_in.toString().replace('((','').replace('))','').split(') (')
                                         for j in range(len(data)):
@@ -322,6 +327,8 @@ def Affordance_comm():
                                     if g > 3:
                                         for j in range(len(data[g])):
                                             prob_succ2 = prob_succ2 + data[g][j]
+                                if prob_succ2 == 1.0:
+                                    prob_succ2 = 0.95
 
                                 if prob_succ1 >= prob_succ2:
                                     prob_succ = prob_succ1
@@ -374,14 +381,15 @@ def Affordance_comm():
                                         tool_desc2 = tooldesc[o][1][1]
                                         toolhandle[o] = [tool] + [tooldesc[o]]
                                         toolnum = o
-                                message = tool_desc1 + obj_desc + [4]
+                                message = tool_desc1[1:] + obj_desc[1:] + [1]
                                 for t in range(len(message)):
                                     mess_num = float(message[t])
+                                    mess_list = mess_list + [mess_num]
                                     affnet_bottle_out.addDouble(mess_num)
                                 affnet_yarp.write()
                                 while 1:
                                     affnet_bottle_in = affnet_yarp.read(False)
-                                    yarp.Time.delay(0.2)
+                                    yarp.Time.delay(0.1)
                                     if affnet_bottle_in:
                                         data = affnet_bottle_in.toString().replace('((','').replace('))','').split(') (')
                                         for j in range(len(data)):
@@ -395,18 +403,21 @@ def Affordance_comm():
                                     if g < 3:
                                         for j in range(len(data[g])):
                                             prob_succ1 = prob_succ1 + data[g][j]
+                                if prob_succ1 == 1.0:
+                                    prob_succ1 = 0.95
 
                                 
-                                message = tool_desc2 + obj_desc + [4]
+                                message = tool_desc2[1:] + obj_desc[1:] + [1]
                                 affnet_bottle_out = affnet_yarp.prepare()
                                 affnet_bottle_out.clear()
                                 for t in range(len(message)):
                                     mess_num = float(message[t])
+                                    mess_list = mess_list + [mess_num]
                                     affnet_bottle_out.addDouble(mess_num)
                                 affnet_yarp.write()
                                 while 1:
                                     affnet_bottle_in = affnet_yarp.read(False)
-                                    yarp.Time.delay(0.2)
+                                    yarp.Time.delay(0.1)
                                     if affnet_bottle_in:
                                         data = affnet_bottle_in.toString().replace('((','').replace('))','').split(') (')
                                         for j in range(len(data)):
@@ -420,6 +431,8 @@ def Affordance_comm():
                                     if g < 3:
                                         for j in range(len(data[g])):
                                             prob_succ2 = prob_succ2 + data[g][j]
+                                if prob_succ2 == 1.0:
+                                    prob_succ2 = 0.95
 
                                 if prob_succ1 >= prob_succ2:
                                     prob_succ = prob_succ1
