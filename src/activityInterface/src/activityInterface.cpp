@@ -342,7 +342,6 @@ Bottle ActivityInterface::askPraxicon(const string &request)
     
     for (int i=0; i<replyPrax.size()-1; i++) //-1 to remove mouth speak
     {
-        
         string replytmp = replyPrax.get(i).asString().c_str();
         istringstream iss(replytmp);
         
@@ -351,9 +350,12 @@ Bottle ActivityInterface::askPraxicon(const string &request)
               back_inserter(tokens));
     }
     
+    //adding this to prevent missing the last goal and going out of range
+    tokens.push_back("endofstring");
+    
     int inc = 0;
     Bottle tmp;
-    for (int i=0; i<=tokens.size(); i++)
+    for (int i=0; i<tokens.size(); i++)
     {
         if ( ++inc == 4 )
         {
@@ -363,7 +365,6 @@ Bottle ActivityInterface::askPraxicon(const string &request)
         }
         tmp.addString(tokens[i].c_str());
     }
-
     //fprintf(stdout, "Final praxicon is: %s \n",replyPrax.toString().c_str());
     return listOfGoals;
 }
