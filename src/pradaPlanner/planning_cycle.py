@@ -120,7 +120,7 @@ def update_state(PathName):
 def planning_cycle():
     ## mode definition: 1-with praxicon; 2-debug with opc; 3-debug without opc; 4- normal demo 
 
-    mode = 2
+    mode = 4
 
     rf = yarp.ResourceFinder()
     rf.setVerbose(True)
@@ -139,9 +139,6 @@ def planning_cycle():
     State_yarp = yarp.BufferedPortBottle()##
     State_yarp.open("/planner/opc_cmd:io")
 
-    prax_yarp_in = yarp.BufferedPortBottle()##
-    prax_yarp_in.open("/planner/prax_inst:i")
-
     prax_yarp_out = yarp.BufferedPortBottle()##
     prax_yarp_out.open("/planner/prax_inst:o")
 
@@ -153,14 +150,21 @@ def planning_cycle():
         old_state = []
         objects_used = []
         toolhandle = []
+        while 1:
+            if goal_yarp.getOutputCount() != 0:
+                break
         if mode == 1 or mode == 4:
+            print 'waiting for praxicon...'
+            goal_bottle_out = goal_yarp.prepare()
+            goal_bottle_out.clear()
+            goal_bottle_out.addString('praxicon')
+            goal_yarp.write()
             while 1:
-                prax_bottle_in = prax_yarp_in.read(False)
-                if prax_bottle_in:
-                    for g in range(prax_bottle_in.size()):
-                        instructions = instructions + [prax_bottle_in.get(g).toString()]
+                goal_bottle_in = goal_yarp.read(False)
+                if goal_bottle_in:
                     break
-                print 'waiting for praxicon...'
+                print '...'
+                yarp.Time.delay(0.1)
                     
         while 1:
             if State_yarp.getOutputCount() != 0:
@@ -209,10 +213,19 @@ def planning_cycle():
             if goal_yarp.getOutputCount() != 0:
                 break
         print 'goal connection done'
-        instructions = '((hand,grasp,cheese),(cheese,reach,bun-bottom),(hand,put,cheese),(hand,grasp,bun-top),(bun-top,reach,cheese),(hand,put,bun-top))'
+##        if mode != 1 and mode != 4:
+##            instructions = [['hand','grasp','cheese'],['cheese','reach','bun-bottom'],['hand','put','cheese'],['hand','grasp','bun-top'],['bun-top','reach','cheese'],['hand','put','bun-top']]
+##            goal_bottle_out = goal_yarp.prepare()
+##            goal_bottle_out.clear()
+##            goal_bottle_out.addList()
+##            for t in range(len(instructions)):
+##                goal_bottle_out.get(t).addString(' '.join(instructions[t]))                    
+##            goal_yarp.write()
+##        else:
         goal_bottle_out = goal_yarp.prepare()
         goal_bottle_out.clear()
-        goal_bottle_out.addString(instructions)
+        goal_bottle_out.addString('update')
+        print goal_bottle_out.toString()
         goal_yarp.write()
         while 1:
             goal_bottle_in = goal_yarp.read(False)
@@ -222,7 +235,7 @@ def planning_cycle():
                 break
             yarp.Time.delay(1)
         print 'goal is done'
-        
+            
 ##        goal_file = open(''.join(PathName +"/final_goal.dat"))
         subgoalsource_file = open(''.join(PathName +"/subgoals.dat"))
 ##        goal = goal_file.read().split(' ')
