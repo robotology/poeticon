@@ -114,6 +114,7 @@ def Affordance_comm():
     for i in range(len(object_IDs)):
         if object_IDs[i].split(',')[0] != '11' and object_IDs[i].split(',')[0] != '12':
             Obj_ID = Obj_ID + [object_IDs[i].split(',')[0]]
+    print 'Objects are:\n', Obj_ID
         
     for i in range(len(Obj_ID)):
             
@@ -125,21 +126,23 @@ def Affordance_comm():
 
         while 1:
             desc_bottle_in = desc_yarp.read(False)
-            yarp.Time.delay(0.1)
+            yarp.Time.delay(1)
             print "waiting for reply..."
             if desc_bottle_in:
                 data = desc_bottle_in.toString()
+                print "descriptors are:\n", data
                 if data != 'ACK' and data != 'NACK' and data != '()' and data != '':
                     data = desc_bottle_in.get(0).asList()
                     data = data.toString().split(' ')
                     for t in range(len(data)):
                         data[t] = float(data[t])
                     break
-                desc_bottle_out = desc_yarp.prepare()
-                desc_bottle_out.clear()
-                desc_bottle_out.addString("querydesc2d")
-                desc_bottle_out.addInt(int(Obj_ID[i]))
-                desc_yarp.write()
+                if data != 'ACK':
+                    desc_bottle_out = desc_yarp.prepare()
+                    desc_bottle_out.clear()
+                    desc_bottle_out.addString("querydesc2d")
+                    desc_bottle_out.addInt(int(Obj_ID[i]))
+                    desc_yarp.write()
         descriptors = descriptors + [[Obj_ID[i], data]]
     tooldesc = []
     tools = []
@@ -155,10 +158,11 @@ def Affordance_comm():
 
         while 1:
             desc_bottle_in = desc_yarp.read(False)
-            yarp.Time.delay(0.1)
+            yarp.Time.delay(1)
             print "waiting for reply..."
             if desc_bottle_in:
                 data = desc_bottle_in.toString()
+                print 'tooldescr are:\n', data
                 if data != 'ACK' and data != 'NACK' and data != '()' and data != '':
                     data = desc_bottle_in.toString()
                     print data
