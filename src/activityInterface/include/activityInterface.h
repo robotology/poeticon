@@ -56,6 +56,8 @@
 #include <activityInterface_IDLServer.h>
 #include "memoryReporter.h"
 
+#include <iterator>
+
 
 typedef std::pair<int, double> Pairs;
 struct compare
