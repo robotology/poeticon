@@ -166,7 +166,7 @@ def create_symbols(objects, symbols, tools):
             i=0
             for j in range(len(objects)):
                 for k in range(len(objects)):
-                    if (k!=j and (objects[k] not in hands or objects[j] not in hands)):
+                    if (k!=j):
                         new_symbol = new_symbol + symbols
                         new_symbol[i] = new_symbol[i].replace('_tool', str(objects[j]))
                         new_symbol[i] = new_symbol[i].replace('_obj', str(objects[k]))
@@ -265,7 +265,7 @@ def geometric_grounding():
                         Affor_bottle_out.clear()
                         Affor_bottle_out.addString('update')
                         Affor_yarp.write()
-                        yarp.Time.delay(0.2)
+                        yarp.Time.delay(0.1)
                         Affor_bottle_out.clear()
                         
 ## Sends info about the rule being updated
@@ -278,12 +278,12 @@ def geometric_grounding():
                         Affor_bottle_out.addString(rules[i+7])
                         Affor_bottle_out.addString(rules[i+8])
                         Affor_yarp.write()
-                        yarp.Time.delay(0.2)
+                        yarp.Time.delay(0.1)
                         Affor_bottle_out.clear()
                         
                         while 1:
                             Affor_bottle_in = Affor_yarp.read(False)
-                            yarp.Time.delay(0.2)
+                            yarp.Time.delay(0.1)
                             if Affor_bottle_in:
                                 bottle_decode_aux = Affor_bottle_in.toString()
                                 break

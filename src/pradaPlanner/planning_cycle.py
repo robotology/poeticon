@@ -12,6 +12,7 @@ from multiprocessing import Pipe,Process
 import subprocess
 import os
 import yarp
+import re
 
 yarp.Network.init()
 
@@ -110,9 +111,7 @@ def update_state(PathName):
         if symbols[j][0] not in data and symbols[j][1] == 'primitive':
             state = '-'.join((state,''.join((symbols[j][0],'() '))))
     state = ''.join((state,'\n'))
-    print state
     state_file = open(''.join(PathName +"/state.dat"),'w')
-    print state_file
     state_file.write(state)
     state_file.close()
     print "done"
@@ -140,20 +139,26 @@ def planning_cycle():
     State_yarp = yarp.BufferedPortBottle()##
     State_yarp.open("/planner/opc_cmd:io")
 
-    prax_yarp = yarp.BufferedPortBottle()##
-    prax_yarp.open("/planner/prax_inst:io")
+    prax_yarp_in = yarp.BufferedPortBottle()##
+    prax_yarp_in.open("/planner/prax_inst:i")
+
+    prax_yarp_out = yarp.BufferedPortBottle()##
+    prax_yarp_out.open("/planner/prax_inst:o")
 
     Aff_yarp = yarp.BufferedPortBottle()##
     Aff_yarp.open("/planner/Aff_cmd:io")
 
-
+    instructions = []
     while 1:
         old_state = []
+        objects_used = []
+        toolhandle = []
         if mode == 1 or mode == 4:
             while 1:
-                prax_bottle_in = prax_yarp.read(False)
+                prax_bottle_in = prax_yarp_in.read(False)
                 if prax_bottle_in:
-                    instructions = prax_bottle_in.toString()
+                    for g in range(prax_bottle_in.size()):
+                        instructions = instructions + [prax_bottle_in.get(g).toString()]
                     break
                 print 'waiting for praxicon...'
                     
@@ -179,7 +184,6 @@ def planning_cycle():
                         print 'waiting...'
                         State_bottle_in = State_yarp.read(False)
                         if State_bottle_in:
-                            print 'Bottle:', State_bottle_in.toString()
                             Object_file = open(''.join(PathName +"/Object_names-IDs.dat"))
                             Objects = Object_file.read().split(';')
                             if len(Objects) > 3:
@@ -231,7 +235,12 @@ def planning_cycle():
         for t in range(len(subgoals)):
             aux_subgoals = aux_subgoals + [subgoals[t].split(' ')]
         print 'started'
-        comm = raw_input('update rules? y/n')
+        while 1:
+            comm = raw_input('update rules? y/n \n')
+            if comm == 'y' or comm == 'n':
+                break
+            else:
+                print 'please write y for yes and n for no'
         if comm == 'y':
             while 1:
                 if geo_yarp.getOutputCount() != 0:
@@ -316,7 +325,6 @@ def planning_cycle():
             yarp.Time.delay(0.1)
                    
             update_state(PathName)
-            raw_input("press enter to continue")
             
 ################# function under construction, updating when objects change ################
 ## requires the geometric grounding to change, to ground object by object
@@ -357,24 +365,18 @@ def planning_cycle():
                 for t in range(len(rules)):
                     if rules[t].replace(' ','').replace('\n','').replace('\r','') == next_action and next_action != '':
                         print rules[t]
-                        print rules[t+4]
                         p = 0
                         while 1:
                             if rules[t+p] == '':
-                                print rules[t]
                                 adapt_rules = rules[t+4].split(' ')
-                                print adapt_rules
                                 adapt_rules[2] = str(float(adapt_rules[2])/2)
                                 rules[t+4] = ' '.join(adapt_rules)
                                 adapt_noise = rules[t+p-1].split(' ')
                                 adapt_noise[2] = str(float(adapt_noise[2])+float(adapt_rules[2]))
-                                print rules[t+p-1]
                                 rules[t+p-1] = ' '.join(adapt_noise)
-                                print rules[t+p-1]
                                 break
                             p = p+1
                         rules_file = open(''.join(PathName +"/rules.dat"),'w')
-                        print ''.join(PathName + "/rules.dat")
                         for y in range(len(rules)):
                             rules_file.write(rules[y])
                             rules_file.write('\n')
@@ -387,6 +389,12 @@ def planning_cycle():
             subgoal_file.close()
             if plan_level >= len(subgoals)-1:
                 print 'plan finished'
+                prax_bottle_out = prax_yarp_out.prepare()
+                prax_bottle_out.clear()
+                prax_bottle_out.addString('OK')
+                for u in range(len(objects_used)):
+                    prax_bottle_out.addString(objects_used[u])
+                prax_yarp_out.write()
 ##                geo_bottle_out = geo_yarp.prepare()
 ##                geo_bottle_out.clear()
 ##                geo_bottle_out.addString('kill')
@@ -437,13 +445,16 @@ def planning_cycle():
             goal = subgoal_file.read().split(' ')
             subgoal_file.close()
             print 'goals not met:'
-            print state
             print goal
+            print state
+            not_comp_goals = []
             for t in range(len(goal)):
                 if goal[t] not in state:
+                    not_comp_goals = not_comp_goals + [goal[t]]
                     print goal[t]
                     cont = 1
             print '\n'
+            raw_input("press enter to continue")
             
             holding_symbols = []
             for t in range(len(aux_subgoals[plan_level-1])):
@@ -454,12 +465,10 @@ def planning_cycle():
             if plan_level >= 1:
                 for t in range(len(holding_symbols)):
                     if holding_symbols[t] not in state:
-                        print holding_symbols[t]
                         failed_steps = plan_level
                         cont = -1
                         print 'situation changed, receding in plan'
                         break
-            print 'continue:',cont
             if cont == -1:
                 plan_level = plan_level-1
                 config_file = open(''.join(PathName +"/config"),'r')
@@ -501,6 +510,10 @@ def planning_cycle():
             act_check = '  %s' %next_action
             if act_check in rules:
                 toolhandle = ['16',['1','1']]
+                objects_used_now = re.findall(r'\d+',next_action)
+                for u in range(len(objects_used_now)):
+                    if objects_used_now[u] not in toolhandle and objects_used_now[u] not in objects_used:
+                        objects_used = objects_used + [objects_used_now[u]]
                 print 'action to be executed: ', next_action, '\n'
                 motor_rpc._is_success(motor_rpc._execute(PathName, next_action, toolhandle))
                 world_rpc._is_success(world_rpc._execute("update"))
@@ -584,6 +597,26 @@ def planning_cycle():
             print 'planning horizon: ',horizon
             if horizon > 15:
                 print 'cant find a solution, abandoning plan'
+                object_file = open(''.join(PathName +"/Object_names-IDs.dat"))
+                Objects = object_file.read()
+                Objects = Objects.split(';')
+                Objects.pop()
+                fail_obj_now = []
+                for u in range(len(Objects)):
+                    Objects[u] = Objects[u].replace('(','').replace(')','').split(',')
+                fail_obj = re.findall(r'\d+',' '.join(not_comp_goals + [' ']))
+                for u in range(len(fail_obj)):
+                    if fail_obj != '11' and fail_obj != '12' and fail_obj not in toolhandle:
+                        for t in range(len(Objects)):
+                            if fail_obj[u] in Objects[t]:
+                                fail_obj_now = fail_obj_now + [Objects[t][1]]
+                                break
+                prax_bottle_out = prax_yarp_out.prepare()
+                prax_bottle_out.clear()
+                prax_bottle_out.addString('FAIL')
+                for u in range(len(fail_obj_now)):
+                    prax_bottle_out.addString(fail_obj_now[u])
+                prax_yarp_out.write()
 ##                geo_bottle_out = geo_yarp.prepare()
 ##                geo_bottle_out.clear()
 ##                geo_bottle_out.addString('kill')
