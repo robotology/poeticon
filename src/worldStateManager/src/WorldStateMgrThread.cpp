@@ -541,13 +541,14 @@ void WorldStateMgrThread::fsmPerception()
 
                 //yInfo("current world state map");
                 //dumpMap(wsMap);
-                yInfo("updating world state map");
+                //yInfo("updating world state map");
                 mergeMaps(opcMap, trackMap, wsMap);
                 //dumpMap(wsMap);
 
                 // populate database
                 if ( doPopulateDB() )
-                    yDebug() << __func__ << "successfully populated database";
+                    //yDebug() << __func__ << "successfully populated database";
+                    ;
                 else
                     yWarning() << __func__ << "problem populating database";
 
