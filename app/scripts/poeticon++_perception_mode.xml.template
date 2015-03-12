@@ -205,6 +205,15 @@
     <to>/planner/goal_cmd:io</to>
 </connection>
 <connection>
+    <from>/activityInterface/rpc:i</from>
+    <to>/goal_imag/prax_inst:i</to>
+</connection>
+<connection>
+    <from>/planner/prax_inst:o</from>
+    <to>/activityInterface/prada:i</to>
+</connection>
+<!--
+<connection>
     <from>/planner/prax_inst:io</from>
     <to>/praxicon/planner_cmd:io</to>
 </connection>
@@ -212,6 +221,7 @@
     <from>/praxicon/planner_cmd:io</from>
     <to>/planner/prax_inst:io</to>
 </connection>
+-->
 <connection>
     <from>/AffordanceComm/ground_cmd:io</from>
     <to>/grounding/Aff_cmd:io</to>
