@@ -7,11 +7,11 @@
 
 %% Effect prediction, queries server
 % Input:
-%    Bottle1x13 vector with prior
-%    6 desc for the tool
-%    6 desc for the object
+%    Bottle1x11 vector with prior - Just doubles
+%    5 desc for the tool
+%    5 desc for the object
 %    1 action
-
+%
 % Output:
 %   5x5 matrix of probabilities distribution
 %   p(EffectX, EffectY | nodeName1=nodeValue1, ... , nodeName12=nodeValue12)
@@ -19,20 +19,21 @@
 clear;
 
 %% Initialize BN
-initPmtk3;
+% initPmtk3;
 
 %% Choice of network:
-bn = 'K2';
+bn = 'pca6merge';
 
 switch bn
-    case 'exp'
-        load('../PlannerServer/original_bn.mat');
-    case 'K2'
-        load('../PlannerServer/k2_bn.mat');
-    case 'BDe'
-        load('../PlannerServer/BDe_bn.mat');
+    case 'pca4merge'
+        load('pcaNet-4mergeComp.mat');
+    case 'pca6merge'
+		load('pca6mergecomp.mat');
+	case 'pca4sep'
+		load('pca2T-2O.mat');
     otherwise
-        load('../PlannerServer/original_bn.mat');
+        error([bn ' is not a known Network']);
+        
 end
 
 %% YARP
@@ -45,7 +46,6 @@ query     = Bottle;
 prior     = Bottle;
 posterior = Bottle;
 answer    = Bottle;
-
 % Creating ports:
 portInput  = Port;
 portOutput = Port;
@@ -87,43 +87,50 @@ while(~done)
             % Get the query priors and posteriors:
             prior = query;
             %posterior = query.get(1);
-            
+            %% Test if yarp bottle is with a good structure/size
+            %%
             switch bn
-                case 'exp'
-                    prior_nodes  = 1:13;
-                    prior_values = zeros(1, size(prior_nodes, 2));
-                    for n = 1:size(prior_nodes, 2)
-                        prior_values(n) = prior.asList.get(n-1).asDouble;
+               case 'pca4merge'
+                   prior_nodes  = [1 2 3 4 5]; % pca1 pca2 pca3 pca4 action
+                    %prior_values = zeros(1, size(prior_nodes,2));
+                    for n = 1:10 % features of the tool and object
+                        features(n) = prior.get(n-1).asDouble;
                     end
-                    posterior_nodes = [14 15];
-                    
-                case 'K2'
-                    prior_nodes  = [1 2 7 14];
-                    trans_nodes = [13 1 6 11];
-                    prior_values = zeros(1, size(prior_nodes, 2));
-                    for n = 1:size(prior_values, 2)
-                        prior_values(n) = ...
-                            prior.get(trans_nodes(n)-1).asDouble;
+                    %action = prior.get(0).asList().get(10).asDouble;
+                    action = prior.get(10).asDouble;
+                    score =  discretize(features*pinv(pc(:,1:components)'), ranges); % convert 
+                                    % to pca - pc 10x10 matrix, discretize values
+                    prior_values = [score action]; % and add the action to prior
+                    posterior_nodes = [6 7]; % X and Y effect 
+               case 'pca6merge'
+                   prior_nodes  = [1 2 3 4 5 6 7]; % pca1 pca2 pca3 pca4 action
+                    %prior_values = zeros(1, size(prior_nodes,2));
+                    for n = 1:10 % features of the tool and object
+                        features(n) = prior.get(n-1).asDouble;
                     end
-                    posterior_nodes = [11 15];
-                    
-                case 'Bde'
-                    prior_nodes  = [2 3 4 5 10 11 15];
-                    trans_nodes  = [5 1 3 13 10 6 9];
-                    prior_values = zeros(1, size(prior_nodes,2));
-                    for n = 1:size(prior_values, 2)
-                        prior_values(n) = ...
-                            prior.asList.get(trans_nodes(n)-1).asDouble;
+                    %action = prior.get(0).asList().get(10).asDouble;
+                    action = prior.get(10).asDouble;
+                    score =  discretize(features*pinv(pc(:,1:components)'), ranges); % convert 
+                                    % to pca - pc 10x10 matrix, discretize values
+                    prior_values = [score action]; % and add the action to prior
+                    posterior_nodes = [8 9]; % X and Y effect   
+                case 'pca4sep'
+                    prior_nodes  = [1 2 3 4 5]; % pca1_T pca2_T pca3_O pca4_O action
+                    %prior_values = zeros(1, size(prior_nodes,2));
+                    for n = 1:10 % features of the tool and object
+                        features(n) = prior.get(n-1).asDouble;
                     end
-                    posterior_nodes = [12 13];
+                    %action = prior.get(0).asList().get(10).asDouble;
+                    action = prior.get(10).asDouble;
+                    featuresT = features(1:5);
+                    featuresO = features(6:10);
+                    score=[ featuresT*pinv(pcT(:,1:components)') featuresO*pinv(pcO(:,1:components)')];
+                    score = discretize(score,ranges);
+                    prior_values = [score action]; % and add the action to prior
+                    posterior_nodes = [6 7]; % X and Y effect 
                     
                 otherwise
-                    prior_nodes  = 1:13;
-                    prior_values = zeros(1,size(prior_nodes,2));
-                    for n = 1:(prior.asList.size)
-                        prior_values(n) = prior.asList.get(n-1).asDouble;
-                    end
-                    posterior_nodes = [14 15];
+                    error([bn ' is not a known Network']);
             end
 
             
@@ -132,54 +139,21 @@ while(~done)
             prob = dgmInferQuery(BN, posterior_nodes, 'clamped', clamped, ...
                 'doSlice', false);
             
-            B=reshape(prob.T,25,1);
-            IX=1:25;
-            
-            numberprob = 25;
-
-            prob_value = zeros( numberprob, 1 );
-            if size(prob.T,2) == 1
-                prob_arg = zeros( numberprob, 1 );
-            else
-                prob_arg = zeros( numberprob, size(size(prob.T), 2) );
-            end
-            prob_arg(:,1) = IX(1:numberprob);
-            
-            % Get the top probabilities (numberOfProb is the number of top
-            % answers):
-            for topprob_number = 1:numberprob
-                prob_value(topprob_number) = B(topprob_number);
-                % Convert the linear index into multidimensional indexes
-                % (the indexes are the arguments that maximize the
-                % probability queried):
-                if size(prob.T,2) > 1
-                    for parameter = 1:size(size(prob.T),2)-1
-                        [ prob_arg(topprob_number, parameter), ...
-                            prob_arg(topprob_number, parameter+1) ] = ...
-                            ind2sub(size(prob.T), ...
-                            prob_arg(topprob_number, parameter));
-                    end
-                end
-            end
-            
-            % Reply the top answers and correspondent probabilities to the
-            % query:
             answer.clear;
             answer_string = '';
-            
-            for ans_n = 1:numberprob
+            answer_string=[answer_string '('];
+            for k=1:size(prob.T,1)
                 answer_string=[answer_string '('];
-                answer_string=[answer_string num2str(prob_value(ans_n))];
-                for parameter = 1:size(prob_arg,2)
-                    answer_string=[answer_string ' ' num2str(prob_arg(ans_n, parameter))];
+                for j=1:size(prob.T,1)
+                     answer_string=[answer_string ' ' num2str(prob.T(k,j))];
                 end
-                answer_string=[answer_string ') '];
-            end
-            
-            answer_string(end) = '';
+               answer_string=[answer_string ') '];
+            end    
+            answer_string=[answer_string ')'];
+            %answer_string(end) = '';
             answer.fromString(answer_string);
-            portOutput.write(answer);
-            
+            portOutput.write(answer);        
+
             disp('Done');            
         end
     end
