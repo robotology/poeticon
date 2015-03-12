@@ -22,24 +22,18 @@ clear;
 % initPmtk3;
 
 %% Choice of network:
-bn = 'pca';
+bn = 'pca4sep';
 
 switch bn
-    case 'exp'
-        load('./original_bn.mat');
-    case 'K2'
-        load('./k2_bn.mat');
-    case 'Bde'
-        load('./BDe_bn.mat');
-    case 'pca'
-        load('./PCA2_bn.mat'); 
-        load('./princomp.mat');
-        components = 2;
-    case 'pca2'
-        load('pca2ndVersion.mat');
-        components = 2;
+    case 'pca4merge'
+        load('pcaNet-4mergeComp.mat');
+    case 'pca6merge'
+		load('pca6mergecomp.mat');
+	case 'pca4sep'
+		load('pca2T-2O.mat');
     otherwise
-        load('./original_bn.mat');
+        error([bn ' is not a known Network']);
+        
 end
 
 %% YARP
@@ -96,56 +90,45 @@ while(~done)
             %% Test if yarp bottle is with a good structure/size
             %%
             switch bn
-                case 'exp'
-                    prior_nodes  = 1:13;
-                    prior_values = zeros(1, size(prior_nodes, 2));
-                    for n = 1:size(prior_nodes, 2)
-                        prior_values(n) = discretizeAfonso(prior.get(n-1).asDouble(),n);
-                    end
-                    posterior_nodes = [14 15];
-                    
-                case 'K2'
-                    prior_nodes  = [1 2 7 14];
-                    trans_nodes = [13 1 6 11];
-                    prior_values = zeros(1, size(prior_nodes, 2));
-                    for n = 1:size(prior_values, 2)
-                        prior_values(n) = ...
-                            discretizeAfonso(prior.get(trans_nodes(n)-1).asDouble, trans_nodes(n));
-                    end
-                    posterior_nodes = [11 15];
-                    
-                case 'Bde'
-                    prior_nodes  = [2 3 4 5 10 11 15];
-                    trans_nodes  = [5 1 3 13 10 6 9];
-                    prior_values = zeros(1, size(prior_nodes,2));
-                    for n = 1:size(prior_values, 2)
-                        prior_values(n) = ...
-                        discretizeAfonso(prior.get(trans_nodes(n)-1).asDouble, trans_nodes(n));
-                    end
-                    posterior_nodes = [9 13];
-                case 'pca'
-                    
-                    prior_nodes  = [1 2 3]; % pca1 pca2 action
-                    %prior_values = zeros(1, size(prior_nodes,2));
-                    for n = 1:12 % features of the tool and object
-                        features(n) = prior.get(n-1).asDouble;
-                    end
-                    action = prior.get(12).asDouble;
-                    score =  discretize(features*pinv(pc(:,1:components)'), ranges); % convert 
-                                    % to pca - pc 12x12 matrix, discretize values
-                    prior_values = [score action]; % and add the action to prior
-                    posterior_nodes = [4 5]; % X and Y effect
-                case 'pca2'
-                   prior_nodes  = [1 2 3]; % pca1 pca2 action
+               case 'pca4merge'
+                   prior_nodes  = [1 2 3 4 5]; % pca1 pca2 pca3 pca4 action
                     %prior_values = zeros(1, size(prior_nodes,2));
                     for n = 1:10 % features of the tool and object
                         features(n) = prior.get(n-1).asDouble;
                     end
-                    action = prior.get(0).asList().get(10).asDouble;
+                    %action = prior.get(0).asList().get(10).asDouble;
+                    action = prior.get(10).asDouble;
                     score =  discretize(features*pinv(pc(:,1:components)'), ranges); % convert 
                                     % to pca - pc 10x10 matrix, discretize values
+                    prior_values = [score action] % and add the action to prior
+                    posterior_nodes = [6 7]; % X and Y effect 
+               case 'pca6merge'
+                   prior_nodes  = [1 2 3 4 5 6 7]; % pca1 pca2 pca3 pca4 action
+                    %prior_values = zeros(1, size(prior_nodes,2));
+                    for n = 1:10 % features of the tool and object
+                        features(n) = prior.get(n-1).asDouble;
+                    end
+                    %action = prior.get(0).asList().get(10).asDouble;
+                    action = prior.get(10).asDouble;
+                    score =  discretize(features*pinv(pc(:,1:components)'), ranges); % convert 
+                                    % to pca - pc 10x10 matrix, discretize values
+                    prior_values = [score action] % and add the action to prior
+                    posterior_nodes = [8 9]; % X and Y effect   
+                case 'pca4sep'
+                    prior_nodes  = [1 2 3 4 5]; % pca1 pca2 pca3 pca4 action
+                    %prior_values = zeros(1, size(prior_nodes,2));
+                    for n = 1:10 % features of the tool and object
+                        features(n) = prior.get(n-1).asDouble;
+                    end
+                    %action = prior.get(0).asList().get(10).asDouble;
+                    action = prior.get(10).asDouble;
+                    featuresT = features(1:5);
+                    featuresO = features(6:10);
+                    score=[ featuresT*pinv(pcT(:,1:components)') featuresO*pinv(pcO(:,1:components)')];
+                    score = discretize(score,ranges);
                     prior_values = [score action]; % and add the action to prior
-                    posterior_nodes = [4 5]; % X and Y effect 
+                    posterior_nodes = [6 7]; % X and Y effect 
+                    
                 otherwise
                     prior_nodes  = 1:13;
                     prior_values = zeros(1,size(prior_nodes,2));
