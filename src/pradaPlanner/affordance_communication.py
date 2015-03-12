@@ -126,7 +126,7 @@ def Affordance_comm():
 
         while 1:
             desc_bottle_in = desc_yarp.read(False)
-            yarp.Time.delay(1)
+            yarp.Time.delay(0.1)
             print "waiting for reply..."
             if desc_bottle_in:
                 data = desc_bottle_in.toString()
@@ -158,7 +158,7 @@ def Affordance_comm():
 
         while 1:
             desc_bottle_in = desc_yarp.read(False)
-            yarp.Time.delay(1)
+            yarp.Time.delay(0.1)
             print "waiting for reply..."
             if desc_bottle_in:
                 data = desc_bottle_in.toString()
