@@ -178,7 +178,7 @@ bool   TranslatorModule::updateModule() {
 
         else if(receive->get(0).asString() == "querydesc2d" && receive->get(1).isInt()) {
 
-            cout << "querydesc2d " << receive->get(1).isInt() << " received" << endl;
+            cout << "querydesc2d " << receive->get(1).asInt() << " received" << endl;
             readingThread->guard.lock();
             dataBase = readingThread->_data;
             ids2 = readingThread->_ids;
@@ -222,7 +222,7 @@ bool   TranslatorModule::updateModule() {
 
         else if(receive->get(0).asString() == "querytooldesc2d" && receive->get(1).isInt()) {
 
-            cout << "querytooldesc2d " << receive->get(1).isInt() << " received" << endl;
+            cout << "querytooldesc2d " << receive->get(1).asInt() << " received" << endl;
             readingThread->guard.lock();
             dataBase = readingThread->_data;
             ids2 = readingThread->_ids;
