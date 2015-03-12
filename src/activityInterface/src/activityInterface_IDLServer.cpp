@@ -102,6 +102,41 @@ public:
   virtual bool read(yarp::os::ConnectionReader& connection);
 };
 
+class activityInterface_IDLServer_reachableWith : public yarp::os::Portable {
+public:
+  std::string objName;
+  yarp::os::Bottle _return;
+  void init(const std::string& objName);
+  virtual bool write(yarp::os::ConnectionWriter& connection);
+  virtual bool read(yarp::os::ConnectionReader& connection);
+};
+
+class activityInterface_IDLServer_pullableWith : public yarp::os::Portable {
+public:
+  std::string objName;
+  yarp::os::Bottle _return;
+  void init(const std::string& objName);
+  virtual bool write(yarp::os::ConnectionWriter& connection);
+  virtual bool read(yarp::os::ConnectionReader& connection);
+};
+
+class activityInterface_IDLServer_getNames : public yarp::os::Portable {
+public:
+  yarp::os::Bottle _return;
+  void init();
+  virtual bool write(yarp::os::ConnectionWriter& connection);
+  virtual bool read(yarp::os::ConnectionReader& connection);
+};
+
+class activityInterface_IDLServer_askPraxicon : public yarp::os::Portable {
+public:
+  std::string request;
+  yarp::os::Bottle _return;
+  void init(const std::string& request);
+  virtual bool write(yarp::os::ConnectionWriter& connection);
+  virtual bool read(yarp::os::ConnectionReader& connection);
+};
+
 class activityInterface_IDLServer_quit : public yarp::os::Portable {
 public:
   bool _return;
@@ -349,6 +384,92 @@ void activityInterface_IDLServer_underOf::init(const std::string& objName) {
   this->objName = objName;
 }
 
+bool activityInterface_IDLServer_reachableWith::write(yarp::os::ConnectionWriter& connection) {
+  yarp::os::idl::WireWriter writer(connection);
+  if (!writer.writeListHeader(2)) return false;
+  if (!writer.writeTag("reachableWith",1,1)) return false;
+  if (!writer.writeString(objName)) return false;
+  return true;
+}
+
+bool activityInterface_IDLServer_reachableWith::read(yarp::os::ConnectionReader& connection) {
+  yarp::os::idl::WireReader reader(connection);
+  if (!reader.readListReturn()) return false;
+  if (!reader.read(_return)) {
+    reader.fail();
+    return false;
+  }
+  return true;
+}
+
+void activityInterface_IDLServer_reachableWith::init(const std::string& objName) {
+  this->objName = objName;
+}
+
+bool activityInterface_IDLServer_pullableWith::write(yarp::os::ConnectionWriter& connection) {
+  yarp::os::idl::WireWriter writer(connection);
+  if (!writer.writeListHeader(2)) return false;
+  if (!writer.writeTag("pullableWith",1,1)) return false;
+  if (!writer.writeString(objName)) return false;
+  return true;
+}
+
+bool activityInterface_IDLServer_pullableWith::read(yarp::os::ConnectionReader& connection) {
+  yarp::os::idl::WireReader reader(connection);
+  if (!reader.readListReturn()) return false;
+  if (!reader.read(_return)) {
+    reader.fail();
+    return false;
+  }
+  return true;
+}
+
+void activityInterface_IDLServer_pullableWith::init(const std::string& objName) {
+  this->objName = objName;
+}
+
+bool activityInterface_IDLServer_getNames::write(yarp::os::ConnectionWriter& connection) {
+  yarp::os::idl::WireWriter writer(connection);
+  if (!writer.writeListHeader(1)) return false;
+  if (!writer.writeTag("getNames",1,1)) return false;
+  return true;
+}
+
+bool activityInterface_IDLServer_getNames::read(yarp::os::ConnectionReader& connection) {
+  yarp::os::idl::WireReader reader(connection);
+  if (!reader.readListReturn()) return false;
+  if (!reader.read(_return)) {
+    reader.fail();
+    return false;
+  }
+  return true;
+}
+
+void activityInterface_IDLServer_getNames::init() {
+}
+
+bool activityInterface_IDLServer_askPraxicon::write(yarp::os::ConnectionWriter& connection) {
+  yarp::os::idl::WireWriter writer(connection);
+  if (!writer.writeListHeader(2)) return false;
+  if (!writer.writeTag("askPraxicon",1,1)) return false;
+  if (!writer.writeString(request)) return false;
+  return true;
+}
+
+bool activityInterface_IDLServer_askPraxicon::read(yarp::os::ConnectionReader& connection) {
+  yarp::os::idl::WireReader reader(connection);
+  if (!reader.readListReturn()) return false;
+  if (!reader.read(_return)) {
+    reader.fail();
+    return false;
+  }
+  return true;
+}
+
+void activityInterface_IDLServer_askPraxicon::init(const std::string& request) {
+  this->request = request;
+}
+
 bool activityInterface_IDLServer_quit::write(yarp::os::ConnectionWriter& connection) {
   yarp::os::idl::WireWriter writer(connection);
   if (!writer.writeListHeader(1)) return false;
@@ -469,6 +590,46 @@ yarp::os::Bottle activityInterface_IDLServer::underOf(const std::string& objName
   helper.init(objName);
   if (!yarp().canWrite()) {
     fprintf(stderr,"Missing server method '%s'?\n","yarp::os::Bottle activityInterface_IDLServer::underOf(const std::string& objName)");
+  }
+  bool ok = yarp().write(helper,helper);
+  return ok?helper._return:_return;
+}
+yarp::os::Bottle activityInterface_IDLServer::reachableWith(const std::string& objName) {
+  yarp::os::Bottle _return;
+  activityInterface_IDLServer_reachableWith helper;
+  helper.init(objName);
+  if (!yarp().canWrite()) {
+    fprintf(stderr,"Missing server method '%s'?\n","yarp::os::Bottle activityInterface_IDLServer::reachableWith(const std::string& objName)");
+  }
+  bool ok = yarp().write(helper,helper);
+  return ok?helper._return:_return;
+}
+yarp::os::Bottle activityInterface_IDLServer::pullableWith(const std::string& objName) {
+  yarp::os::Bottle _return;
+  activityInterface_IDLServer_pullableWith helper;
+  helper.init(objName);
+  if (!yarp().canWrite()) {
+    fprintf(stderr,"Missing server method '%s'?\n","yarp::os::Bottle activityInterface_IDLServer::pullableWith(const std::string& objName)");
+  }
+  bool ok = yarp().write(helper,helper);
+  return ok?helper._return:_return;
+}
+yarp::os::Bottle activityInterface_IDLServer::getNames() {
+  yarp::os::Bottle _return;
+  activityInterface_IDLServer_getNames helper;
+  helper.init();
+  if (!yarp().canWrite()) {
+    fprintf(stderr,"Missing server method '%s'?\n","yarp::os::Bottle activityInterface_IDLServer::getNames()");
+  }
+  bool ok = yarp().write(helper,helper);
+  return ok?helper._return:_return;
+}
+yarp::os::Bottle activityInterface_IDLServer::askPraxicon(const std::string& request) {
+  yarp::os::Bottle _return;
+  activityInterface_IDLServer_askPraxicon helper;
+  helper.init(request);
+  if (!yarp().canWrite()) {
+    fprintf(stderr,"Missing server method '%s'?\n","yarp::os::Bottle activityInterface_IDLServer::askPraxicon(const std::string& request)");
   }
   bool ok = yarp().write(helper,helper);
   return ok?helper._return:_return;
@@ -683,6 +844,65 @@ bool activityInterface_IDLServer::read(yarp::os::ConnectionReader& connection) {
       reader.accept();
       return true;
     }
+    if (tag == "reachableWith") {
+      std::string objName;
+      if (!reader.readString(objName)) {
+        reader.fail();
+        return false;
+      }
+      yarp::os::Bottle _return;
+      _return = reachableWith(objName);
+      yarp::os::idl::WireWriter writer(reader);
+      if (!writer.isNull()) {
+        if (!writer.writeListHeader(1)) return false;
+        if (!writer.write(_return)) return false;
+      }
+      reader.accept();
+      return true;
+    }
+    if (tag == "pullableWith") {
+      std::string objName;
+      if (!reader.readString(objName)) {
+        reader.fail();
+        return false;
+      }
+      yarp::os::Bottle _return;
+      _return = pullableWith(objName);
+      yarp::os::idl::WireWriter writer(reader);
+      if (!writer.isNull()) {
+        if (!writer.writeListHeader(1)) return false;
+        if (!writer.write(_return)) return false;
+      }
+      reader.accept();
+      return true;
+    }
+    if (tag == "getNames") {
+      yarp::os::Bottle _return;
+      _return = getNames();
+      yarp::os::idl::WireWriter writer(reader);
+      if (!writer.isNull()) {
+        if (!writer.writeListHeader(1)) return false;
+        if (!writer.write(_return)) return false;
+      }
+      reader.accept();
+      return true;
+    }
+    if (tag == "askPraxicon") {
+      std::string request;
+      if (!reader.readString(request)) {
+        reader.fail();
+        return false;
+      }
+      yarp::os::Bottle _return;
+      _return = askPraxicon(request);
+      yarp::os::idl::WireWriter writer(reader);
+      if (!writer.isNull()) {
+        if (!writer.writeListHeader(1)) return false;
+        if (!writer.write(_return)) return false;
+      }
+      reader.accept();
+      return true;
+    }
     if (tag == "quit") {
       bool _return;
       _return = quit();
@@ -738,6 +958,10 @@ std::vector<std::string> activityInterface_IDLServer::help(const std::string& fu
     helpString.push_back("drop");
     helpString.push_back("geto");
     helpString.push_back("underOf");
+    helpString.push_back("reachableWith");
+    helpString.push_back("pullableWith");
+    helpString.push_back("getNames");
+    helpString.push_back("askPraxicon");
     helpString.push_back("quit");
     helpString.push_back("help");
   }
@@ -797,8 +1021,9 @@ std::vector<std::string> activityInterface_IDLServer::help(const std::string& fu
     if (functionName=="geto") {
       helpString.push_back("bool geto(const std::string& handName, const int32_t xpos, const int32_t ypos) ");
       helpString.push_back("Perform the take action on the particular tool with the particular hand ");
-      helpString.push_back("@param objName specifies the name of the object in question ");
-      helpString.push_back("@param handName specifies the name of the hand in question ");
+      helpString.push_back("@param handName specifies the name of the hand to use ");
+      helpString.push_back("@param xpos specifies the 2D position of the object on the X axis ");
+      helpString.push_back("@param ypos specifies the 2D position of the object on the Y axis ");
       helpString.push_back("@return true/false on taking or not ");
     }
     if (functionName=="underOf") {
@@ -806,6 +1031,29 @@ std::vector<std::string> activityInterface_IDLServer::help(const std::string& fu
       helpString.push_back("Ask for the list of labels that are under ojbName ");
       helpString.push_back("@param objName specifies the name of the object in question ");
       helpString.push_back("@return Bottle containing list of labels that are under objName ");
+    }
+    if (functionName=="reachableWith") {
+      helpString.push_back("yarp::os::Bottle reachableWith(const std::string& objName) ");
+      helpString.push_back("Ask with what the object in question is reacheable with ");
+      helpString.push_back("@param objName specifies the name of the object in question ");
+      helpString.push_back("@return Bottle containing list of labels that can be used to reach the objName ");
+    }
+    if (functionName=="pullableWith") {
+      helpString.push_back("yarp::os::Bottle pullableWith(const std::string& objName) ");
+      helpString.push_back("Ask which objects can be used to pull object in question ");
+      helpString.push_back("@param objName specifies the name of the object in question ");
+      helpString.push_back("@return Bottle containing list of labels that can be used to reach the objName ");
+    }
+    if (functionName=="getNames") {
+      helpString.push_back("yarp::os::Bottle getNames() ");
+      helpString.push_back("Ask which objects are available in the opc ");
+      helpString.push_back("@return Bottle containing list of labels that are available ");
+    }
+    if (functionName=="askPraxicon") {
+      helpString.push_back("yarp::os::Bottle askPraxicon(const std::string& request) ");
+      helpString.push_back("Get the speech instruction and sends it to the praxicon ");
+      helpString.push_back("@param request specifies the request to be asked to the praxicon ");
+      helpString.push_back("@return Bottle containing list of goals to achieve ");
     }
     if (functionName=="quit") {
       helpString.push_back("bool quit() ");

@@ -35,11 +35,12 @@ source_group("IDL Files" FILES ${idl})
 
 include_directories(${PROJECT_SOURCE_DIR}/include
                     ${YARP_INCLUDE_DIRS}
-                    ${ICUB_INCLUDE_DIRS})
+                    ${ICUB_INCLUDE_DIRS}
+                    ${OpenCV_INCLUDE_DIRS})
 
 add_executable(${PROJECTNAME} ${source} ${header} ${idl} )
 
-target_link_libraries(${PROJECTNAME} ${YARP_LIBRARIES} icubmod)
+target_link_libraries(${PROJECTNAME} ${YARP_LIBRARIES} ${OpenCV_LIBRARIES} icubmod)
 
 install(TARGETS ${PROJECTNAME} DESTINATION bin)
 

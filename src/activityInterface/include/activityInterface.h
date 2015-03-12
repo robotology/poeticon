@@ -28,6 +28,8 @@
 #include <yarp/os/Semaphore.h>
 #include <yarp/os/Stamp.h>
 
+#include <yarp/sig/Image.h>
+
 #include <yarp/dev/Drivers.h>
 #include <yarp/dev/PolyDriver.h>
 #include <yarp/dev/CartesianControl.h>
@@ -36,6 +38,11 @@
 #include <yarp/os/RpcClient.h>
 #include <yarp/os/PortInfo.h>
 #include <yarp/math/Math.h>
+
+#include <cv.h>
+#include <highgui.h>
+#include "opencv2/objdetect/objdetect.hpp"
+#include "opencv2/features2d/features2d.hpp"
 
 #include <math.h>
 
@@ -48,6 +55,18 @@
 
 #include <activityInterface_IDLServer.h>
 #include "memoryReporter.h"
+
+#include <iterator>
+
+
+typedef std::pair<int, double> Pairs;
+struct compare
+{
+    bool operator()(const Pairs& fisrtPair, const Pairs& secondPair) const
+    {
+        return fisrtPair.second < secondPair.second;
+    }
+};
 
 
 /**********************************************************/
@@ -66,8 +85,15 @@ protected:
     yarp::os::RpcClient                 rpcAREcmd;
     yarp::os::RpcClient                 rpcMemory;
     yarp::os::RpcClient                 rpcWorldState;
+    yarp::os::RpcClient                 rpcIolState;
+    
+    yarp::os::RpcClient                 rpcPraxiconInterface;
     
     yarp::os::Port                      robotStatus;
+    
+    std::string                         inputBlobPortName;
+    
+    yarp::os::BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelMono> >  blobPortIn;
     
     /* left & right cartesian interfaces */
     yarp::dev::PolyDriver               client_left;
@@ -107,6 +133,8 @@ protected:
     int                                 elements;
     std::vector<int>                    pausedThreads;
     
+    yarp::os::Semaphore                 semaphore;
+    
 public:
     
     ActivityInterface();
@@ -126,6 +154,12 @@ public:
     bool                handleTrackers();
     std::string         getMemoryNameBottle(int id);
     yarp::os::Bottle    getIDs();
+    bool                executeSpeech(const std::string &speech);
+    yarp::os::Bottle    getToolLikeNames();
+    double              getAxes(std::vector<cv::Point> &pts, cv::Mat &img);
+    double              getPairMin(std::map<int, double> pairmap);
+    double              getPairMax(std::map<int, double> pairmap);
+    
     bool                with_robot;
     
     int                 incrementSize[10];
@@ -142,6 +176,11 @@ public:
     yarp::os::Bottle    underOf(const std::string &objName);
     yarp::os::Bottle    getOffset(const std::string &objName);
     bool                geto(const std::string &handName, const int32_t pos_x, const int32_t pos_y);
+    yarp::os::Bottle    reachableWith(const std::string &objName);
+    yarp::os::Bottle    pullableWith(const std::string &objName);
+    yarp::os::Bottle    getNames();
+    yarp::os::Bottle    askPraxicon(const std::string &request);
+    
     bool                quit();
 };
 

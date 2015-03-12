@@ -79,8 +79,9 @@ service activityInterface_IDLServer
     
     /**
      * Perform the take action on the particular tool with the particular hand
-     * @param objName specifies the name of the object in question
-     * @param handName specifies the name of the hand in question
+     * @param handName specifies the name of the hand to use
+     * @param xpos specifies the 2D position of the object on the X axis
+     * @param ypos specifies the 2D position of the object on the Y axis
      * @return true/false on taking or not
      **/
     bool geto(1:string handName, 2:i32 xpos, 3:i32 ypos)
@@ -91,6 +92,33 @@ service activityInterface_IDLServer
      * @return Bottle containing list of labels that are under objName
      **/
     Bottle underOf(1:string objName)
+    
+    /**
+     * Ask with what the object in question is reacheable with
+     * @param objName specifies the name of the object in question
+     * @return Bottle containing list of labels that can be used to reach the objName
+     **/
+    Bottle reachableWith(1:string objName)
+    
+    /**
+     * Ask which objects can be used to pull object in question
+     * @param objName specifies the name of the object in question
+     * @return Bottle containing list of labels that can be used to reach the objName
+     **/
+    Bottle pullableWith(1:string objName)
+    
+    /**
+     * Ask which objects are available in the opc
+     * @return Bottle containing list of labels that are available
+     **/
+    Bottle getNames()
+    
+    /**
+     * Get the speech instruction and sends it to the praxicon
+     * @param request specifies the request to be asked to the praxicon
+     * @return Bottle containing list of goals to achieve
+     **/
+    Bottle askPraxicon(1:string request)
     
     /**
      * Quit the module.

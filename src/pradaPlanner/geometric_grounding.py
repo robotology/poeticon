@@ -67,9 +67,7 @@ def create_rules(objects, pre_rules, tools):
             elif pre_rules[3].find('push') != -1 or pre_rules[3].find('pull') != -1:
                 print "checking for push/pull"
                 for j in range(len(tools)):
-                    print tools[j]
                     for c in range(len(objects)):
-                        print objects[c]
                         if objects[c] != tools[j] and objects[c] not in hands:
                             print "working"
                             new_rule = new_rule + pre_rules
@@ -120,7 +118,6 @@ def create_rules(objects, pre_rules, tools):
             new_rule[j] = ''.join([' '] +[' '.join(new_temp_rule)])
                     
             aux_rule = []
-    print new_rule
     return new_rule
 
 ##################################################################################
@@ -169,7 +166,7 @@ def create_symbols(objects, symbols, tools):
             i=0
             for j in range(len(objects)):
                 for k in range(len(objects)):
-                    if (k!=j and (objects[k] not in hands or objects[j] not in hands)):
+                    if (k!=j):
                         new_symbol = new_symbol + symbols
                         new_symbol[i] = new_symbol[i].replace('_tool', str(objects[j]))
                         new_symbol[i] = new_symbol[i].replace('_obj', str(objects[k]))
@@ -220,22 +217,25 @@ def geometric_grounding():
                 objects_file = open(''.join(PathName + "/Object_names-IDs.dat"),'r')
                 
 ## reads objects in world
-                lines = world_file.read()
-                world_file.close()
+                lines = objects_file.read()
+                objects_file.close()
                 objects = re.findall(r'\d+',lines)
                 temp_obj = []
+                print '->',objects
                 for i in range(len(objects)):
                     if objects[i] not in temp_obj:
                         temp_obj = temp_obj + [objects[i]]
                 objects = temp_obj
 
 ## reads tools in the world
-                lines = objects_file.read()
-                objects_file.close()
-                temp_data = lines.replace('((','').replace('))','').split(');(')
+                print lines
+                temp_data = lines.replace('(','').replace(')','').split(';')  ## problem! it's showing up blank.
+                temp_data.pop(-1)
+                print temp_data
                 tools = []
                 for i in range(len(temp_data)):
                     temp_data[i] = temp_data[i].split(',')
+                print temp_data
                 for i in range(len(temp_data)):
                     if temp_data[i][1] == 'stick' or temp_data[i][1] == 'rake':
                         tools = tools + [temp_data[i][0]]
@@ -265,7 +265,7 @@ def geometric_grounding():
                         Affor_bottle_out.clear()
                         Affor_bottle_out.addString('update')
                         Affor_yarp.write()
-                        yarp.Time.delay(0.2)
+                        yarp.Time.delay(0.1)
                         Affor_bottle_out.clear()
                         
 ## Sends info about the rule being updated
@@ -278,12 +278,12 @@ def geometric_grounding():
                         Affor_bottle_out.addString(rules[i+7])
                         Affor_bottle_out.addString(rules[i+8])
                         Affor_yarp.write()
-                        yarp.Time.delay(0.2)
+                        yarp.Time.delay(0.1)
                         Affor_bottle_out.clear()
                         
                         while 1:
                             Affor_bottle_in = Affor_yarp.read(False)
-                            yarp.Time.delay(0.2)
+                            yarp.Time.delay(0.1)
                             if Affor_bottle_in:
                                 bottle_decode_aux = Affor_bottle_in.toString()
                                 break
