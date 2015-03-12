@@ -293,6 +293,7 @@ bool ActivityInterface::executeSpeech (const string &speech)
 /**********************************************************/
 Bottle ActivityInterface::askPraxicon(const string &request)
 {
+    praxiconRequest = request;
     Bottle listOfGoals, cmdPrax, replyPrax;
     
     Bottle toolLikeMemory = getToolLikeNames();
@@ -346,32 +347,40 @@ Bottle ActivityInterface::askPraxicon(const string &request)
     listOfGoals.clear();
     vector<string> tokens;
     
-    for (int i=0; i<replyPrax.size()-1; i++) //-1 to remove mouth speak
+    if (replyPrax.size() > 0)
     {
-        string replytmp = replyPrax.get(i).asString().c_str();
-        istringstream iss(replytmp);
-        
-        copy(istream_iterator<string>(iss),
-             istream_iterator<string>(),
-              back_inserter(tokens));
-    }
     
-    //adding this to prevent missing the last goal and going out of range
-    tokens.push_back("endofstring");
-    
-    int inc = 0;
-    Bottle tmp;
-    for (int i=0; i<tokens.size(); i++)
-    {
-        if ( ++inc == 4 )
+        for (int i=0; i<replyPrax.size()-1; i++) //-1 to remove mouth speak
         {
-            listOfGoals.addList() = tmp;
-            inc=1;
-            tmp.clear();
+            string replytmp = replyPrax.get(i).asString().c_str();
+            istringstream iss(replytmp);
+            
+            copy(istream_iterator<string>(iss),
+                 istream_iterator<string>(),
+                  back_inserter(tokens));
         }
-        tmp.addString(tokens[i].c_str());
+        
+        //adding this to prevent missing the last goal and going out of range
+        tokens.push_back("endofstring");
+        
+        int inc = 0;
+        Bottle tmp;
+        for (int i=0; i<tokens.size(); i++)
+        {
+            if ( ++inc == 4 )
+            {
+                listOfGoals.addList() = tmp;
+                inc=1;
+                tmp.clear();
+            }
+            tmp.addString(tokens[i].c_str());
+        }
+        //fprintf(stdout, "Final praxicon is: %s \n",replyPrax.toString().c_str());
     }
-    //fprintf(stdout, "Final praxicon is: %s \n",replyPrax.toString().c_str());
+    else
+    {
+        executeSpeech("something went terribly wrong. I cannot " + request);
+    }
     return listOfGoals;
 }
 
@@ -399,15 +408,17 @@ bool ActivityInterface::processPradaStatus(const Bottle &status)
                 objectsMissing.addString(status.get(i).asString());
             }
             
-            string say = "I seem to be missing the " ;
+            string toSay = "I seem to be missing the " ;
             for (int i=0; i<objectsMissing.size(); i++)
             {
-                say += objectsMissing.get(i).asString();
+                toSay += objectsMissing.get(i).asString();
                 if (i < objectsMissing.size()-1 )
-                    say+=" and";
+                    toSay+=" and";
             }
-            executeSpeech(say);
+            executeSpeech(toSay);
             executeSpeech("I need to ask the praxicon for help!" );
+            
+            askPraxicon(praxiconRequest);
         }
         else
         {

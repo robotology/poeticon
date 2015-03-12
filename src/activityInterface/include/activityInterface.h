@@ -136,6 +136,8 @@ protected:
     std::vector<int>                    pausedThreads;
     
     yarp::os::Semaphore                 semaphore;
+    std::string                         praxiconRequest;
+    
     
 public:
     
