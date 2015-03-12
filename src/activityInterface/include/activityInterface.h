@@ -116,9 +116,11 @@ protected:
     yarp::sig::Vector                   reachAboveOrient[2];
     yarp::sig::Vector                   thetaMin, thetaMax;
     
-    MemoryReporter                      memoryReporter; //OPC class
+    MemoryReporter                      memoryReporter;
+    PradaStatus                         pradaStatus;
     
     friend class                        MemoryReporter;
+    friend class                        PradaStatus;
 
     bool                                first;
     int                                 ctxt_left;
@@ -159,6 +161,7 @@ public:
     double              getAxes(std::vector<cv::Point> &pts, cv::Mat &img);
     double              getPairMin(std::map<int, double> pairmap);
     double              getPairMax(std::map<int, double> pairmap);
+    bool                processPradaStatus(const yarp::os::Bottle &status);
     
     bool                with_robot;
     

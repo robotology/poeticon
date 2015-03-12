@@ -39,4 +39,24 @@ void MemoryReporter::report(const PortInfo &info)
     if ((manager!=NULL) && info.created && !info.incoming)
         manager->scheduleLoadMemory=true;
 }
+
+/**********************************************************/
+PradaStatus::PradaStatus()
+{
+    manager=NULL;
+    useCallback();
+}
+
+/**********************************************************/
+void PradaStatus::setManager(ActivityInterface *manager)
+{
+    this->manager=manager;
+}
+
+/**********************************************************/
+void PradaStatus::onRead(Bottle &status)
+{
+    if (status.size()>1)
+        manager->processPradaStatus(status);
+}
 //empty line to make gcc happy

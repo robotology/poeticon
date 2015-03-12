@@ -114,6 +114,10 @@ bool ActivityInterface::configure(yarp::os::ResourceFinder &rf)
     rpcPraxiconInterface.setReporter(memoryReporter);
     rpcPraxiconInterface.open(("/"+moduleName+"/praxicon:rpc").c_str());
     
+    pradaStatus.setManager(this);
+    pradaStatus.open(("/"+moduleName+"/prada:i").c_str());
+    
+    
     yarp::os::Network::connect(("/"+moduleName+"/arecmd:rpc").c_str(), "/actionsRenderingEngine/cmd:io");
     yarp::os::Network::connect(("/"+moduleName+"/are:rpc").c_str(), "/actionsRenderingEngine/get:io");
     yarp::os::Network::connect(("/"+moduleName+"/memory:rpc").c_str(), "/memory/rpc");
@@ -222,6 +226,7 @@ bool ActivityInterface::interruptModule()
     rpcIolState.interrupt();
     blobPortIn.interrupt();
     rpcPraxiconInterface.interrupt();
+    pradaStatus.interrupt();
     semaphore.post();
     return true;
 }
@@ -242,6 +247,7 @@ bool ActivityInterface::close()
     rpcIolState.close();
     blobPortIn.close();
     rpcPraxiconInterface.close();
+    pradaStatus.close();
     fprintf(stdout, "finished shutdown procedure\n");
     semaphore.post();
     return true;
@@ -367,6 +373,48 @@ Bottle ActivityInterface::askPraxicon(const string &request)
     }
     //fprintf(stdout, "Final praxicon is: %s \n",replyPrax.toString().c_str());
     return listOfGoals;
+}
+
+bool ActivityInterface::processPradaStatus(const Bottle &status)
+{
+    Bottle objectsUsed;
+    if ( status.size() > 0 )
+    {
+        fprintf(stdout, "the status is %s \n", status.toString().c_str());
+        if (strcmp (status.get(0).asString().c_str(), "ok" ) == 0)
+        {
+            for (int i=1; i< status.size(); i++)
+            {
+                if (strcmp (status.get(i).asString().c_str(), "bun_bottom" ) != 0 && strcmp (status.get(i).asString().c_str(), "bun_top" ) )
+                    objectsUsed.addString(status.get(i).asString().c_str());
+
+            }
+            executeSpeech("I made a " + objectsUsed.toString() + " sandwich");
+        }
+        else if (strcmp (status.get(0).asString().c_str(), "fail" ) == 0)
+        {
+            Bottle objectsMissing;
+            for (int i=1; i< status.size(); i++)
+            {
+                objectsMissing.addString(status.get(i).asString());
+            }
+            
+            string say = "I seem to be missing the " ;
+            for (int i=0; i<objectsMissing.size(); i++)
+            {
+                say += objectsMissing.get(i).asString();
+                if (i < objectsMissing.size()-1 )
+                    say+=" and";
+            }
+            executeSpeech(say);
+            executeSpeech("I need to ask the praxicon for help!" );
+        }
+        else
+        {
+            fprintf(stdout, "Something is wrong with the status\n");
+        }
+    }
+    return true;
 }
 
 /**********************************************************/
