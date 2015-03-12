@@ -292,6 +292,10 @@ Bottle ActivityInterface::askPraxicon(const string &request)
     Bottle toolLikeMemory = getToolLikeNames();
     Bottle objectsMemory = getNames();
     
+    
+    fprintf(stdout, "tool names: %s \n", toolLikeMemory.toString().c_str());
+    fprintf(stdout, "object names: %s \n", objectsMemory.toString().c_str());
+    
     Bottle &listOfObjects = cmdPrax.addList();
     
     //create available list
@@ -312,11 +316,11 @@ Bottle ActivityInterface::askPraxicon(const string &request)
         for (int x=0; x<toolLikeMemory.size(); x++)
             total+=passed[x];
         
-        if (total>1)
+        //fprintf(stdout,"toolLikeMemory size: %d and total %d\n", toolLikeMemory.size(), total);
+        
+        if (total==toolLikeMemory.size())
             listOfObjects.addString(objectsMemory.get(i).asString().c_str());
     }
-    
-    
     
     Bottle &query=cmdPrax.addList();
     //create query list
@@ -329,12 +333,39 @@ Bottle ActivityInterface::askPraxicon(const string &request)
     missing.addString("stirrer");
     missing.addString("plate");
     
+    fprintf(stdout, "sending: \n %s \n", cmdPrax.toString().c_str());
     //send it all to praxicon
     rpcPraxiconInterface.write(cmdPrax,replyPrax);
     
-    fprintf(stdout, "the size of the reply is: %d \n", replyPrax.size());
+    listOfGoals.clear();
+    vector<string> tokens;
+    
+    for (int i=0; i<replyPrax.size()-1; i++) //-1 to remove mouth speak
+    {
+        
+        string replytmp = replyPrax.get(i).asString().c_str();
+        istringstream iss(replytmp);
+        
+        copy(istream_iterator<string>(iss),
+             istream_iterator<string>(),
+              back_inserter(tokens));
+    }
+    
+    int inc = 0;
+    Bottle tmp;
+    for (int i=0; i<=tokens.size(); i++)
+    {
+        if ( ++inc == 4 )
+        {
+            listOfGoals.addList() = tmp;
+            inc=1;
+            tmp.clear();
+        }
+        tmp.addString(tokens[i].c_str());
+    }
 
-    return replyPrax ; //listOfGoals
+    //fprintf(stdout, "Final praxicon is: %s \n",replyPrax.toString().c_str());
+    return listOfGoals;
 }
 
 /**********************************************************/
