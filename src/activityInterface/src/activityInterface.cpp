@@ -892,7 +892,7 @@ bool ActivityInterface::take(const string &objName, const string &handName)
 {
     //check for hand status beforehand to make sure that it is empty
     
-    string handStatus = inHand(handName);
+    string handStatus = inHand(objName);
     if (strcmp (handStatus.c_str(), "none" ) == 0 )
     {
         //talk to iolStateMachineHandler
@@ -907,8 +907,8 @@ bool ActivityInterface::take(const string &objName, const string &handName)
             Bottle cmd, reply;
             cmd.clear(), reply.clear();
             cmd.addString("take");
-            cmd.addString(objName);
-            cmd.addString(handName);
+            cmd.addString(objName.c_str());
+            cmd.addString(handName.c_str());
             rpcAREcmd.write(cmd, reply);
             
             if (reply.get(0).asVocab()==Vocab::encode("ack"))
@@ -941,38 +941,56 @@ bool ActivityInterface::take(const string &objName, const string &handName)
         executeSpeech("I already have the " + handStatus + " in my hand");
         fprintf(stdout, "Cannot grasp already have something in hand\n");
     }
-    
-    
+
     return true;
 }
 
 /**********************************************************/
 bool ActivityInterface::drop(const string &objName, const string &targetName)
 {
-    //check for inHand status beforehand to make sure that the hand has the object
-    
-    //inHand(objName.c_str());
-    
-    //talk to iolStateMachineHandler
-    
-    if (!targetName.empty())
+    string handStatus = inHand(objName);
+    if (strcmp (handStatus.c_str(), "none" ) != 0 )
     {
-        if (elements == 0)
+        //talk to iolStateMachineHandler
+        Bottle position = get3D(targetName);
+        
+        if (position.size()>0)
         {
-            onTopElements.insert(pair<int, string>(elements, targetName.c_str()));
-            elements++;
-        }
-
-        onTopElements.insert(pair<int, string>(elements, objName.c_str()));
-        elements++;
-    }
-    
-    for (std::map<string, string>::iterator it=inHandStatus.begin(); it!=inHandStatus.end(); ++it)
-    {
-        if (strcmp (it->first.c_str(), objName.c_str() ) == 0)
-        {
-            inHandStatus.erase(objName.c_str());
-            break;
+            executeSpeech("ok, I will place the " + objName + " on the " + targetName);
+            
+            //do the take actions
+            Bottle cmd, reply;
+            cmd.clear(), reply.clear();
+            cmd.addString("drop");
+            cmd.addString("over");
+            cmd.addString(targetName.c_str());
+            cmd.addString("gently");
+            cmd.addString(handStatus.c_str());
+            rpcAREcmd.write(cmd, reply);
+            
+            if (reply.get(0).asVocab()==Vocab::encode("ack"))
+            {
+                if (!targetName.empty())
+                {
+                    if (elements == 0)
+                    {
+                        onTopElements.insert(pair<int, string>(elements, targetName.c_str()));
+                        elements++;
+                    }
+                    
+                    onTopElements.insert(pair<int, string>(elements, objName.c_str()));
+                    elements++;
+                }
+                
+                for (std::map<string, string>::iterator it=inHandStatus.begin(); it!=inHandStatus.end(); ++it)
+                {
+                    if (strcmp (it->first.c_str(), objName.c_str() ) == 0)
+                    {
+                        inHandStatus.erase(objName.c_str());
+                        break;
+                    }
+                }
+            }
         }
     }
     
