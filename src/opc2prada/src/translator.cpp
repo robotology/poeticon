@@ -173,7 +173,7 @@ bool   TranslatorModule::updateModule() {
             translatorPort.write();
         } // end "update"
         else if(receive->get(0).asString() == "querydesc2d" && receive->get(1).isInt()) {
-            /*cout << "query received" << endl;*/
+            cout << "querydesc2d " << receive->get(1).isInt() << " received" << endl;
             readingThread->guard.lock();
             dataBase = readingThread->_data;
             ids2 = readingThread->_ids;
@@ -188,27 +188,33 @@ bool   TranslatorModule::updateModule() {
                 }
             }
             Bottle *objecto = dataBase.get(ObjectID+1).asList();
-            /*cout << ObjectID << endl;*/
-            for(int j=0;j<objecto->size();j++) { // for each properties
-                Bottle *propriedade = objecto->get(j).asList();
-                switchCase r = hashtable(propriedade->get(0).asString());
-                /*cout << propriedade->get(0).asString().c_str() << endl;*/
-                // TODO: replace switch/case with if(propriedade->get(0).asString()=="desc2d")
-                switch(r) {
-                    case desc: {
-                        Bottle &send = translatorPort.prepare();
-                        send.clear();
-                        send.addList()=*propriedade->get(1).asList();
-//                        cout << send.toString().c_str() << endl;
-                        translatorPort.write();
-                        break;
+
+            // Giovanni
+            if (objecto!=NULL)
+            {
+
+                /*cout << ObjectID << endl;*/
+                for(int j=0;j<objecto->size();j++) { // for each properties
+                    Bottle *propriedade = objecto->get(j).asList();
+                    switchCase r = hashtable(propriedade->get(0).asString());
+                    /*cout << propriedade->get(0).asString().c_str() << endl;*/
+                    // TODO: replace switch/case with if(propriedade->get(0).asString()=="desc2d")
+                    switch(r) {
+                        case desc: {
+                            Bottle &send = translatorPort.prepare();
+                            send.clear();
+                            send.addList()=*propriedade->get(1).asList();
+    //                        cout << send.toString().c_str() << endl;
+                            translatorPort.write();
+                            break;
+                        }
                     }
                 }
+            
             }
         } // end "querydesc2d"
         else if(receive->get(0).asString() == "querytooldesc2d" && receive->get(1).isInt()) {
-
-            /*cout << "query received" << endl;*/
+            cout << "querytooldesc2d " << receive->get(1).isInt() << " received" << endl;
             readingThread->guard.lock();
             dataBase = readingThread->_data;
             ids2 = readingThread->_ids;
@@ -223,21 +229,28 @@ bool   TranslatorModule::updateModule() {
                 }
             }
             Bottle *objecto = dataBase.get(ObjectID+1).asList();
-            /*cout << ObjectID << endl;*/
-            for(int j=0;j<objecto->size();j++) { // for each properties
-                Bottle *propriedade = objecto->get(j).asList();
-                switchCase r = hashtable(propriedade->get(0).asString());
-                /*cout << propriedade->get(0).asString().c_str() << endl;*/
-                // TODO: replace switch/case with if(propriedade->get(0).asString()=="tooldesc2d")
-                switch(r) {
-                    case tooldesc2d: {
-                        Bottle &send = translatorPort.prepare();
-                        send.clear();
-                        send.addList()=*propriedade->get(1).asList();
-                        translatorPort.write();
-                        break;
+
+            // Giovanni
+            if (objecto!=NULL)
+            {
+
+                /*cout << ObjectID << endl;*/
+                for(int j=0;j<objecto->size();j++) { // for each properties
+                    Bottle *propriedade = objecto->get(j).asList();
+                    switchCase r = hashtable(propriedade->get(0).asString());
+                    /*cout << propriedade->get(0).asString().c_str() << endl;*/
+                    // TODO: replace switch/case with if(propriedade->get(0).asString()=="tooldesc2d")
+                    switch(r) {
+                        case tooldesc2d: {
+                            Bottle &send = translatorPort.prepare();
+                            send.clear();
+                            send.addList()=*propriedade->get(1).asList();
+                            translatorPort.write();
+                            break;
+                        }
                     }
                 }
+
             }
 
         } // end "querytooldesc2d"
