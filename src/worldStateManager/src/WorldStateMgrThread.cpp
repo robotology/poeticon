@@ -183,13 +183,13 @@ bool WorldStateMgrThread::updateWorldState()
         }
         needUpdate = true;
         refreshPerceptionAndValidate(); // TODO: redundant?
-        yInfo("updated world state from robot perception");
+        yInfo("updating world state from robot perception");
     }
     else
     {
         // playback mode
         playbackPaused = false;
-        yInfo("updated world state from playback file");
+        yInfo("updating world state from playback file");
     }
 
     // TODO: opcPort.write() should be here instead of inner functions
@@ -506,14 +506,14 @@ void WorldStateMgrThread::fsmPerception()
             // read new data and ensure validity
             refreshPerceptionAndValidate();
 
-            yInfo("updating world state map");
+            //yInfo("updating world state map");
             mergeMaps(opcMap, trackMap, wsMap);
-            dumpMap(wsMap);
+            //dumpMap(wsMap);
 
             // populate database: if success proceed, else stay in same state
             if ( doPopulateDB() )
             {
-                yDebug() << __func__ << "successfully populated database";
+                //yDebug() << __func__ << "successfully populated database";
                 fsmState = STATE_PERCEPTION_WAIT_CMD;
             }
             else
@@ -543,7 +543,7 @@ void WorldStateMgrThread::fsmPerception()
                 //dumpMap(wsMap);
                 yInfo("updating world state map");
                 mergeMaps(opcMap, trackMap, wsMap);
-                dumpMap(wsMap);
+                //dumpMap(wsMap);
 
                 // populate database
                 if ( doPopulateDB() )
