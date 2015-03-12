@@ -22,7 +22,6 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/../conf"
 find_package(TBB)
 
 # modules that do not need OpenCV
-add_subdirectory(activityInterface)
 add_subdirectory(opc2prada)
 add_subdirectory(pradaPlanner)
 add_subdirectory(worldStateManager)
@@ -30,6 +29,7 @@ add_subdirectory(worldStateManager)
 # modules that need OpenCV
 if(OpenCV_FOUND)
     add_subdirectory(activeSegmentation)
+    add_subdirectory(activityInterface)
     add_subdirectory(affExploreManager)
     add_subdirectory(blobSpotter)
     add_subdirectory(blobDescriptor)
