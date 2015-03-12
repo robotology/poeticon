@@ -460,9 +460,8 @@ def planning_cycle():
             subgoal_file = open(''.join(PathName +"/goal.dat"),'r')
             goal = subgoal_file.read().split(' ')
             subgoal_file.close()
-            print 'goals not met:'
             print goal
-            print state
+            print 'goals not met:'
             not_comp_goals = []
             for t in range(len(goal)):
                 if goal[t] not in state:
