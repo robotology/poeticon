@@ -208,6 +208,12 @@ bool ActivityInterface::configure(yarp::os::ResourceFinder &rf)
     for (int i=0; i<10; i++)
         incrementSize[i] = 0;
     
+    Bottle cmd, reply;
+    cmd.clear(), reply.clear();
+    cmd.addString("attention");
+    cmd.addString("stop");
+    rpcIolState.write(cmd, reply);
+    
     fprintf(stdout,"done initialization\n");
     
     return true ;
