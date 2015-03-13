@@ -211,6 +211,7 @@ def Affordance_comm():
 ##                    planner_yarp.write()
 ##                    break
         new_rule = []
+        posit = []
                     
                 
                     
@@ -288,7 +289,9 @@ def Affordance_comm():
                             Affor_bottle_out.addString(outcome2)
                             Affor_bottle_out.addString(outcome3)
                             geo_yarp.write()
-                            toolhandle = toolhandle+['1']
+                            if rule.split('_')[1] != '11' and rule.split('_')[1] != '12' and rule.split('_')[3] != '11' and rule.split('_')[3] != '12':
+                                for i in range(len(tooldesc)):
+                                    posit = posit + [rule.split('_')[3].replace('()','')] + [tooldesc[i][2][0]] + [tooldesc[i][2][0]]
                         else:
                             if rule.split('_')[1] != '11' and rule.split('_')[1] != '12' and rule.split('_')[3] != '11' and rule.split('_')[3] != '12':
                                 affnet_bottle_out = affnet_yarp.prepare()
@@ -397,6 +400,9 @@ def Affordance_comm():
                             Affor_bottle_out.addString(outcome2)
                             Affor_bottle_out.addString(outcome3)
                             geo_yarp.write()
+                            if rule.split('_')[1] != '11' and rule.split('_')[1] != '12' and rule.split('_')[3] != '11' and rule.split('_')[3] != '12': 
+                                for i in range(len(tooldesc)):
+                                    posit = posit + [rule.split('_')[3].replace('()','')] + [tooldesc[i][2][0]] + [tooldesc[i][2][0]]
                         else:
                             if rule.split('_')[1] != '11' and rule.split('_')[1] != '12' and rule.split('_')[3] != '11' and rule.split('_')[3] != '12':
                                 affnet_bottle_out = affnet_yarp.prepare()
