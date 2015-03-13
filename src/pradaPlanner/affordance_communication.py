@@ -150,6 +150,7 @@ def Affordance_comm():
     for j in range(len(object_IDs)):
         if object_IDs[j].split(',')[1] == 'stick' or object_IDs[j].split(',')[1] == 'rake':
             tools = tools + [object_IDs[j].split(',')[0]]
+    print 'available tools: \n',tools
     for i in range(len(tools)):
         desc_bottle_out = desc_yarp.prepare()
         desc_bottle_out.clear()
@@ -163,7 +164,6 @@ def Affordance_comm():
             print "waiting for reply..."
             if desc_bottle_in:
                 data = desc_bottle_in.toString()
-                print 'tooldescr are:\n', data
                 if data != 'ACK' and data != 'NACK' and data != '()' and data != '':
                     data = desc_bottle_in.toString()
                     print data
@@ -182,6 +182,7 @@ def Affordance_comm():
                 desc_bottle_out.addInt(int(tools[i]))
                 desc_yarp.write()
         tooldesc = tooldesc + [[tools[i], data]]
+        print "tooldesc are:\n", tooldesc
     translation_file = open(''.join(PathName +"/Action_Affordance_Translation.dat"))
     aux_translation = translation_file.read().split('\n')
     translation = []
@@ -291,7 +292,7 @@ def Affordance_comm():
                             geo_yarp.write()
                             if rule.split('_')[1] != '11' and rule.split('_')[1] != '12' and rule.split('_')[3] != '11' and rule.split('_')[3] != '12':
                                 for i in range(len(tooldesc)):
-                                    posit = posit + [rule.split('_')[3].replace('()','')] + [tooldesc[i][2][0]] + [tooldesc[i][2][0]]
+                                    posit = posit + [rule.split('_')[3].replace('()','')] + [tooldesc[i][1][1][0]] + [tooldesc[i][1][1][1]]
                         else:
                             if rule.split('_')[1] != '11' and rule.split('_')[1] != '12' and rule.split('_')[3] != '11' and rule.split('_')[3] != '12':
                                 affnet_bottle_out = affnet_yarp.prepare()
@@ -402,7 +403,7 @@ def Affordance_comm():
                             geo_yarp.write()
                             if rule.split('_')[1] != '11' and rule.split('_')[1] != '12' and rule.split('_')[3] != '11' and rule.split('_')[3] != '12': 
                                 for i in range(len(tooldesc)):
-                                    posit = posit + [rule.split('_')[3].replace('()','')] + [tooldesc[i][2][0]] + [tooldesc[i][2][0]]
+                                    posit = posit + [rule.split('_')[3].replace('()','')] + [tooldesc[i][1][1][0]] + [tooldesc[i][1][1][1]]
                         else:
                             if rule.split('_')[1] != '11' and rule.split('_')[1] != '12' and rule.split('_')[3] != '11' and rule.split('_')[3] != '12':
                                 affnet_bottle_out = affnet_yarp.prepare()
