@@ -202,6 +202,7 @@ bool ActivityInterface::configure(yarp::os::ResourceFinder &rf)
             thetaMax[i]=(*chain_left)(i).getMax();
         }
     }
+
     attach(rpcPort);
     
     first = true;
@@ -221,7 +222,7 @@ bool ActivityInterface::configure(yarp::os::ResourceFinder &rf)
     cmd.addString("head");
     rpcAREcmd.write(cmd, reply);
     
-    fprintf(stdout,"done initialization\n");
+    fprintf(stdout, "done initialization\n");
     
     return true ;
 }
@@ -276,7 +277,6 @@ bool ActivityInterface::goHome()
     are.addString("home");
     are.addString("head");
     rpcAREcmd.write(are,replyAre);
-    
     return true;
 }
 
