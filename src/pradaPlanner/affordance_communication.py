@@ -288,6 +288,7 @@ def Affordance_comm():
                             Affor_bottle_out.addString(outcome2)
                             Affor_bottle_out.addString(outcome3)
                             geo_yarp.write()
+                            toolhandle = toolhandle+['1']
                         else:
                             if rule.split('_')[1] != '11' and rule.split('_')[1] != '12' and rule.split('_')[3] != '11' and rule.split('_')[3] != '12':
                                 affnet_bottle_out = affnet_yarp.prepare()
@@ -303,7 +304,7 @@ def Affordance_comm():
                                         tool_desc2 = tooldesc[o][1][1]
                                         toolhandle[o] = [tool] + [tooldesc[o]]
                                         toolnum = o
-                                message = tool_desc1[1:] + obj_desc[1:] + [2]
+                                message = tool_desc1[2:-1] + obj_desc[1:] + [2]
                                 print '******', message
                                 mess_list = []
                                 for t in range(len(message)):
@@ -331,7 +332,7 @@ def Affordance_comm():
                                 if prob_succ1 == 1.0:
                                     prob_succ1 = 0.95
 
-                                message = tool_desc2[1:] + obj_desc[1:] + [2]
+                                message = tool_desc2[2:-1] + obj_desc[1:] + [2]
                                 affnet_bottle_out = affnet_yarp.prepare()
                                 affnet_bottle_out.clear()
                                 for t in range(len(message)):
@@ -360,9 +361,11 @@ def Affordance_comm():
 
                                 if prob_succ1 >= prob_succ2:
                                     prob_succ = prob_succ1
+                                    posit = posit + [toolhandle[toolnum][0],toolhandle[toolnum][1][0],toolhandle[toolnum][1][1]]
                                     toolhandle[toolnum] = toolhandle[toolnum]+['1']
                                 else:
                                     prob_succ = prob_succ2
+                                    posit = posit + [toolhandle[toolnum][0],toolhandle[toolnum][2][0],toolhandle[toolnum][2][1]]
                                     toolhandle[toolnum] = toolhandle[toolnum]+['2']
                                 prob_fail = 1 - prob_succ
                                 
@@ -409,7 +412,7 @@ def Affordance_comm():
                                         tool_desc2 = tooldesc[o][1][1]
                                         toolhandle[o] = [tool] + [tooldesc[o]]
                                         toolnum = o
-                                message = tool_desc1[1:] + obj_desc[1:] + [1]
+                                message = tool_desc1[2:-1] + obj_desc[1:] + [1]
                                 for t in range(len(message)):
                                     mess_num = float(message[t])
                                     mess_list = mess_list + [mess_num]
@@ -435,7 +438,7 @@ def Affordance_comm():
                                     prob_succ1 = 0.95
 
                                 
-                                message = tool_desc2[1:] + obj_desc[1:] + [1]
+                                message = tool_desc2[2:-1] + obj_desc[1:] + [1]
                                 affnet_bottle_out = affnet_yarp.prepare()
                                 affnet_bottle_out.clear()
                                 for t in range(len(message)):
@@ -464,9 +467,11 @@ def Affordance_comm():
 
                                 if prob_succ1 >= prob_succ2:
                                     prob_succ = prob_succ1
+                                    posit = posit + [toolhandle[toolnum][0],toolhandle[toolnum][1][0],toolhandle[toolnum][1][1]]
                                     toolhandle[toolnum] = toolhandle[toolnum]+['1']
                                 else:
                                     prob_succ = prob_succ2
+                                    posit = posit + [toolhandle[toolnum][0],toolhandle[toolnum][2][0],toolhandle[toolnum][2][1]]
                                     toolhandle[toolnum] = toolhandle[toolnum]+['2']
                                 prob_fail = 1 - prob_succ
                                 
@@ -510,6 +515,12 @@ def Affordance_comm():
                     new_rule = new_rule + [outcome]
                     new_rule = new_rule + [outcome2]
                     new_rule = new_rule + [outcome3]
+        
+        planner_yarp_bottle = planner_yarp.prepare()
+        planner_yarp_bottle.clear()
+        planner_yarp_bottle.addString(' '.join(posit))
+        planner_yarp.write()
+        
     translation_file.close()
 
 Affordance_comm()

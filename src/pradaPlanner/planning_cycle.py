@@ -64,9 +64,9 @@ class ActionExecutorCommunication:
             hand = cmd[3].replace('()','')
             if act == 'grasp' and ( obj == 'rake' or obj == 'stick'):
                 for i in range(len(toolhandle)):
-                    if toolhandle[i][0] == obj:
-                        positx = toolhandle[i][1][int(toolhandle[i][2])][0]
-                        posity = toolhandle[i][1][int(toolhandle[i][2])][1]
+                    if toolhandle[i] == obj:
+                        positx = toolhandle[i+1]
+                        posity = toolhandle[i+2]
                         ind = i
         for k in range(len(Object_list)):
             if str(act) == Object_list[k][0]:
@@ -276,6 +276,16 @@ def planning_cycle():
                     print 'ready'
                     break
                 yarp.Time.delay(1)
+        while 1:
+            Aff_bottle_in = Aff_yarp.read(False)
+            if Aff_bottle_in:
+                data = Aff_bottle_in.toString()
+                print data
+                data = data.replace('((','').replace('))','').split(' ')
+                toolhandle = data
+                break
+            yarp.Time.delay(0.1)
+        print "tool position: \n", toolhandle
         rules_file = open(''.join(PathName +"/rules.dat"),'r')
         old_rules = rules_file.read().split('\n')
         rules_file.close()
@@ -462,8 +472,8 @@ def planning_cycle():
             subgoal_file = open(''.join(PathName +"/goal.dat"),'r')
             goal = subgoal_file.read().split(' ')
             subgoal_file.close()
-            print goal
-            print 'goals not met:'
+            print 'goals: \n', goal
+            print '\n goals not met:'
             not_comp_goals = []
             for t in range(len(goal)):
                 if goal[t] not in state:
