@@ -132,6 +132,8 @@ def planning_cycle():
     print(''.join("cd " + PathName +" && " + "./planner.exe"))
     world_rpc = worldStateCommunication()
     motor_rpc = ActionExecutorCommunication()
+    world_rpc.__init__()
+    motor_rpc.__init__()
     
     geo_yarp = yarp.BufferedPortBottle()##
     geo_yarp.open("/planner/grounding_cmd:io")
@@ -166,7 +168,6 @@ def planning_cycle():
                 goal_bottle_in = goal_yarp.read(False)
                 if goal_bottle_in:
                     break
-                print '...'
                 yarp.Time.delay(0.1)
                     
         while 1:
@@ -176,11 +177,11 @@ def planning_cycle():
     ## cycle that will check if we have any object on the table. if not, it won't continue
         if mode != 3:
             print "opc mode engaged"
-            yarp.Time.delay(0.5)
+            yarp.Time.delay(0.1)
             while 1:
                 print "attempting communication"
                 if world_rpc._is_success(world_rpc._execute("update")):
-                    yarp.Time.delay(0.2)
+                    yarp.Time.delay(0.1)
                     state_flag = 0
                     State_bottle_out = State_yarp.prepare()
                     State_bottle_out.clear()
@@ -203,6 +204,7 @@ def planning_cycle():
                     if state_flag == 1:
                         break
                     yarp.Time.delay(1)
+                yarp.Time.delay(1)
             yarp.Time.delay(0.1)
     ###################
         
