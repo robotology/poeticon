@@ -424,13 +424,16 @@ Bottle ActivityInterface::askPraxicon(const string &request)
 /**********************************************************/
 bool ActivityInterface::processSpeech(const Bottle &speech)
 {
-
     if ( speech.size() > 0 )
     {
+        string s = speech.toString();
         
-        askPraxicon(speech.toString());
+        //remove extra characters
+        //    "\"make a sandwich\""
+        s.erase(0,1);
+        s.erase(s.size()-1,1);
+        askPraxicon(s.c_str());
     }
-    
     return true;
 }
 
