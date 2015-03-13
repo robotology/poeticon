@@ -74,9 +74,11 @@ class ActionExecutorCommunication:
                 if Object_list[objID][1] == 'stick':
                     tool2 = Object_list[objID][0]
             if act == 'grasp' and ( obj == tool1 or obj == tool2):
-                print 'in'
                 for i in range(len(toolhandle)):
                     if str(toolhandle[i]) == (obj):
+                        print toolhandle[i+1]
+                        print float(toolhandle[i+1])
+                        print int(float(toolhandle[i+1]))
                         positx = int(float(toolhandle[i+1]))
                         posity = int(float(toolhandle[i+2]))
                         ind = i
@@ -89,11 +91,13 @@ class ActionExecutorCommunication:
                 hand = Object_list[k][1].replace('hand','')
         if act == 'grasp' and (obj == 'rake' or obj == 'stick'):
             act = 'askForTool'
-            obj = hand
+            print 'hand used:', hand
             message.addString(act)
-            message.addString(obj)
+            message.addString(hand)
+            print 'positions:', positx, posity
             message.addInt(positx)
             message.addInt(posity)
+            print 'full message:' , message.toString()
         elif act == 'grasp' and (obj != 'rake' and obj != 'stick'):
             act = 'take'
             map(message.addString, [act, obj, hand])
