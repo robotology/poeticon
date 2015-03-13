@@ -52,6 +52,8 @@ class ActionExecutorCommunication:
         Object_list = Objects_file.read().split(';')
         Object_list.pop()
         Objects_file.close()
+        message = yarp.Bottle()
+        message.clear()
         for k in range(len(Object_list)):
             Object_list[k] = Object_list[k].replace('(','').replace(')','').split(',')
         cmd = cmd.split('_')
@@ -75,8 +77,8 @@ class ActionExecutorCommunication:
                 print 'in'
                 for i in range(len(toolhandle)):
                     if str(toolhandle[i]) == (obj):
-                        positx = toolhandle[i+1]
-                        posity = toolhandle[i+2]
+                        positx = int(toolhandle[i+1])
+                        posity = int(toolhandle[i+2])
                         ind = i
         for k in range(len(Object_list)):
             if str(act) == Object_list[k][0]:
@@ -88,15 +90,17 @@ class ActionExecutorCommunication:
         if act == 'grasp' and (obj == 'rake' or obj == 'stick'):
             act = 'askForTool'
             obj = hand
-            hand = ' '.join([positx]+[posity])
+            message.addString(act)
+            message.addString(obj)
+            message.addInt(positx)
+            message.addInt(posity)
         elif act == 'grasp' and (obj != 'rake' and obj != 'stick'):
             act = 'take'
-            
+            map(message.addString, [act, obj, hand])
+        else:
+            map(message.addString, [act, obj, hand])
             
         print act, obj, hand
-        message = yarp.Bottle()
-        message.clear()
-        map(message.addString, [act, obj, hand])
         ans = yarp.Bottle()
         self._rpc_client.write(message, ans)
         return ans
