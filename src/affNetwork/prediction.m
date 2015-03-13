@@ -22,7 +22,7 @@ clear;
 % initPmtk3;
 
 %% Choice of network:
-bn = 'pca6merge';
+bn = 'pca4sep';
 
 switch bn
     case 'pca4merge'
@@ -30,7 +30,10 @@ switch bn
     case 'pca6merge'
 		load('pca6mergecomp.mat');
 	case 'pca4sep'
-		load('pca2T-2O.mat');
+		%load('pca_2n_2C_noise_25b.mat');
+        load('pca_2n_2C_noise_2b.mat');
+    case 'pca6sep'
+		load('pca_2n_3C.mat');
     otherwise
         error([bn ' is not a known Network']);
         
@@ -134,6 +137,20 @@ while(~done)
                     score = discretize(score,ranges);
                     prior_values = [score action]; % and add the action to prior
                     posterior_nodes = [6 7]; % X and Y effect 
+                case 'pca6sep'
+                    prior_nodes  = [1 2 3 4 5 6 7]; % pca1_T pca2_T pca3_O pca4_O action
+                    %prior_values = zeros(1, size(prior_nodes,2));
+                    for n = 1:10 % features of the tool and object
+                        features(n) = prior.get(n-1).asDouble;
+                    end
+                    %action = prior.get(0).asList().get(10).asDouble;
+                    action = prior.get(10).asDouble;
+                    featuresT = features(1:5);
+                    featuresO = features(6:10);
+                    score=[ featuresT*pinv(pcT(:,1:components)') featuresO*pinv(pcO(:,1:components)')];
+                    score = discretize(score,ranges);
+                    prior_values = [score action]; % and add the action to prior
+                    posterior_nodes = [8 9]; % X and Y effect
                     
                 otherwise
                     error([bn ' is not a known Network']);
