@@ -427,7 +427,6 @@ bool ActivityInterface::processSpeech(const Bottle &speech)
     if ( speech.size() > 0 )
     {
         string s = speech.toString();
-        
         //remove extra characters
         //    "\"make a sandwich\""
         s.erase(0,1);
@@ -444,7 +443,7 @@ bool ActivityInterface::processPradaStatus(const Bottle &status)
     if ( status.size() > 0 )
     {
         fprintf(stdout, "[processPradaStatus] the status is %s \n", status.toString().c_str());
-        if (strcmp (status.get(0).asString().c_str(), "ok" ) == 0)
+        if (strcmp (status.get(0).asString().c_str(), "OK" ) == 0)
         {
             for (int i=1; i< status.size(); i++)
             {
@@ -454,7 +453,7 @@ bool ActivityInterface::processPradaStatus(const Bottle &status)
             }
             executeSpeech("I made a " + objectsUsed.toString() + " sandwich");
         }
-        else if (strcmp (status.get(0).asString().c_str(), "fail" ) == 0)
+        else if (strcmp (status.get(0).asString().c_str(), "FAIL" ) == 0)
         {
             Bottle objectsMissing;
             for (int i=1; i< status.size(); i++)
