@@ -437,6 +437,31 @@ void WorldStateMgrThread::fsmPerception()
                     yWarning() << __func__ << "obtained invalid response from tracker:" << trackerReply.toString().c_str();
             }
 
+            // TODO: this should be sent once as soon as activityPort is connected
+            if (!toldActivityGoHome && activityPort.getOutputCount()>=1)
+            {
+                Bottle activityCmd, activityReply;
+                activityCmd.clear();
+                activityReply.clear();
+                activityCmd.addString("goHome");
+                yDebug() << __func__ <<  "sending query to tracker:" << activityCmd.toString().c_str();
+                activityPort.write(activityCmd, activityReply);
+                yDebug() << __func__ <<  "obtained response:" << activityReply.toString().c_str();
+                bool validResponse = false;
+                validResponse = ( activityReply.size()>0 &&
+                                  activityReply.get(0).asVocab()==Vocab::encode("ok") );
+
+                if (validResponse)
+                {
+                    yDebug() << __func__ <<  "obtained valid response:" << activityReply.toString().c_str();
+                }
+                else
+                {
+                    yWarning() << __func__ <<  "obtained invalid response:" << activityReply.toString().c_str();
+                }
+                toldActivityGoHome = true;
+            }
+
             // proceed
             fsmState = STATE_PERCEPTION_INIT_TRACKER;
 
@@ -497,31 +522,6 @@ void WorldStateMgrThread::fsmPerception()
 
         case STATE_PERCEPTION_WAIT_ACTIVITYIF:
         {
-            // TODO: reorganize checks within this state
-            if (!toldActivityGoHome && activityPort.getOutputCount()>=1)
-            {
-                Bottle activityCmd, activityReply;
-                activityCmd.clear();
-                activityReply.clear();
-                activityCmd.addString("goHome");
-                yDebug() << __func__ <<  "sending query to tracker:" << activityCmd.toString().c_str();
-                activityPort.write(activityCmd, activityReply);
-                yDebug() << __func__ <<  "obtained response:" << activityReply.toString().c_str();
-                bool validResponse = false;
-                validResponse = ( activityReply.size()>0 &&
-                                  activityReply.get(0).asVocab()==Vocab::encode("ok") );
-
-                if (validResponse)
-                {
-                    yDebug() << __func__ <<  "obtained valid response:" << activityReply.toString().c_str();
-                }
-                else
-                {
-                    yWarning() << __func__ <<  "obtained invalid response:" << activityReply.toString().c_str();
-                }
-                toldActivityGoHome = true;
-            }
-
             if (!toldUserWaitActivityIF && activityPort.getOutputCount()<1)
             {
                 yInfo("waiting for %s to be connected to /activityInterface/rpc:i",
