@@ -324,7 +324,6 @@ bool ActivityInterface::executeSpeech (const string &speech)
     cmdIol.addString("say");
     cmdIol.addString(speech.c_str());
     rpcIolState.write(cmdIol,replyIol);
-    fprintf(stdout,"%s\n", replyIol.toString().c_str());
     return true;
 }
 
@@ -336,7 +335,6 @@ Bottle ActivityInterface::askPraxicon(const string &request)
     
     Bottle toolLikeMemory = getToolLikeNames();
     Bottle objectsMemory = getNames();
-    
     
     fprintf(stdout, "tool names: %s \n", toolLikeMemory.toString().c_str());
     fprintf(stdout, "object names: %s \n", objectsMemory.toString().c_str());
@@ -360,8 +358,6 @@ Bottle ActivityInterface::askPraxicon(const string &request)
         int total=0;
         for (int x=0; x<toolLikeMemory.size(); x++)
             total+=passed[x];
-        
-        //fprintf(stdout,"toolLikeMemory size: %d and total %d\n", toolLikeMemory.size(), total);
         
         if (total==toolLikeMemory.size())
             listOfObjects.addString(objectsMemory.get(i).asString().c_str());
@@ -390,7 +386,7 @@ Bottle ActivityInterface::askPraxicon(const string &request)
     if (replyPrax.size() > 0)
     {
     
-        for (int i=0; i<replyPrax.size()-1; i++) //-1 to remove mouth speak
+        for (int i=0; i<replyPrax.size()-1; i++) //-1 to remove (mouth speak goal from praxicon)
         {
             string replytmp = replyPrax.get(i).asString().c_str();
             istringstream iss(replytmp);
@@ -400,8 +396,7 @@ Bottle ActivityInterface::askPraxicon(const string &request)
                   back_inserter(tokens));
         }
         
-        //adding this to prevent missing the last goal or going out of range
-        tokens.push_back("endofstring");
+        tokens.push_back("endofstring"); //adding this to prevent missing the last goal or going out of range
         
         int inc = 0;
         Bottle tmp;
@@ -415,12 +410,9 @@ Bottle ActivityInterface::askPraxicon(const string &request)
             }
             tmp.addString(tokens[i].c_str());
         }
-        //fprintf(stdout, "Final praxicon is: %s \n",replyPrax.toString().c_str());
     }
     else
-    {
         executeSpeech("something went terribly wrong. I cannot " + request);
-    }
     
     praxiconToPradaPort.write(listOfGoals);
     
