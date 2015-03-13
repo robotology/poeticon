@@ -64,6 +64,8 @@ class ActionExecutorCommunication:
             obj = cmd[1]
             hand = cmd[3].replace('()','')
             print Object_list
+            tool1 = ''
+            tool2 = ''
             for objID in range(len(Object_list)):
                 if Object_list[objID][1] == 'rake':
                     tool1 = Object_list[objID][0]
