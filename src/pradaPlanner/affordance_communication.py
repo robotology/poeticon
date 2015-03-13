@@ -188,6 +188,8 @@ def Affordance_comm():
     translation = []
     for i in range(len(aux_translation)):
         translation = translation + [aux_translation[i].split(' ')]
+    
+    posit = []
     while 1:
         command = ''
         while 1:
@@ -197,6 +199,23 @@ def Affordance_comm():
                 command = Affor_bottle_in.toString()
                 print "updating rule..."
                 break
+            planner_bottle_in = planner_yarp.read(False)
+            if planner_bottle_in:
+                comm = planner_bottle_in.toString()
+                if comm == 'query':
+                    new_posit = []
+                    for g in range(len(posit)/3):
+                        if posit[g] not in new_posit:
+                            new_posit = new_posit + [posit[g],posit[g+1],posit[g+2]]
+                    for g in range(len(new_posit)):
+                        new_posit[g] = str(new_posit[g])
+                    message = ' '.join(new_posit)
+                    print message
+                    planner_bottle_out = planner_yarp.prepare()
+                    planner_bottle_out.clear()
+                    planner_bottle_out.addString(message)
+                    planner_yarp.write()
+                    break
 ##            planner_bottle_in = planner_yarp.read(False)
 ##            if planner_bottle_in:
 ##                data = planner_bottle_in.toString()
@@ -211,9 +230,12 @@ def Affordance_comm():
 ##                        print planner_bottle_out
 ##                    planner_yarp.write()
 ##                    break
+##            planner_yarp_bottle = planner_yarp.prepare()
+##            planner_yarp_bottle.clear()
+##            planner_yarp_bottle.addString(' '.join(posit))
+##            planner_yarp.write()
         new_rule = []
-        posit = []
-                    
+        print posit          
                 
                     
         if command == 'kill':
@@ -523,10 +545,7 @@ def Affordance_comm():
                     new_rule = new_rule + [outcome2]
                     new_rule = new_rule + [outcome3]
         
-        planner_yarp_bottle = planner_yarp.prepare()
-        planner_yarp_bottle.clear()
-        planner_yarp_bottle.addString(' '.join(posit))
-        planner_yarp.write()
+
         
     translation_file.close()
 
