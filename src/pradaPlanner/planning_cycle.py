@@ -70,10 +70,11 @@ class ActionExecutorCommunication:
                     tool1 = Object_list[objID][0]
                 if Object_list[objID][1] == 'stick':
                     tool2 = Object_list[objID][0]
-                    
+            print toolhandle        
             if act == 'grasp' and ( obj == tool1 or obj == tool2):
+                print 'in'
                 for i in range(len(toolhandle)):
-                    if toolhandle[i] == obj:
+                    if str(toolhandle[i]) == (obj):
                         positx = toolhandle[i+1]
                         posity = toolhandle[i+2]
                         ind = i
@@ -290,6 +291,7 @@ def planning_cycle():
             if Aff_bottle_in:
                 data = Aff_bottle_in.toString()
                 data = data.replace('((','').replace('))','').split(' ')
+                print "tool position received:\n", data
                 toolhandle = data
                 break
             yarp.Time.delay(0.1)
@@ -330,6 +332,7 @@ def planning_cycle():
             
         while(True):
             ## Plan!!!
+            
             flag_kill = 0
             cont = 0
             if mode != 3:
@@ -487,7 +490,6 @@ def planning_cycle():
             prtmess = goal
             for i in range(len(goal)):
                 for t in range(len(object_IDs)):
-                    print object_IDs[t][0], object_IDs[t][1]
                     prtmess[i] = prtmess[i].replace(object_IDs[t][0], object_IDs[t][1])
             print 'goals: \n',prtmess
             print '\n goals not met:'
@@ -496,9 +498,7 @@ def planning_cycle():
                 if goal[t] not in state:
                     prtmess = goal[t]
                     for o in range(len(object_IDs)):
-                        print prtmess
                         prtmess = prtmess.replace(object_IDs[o][0], object_IDs[o][1])
-                        print prtmess
                     not_comp_goals = not_comp_goals + [goal[t]]
                     print prtmess
                     cont = 1
@@ -558,7 +558,6 @@ def planning_cycle():
                 rules_file.close()
             act_check = '  %s' %next_action
             if act_check in rules:
-                toolhandle = ['16',['1','1']]
                 objects_used_now = re.findall(r'\d+',next_action)
                 for u in range(len(objects_used_now)):
                     if objects_used_now[u] not in toolhandle and objects_used_now[u] not in objects_used:
@@ -568,7 +567,6 @@ def planning_cycle():
                     prtmess = prtmess.replace(object_IDs[t][0], object_IDs[t][1])
                 print 'action to be executed: ', prtmess, '\n'
                 motor_rpc._is_success(motor_rpc._execute(PathName, next_action, toolhandle))
-                world_rpc._is_success(world_rpc._execute("update"))
                 raw_input("press any key")
 
 
@@ -644,7 +642,8 @@ def planning_cycle():
                     state_file.write(state)
                     state_file.close()
     ##########################################################################
-                
+            
+            world_rpc._is_success(world_rpc._execute("update"))
             print 'planning step: ' ,plan_level
             print 'planning horizon: ',horizon
             if horizon > 15:
