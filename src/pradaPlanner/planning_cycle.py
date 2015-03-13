@@ -62,7 +62,13 @@ class ActionExecutorCommunication:
             act = cmd[0]
             obj = cmd[1]
             hand = cmd[3].replace('()','')
-            if act == 'grasp' and ( obj == 'rake' or obj == 'stick'):
+            for l in range(len(Object_list)):
+                if Object_list[l][1] == 'rake':
+                    tool1 = Object_list[l][0]
+                if Object_list[l][1] == 'stick':
+                    tool2 = Object_list[l][0]
+                    
+            if act == 'grasp' and ( obj == tool1 or obj == tool2):
                 for i in range(len(toolhandle)):
                     if toolhandle[i] == obj:
                         positx = toolhandle[i+1]
