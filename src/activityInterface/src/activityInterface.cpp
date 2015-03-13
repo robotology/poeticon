@@ -283,10 +283,12 @@ bool ActivityInterface::goHome()
     rpcAREcmd.write(are,replyAre);
     
     if (strcmp (replyAre.toString().c_str(),"[ack]") == 0)
-        reply = false;
-    else
         reply = true;
-    return reply;
+    else
+        reply = false;
+    
+    
+    return true;
 }
 
 /**********************************************************/
