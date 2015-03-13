@@ -88,6 +88,7 @@ def Affordance_comm():
     affnet_yarp.open("/AffordanceComm/aff_query:io")
 
     ActionQuery = ActionQueryCommunication()
+    ActionQuery.__init__()
 
     rf = yarp.ResourceFinder()
     rf.setVerbose(True)
