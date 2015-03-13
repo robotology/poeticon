@@ -1232,8 +1232,10 @@ bool ActivityInterface::askForTool(const std::string &handName, const int32_t po
 bool ActivityInterface::pull(const string &objName, const string &toolName)
 {
     pauseAllTrackers();
+    fprintf(stdout, "[pull] asked to pull %s with %s\n", objName.c_str(), toolName.c_str());
     //ask for tool
     //do the pulling action
+    fprintf(stdout, "[pull] done");
     resumeAllTrackers();
     return true;
 }
@@ -1242,8 +1244,10 @@ bool ActivityInterface::pull(const string &objName, const string &toolName)
 bool ActivityInterface::push(const string &objName, const string &toolName)
 {
     pauseAllTrackers();
+    fprintf(stdout, "[push] asked to push %s with %s\n", objName.c_str(), toolName.c_str());
     //ask for tool
     //do the pushing action
+    fprintf(stdout, "[push] done");
     resumeAllTrackers();
     return true;
 }
