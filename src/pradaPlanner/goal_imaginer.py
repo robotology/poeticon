@@ -60,21 +60,22 @@ def goal_imaginer():
                 if prax_bottle_in:
                     instructions = []
                     print 'bottle received: \n', prax_bottle_in.toString()
-                    for g in range(prax_bottle_in.size()):
-                        temp_instructions = []
-                        for y in range(prax_bottle_in.get(g).asList().size()):
-                            temp1_instructions = []
-                            for t in range(prax_bottle_in.get(g).asList().get(y).asList().size()):
-                                temp1_instructions = temp1_instructions + [prax_bottle_in.get(g).asList().get(y).asList().get(t).toString()]
-                                print temp1_instructions
-                            temp_instructions = temp_instructions + [temp1_instructions]
-                        instructions = instructions + temp_instructions
-                    yarp.Time.delay(0.1)
-                    goal_bottle_out = goal_yarp.prepare()
-                    goal_bottle_out.clear()
-                    goal_bottle_out.addString('done')
-                    goal_yarp.write()
-                    break
+                    if instructions != []:
+                        for g in range(prax_bottle_in.size()):
+                            temp_instructions = []
+                            for y in range(prax_bottle_in.get(g).asList().size()):
+                                temp1_instructions = []
+                                for t in range(prax_bottle_in.get(g).asList().get(y).asList().size()):
+                                    temp1_instructions = temp1_instructions + [prax_bottle_in.get(g).asList().get(y).asList().get(t).toString()]
+                                    print temp1_instructions
+                                temp_instructions = temp_instructions + [temp1_instructions]
+                            instructions = instructions + temp_instructions
+                        yarp.Time.delay(0.1)
+                        goal_bottle_out = goal_yarp.prepare()
+                        goal_bottle_out.clear()
+                        goal_bottle_out.addString('done')
+                        goal_yarp.write()
+                        break
             
         if command == 'update':
             print 'starting'
