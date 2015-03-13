@@ -70,12 +70,36 @@ service activityInterface_IDLServer
     bool take(1:string objName, 2:string handName)
     
     /**
-     * Perform the drop action on the particular object with the particular hand
+     * Perform the drops action on the particular object with the particular hand
      * @param objName specifies the name of the object in question
-     * @param targetName specifies the name of target object to drop onto.
      * @return true/false on droping or not
      **/
-    bool drop(1:string objName, 2:string targetName)
+    bool drop(1:string objName)
+    
+    /**
+     * Perform the put action on the particular object with the particular hand
+     * @param objName specifies the name of the object in question
+     * @param targetName specifies the name of target object to drop onto.
+     * @return true/false on putting or not
+     **/
+    bool put(1:string objName, 2:string targetName)
+    
+    /**
+     * Perform the push action on the particular object with the particular tool
+     * @param objName specifies the name of the object in question
+     * @param toolName specifies the name of target tool.
+     * @return true/false on pushing or not
+     **/
+    bool push(1:string objName, 2:string toolName)
+    
+    /**
+     * Perform the pull action on the particular object with the particular tool
+     * @param objName specifies the name of the object in question
+     * @param toolName specifies the name of target tool.
+     * @return true/false on pulling or not
+     **/
+    bool pull(1:string objName, 2:string toolName)
+
     
     /**
      * Perform the take action on the particular tool with the particular hand
@@ -84,7 +108,7 @@ service activityInterface_IDLServer
      * @param ypos specifies the 2D position of the object on the Y axis
      * @return true/false on taking or not
      **/
-    bool geto(1:string handName, 2:i32 xpos, 3:i32 ypos)
+    bool askForTool(1:string handName, 2:i32 xpos, 3:i32 ypos)
     
     /**
      * Ask for the list of labels that are under ojbName
@@ -121,9 +145,14 @@ service activityInterface_IDLServer
     Bottle askPraxicon(1:string request)
     
     /**
+     * Return to home position
+     * @return true/false on homeing or not
+     **/
+    bool goHome()
+    
+    /**
      * Quit the module.
      * @return true/false on success/failure
      */
     bool quit();
-
 }

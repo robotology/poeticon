@@ -114,6 +114,12 @@ bool ActivityInterface::configure(yarp::os::ResourceFinder &rf)
     rpcPraxiconInterface.setReporter(memoryReporter);
     rpcPraxiconInterface.open(("/"+moduleName+"/praxicon:rpc").c_str());
     
+    pradaStatus.setManager(this);
+    pradaStatus.open(("/"+moduleName+"/prada:i").c_str());
+    
+    praxiconToPradaPort.open(("/"+moduleName+"/praxicon:o").c_str());
+    
+    
     yarp::os::Network::connect(("/"+moduleName+"/arecmd:rpc").c_str(), "/actionsRenderingEngine/cmd:io");
     yarp::os::Network::connect(("/"+moduleName+"/are:rpc").c_str(), "/actionsRenderingEngine/get:io");
     yarp::os::Network::connect(("/"+moduleName+"/memory:rpc").c_str(), "/memory/rpc");
@@ -196,6 +202,7 @@ bool ActivityInterface::configure(yarp::os::ResourceFinder &rf)
             thetaMax[i]=(*chain_left)(i).getMax();
         }
     }
+
     attach(rpcPort);
     
     first = true;
@@ -204,7 +211,18 @@ bool ActivityInterface::configure(yarp::os::ResourceFinder &rf)
     for (int i=0; i<10; i++)
         incrementSize[i] = 0;
     
-    fprintf(stdout,"done initialization\n");
+    Bottle cmd, reply;
+    cmd.clear(), reply.clear();
+    cmd.addString("attention");
+    cmd.addString("stop");
+    rpcIolState.write(cmd, reply);
+    
+    cmd.clear(), reply.clear();
+    cmd.addString("home");
+    cmd.addString("head");
+    rpcAREcmd.write(cmd, reply);
+    
+    fprintf(stdout, "done initialization\n");
     
     return true ;
 }
@@ -222,6 +240,8 @@ bool ActivityInterface::interruptModule()
     rpcIolState.interrupt();
     blobPortIn.interrupt();
     rpcPraxiconInterface.interrupt();
+    pradaStatus.interrupt();
+    praxiconToPradaPort.interrupt();
     semaphore.post();
     return true;
 }
@@ -242,9 +262,29 @@ bool ActivityInterface::close()
     rpcIolState.close();
     blobPortIn.close();
     rpcPraxiconInterface.close();
+    pradaStatus.close();
+    praxiconToPradaPort.close();
     fprintf(stdout, "finished shutdown procedure\n");
     semaphore.post();
     return true;
+}
+
+/**********************************************************/
+bool ActivityInterface::goHome()
+{
+    bool reply;
+    
+    Bottle are, replyAre;
+    are.clear(),replyAre.clear();
+    are.addString("home");
+    are.addString("head");
+    rpcAREcmd.write(are,replyAre);
+    
+    if (strcmp (replyAre.toString().c_str(),"[ack]") == 0)
+        reply = false;
+    else
+        reply = true;
+    return reply;
 }
 
 /**********************************************************/
@@ -287,6 +327,7 @@ bool ActivityInterface::executeSpeech (const string &speech)
 /**********************************************************/
 Bottle ActivityInterface::askPraxicon(const string &request)
 {
+    praxiconRequest = request;
     Bottle listOfGoals, cmdPrax, replyPrax;
     
     Bottle toolLikeMemory = getToolLikeNames();
@@ -330,43 +371,101 @@ Bottle ActivityInterface::askPraxicon(const string &request)
     Bottle &missing=cmdPrax.addList();
     //create query list
     missing.addString("missing");
-    missing.addString("stirrer");
-    missing.addString("plate");
+    //missing.addString("stirrer");
+    //missing.addString("plate");
     
     fprintf(stdout, "sending: \n %s \n", cmdPrax.toString().c_str());
     //send it all to praxicon
     rpcPraxiconInterface.write(cmdPrax,replyPrax);
     
-    listOfGoals.clear();
+    
+    Bottle &tmpList = listOfGoals.addList();
+    //listOfGoals.clear();
     vector<string> tokens;
     
-    for (int i=0; i<replyPrax.size()-1; i++) //-1 to remove mouth speak
+    if (replyPrax.size() > 0)
     {
-        string replytmp = replyPrax.get(i).asString().c_str();
-        istringstream iss(replytmp);
-        
-        copy(istream_iterator<string>(iss),
-             istream_iterator<string>(),
-              back_inserter(tokens));
-    }
     
-    //adding this to prevent missing the last goal and going out of range
-    tokens.push_back("endofstring");
-    
-    int inc = 0;
-    Bottle tmp;
-    for (int i=0; i<tokens.size(); i++)
-    {
-        if ( ++inc == 4 )
+        for (int i=0; i<replyPrax.size()-1; i++) //-1 to remove mouth speak
         {
-            listOfGoals.addList() = tmp;
-            inc=1;
-            tmp.clear();
+            string replytmp = replyPrax.get(i).asString().c_str();
+            istringstream iss(replytmp);
+            
+            copy(istream_iterator<string>(iss),
+                 istream_iterator<string>(),
+                  back_inserter(tokens));
         }
-        tmp.addString(tokens[i].c_str());
+        
+        //adding this to prevent missing the last goal or going out of range
+        tokens.push_back("endofstring");
+        
+        int inc = 0;
+        Bottle tmp;
+        for (int i=0; i<tokens.size(); i++)
+        {
+            if ( ++inc == 4 )
+            {
+                tmpList.addList() = tmp;
+                inc=1;
+                tmp.clear();
+            }
+            tmp.addString(tokens[i].c_str());
+        }
+        //fprintf(stdout, "Final praxicon is: %s \n",replyPrax.toString().c_str());
     }
-    //fprintf(stdout, "Final praxicon is: %s \n",replyPrax.toString().c_str());
+    else
+    {
+        executeSpeech("something went terribly wrong. I cannot " + request);
+    }
+    
+    praxiconToPradaPort.write(listOfGoals);
+    
     return listOfGoals;
+}
+
+/**********************************************************/
+bool ActivityInterface::processPradaStatus(const Bottle &status)
+{
+    Bottle objectsUsed;
+    if ( status.size() > 0 )
+    {
+        fprintf(stdout, "the status is %s \n", status.toString().c_str());
+        if (strcmp (status.get(0).asString().c_str(), "ok" ) == 0)
+        {
+            for (int i=1; i< status.size(); i++)
+            {
+                if (strcmp (status.get(i).asString().c_str(), "bun_bottom" ) != 0 && strcmp (status.get(i).asString().c_str(), "bun_top" ) != 0)
+                    objectsUsed.addString(status.get(i).asString().c_str());
+
+            }
+            executeSpeech("I made a " + objectsUsed.toString() + " sandwich");
+        }
+        else if (strcmp (status.get(0).asString().c_str(), "fail" ) == 0)
+        {
+            Bottle objectsMissing;
+            for (int i=1; i< status.size(); i++)
+            {
+                objectsMissing.addString(status.get(i).asString());
+            }
+            
+            string toSay = "I seem to be missing the " ;
+            for (int i=0; i<objectsMissing.size(); i++)
+            {
+                toSay += objectsMissing.get(i).asString();
+                if (i < objectsMissing.size()-1 )
+                    toSay+=" and";
+            }
+            executeSpeech(toSay);
+            executeSpeech("I need to ask the praxicon for help!" );
+            
+            askPraxicon(praxiconRequest);
+        }
+        else
+        {
+            fprintf(stdout, "Something is wrong with the status\n");
+        }
+    }
+    return true;
 }
 
 /**********************************************************/
@@ -702,7 +801,7 @@ string ActivityInterface::getLabel(const int32_t pos_x, const int32_t pos_y)
                 int diffx = abs(cog.get(0).asInt() - pos_x);
                 int diffy = abs(cog.get(1).asInt() - pos_y);
                 
-                if ( diffx < 10 && diffy < 10)
+                if ( abs (diffx + diffy) < 50)
                 {
                     if (propField->check("name"))
                     {
@@ -786,7 +885,6 @@ double ActivityInterface::getManip(const string &objName, const std::string &han
             
             manip_right*=(1-exp(-limits_right));
             
-            
             if (strcmp (handName.c_str(),"left") == 0)
                 manip = manip_left;
             else if (strcmp (handName.c_str(),"right") == 0)
@@ -799,12 +897,38 @@ double ActivityInterface::getManip(const string &objName, const std::string &han
     }
     else
     {
-        if (strcmp (handName.c_str(),"left") == 0)
-            manip = 0.6;
-        else if (strcmp (handName.c_str(),"right") == 0)
-            manip = 0.4;
+        //adding this in case of no robot
+        Bottle position = get3D(objName);
+        
+        if (position.get(0).asDouble() > -0.55 && position.get(1).asDouble() < - 0.07)
+        {
+            if (strcmp (handName.c_str(),"left") == 0)
+                manip = 0.8;
+            if (strcmp (handName.c_str(),"right") == 0)
+                manip = 0.3;
+        }
+        else if (position.get(0).asDouble() > -0.55 && position.get(1).asDouble() > 0.07)
+        {
+            if (strcmp (handName.c_str(),"left") == 0)
+                manip = 0.3;
+            if (strcmp (handName.c_str(),"right") == 0)
+                manip = 0.8;
+        }
+        else if (position.get(0).asDouble() > -0.55 && position.get(1).asDouble() < 0.07 && position.get(1).asDouble() > - 0.07)
+        {
+            if (strcmp (handName.c_str(),"left") == 0)
+                manip = 0.8;
+            if (strcmp (handName.c_str(),"right") == 0)
+                manip = 0.8;
+        }
         else
-            manip = 0.0;
+        {
+            if (strcmp (handName.c_str(),"left") == 0)
+                manip = 0.1;
+            if (strcmp (handName.c_str(),"right") == 0)
+                manip = 0.1;
+        }
+
     }
     return manip;
 }
@@ -813,8 +937,6 @@ double ActivityInterface::getManip(const string &objName, const std::string &han
 string ActivityInterface::inHand(const string &objName)
 {
     string handName;
-    
-    //handName = inHandStatus.find(objName.c_str())->second;
     
     for (std::map<string, string>::iterator it=inHandStatus.begin(); it!=inHandStatus.end(); ++it)
     {
@@ -832,58 +954,126 @@ string ActivityInterface::inHand(const string &objName)
 bool ActivityInterface::take(const string &objName, const string &handName)
 {
     //check for hand status beforehand to make sure that it is empty
-    
-    //handStatus(handName);
-    
-    //talk to iolStateMachineHandler
-    //figure out if object is visible
-    
-    //if object is visible do the following
-    
-    for (std::map<int, string>::iterator it=onTopElements.begin(); it!=onTopElements.end(); ++it)
+    string handStatus = inHand(objName);
+    if (strcmp (handStatus.c_str(), "none" ) == 0 )
     {
-        if (strcmp (it->second.c_str(), objName.c_str() ) == 0)
+        //talk to iolStateMachineHandler
+        Bottle position = get3D(objName);
+    
+        if (position.size()>0)
         {
-            int id = it->first;
-            onTopElements.erase(id);
-            elements--;
+            fprintf(stdout, "object is visible at %s will do the take action \n", position.toString().c_str());
+            
+            executeSpeech("ok, I will take the " + objName);
+            //do the take actions
+            Bottle cmd, reply;
+            cmd.clear(), reply.clear();
+            cmd.addString("take");
+            cmd.addString(objName.c_str());
+            cmd.addString(handName.c_str());
+            rpcAREcmd.write(cmd, reply);
+            
+            if (reply.get(0).asVocab()==Vocab::encode("ack"))
+            {
+                for (std::map<int, string>::iterator it=onTopElements.begin(); it!=onTopElements.end(); ++it)
+                {
+                    if (strcmp (it->second.c_str(), objName.c_str() ) == 0)
+                    {
+                        int id = it->first;
+                        onTopElements.erase(id);
+                        elements--;
+                    }
+                }
+                
+                //update inHandStatus map
+                inHandStatus.insert(pair<string, string>(objName.c_str(), handName.c_str()));
+            }
+            else
+            {
+                executeSpeech("I have failed to take the" + objName);
+            }
+        }
+        else
+        {
+            executeSpeech("I am sorry I cannot see the" + objName);
         }
     }
-    
-    //do the take actions
-    
-    //update inHandStatus map
-    inHandStatus.insert(pair<string, string>(objName.c_str(), handName.c_str()));
+    else
+    {
+        executeSpeech("I already have the " + objName + " in my hand");
+        fprintf(stdout, "Cannot grasp already have something in hand\n");
+    }
+
     return true;
 }
 
 /**********************************************************/
-bool ActivityInterface::drop(const string &objName, const string &targetName)
+bool ActivityInterface::drop(const string &objName)
 {
-    //check for inHand status beforehand to make sure that the hand has the object
-    
-    //inHand(objName.c_str());
-    
-    //talk to iolStateMachineHandler
-    
-    if (!targetName.empty())
+    string handName = inHand(objName);
+    if (strcmp (handName.c_str(), "none" ) != 0 )
     {
-        if (elements == 0)
-        {
-            onTopElements.insert(pair<int, string>(elements, targetName.c_str()));
-            elements++;
-        }
-
-        onTopElements.insert(pair<int, string>(elements, objName.c_str()));
-        elements++;
+        executeSpeech("ok, I will drop the " + objName );
+        //do the take actions
+        Bottle cmd, reply;
+        cmd.clear(), reply.clear();
+        cmd.addString("drop");
+        cmd.addString(handName.c_str());
+        rpcAREcmd.write(cmd, reply);
     }
-    
-    for (std::map<string, string>::iterator it=inHandStatus.begin(); it!=inHandStatus.end(); ++it)
+    else
     {
-        if (strcmp (it->first.c_str(), objName.c_str() ) == 0)
+        fprintf(stdout, "I am not holding anything\n");
+    }
+    return true;
+}
+
+/**********************************************************/
+bool ActivityInterface::put(const string &objName, const string &targetName)
+{
+    string handName = inHand(objName);
+    if (strcmp (handName.c_str(), "none" ) != 0 )
+    {
+        //talk to iolStateMachineHandler
+        Bottle position = get3D(targetName);
+        
+        if (position.size()>0)
         {
-            inHandStatus.erase(objName.c_str());
-            break;
+            executeSpeech("ok, I will place the " + objName + " on the " + targetName);
+            
+            //do the take actions
+            Bottle cmd, reply;
+            cmd.clear(), reply.clear();
+            cmd.addString("drop");
+            cmd.addString("over");
+            cmd.addString(targetName.c_str());
+            cmd.addString("gently");
+            cmd.addString(handName.c_str());
+            rpcAREcmd.write(cmd, reply);
+            
+            if (reply.get(0).asVocab()==Vocab::encode("ack"))
+            {
+                if (!targetName.empty())
+                {
+                    if (elements == 0)
+                    {
+                        onTopElements.insert(pair<int, string>(elements, targetName.c_str()));
+                        elements++;
+                    }
+                    
+                    onTopElements.insert(pair<int, string>(elements, objName.c_str()));
+                    elements++;
+                }
+                
+                for (std::map<string, string>::iterator it=inHandStatus.begin(); it!=inHandStatus.end(); ++it)
+                {
+                    if (strcmp (it->first.c_str(), objName.c_str() ) == 0)
+                    {
+                        inHandStatus.erase(objName.c_str());
+                        break;
+                    }
+                }
+            }
         }
     }
     
@@ -891,7 +1081,7 @@ bool ActivityInterface::drop(const string &objName, const string &targetName)
 }
 
 /**********************************************************/
-bool ActivityInterface::geto(const std::string &handName, const int32_t pos_x, const int32_t pos_y)
+bool ActivityInterface::askForTool(const std::string &handName, const int32_t pos_x, const int32_t pos_y)
 {
 
     // Get the label of the object requested
@@ -959,6 +1149,22 @@ bool ActivityInterface::geto(const std::string &handName, const int32_t pos_x, c
 }
 
 /**********************************************************/
+bool ActivityInterface::pull(const string &objName, const string &toolName)
+{
+    //ask for tool
+    //do the pulling action
+    return true;
+}
+
+/**********************************************************/
+bool ActivityInterface::push(const string &objName, const string &toolName)
+{
+    //ask for tool
+    //do the pushing action
+    return true;
+}
+
+/**********************************************************/
 Bottle ActivityInterface::underOf(const std::string &objName)
 {
     Bottle replyList;
@@ -990,9 +1196,12 @@ Bottle ActivityInterface::getNames()
     {
         if (Bottle *propField = Memory.get(i).asList())
         {
-            if (propField->check("name"))
+            if (propField->check("position_2d_left"))
             {
-                names.addString(propField->find("name").asString());
+                if (propField->check("name"))
+                {
+                    names.addString(propField->find("name").asString());
+                }
             }
         }
     }
@@ -1009,7 +1218,7 @@ Bottle ActivityInterface::reachableWith(const string &objName)
     
     position = get3D(objName);
 
-    if (position.get(0).asDouble() < -0.47)
+    if (position.get(0).asDouble() < -0.55)
     {
         Bottle list = pullableWith(objName);
         for (int i = 0; i<list.size(); i++)
@@ -1028,7 +1237,7 @@ Bottle ActivityInterface::reachableWith(const string &objName)
         //double rightManip = getManip(objName, "right");
         //fprintf(stdout, "\nleftManip: %lf and rightManip: %lf\n", leftManip, rightManip);
         
-        //using 3D for testing
+        //using 3D instead of manip for testing
         if(position.get(1).asDouble() < - 0.1 )
             replyList.addString("left");
         else if (position.get(1).asDouble() >  0.1)
@@ -1168,7 +1377,6 @@ double ActivityInterface::getAxes(vector<cv::Point> &pts, cv::Mat &img)
     //atan2(eigen_vecs[0].y, eigen_vecs[0].x);
     
     return axe1;
-    
 }
 
 /**********************************************************/

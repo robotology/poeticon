@@ -49,5 +49,16 @@ public:
     void report(const yarp::os::PortInfo &info);
 };
 
+/**********************************************************/
+class PradaStatus : public yarp::os::BufferedPort<yarp::os::Bottle>
+{
+protected:
+    ActivityInterface *manager;
+    void onRead(yarp::os::Bottle &b);
+public:
+    PradaStatus();
+    void setManager(ActivityInterface *manager);
+};
+
 #endif
 //empty line to make gcc happy

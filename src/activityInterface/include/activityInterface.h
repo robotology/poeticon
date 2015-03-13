@@ -89,6 +89,8 @@ protected:
     
     yarp::os::RpcClient                 rpcPraxiconInterface;
     
+    yarp::os::Port                      praxiconToPradaPort;
+    
     yarp::os::Port                      robotStatus;
     
     std::string                         inputBlobPortName;
@@ -116,9 +118,11 @@ protected:
     yarp::sig::Vector                   reachAboveOrient[2];
     yarp::sig::Vector                   thetaMin, thetaMax;
     
-    MemoryReporter                      memoryReporter; //OPC class
+    MemoryReporter                      memoryReporter;
+    PradaStatus                         pradaStatus;
     
     friend class                        MemoryReporter;
+    friend class                        PradaStatus;
 
     bool                                first;
     int                                 ctxt_left;
@@ -134,6 +138,8 @@ protected:
     std::vector<int>                    pausedThreads;
     
     yarp::os::Semaphore                 semaphore;
+    std::string                         praxiconRequest;
+    
     
 public:
     
@@ -159,6 +165,7 @@ public:
     double              getAxes(std::vector<cv::Point> &pts, cv::Mat &img);
     double              getPairMin(std::map<int, double> pairmap);
     double              getPairMax(std::map<int, double> pairmap);
+    bool                processPradaStatus(const yarp::os::Bottle &status);
     
     bool                with_robot;
     
@@ -172,14 +179,18 @@ public:
     std::string         getLabel(const int32_t pos_x, const int32_t pos_y);
     std::string         inHand(const std::string &objName);
     bool                take(const std::string &objName, const std::string &handName);
-    bool                drop(const std::string &objName, const std::string &targetName);
+    bool                put(const std::string &objName, const std::string &targetName);
     yarp::os::Bottle    underOf(const std::string &objName);
     yarp::os::Bottle    getOffset(const std::string &objName);
-    bool                geto(const std::string &handName, const int32_t pos_x, const int32_t pos_y);
+    bool                askForTool(const std::string &handName, const int32_t pos_x, const int32_t pos_y);
     yarp::os::Bottle    reachableWith(const std::string &objName);
     yarp::os::Bottle    pullableWith(const std::string &objName);
     yarp::os::Bottle    getNames();
     yarp::os::Bottle    askPraxicon(const std::string &request);
+    bool                drop(const std::string &objName);
+    bool                push(const std::string &objName, const std::string &toolName);
+    bool                pull(const std::string &objName, const std::string &toolName);
+    bool                goHome();
     
     bool                quit();
 };

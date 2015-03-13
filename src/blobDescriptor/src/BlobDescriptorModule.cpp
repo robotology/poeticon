@@ -779,12 +779,12 @@ bool BlobDescriptorModule::updateModule()
                     top_largest_cnt_index = c;
                 }
             }
-            top_area = cv::contourArea(top_cnt[top_largest_cnt_index], false);
+            top_area = cv::contourArea(top_cnt[top_largest_cnt_index]);
 
             // compute shape descriptors for largest contour
             cv::convexHull(top_cnt[top_largest_cnt_index], top_hull);
-            double top_perimeter = cv::arcLength(top_cnt[top_largest_cnt_index], false);
-            double top_convex_perimeter = cv::arcLength(top_hull, false);
+            double top_perimeter = cv::arcLength(top_cnt[top_largest_cnt_index], true);
+            double top_convex_perimeter = cv::arcLength(top_hull, true);
             cv::RotatedRect top_enclosing_rect = cv::minAreaRect(top_cnt[top_largest_cnt_index]);
             double top_major_axis = (top_enclosing_rect.size.width > top_enclosing_rect.size.height ? top_enclosing_rect.size.width : top_enclosing_rect.size.height);
             double top_minor_axis = (top_enclosing_rect.size.width > top_enclosing_rect.size.height ? top_enclosing_rect.size.height : top_enclosing_rect.size.width);
@@ -874,12 +874,12 @@ bool BlobDescriptorModule::updateModule()
                     bot_largest_cnt_index = c;
                 }
             }
-            bot_area = cv::contourArea(bot_cnt[bot_largest_cnt_index], false);
+            bot_area = cv::contourArea(bot_cnt[bot_largest_cnt_index]);
 
             // compute shape descriptors for largest contour
             cv::convexHull(bot_cnt[bot_largest_cnt_index], bot_hull);
-            double bot_perimeter = cv::arcLength(bot_cnt[bot_largest_cnt_index], false);
-            double bot_convex_perimeter = cv::arcLength(bot_hull, false);
+            double bot_perimeter = cv::arcLength(bot_cnt[bot_largest_cnt_index], true);
+            double bot_convex_perimeter = cv::arcLength(bot_hull, true);
             cv::RotatedRect bot_enclosing_rect = cv::minAreaRect(bot_cnt[bot_largest_cnt_index]);
             double bot_major_axis = (bot_enclosing_rect.size.width > bot_enclosing_rect.size.height ? bot_enclosing_rect.size.width : bot_enclosing_rect.size.height);
             double bot_minor_axis = (bot_enclosing_rect.size.width > bot_enclosing_rect.size.height ? bot_enclosing_rect.size.height : bot_enclosing_rect.size.width);

@@ -88,6 +88,7 @@ def Affordance_comm():
     affnet_yarp.open("/AffordanceComm/aff_query:io")
 
     ActionQuery = ActionQueryCommunication()
+    ActionQuery.__init__()
 
     rf = yarp.ResourceFinder()
     rf.setVerbose(True)
@@ -114,6 +115,7 @@ def Affordance_comm():
     for i in range(len(object_IDs)):
         if object_IDs[i].split(',')[0] != '11' and object_IDs[i].split(',')[0] != '12':
             Obj_ID = Obj_ID + [object_IDs[i].split(',')[0]]
+    print 'Objects are:\n', Obj_ID
         
     for i in range(len(Obj_ID)):
             
@@ -129,18 +131,26 @@ def Affordance_comm():
             print "waiting for reply..."
             if desc_bottle_in:
                 data = desc_bottle_in.toString()
-                if data != 'ACK':
+                print "descriptors are:\n", data
+                if data != 'ACK' and data != 'NACK' and data != '()' and data != '':
                     data = desc_bottle_in.get(0).asList()
                     data = data.toString().split(' ')
                     for t in range(len(data)):
                         data[t] = float(data[t])
                     break
+                if data != 'ACK':
+                    desc_bottle_out = desc_yarp.prepare()
+                    desc_bottle_out.clear()
+                    desc_bottle_out.addString("querydesc2d")
+                    desc_bottle_out.addInt(int(Obj_ID[i]))
+                    desc_yarp.write()
         descriptors = descriptors + [[Obj_ID[i], data]]
     tooldesc = []
     tools = []
     for j in range(len(object_IDs)):
         if object_IDs[j].split(',')[1] == 'stick' or object_IDs[j].split(',')[1] == 'rake':
             tools = tools + [object_IDs[j].split(',')[0]]
+    print 'available tools: \n',tools
     for i in range(len(tools)):
         desc_bottle_out = desc_yarp.prepare()
         desc_bottle_out.clear()
@@ -154,8 +164,9 @@ def Affordance_comm():
             print "waiting for reply..."
             if desc_bottle_in:
                 data = desc_bottle_in.toString()
-                if data != 'ACK':
+                if data != 'ACK' and data != 'NACK' and data != '()' and data != '':
                     data = desc_bottle_in.toString()
+                    print data
                     data = data.replace('((','').replace('))','').split(') (')
                     data[0] = data[0].split(' ')
                     data[1] = data[1].split(' ')
@@ -165,7 +176,13 @@ def Affordance_comm():
                     data[0] = data[0][2:-1]
                     data[1] = data[1][2:-1]
                     break
+                desc_bottle_out = desc_yarp.prepare()
+                desc_bottle_out.clear()
+                desc_bottle_out.addString("querytooldesc2d")
+                desc_bottle_out.addInt(int(tools[i]))
+                desc_yarp.write()
         tooldesc = tooldesc + [[tools[i], data]]
+        print "tooldesc are:\n", tooldesc
     translation_file = open(''.join(PathName +"/Action_Affordance_Translation.dat"))
     aux_translation = translation_file.read().split('\n')
     translation = []
@@ -195,6 +212,7 @@ def Affordance_comm():
 ##                    planner_yarp.write()
 ##                    break
         new_rule = []
+        posit = []
                     
                 
                     
@@ -230,6 +248,8 @@ def Affordance_comm():
                             ans = ActionQuery._execute(PathName, rule)
                             if ActionQuery._is_success(ans):
                                 probability = ans.get(0).asDouble()
+                                if float(probability) == 1.0:
+                                    probability = 0.95
                                 new_outcome = outcome.split(' ')
                                 new_outcome[2] = str(probability)
                                 new_outcome = ' '.join(new_outcome)
@@ -270,6 +290,9 @@ def Affordance_comm():
                             Affor_bottle_out.addString(outcome2)
                             Affor_bottle_out.addString(outcome3)
                             geo_yarp.write()
+                            if rule.split('_')[1] != '11' and rule.split('_')[1] != '12' and rule.split('_')[3] != '11' and rule.split('_')[3] != '12':
+                                for i in range(len(tooldesc)):
+                                    posit = posit + [rule.split('_')[3].replace('()','')] + [tooldesc[i][1][1][0]] + [tooldesc[i][1][1][1]]
                         else:
                             if rule.split('_')[1] != '11' and rule.split('_')[1] != '12' and rule.split('_')[3] != '11' and rule.split('_')[3] != '12':
                                 affnet_bottle_out = affnet_yarp.prepare()
@@ -285,7 +308,7 @@ def Affordance_comm():
                                         tool_desc2 = tooldesc[o][1][1]
                                         toolhandle[o] = [tool] + [tooldesc[o]]
                                         toolnum = o
-                                message = tool_desc1[1:] + obj_desc[1:] + [2]
+                                message = tool_desc1[2:-1] + obj_desc[1:] + [2]
                                 print '******', message
                                 mess_list = []
                                 for t in range(len(message)):
@@ -313,7 +336,7 @@ def Affordance_comm():
                                 if prob_succ1 == 1.0:
                                     prob_succ1 = 0.95
 
-                                message = tool_desc2[1:] + obj_desc[1:] + [2]
+                                message = tool_desc2[2:-1] + obj_desc[1:] + [2]
                                 affnet_bottle_out = affnet_yarp.prepare()
                                 affnet_bottle_out.clear()
                                 for t in range(len(message)):
@@ -342,9 +365,11 @@ def Affordance_comm():
 
                                 if prob_succ1 >= prob_succ2:
                                     prob_succ = prob_succ1
+                                    posit = posit + [toolhandle[toolnum][0],toolhandle[toolnum][1][0],toolhandle[toolnum][1][1]]
                                     toolhandle[toolnum] = toolhandle[toolnum]+['1']
                                 else:
                                     prob_succ = prob_succ2
+                                    posit = posit + [toolhandle[toolnum][0],toolhandle[toolnum][2][0],toolhandle[toolnum][2][1]]
                                     toolhandle[toolnum] = toolhandle[toolnum]+['2']
                                 prob_fail = 1 - prob_succ
                                 
@@ -376,6 +401,9 @@ def Affordance_comm():
                             Affor_bottle_out.addString(outcome2)
                             Affor_bottle_out.addString(outcome3)
                             geo_yarp.write()
+                            if rule.split('_')[1] != '11' and rule.split('_')[1] != '12' and rule.split('_')[3] != '11' and rule.split('_')[3] != '12': 
+                                for i in range(len(tooldesc)):
+                                    posit = posit + [rule.split('_')[3].replace('()','')] + [tooldesc[i][1][1][0]] + [tooldesc[i][1][1][1]]
                         else:
                             if rule.split('_')[1] != '11' and rule.split('_')[1] != '12' and rule.split('_')[3] != '11' and rule.split('_')[3] != '12':
                                 affnet_bottle_out = affnet_yarp.prepare()
@@ -391,7 +419,7 @@ def Affordance_comm():
                                         tool_desc2 = tooldesc[o][1][1]
                                         toolhandle[o] = [tool] + [tooldesc[o]]
                                         toolnum = o
-                                message = tool_desc1[1:] + obj_desc[1:] + [1]
+                                message = tool_desc1[2:-1] + obj_desc[1:] + [1]
                                 for t in range(len(message)):
                                     mess_num = float(message[t])
                                     mess_list = mess_list + [mess_num]
@@ -417,7 +445,7 @@ def Affordance_comm():
                                     prob_succ1 = 0.95
 
                                 
-                                message = tool_desc2[1:] + obj_desc[1:] + [1]
+                                message = tool_desc2[2:-1] + obj_desc[1:] + [1]
                                 affnet_bottle_out = affnet_yarp.prepare()
                                 affnet_bottle_out.clear()
                                 for t in range(len(message)):
@@ -446,9 +474,11 @@ def Affordance_comm():
 
                                 if prob_succ1 >= prob_succ2:
                                     prob_succ = prob_succ1
+                                    posit = posit + [toolhandle[toolnum][0],toolhandle[toolnum][1][0],toolhandle[toolnum][1][1]]
                                     toolhandle[toolnum] = toolhandle[toolnum]+['1']
                                 else:
                                     prob_succ = prob_succ2
+                                    posit = posit + [toolhandle[toolnum][0],toolhandle[toolnum][2][0],toolhandle[toolnum][2][1]]
                                     toolhandle[toolnum] = toolhandle[toolnum]+['2']
                                 prob_fail = 1 - prob_succ
                                 
@@ -492,6 +522,12 @@ def Affordance_comm():
                     new_rule = new_rule + [outcome]
                     new_rule = new_rule + [outcome2]
                     new_rule = new_rule + [outcome3]
+        
+        planner_yarp_bottle = planner_yarp.prepare()
+        planner_yarp_bottle.clear()
+        planner_yarp_bottle.addString(' '.join(posit))
+        planner_yarp.write()
+        
     translation_file.close()
 
 Affordance_comm()

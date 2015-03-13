@@ -49,6 +49,7 @@ class ActionExecutorCommunication:
     def _execute(self, PathName, cmd, toolhandle):
         Objects_file = open(''.join(PathName +"/Object_names-IDs.dat"))
         Object_list = Objects_file.read().split(';')
+        Object_list.pop()
         Objects_file.close()
         for k in range(len(Object_list)):
             Object_list[k] = Object_list[k].replace('(','').replace(')','').split(',')
@@ -62,11 +63,20 @@ class ActionExecutorCommunication:
             act = cmd[0]
             obj = cmd[1]
             hand = cmd[3].replace('()','')
-            if act == 'grasp' and ( obj == 'rake' or obj == 'stick'):
+            print Object_list
+            tool1 = ''
+            tool2 = ''
+            for objID in range(len(Object_list)):
+                if Object_list[objID][1] == 'rake':
+                    tool1 = Object_list[objID][0]
+                if Object_list[objID][1] == 'stick':
+                    tool2 = Object_list[objID][0]
+                    
+            if act == 'grasp' and ( obj == tool1 or obj == tool2):
                 for i in range(len(toolhandle)):
-                    if toolhandle[i][0] == obj:
-                        positx = toolhandle[i][1][int(toolhandle[i][2])][0]
-                        posity = toolhandle[i][1][int(toolhandle[i][2])][1]
+                    if toolhandle[i] == obj:
+                        positx = toolhandle[i+1]
+                        posity = toolhandle[i+2]
                         ind = i
         for k in range(len(Object_list)):
             if str(act) == Object_list[k][0]:
@@ -76,9 +86,12 @@ class ActionExecutorCommunication:
             if str(hand) == Object_list[k][0]:
                 hand = Object_list[k][1].replace('hand','')
         if act == 'grasp' and (obj == 'rake' or obj == 'stick'):
-            act = 'geto'
+            act = 'askForTool'
             obj = hand
             hand = ' '.join([positx]+[posity])
+        elif act == 'grasp' and (obj != 'rake' and obj != 'stick'):
+            act = 'take'
+            
             
         print act, obj, hand
         message = yarp.Bottle()
@@ -120,7 +133,7 @@ def update_state(PathName):
 def planning_cycle():
     ## mode definition: 1-with praxicon; 2-debug with opc; 3-debug without opc; 4- normal demo 
 
-    mode = 2
+    mode = 4
 
     rf = yarp.ResourceFinder()
     rf.setVerbose(True)
@@ -129,6 +142,8 @@ def planning_cycle():
     print(''.join("cd " + PathName +" && " + "./planner.exe"))
     world_rpc = worldStateCommunication()
     motor_rpc = ActionExecutorCommunication()
+    world_rpc.__init__()
+    motor_rpc.__init__()
     
     geo_yarp = yarp.BufferedPortBottle()##
     geo_yarp.open("/planner/grounding_cmd:io")
@@ -138,9 +153,6 @@ def planning_cycle():
     
     State_yarp = yarp.BufferedPortBottle()##
     State_yarp.open("/planner/opc_cmd:io")
-
-    prax_yarp_in = yarp.BufferedPortBottle()##
-    prax_yarp_in.open("/planner/prax_inst:i")
 
     prax_yarp_out = yarp.BufferedPortBottle()##
     prax_yarp_out.open("/planner/prax_inst:o")
@@ -153,14 +165,20 @@ def planning_cycle():
         old_state = []
         objects_used = []
         toolhandle = []
+        while 1:
+            if goal_yarp.getOutputCount() != 0:
+                break
         if mode == 1 or mode == 4:
+            print 'waiting for praxicon...'
+            goal_bottle_out = goal_yarp.prepare()
+            goal_bottle_out.clear()
+            goal_bottle_out.addString('praxicon')
+            goal_yarp.write()
             while 1:
-                prax_bottle_in = prax_yarp_in.read(False)
-                if prax_bottle_in:
-                    for g in range(prax_bottle_in.size()):
-                        instructions = instructions + [prax_bottle_in.get(g).toString()]
+                goal_bottle_in = goal_yarp.read(False)
+                if goal_bottle_in:
                     break
-                print 'waiting for praxicon...'
+                yarp.Time.delay(0.1)
                     
         while 1:
             if State_yarp.getOutputCount() != 0:
@@ -169,11 +187,11 @@ def planning_cycle():
     ## cycle that will check if we have any object on the table. if not, it won't continue
         if mode != 3:
             print "opc mode engaged"
-            yarp.Time.delay(0.5)
+            yarp.Time.delay(0.1)
             while 1:
                 print "attempting communication"
                 if world_rpc._is_success(world_rpc._execute("update")):
-                    yarp.Time.delay(0.2)
+                    yarp.Time.delay(0.1)
                     state_flag = 0
                     State_bottle_out = State_yarp.prepare()
                     State_bottle_out.clear()
@@ -196,6 +214,7 @@ def planning_cycle():
                     if state_flag == 1:
                         break
                     yarp.Time.delay(1)
+                yarp.Time.delay(1)
             yarp.Time.delay(0.1)
     ###################
         
@@ -209,10 +228,19 @@ def planning_cycle():
             if goal_yarp.getOutputCount() != 0:
                 break
         print 'goal connection done'
-        instructions = '((hand,grasp,cheese),(cheese,reach,bun-bottom),(hand,put,cheese),(hand,grasp,bun-top),(bun-top,reach,cheese),(hand,put,bun-top))'
+##        if mode != 1 and mode != 4:
+##            instructions = [['hand','grasp','cheese'],['cheese','reach','bun-bottom'],['hand','put','cheese'],['hand','grasp','bun-top'],['bun-top','reach','cheese'],['hand','put','bun-top']]
+##            goal_bottle_out = goal_yarp.prepare()
+##            goal_bottle_out.clear()
+##            goal_bottle_out.addList()
+##            for t in range(len(instructions)):
+##                goal_bottle_out.get(t).addString(' '.join(instructions[t]))                    
+##            goal_yarp.write()
+##        else:
         goal_bottle_out = goal_yarp.prepare()
         goal_bottle_out.clear()
-        goal_bottle_out.addString(instructions)
+        goal_bottle_out.addString('update')
+        print goal_bottle_out.toString()
         goal_yarp.write()
         while 1:
             goal_bottle_in = goal_yarp.read(False)
@@ -222,7 +250,7 @@ def planning_cycle():
                 break
             yarp.Time.delay(1)
         print 'goal is done'
-        
+            
 ##        goal_file = open(''.join(PathName +"/final_goal.dat"))
         subgoalsource_file = open(''.join(PathName +"/subgoals.dat"))
 ##        goal = goal_file.read().split(' ')
@@ -258,6 +286,16 @@ def planning_cycle():
                     print 'ready'
                     break
                 yarp.Time.delay(1)
+        while 1:
+            Aff_bottle_in = Aff_yarp.read(False)
+            if Aff_bottle_in:
+                data = Aff_bottle_in.toString()
+                print data
+                data = data.replace('((','').replace('))','').split(' ')
+                toolhandle = data
+                break
+            yarp.Time.delay(0.1)
+        print "tool position: \n", toolhandle
         rules_file = open(''.join(PathName +"/rules.dat"),'r')
         old_rules = rules_file.read().split('\n')
         rules_file.close()
@@ -444,9 +482,8 @@ def planning_cycle():
             subgoal_file = open(''.join(PathName +"/goal.dat"),'r')
             goal = subgoal_file.read().split(' ')
             subgoal_file.close()
-            print 'goals not met:'
-            print goal
-            print state
+            print 'goals: \n', goal
+            print '\n goals not met:'
             not_comp_goals = []
             for t in range(len(goal)):
                 if goal[t] not in state:

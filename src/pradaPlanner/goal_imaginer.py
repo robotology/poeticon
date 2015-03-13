@@ -42,16 +42,43 @@ def goal_imaginer():
     rf.setVerbose(True)
     rf.setDefaultContext("poeticon")
     PathName = rf.findPath("contexts/poeticon")
+
+    prax_yarp_in = yarp.BufferedPortBottle()##
+    prax_yarp_in.open("/goal_imag/prax_inst:i")
     while 1:
         while 1:
             goal_bottle_in = goal_yarp.read(False)
-            yarp.Time.delay(0.2)
+            
             if goal_bottle_in:
-                 command = goal_bottle_in.toString()
-                 break
-        if command != 'kill':
+                command = goal_bottle_in.toString()
+                print command
+                break
+            yarp.Time.delay(0.1)
+        if command == 'praxicon':
+            while 1:
+                prax_bottle_in = prax_yarp_in.read(False)
+                if prax_bottle_in:
+                    instructions = []
+                    print 'bottle received: \n', prax_bottle_in.toString()
+                    for g in range(prax_bottle_in.size()):
+                        temp_instructions = []
+                        for y in range(prax_bottle_in.get(g).asList().size()):
+                            temp1_instructions = []
+                            for t in range(prax_bottle_in.get(g).asList().get(y).asList().size()):
+                                temp1_instructions = temp1_instructions + [prax_bottle_in.get(g).asList().get(y).asList().get(t).toString()]
+                                print temp1_instructions
+                            temp_instructions = temp_instructions + [temp1_instructions]
+                        instructions = instructions + temp_instructions
+                    yarp.Time.delay(0.1)
+                    goal_bottle_out = goal_yarp.prepare()
+                    goal_bottle_out.clear()
+                    goal_bottle_out.addString('done')
+                    goal_yarp.write()
+                    break
+            
+        if command == 'update':
             print 'starting'
-            instructions = command
+            print instructions
             goal_file = open(''.join(PathName +"/goal.dat"),'w')
             sub_goal_file = open(''.join(PathName +"/subgoals.dat"),'w')
             actions_file = open(''.join(PathName +"/pre_rules.dat"))
@@ -65,7 +92,6 @@ def goal_imaginer():
             Objects.pop()
             for j in range(len(Objects)):
                 translat = translat + [Objects[j].replace('(','').replace(')','').split(',')] ## list of objects IDs+numbers
-            print translat
             actions = actions_file.read().split('\n')
 
             subgoals = [[]]
@@ -76,12 +102,13 @@ def goal_imaginer():
             ## 
             ## instructions = '((hand,grasp,cheese),(cheese,reach,bun-bottom),(hand,put,cheese),(hand,grasp,salami),(salami,reach,cheese),(hand,put,salami),(hand,grasp,bun-top),(bun-top,reach,salami),(hand,put,bun-top))'
             ## instructions = '((hand,grasp,cheese),(cheese,reach,bun-bottom),(hand,put,cheese),(hand,grasp,bun-top),(bun-top,reach,cheese),(hand,put,bun-top))'
-            instructions = instructions.replace('hand','left')
+            for g in range(len(instructions)):
+                for y in range(len(instructions[g])):
+                    instructions[g][y] = instructions[g][y].replace('hand','left')
             ## state = verificar maos (query hand clearance), verificar objectos (query world state)
             ## objects = object name list
             ## we can create a state from here (replacing _obj with the name)
-            instructions = instructions.split('),(')
-            first_inst = instructions[0].replace('"((','').replace('))"','').split(',')
+            first_inst = instructions[0]
             for i in range(0,len(actions)):
                 if actions[i].find("%s_" %first_inst[1]) != -1:
                     aux_subgoal = actions[i+2].replace('_obj','%s' %first_inst[2]).replace('_tool','%s' %first_inst[0]).replace('_hand','left').split(' ')
@@ -89,10 +116,9 @@ def goal_imaginer():
                     aux_subgoal.pop(0)
                     subgoals = [aux_subgoal]
                     break
-            print instructions
             aux_subgoal = []
             for i in range(len(instructions)):
-                prax_action = instructions[i].replace('"((','').replace('))"','').split(',')
+                prax_action = instructions[i]
                 if prax_action[1] != 'reach':
                     for j in range(0,len(actions)):
                         if actions[j].find("%s_" %prax_action[1]) != -1:

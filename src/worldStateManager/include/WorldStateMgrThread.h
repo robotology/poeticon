@@ -99,6 +99,7 @@ class WorldStateMgrThread : public RateThread
         bool toldUserWaitTracker;
         bool toldUserTrackerConnected;
         bool toldUserWaitActivityIF;
+        bool toldActivityGoHome;
         bool toldUserActivityIFConnected;
         Bottle *inAff;
         Bottle *inToolAff;

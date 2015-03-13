@@ -64,12 +64,32 @@ public:
    */
   virtual bool take(const std::string& objName, const std::string& handName);
   /**
-   * Perform the drop action on the particular object with the particular hand
+   * Perform the drops action on the particular object with the particular hand
    * @param objName specifies the name of the object in question
-   * @param targetName specifies the name of target object to drop onto.
    * @return true/false on droping or not
    */
-  virtual bool drop(const std::string& objName, const std::string& targetName);
+  virtual bool drop(const std::string& objName);
+  /**
+   * Perform the put action on the particular object with the particular hand
+   * @param objName specifies the name of the object in question
+   * @param targetName specifies the name of target object to drop onto.
+   * @return true/false on putting or not
+   */
+  virtual bool put(const std::string& objName, const std::string& targetName);
+  /**
+   * Perform the push action on the particular object with the particular tool
+   * @param objName specifies the name of the object in question
+   * @param toolName specifies the name of target tool.
+   * @return true/false on pushing or not
+   */
+  virtual bool push(const std::string& objName, const std::string& toolName);
+  /**
+   * Perform the pull action on the particular object with the particular tool
+   * @param objName specifies the name of the object in question
+   * @param toolName specifies the name of target tool.
+   * @return true/false on pulling or not
+   */
+  virtual bool pull(const std::string& objName, const std::string& toolName);
   /**
    * Perform the take action on the particular tool with the particular hand
    * @param handName specifies the name of the hand to use
@@ -77,7 +97,7 @@ public:
    * @param ypos specifies the 2D position of the object on the Y axis
    * @return true/false on taking or not
    */
-  virtual bool geto(const std::string& handName, const int32_t xpos, const int32_t ypos);
+  virtual bool askForTool(const std::string& handName, const int32_t xpos, const int32_t ypos);
   /**
    * Ask for the list of labels that are under ojbName
    * @param objName specifies the name of the object in question
@@ -107,6 +127,11 @@ public:
    * @return Bottle containing list of goals to achieve
    */
   virtual yarp::os::Bottle askPraxicon(const std::string& request);
+  /**
+   * Return to home position
+   * @return true/false on homeing or not
+   */
+  virtual bool goHome();
   /**
    * Quit the module.
    * @return true/false on success/failure

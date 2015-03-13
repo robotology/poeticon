@@ -6,10 +6,6 @@
 </dependencies>
 
 <module>
-    <name>activityInterface</name>
-    <node>pwrNode</node>
-</module>
-<module>
     <name>blobSpotter</name>
     <node>pwrNode</node>
 </module>
@@ -125,12 +121,8 @@
     <to>/activeParticleTrack/image:i</to>
 </connection>
 <connection>
-    <from>/wsm/activity:rpc</from>
-    <to>/activityInterface/rpc:i</to>
-</connection>
-<connection>
-    <from>/activityInterface/worldState:rpc</from>
-    <to>/wsm/rpc:i</to>
+    <from>/wsm/fixation:o</from>
+    <to>/activeParticleTrack/fixation:i</to>
 </connection>
 <connection>
     <from>/wsm/tracker:rpc</from>
@@ -143,10 +135,6 @@
 <connection>
     <from>/blobDescriptor/affDescriptor:o</from>
     <to>/wsm/affDescriptor:i</to>
-</connection>
-<connection>
-    <from>/blobDescriptor/toolAffDescriptor:o</from>
-    <to>/wsm/toolAffDescriptor:i</to>
 </connection>
 <connection>
     <from>/wsm/opc:io</from>
@@ -205,23 +193,13 @@
     <to>/planner/goal_cmd:io</to>
 </connection>
 <connection>
-    <from>/activityInterface/praxicon:o</from>
-    <to>/goal_imag/prax_inst:i</to>
-</connection>
-<connection>
     <from>/planner/prax_inst:o</from>
-    <to>/activityInterface/prada:i</to>
-</connection>
-<!--
-<connection>
-    <from>/planner/prax_inst:io</from>
     <to>/praxicon/planner_cmd:io</to>
 </connection>
 <connection>
     <from>/praxicon/planner_cmd:io</from>
-    <to>/planner/prax_inst:io</to>
+    <to>/goal_imag/prax_inst:i</to>
 </connection>
--->
 <connection>
     <from>/AffordanceComm/ground_cmd:io</from>
     <to>/grounding/Aff_cmd:io</to>
