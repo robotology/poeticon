@@ -58,6 +58,11 @@
 
 <module>
     <name>yarpview</name>
+    <parameters>--name /view/blobdesc --x 320 --y 0</parameters>
+    <node>icub-laptop</node>
+</module>
+<module>
+    <name>yarpview</name>
     <parameters>--name /view/track --x 660 --y 0</parameters>
     <node>console</node>
 </module>
@@ -85,6 +90,11 @@
 <connection>
     <from>/sequentialLabeller/labeledImg:o</from>
     <to>/blobDescriptor/labeledImg:i</to>
+    <protocol>udp</protocol>
+</connection>
+<connection>
+    <from>/blobDescriptor/viewImg:o</from>
+    <to>/view/blobdesc</to>
     <protocol>udp</protocol>
 </connection>
 <connection>
