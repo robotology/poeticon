@@ -27,7 +27,8 @@ bool SPOTTERModule::configure(yarp::os::ResourceFinder &rf)
     moduleName = rf.check("name", Value("blobSpotter"), "module name (string)").asString();
 
     
-    int minArea = rf.check("minArea", Value("100"), "module name (string)").asInt();
+    int minArea = rf.check("minArea", Value("100"), "min area (int)").asInt();
+    int maxArea = rf.check("minArea", Value("3000"), "max area (int)").asInt();
     
     setName(moduleName.c_str());
 
@@ -51,6 +52,7 @@ bool SPOTTERModule::configure(yarp::os::ResourceFinder &rf)
     spotterManager->open();
     
     spotterManager->minArea = minArea;
+    spotterManager->maxArea = maxArea;
 
     return true ;
 }
