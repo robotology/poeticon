@@ -354,6 +354,8 @@ Bottle ActivityInterface::askPraxicon(const string &request)
     //send it all to praxicon
     rpcPraxiconInterface.write(cmdPrax,replyPrax);
     
+    
+    Bottle &tmpList = listOfGoals.addList();
     listOfGoals.clear();
     vector<string> tokens;
     
@@ -379,7 +381,7 @@ Bottle ActivityInterface::askPraxicon(const string &request)
         {
             if ( ++inc == 4 )
             {
-                listOfGoals.addList() = tmp;
+                tmpList.addList() = tmp;
                 inc=1;
                 tmp.clear();
             }
