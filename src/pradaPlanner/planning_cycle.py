@@ -55,15 +55,14 @@ class ActionExecutorCommunication:
             Object_list[k] = Object_list[k].replace('(','').replace(')','').split(',')
         cmd = cmd.split('_')
         if 'on' in cmd:
-            obj = cmd[3]
-            hand = cmd[5].replace('()','')
+            obj = cmd[1].replace('()','')
+            hand = cmd[3]
             act = cmd[0]
             
         else:
             act = cmd[0]
             obj = cmd[1]
             hand = cmd[3].replace('()','')
-            print Object_list
             tool1 = ''
             tool2 = ''
             for objID in range(len(Object_list)):
@@ -290,12 +289,10 @@ def planning_cycle():
             Aff_bottle_in = Aff_yarp.read(False)
             if Aff_bottle_in:
                 data = Aff_bottle_in.toString()
-                print data
                 data = data.replace('((','').replace('))','').split(' ')
                 toolhandle = data
                 break
             yarp.Time.delay(0.1)
-        print "tool position: \n", toolhandle
         rules_file = open(''.join(PathName +"/rules.dat"),'r')
         old_rules = rules_file.read().split('\n')
         rules_file.close()
@@ -402,7 +399,6 @@ def planning_cycle():
                 print "state hasn't changed, action failed"
                 for t in range(len(rules)):
                     if rules[t].replace(' ','').replace('\n','').replace('\r','') == next_action and next_action != '':
-                        print rules[t]
                         p = 0
                         while 1:
                             if rules[t+p] == '':
@@ -480,15 +476,31 @@ def planning_cycle():
             ## executes next action
             
             subgoal_file = open(''.join(PathName +"/goal.dat"),'r')
+            object_file = open(''.join(PathName + "/Object_names-IDs.dat"))
+            object_IDs = object_file.read().replace(')','').replace('(','').split(';')
+            object_file.close()
+            object_IDs.pop()
+            for h in range(len(object_IDs)):
+                object_IDs[h] = object_IDs[h].split(',')
             goal = subgoal_file.read().split(' ')
             subgoal_file.close()
-            print 'goals: \n', goal
+            prtmess = goal
+            for i in range(len(goal)):
+                for t in range(len(object_IDs)):
+                    print object_IDs[t][0], object_IDs[t][1]
+                    prtmess[i] = prtmess[i].replace(object_IDs[t][0], object_IDs[t][1])
+            print 'goals: \n',prtmess
             print '\n goals not met:'
             not_comp_goals = []
             for t in range(len(goal)):
                 if goal[t] not in state:
+                    prtmess = goal[t]
+                    for o in range(len(object_IDs)):
+                        print prtmess
+                        prtmess = prtmess.replace(object_IDs[o][0], object_IDs[o][1])
+                        print prtmess
                     not_comp_goals = not_comp_goals + [goal[t]]
-                    print goal[t]
+                    print prtmess
                     cont = 1
             print '\n'
             raw_input("press enter to continue")
@@ -551,7 +563,10 @@ def planning_cycle():
                 for u in range(len(objects_used_now)):
                     if objects_used_now[u] not in toolhandle and objects_used_now[u] not in objects_used:
                         objects_used = objects_used + [objects_used_now[u]]
-                print 'action to be executed: ', next_action, '\n'
+                prtmess = next_action
+                for t in range(len(object_IDs)):
+                    prtmess = prtmess.replace(object_IDs[t][0], object_IDs[t][1])
+                print 'action to be executed: ', prtmess, '\n'
                 motor_rpc._is_success(motor_rpc._execute(PathName, next_action, toolhandle))
                 world_rpc._is_success(world_rpc._execute("update"))
                 raw_input("press any key")
