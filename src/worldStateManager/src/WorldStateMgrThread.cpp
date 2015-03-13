@@ -967,14 +967,17 @@ bool WorldStateMgrThread::doPopulateDB()
                 v = inTargets->get(tbi).asList()->get(2).asDouble();
             }
 
-            // prepare position property
-            bPos.addString("pos");
-            Bottle &bPosValue = bPos.addList();
-            double x=0.0, y=0.0, z=0.0;
-            mono2stereo(bNameValue.c_str(), x, y, z);
-            bPosValue.addDouble(x);
-            bPosValue.addDouble(y);
-            bPosValue.addDouble(z);
+            if (currentlySeen)
+            {
+                // prepare position property
+                bPos.addString("pos");
+                Bottle &bPosValue = bPos.addList();
+                double x=0.0, y=0.0, z=0.0;
+                mono2stereo(bNameValue.c_str(), x, y, z);
+                bPosValue.addDouble(x);
+                bPosValue.addDouble(y);
+                bPosValue.addDouble(z);
+            }
 
             // prepare offset property (end-effector transform when grasping tools)
             bOffset.addString("offset");
@@ -1106,7 +1109,10 @@ bool WorldStateMgrThread::doPopulateDB()
             opcCmdContent.addList() = bIsHand;
             if (!bIsHandValue)
             {
-                opcCmdContent.addList() = bPos;
+                if (currentlySeen)
+                {
+                    opcCmdContent.addList() = bPos;
+                }
                 opcCmdContent.addList() = bOffset;
                 if (currentlySeen)
                 {
@@ -1139,7 +1145,10 @@ bool WorldStateMgrThread::doPopulateDB()
             opcCmdContent.addList() = bIsHand;
             if (!bIsHandValue)
             {
-                opcCmdContent.addList() = bPos;
+                if (currentlySeen)
+                {
+                    opcCmdContent.addList() = bPos;
+                }
                 opcCmdContent.addList() = bOffset;
                 if (currentlySeen)
                 {
