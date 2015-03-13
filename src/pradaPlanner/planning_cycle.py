@@ -55,8 +55,8 @@ class ActionExecutorCommunication:
             Object_list[k] = Object_list[k].replace('(','').replace(')','').split(',')
         cmd = cmd.split('_')
         if 'on' in cmd:
-            obj = cmd[3]
-            hand = cmd[5].replace('()','')
+            obj = cmd[1].replace('()','')
+            hand = cmd[3]
             act = cmd[0]
             
         else:
