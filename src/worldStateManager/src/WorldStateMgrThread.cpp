@@ -213,6 +213,7 @@ bool WorldStateMgrThread::initPerceptionVars()
     toldUserWaitTracker = false;
     toldUserTrackerConnected = false;
     toldUserWaitActivityIF = false;
+    toldActivityGoHome = false;
     toldUserActivityIFConnected = false;
 
     return true;
@@ -496,6 +497,31 @@ void WorldStateMgrThread::fsmPerception()
 
         case STATE_PERCEPTION_WAIT_ACTIVITYIF:
         {
+            // TODO: reorganize checks within this state
+            if (!toldActivityGoHome && activityPort.getOutputCount()>=1)
+            {
+                Bottle activityCmd, activityReply;
+                activityCmd.clear();
+                activityReply.clear();
+                activityCmd.addString("goHome");
+                yDebug() << __func__ <<  "sending query to tracker:" << activityCmd.toString().c_str();
+                activityPort.write(activityCmd, activityReply);
+                yDebug() << __func__ <<  "obtained response:" << activityReply.toString().c_str();
+                bool validResponse = false;
+                validResponse = ( activityReply.size()>0 &&
+                                  activityReply.get(0).asVocab()==Vocab::encode("ok") );
+
+                if (validResponse)
+                {
+                    yDebug() << __func__ <<  "obtained valid response:" << activityReply.toString().c_str();
+                }
+                else
+                {
+                    yWarning() << __func__ <<  "obtained invalid response:" << activityReply.toString().c_str();
+                }
+                toldActivityGoHome = true;
+            }
+
             if (!toldUserWaitActivityIF && activityPort.getOutputCount()<1)
             {
                 yInfo("waiting for %s to be connected to /activityInterface/rpc:i",
