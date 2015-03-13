@@ -70,7 +70,6 @@ class ActionExecutorCommunication:
                     tool1 = Object_list[objID][0]
                 if Object_list[objID][1] == 'stick':
                     tool2 = Object_list[objID][0]
-            print toolhandle        
             if act == 'grasp' and ( obj == tool1 or obj == tool2):
                 print 'in'
                 for i in range(len(toolhandle)):
@@ -240,7 +239,6 @@ def planning_cycle():
         goal_bottle_out = goal_yarp.prepare()
         goal_bottle_out.clear()
         goal_bottle_out.addString('update')
-        print goal_bottle_out.toString()
         goal_yarp.write()
         while 1:
             goal_bottle_in = goal_yarp.read(False)
@@ -286,11 +284,15 @@ def planning_cycle():
                     print 'ready'
                     break
                 yarp.Time.delay(1)
+        Aff_bottle_out = Aff_yarp.prepare()
+        Aff_bottle_out.clear()
+        Aff_bottle_out.addString('query')
+        Aff_yarp.write() 
         while 1:
             Aff_bottle_in = Aff_yarp.read(False)
             if Aff_bottle_in:
                 data = Aff_bottle_in.toString()
-                data = data.replace('((','').replace('))','').split(' ')
+                data = data.replace('"','').split(' ')
                 print "tool position received:\n", data
                 toolhandle = data
                 break
