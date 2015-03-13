@@ -507,7 +507,6 @@ def planning_cycle():
                     print prtmess
                     cont = 1
             print '\n'
-            raw_input("press enter to continue")
             
             holding_symbols = []
             for t in range(len(aux_subgoals[plan_level-1])):
