@@ -951,7 +951,7 @@ bool ActivityInterface::take(const string &objName, const string &handName)
     }
     else
     {
-        executeSpeech("I already have the " + handStatus + " in my hand");
+        executeSpeech("I already have the " + objName + " in my hand");
         fprintf(stdout, "Cannot grasp already have something in hand\n");
     }
 
