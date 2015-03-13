@@ -416,6 +416,7 @@ void WorldStateMgrThread::fsmPerception()
                 toldUserWaitTracker = true;
             }
 
+            // TODO: check for !initTracker here
             if (!toldUserTrackerConnected && inTargetsPort.getInputCount()>=1)
             {
                 yInfo("connected to tracker, sending it instruction: countFrom %d", countFrom);
@@ -443,6 +444,28 @@ void WorldStateMgrThread::fsmPerception()
 
         case STATE_PERCEPTION_INIT_TRACKER:
         {
+            // if tracker was already initialized, do nothing in this state
+            if (inTargetsPort.getInputCount()>=1)
+            {
+                Bottle trackerCmd, trackerReply;
+                trackerCmd.clear();
+                trackerReply.clear();
+                trackerCmd.addString("getIDs");
+                //yDebug() << __func__ <<  "sending query to tracker:" << trackerCmd.toString().c_str();
+                trackerPort.write(trackerCmd, trackerReply);
+                //yDebug() << __func__ <<  "obtained response:" << trackerReply.toString().c_str();
+                bool validResponse = false;
+                validResponse = ( trackerReply.size()>0 &&
+                                  trackerReply.get(0).isList() &&
+                                  trackerReply.get(0).asList()->size()>0 );
+
+                if (validResponse)
+                {
+                    yInfo() << "tracker is already initialized, it contains IDs:" << trackerReply.get(0).asList()->toString();
+                    trackerInit = true;
+                }
+            }
+
             // initialize multi-object active particle tracker
             if (!trackerInit)
             {
@@ -840,7 +863,8 @@ bool WorldStateMgrThread::doPopulateDB()
         if ( getTrackerBottleIndexFromID(wsID, tbi) )
         {
             // present in WSOPC and in tracker -> currently tracker object
-            yDebug("corresponds to tracker Bottle index %d", tbi);
+            //yDebug("corresponds to tracker Bottle index %d", tbi);
+            ;
         }
         else
         {
@@ -866,7 +890,8 @@ bool WorldStateMgrThread::doPopulateDB()
                 v = inTargets->get(tbi).asList()->get(2).asDouble();
 
                 if ( getAffBottleIndexFromTrackROI(u, v, abi) )
-                    yDebug("corresponds to affordance blobs Bottle index %d", abi);
+                    //yDebug("corresponds to affordance blobs Bottle index %d", abi);
+                    ;
                 else
                     yWarning("problem with getAffBottleIndexFromTrackROI");
             }
@@ -1363,7 +1388,7 @@ bool WorldStateMgrThread::getLabelMajorityVote(const int &u, const int &v, strin
     std::pair<string, int> max_el = *std::max_element(histogram.begin(), histogram.end(), compareSecond());
     //yDebug() << "winner is" << max_el.first << "having count" << max_el.second;
     if (max_el.second < majority)
-        yWarning("selected winning label --> %s <-- with %d/%d entries after %d queries, despite being less than majority %d",
+        yWarning("selected winning label --> %s <-- with %d/%d non-empty entries after %d queries, despite being less than majority %d",
                  max_el.first.c_str(), max_el.second, votes.size(), rounds, majority);
     else
         yDebug("selected winning label --> %s <--", max_el.first.c_str());
