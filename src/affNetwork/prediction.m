@@ -30,7 +30,7 @@ switch bn
     case 'pca6merge'
 		load('pca6mergecomp.mat');
 	case 'pca4sep'
-		load('pca2T-2O.mat');
+		load('pca_2n_2C_noise_25b.mat');
     otherwise
         error([bn ' is not a known Network']);
         
