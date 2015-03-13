@@ -338,7 +338,7 @@ def planning_cycle():
             
             flag_kill = 0
             cont = 0
-            yarp.Time.delay(0.1)
+            yarp.Time.delay(1)
             if mode != 3:
                 while 1:
                     print "communicating..."
@@ -367,7 +367,7 @@ def planning_cycle():
             yarp.Time.delay(0.1)
                    
             update_state(PathName)
-            
+            yarp.Time.delay(0.1)
 ################# function under construction, updating when objects change ################
 ## requires the geometric grounding to change, to ground object by object
 ## will take two types of commands: a "complete", to make the full grounding
@@ -570,8 +570,8 @@ def planning_cycle():
                 for t in range(len(object_IDs)):
                     prtmess = prtmess.replace(object_IDs[t][0], object_IDs[t][1])
                 print 'action to be executed: ', prtmess, '\n'
-                motor_rpc._is_success(motor_rpc._execute(PathName, next_action, toolhandle))
                 raw_input("press any key")
+                motor_rpc._is_success(motor_rpc._execute(PathName, next_action, toolhandle))
 
 
 
