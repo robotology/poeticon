@@ -441,7 +441,8 @@ def planning_cycle():
                 for u in range(len(objects_used)):
                     for inde in range(len(object_IDs)):
                         if object_IDs[inde][0] == objects_used[u]:
-                            prax_bottle_out.addString(object_IDs[inde][1])
+                            if object_IDs[inde][1] != 'rake' and object_IDs[inde][1] != 'stick' and object_IDs[inde][1] != 'left' and object_IDs[inde][1] != 'right':
+                                prax_bottle_out.addString(object_IDs[inde][1])
                 prax_yarp_out.write()
 ##                geo_bottle_out = geo_yarp.prepare()
 ##                geo_bottle_out.clear()
@@ -673,7 +674,8 @@ def planning_cycle():
                 for u in range(len(fail_obj_now)):
                     for inde in range(len(object_IDs)):
                         if object_IDs[inde][0] == fail_obj_now[u]:
-                            prax_bottle_out.addString(object_IDs[inde][1])
+                            if object_IDs[inde][1] != 'rake' and object_IDs[inde][1] != 'stick' and object_IDs[inde][1] != 'left' and object_IDs[inde][1] != 'right':
+                                prax_bottle_out.addString(object_IDs[inde][1])
                 prax_yarp_out.write()
 ##                geo_bottle_out = geo_yarp.prepare()
 ##                geo_bottle_out.clear()
