@@ -49,6 +49,7 @@ class ActionExecutorCommunication:
     def _execute(self, PathName, cmd, toolhandle):
         Objects_file = open(''.join(PathName +"/Object_names-IDs.dat"))
         Object_list = Objects_file.read().split(';')
+        Object_list.pop()
         Objects_file.close()
         for k in range(len(Object_list)):
             Object_list[k] = Object_list[k].replace('(','').replace(')','').split(',')
