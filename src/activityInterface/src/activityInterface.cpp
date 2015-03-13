@@ -114,11 +114,13 @@ bool ActivityInterface::configure(yarp::os::ResourceFinder &rf)
     rpcPraxiconInterface.setReporter(memoryReporter);
     rpcPraxiconInterface.open(("/"+moduleName+"/praxicon:rpc").c_str());
     
-    pradaStatus.setManager(this);
-    pradaStatus.open(("/"+moduleName+"/prada:i").c_str());
+    pradaReporter.setManager(this);
+    pradaReporter.open(("/"+moduleName+"/prada:i").c_str());
+    
+    speechReporter.setManager(this);
+    speechReporter.open(("/"+moduleName+"/speech:i").c_str());
     
     praxiconToPradaPort.open(("/"+moduleName+"/praxicon:o").c_str());
-    
     
     yarp::os::Network::connect(("/"+moduleName+"/arecmd:rpc").c_str(), "/actionsRenderingEngine/cmd:io");
     yarp::os::Network::connect(("/"+moduleName+"/are:rpc").c_str(), "/actionsRenderingEngine/get:io");
@@ -239,7 +241,8 @@ bool ActivityInterface::interruptModule()
     rpcIolState.interrupt();
     blobPortIn.interrupt();
     rpcPraxiconInterface.interrupt();
-    pradaStatus.interrupt();
+    pradaReporter.interrupt();
+    speechReporter.interrupt();
     praxiconToPradaPort.interrupt();
     semaphore.post();
     return true;
@@ -261,7 +264,8 @@ bool ActivityInterface::close()
     rpcIolState.close();
     blobPortIn.close();
     rpcPraxiconInterface.close();
-    pradaStatus.close();
+    pradaReporter.close();
+    speechReporter.close();
     praxiconToPradaPort.close();
     fprintf(stdout, "[closing] finished shutdown procedure\n");
     semaphore.post();
@@ -415,6 +419,19 @@ Bottle ActivityInterface::askPraxicon(const string &request)
     praxiconToPradaPort.write(listOfGoals);
     
     return listOfGoals;
+}
+
+/**********************************************************/
+bool ActivityInterface::processSpeech(const Bottle &speech)
+{
+
+    if ( speech.size() > 0 )
+    {
+        fprintf(stdout,"processSpeech]: %s \n", speech.toString().c_str());
+        askPraxicon(speech.toString().c_str());
+    }
+    
+    return true;
 }
 
 /**********************************************************/
@@ -1059,6 +1076,18 @@ bool ActivityInterface::drop(const string &objName)
         cmd.addString("drop");
         cmd.addString(handName.c_str());
         rpcAREcmd.write(cmd, reply);
+        
+        if (reply.get(0).asVocab()==Vocab::encode("ack"))
+        {
+            for (std::map<string, string>::iterator it=inHandStatus.begin(); it!=inHandStatus.end(); ++it)
+            {
+                if (strcmp (it->first.c_str(), objName.c_str() ) == 0)
+                {
+                    inHandStatus.erase(objName.c_str());
+                    break;
+                }
+            }
+        }
     }
     else
     {
@@ -1117,7 +1146,11 @@ bool ActivityInterface::put(const string &objName, const string &targetName)
                 }
             }
         }
-        executeSpeech("There seems to be an issue with the command");
+        else
+        {
+            fprintf(stdout, "[put] there seems to be a problem with the object\n");
+            executeSpeech("There seems to be an issue with the command");
+        }
     }
     resumeAllTrackers();
     return true;
@@ -1126,7 +1159,6 @@ bool ActivityInterface::put(const string &objName, const string &targetName)
 /**********************************************************/
 bool ActivityInterface::askForTool(const std::string &handName, const int32_t pos_x, const int32_t pos_y)
 {
-    
     // Get the label of the object requested
     int whichArm = 0;
     string label = getLabel(pos_x, pos_y);

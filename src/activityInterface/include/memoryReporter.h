@@ -50,15 +50,27 @@ public:
 };
 
 /**********************************************************/
-class PradaStatus : public yarp::os::BufferedPort<yarp::os::Bottle>
+class PradaReporter : public yarp::os::BufferedPort<yarp::os::Bottle>
 {
 protected:
     ActivityInterface *manager;
     void onRead(yarp::os::Bottle &b);
 public:
-    PradaStatus();
+    PradaReporter();
     void setManager(ActivityInterface *manager);
 };
+
+/**********************************************************/
+class SpeechReporter : public yarp::os::BufferedPort<yarp::os::Bottle>
+{
+protected:
+    ActivityInterface *manager;
+    void onRead(yarp::os::Bottle &b);
+public:
+    SpeechReporter();
+    void setManager(ActivityInterface *manager);
+};
+
 
 #endif
 //empty line to make gcc happy
