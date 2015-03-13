@@ -190,6 +190,7 @@ public:
     bool                drop(const std::string &objName);
     bool                push(const std::string &objName, const std::string &toolName);
     bool                pull(const std::string &objName, const std::string &toolName);
+    bool                goHome();
     
     bool                quit();
 };

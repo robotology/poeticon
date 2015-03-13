@@ -216,6 +216,11 @@ bool ActivityInterface::configure(yarp::os::ResourceFinder &rf)
     cmd.addString("stop");
     rpcIolState.write(cmd, reply);
     
+    cmd.clear(), reply.clear();
+    cmd.addString("home");
+    cmd.addString("head");
+    rpcAREcmd.write(cmd, reply);
+    
     fprintf(stdout,"done initialization\n");
     
     return true ;
@@ -260,6 +265,18 @@ bool ActivityInterface::close()
     praxiconToPradaPort.close();
     fprintf(stdout, "finished shutdown procedure\n");
     semaphore.post();
+    return true;
+}
+
+/**********************************************************/
+bool ActivityInterface::goHome()
+{
+    Bottle are, replyAre;
+    are.clear(),replyAre.clear();
+    are.addString("home");
+    are.addString("head");
+    rpcAREcmd.write(are,replyAre);
+    
     return true;
 }
 

@@ -73,21 +73,21 @@ public:
    * Perform the put action on the particular object with the particular hand
    * @param objName specifies the name of the object in question
    * @param targetName specifies the name of target object to drop onto.
-   * @return true/false on droping or not
+   * @return true/false on putting or not
    */
   virtual bool put(const std::string& objName, const std::string& targetName);
   /**
    * Perform the push action on the particular object with the particular tool
    * @param objName specifies the name of the object in question
    * @param toolName specifies the name of target tool.
-   * @return true/false on droping or not
+   * @return true/false on pushing or not
    */
   virtual bool push(const std::string& objName, const std::string& toolName);
   /**
    * Perform the pull action on the particular object with the particular tool
    * @param objName specifies the name of the object in question
    * @param toolName specifies the name of target tool.
-   * @return true/false on droping or not
+   * @return true/false on pulling or not
    */
   virtual bool pull(const std::string& objName, const std::string& toolName);
   /**
@@ -127,6 +127,11 @@ public:
    * @return Bottle containing list of goals to achieve
    */
   virtual yarp::os::Bottle askPraxicon(const std::string& request);
+  /**
+   * Return to home position
+   * @return true/false on homeing or not
+   */
+  virtual bool goHome();
   /**
    * Quit the module.
    * @return true/false on success/failure

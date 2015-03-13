@@ -80,7 +80,7 @@ service activityInterface_IDLServer
      * Perform the put action on the particular object with the particular hand
      * @param objName specifies the name of the object in question
      * @param targetName specifies the name of target object to drop onto.
-     * @return true/false on droping or not
+     * @return true/false on putting or not
      **/
     bool put(1:string objName, 2:string targetName)
     
@@ -88,7 +88,7 @@ service activityInterface_IDLServer
      * Perform the push action on the particular object with the particular tool
      * @param objName specifies the name of the object in question
      * @param toolName specifies the name of target tool.
-     * @return true/false on droping or not
+     * @return true/false on pushing or not
      **/
     bool push(1:string objName, 2:string toolName)
     
@@ -96,7 +96,7 @@ service activityInterface_IDLServer
      * Perform the pull action on the particular object with the particular tool
      * @param objName specifies the name of the object in question
      * @param toolName specifies the name of target tool.
-     * @return true/false on droping or not
+     * @return true/false on pulling or not
      **/
     bool pull(1:string objName, 2:string toolName)
 
@@ -143,6 +143,12 @@ service activityInterface_IDLServer
      * @return Bottle containing list of goals to achieve
      **/
     Bottle askPraxicon(1:string request)
+    
+    /**
+     * Return to home position
+     * @return true/false on homeing or not
+     **/
+    bool goHome()
     
     /**
      * Quit the module.

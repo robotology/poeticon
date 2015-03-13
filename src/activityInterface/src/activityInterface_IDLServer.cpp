@@ -166,6 +166,14 @@ public:
   virtual bool read(yarp::os::ConnectionReader& connection);
 };
 
+class activityInterface_IDLServer_goHome : public yarp::os::Portable {
+public:
+  bool _return;
+  void init();
+  virtual bool write(yarp::os::ConnectionWriter& connection);
+  virtual bool read(yarp::os::ConnectionReader& connection);
+};
+
 class activityInterface_IDLServer_quit : public yarp::os::Portable {
 public:
   bool _return;
@@ -572,6 +580,27 @@ void activityInterface_IDLServer_askPraxicon::init(const std::string& request) {
   this->request = request;
 }
 
+bool activityInterface_IDLServer_goHome::write(yarp::os::ConnectionWriter& connection) {
+  yarp::os::idl::WireWriter writer(connection);
+  if (!writer.writeListHeader(1)) return false;
+  if (!writer.writeTag("goHome",1,1)) return false;
+  return true;
+}
+
+bool activityInterface_IDLServer_goHome::read(yarp::os::ConnectionReader& connection) {
+  yarp::os::idl::WireReader reader(connection);
+  if (!reader.readListReturn()) return false;
+  if (!reader.readBool(_return)) {
+    reader.fail();
+    return false;
+  }
+  return true;
+}
+
+void activityInterface_IDLServer_goHome::init() {
+  _return = false;
+}
+
 bool activityInterface_IDLServer_quit::write(yarp::os::ConnectionWriter& connection) {
   yarp::os::idl::WireWriter writer(connection);
   if (!writer.writeListHeader(1)) return false;
@@ -762,6 +791,16 @@ yarp::os::Bottle activityInterface_IDLServer::askPraxicon(const std::string& req
   helper.init(request);
   if (!yarp().canWrite()) {
     fprintf(stderr,"Missing server method '%s'?\n","yarp::os::Bottle activityInterface_IDLServer::askPraxicon(const std::string& request)");
+  }
+  bool ok = yarp().write(helper,helper);
+  return ok?helper._return:_return;
+}
+bool activityInterface_IDLServer::goHome() {
+  bool _return = false;
+  activityInterface_IDLServer_goHome helper;
+  helper.init();
+  if (!yarp().canWrite()) {
+    fprintf(stderr,"Missing server method '%s'?\n","bool activityInterface_IDLServer::goHome()");
   }
   bool ok = yarp().write(helper,helper);
   return ok?helper._return:_return;
@@ -1093,6 +1132,17 @@ bool activityInterface_IDLServer::read(yarp::os::ConnectionReader& connection) {
       reader.accept();
       return true;
     }
+    if (tag == "goHome") {
+      bool _return;
+      _return = goHome();
+      yarp::os::idl::WireWriter writer(reader);
+      if (!writer.isNull()) {
+        if (!writer.writeListHeader(1)) return false;
+        if (!writer.writeBool(_return)) return false;
+      }
+      reader.accept();
+      return true;
+    }
     if (tag == "quit") {
       bool _return;
       _return = quit();
@@ -1155,6 +1205,7 @@ std::vector<std::string> activityInterface_IDLServer::help(const std::string& fu
     helpString.push_back("pullableWith");
     helpString.push_back("getNames");
     helpString.push_back("askPraxicon");
+    helpString.push_back("goHome");
     helpString.push_back("quit");
     helpString.push_back("help");
   }
@@ -1215,21 +1266,21 @@ std::vector<std::string> activityInterface_IDLServer::help(const std::string& fu
       helpString.push_back("Perform the put action on the particular object with the particular hand ");
       helpString.push_back("@param objName specifies the name of the object in question ");
       helpString.push_back("@param targetName specifies the name of target object to drop onto. ");
-      helpString.push_back("@return true/false on droping or not ");
+      helpString.push_back("@return true/false on putting or not ");
     }
     if (functionName=="push") {
       helpString.push_back("bool push(const std::string& objName, const std::string& toolName) ");
       helpString.push_back("Perform the push action on the particular object with the particular tool ");
       helpString.push_back("@param objName specifies the name of the object in question ");
       helpString.push_back("@param toolName specifies the name of target tool. ");
-      helpString.push_back("@return true/false on droping or not ");
+      helpString.push_back("@return true/false on pushing or not ");
     }
     if (functionName=="pull") {
       helpString.push_back("bool pull(const std::string& objName, const std::string& toolName) ");
       helpString.push_back("Perform the pull action on the particular object with the particular tool ");
       helpString.push_back("@param objName specifies the name of the object in question ");
       helpString.push_back("@param toolName specifies the name of target tool. ");
-      helpString.push_back("@return true/false on droping or not ");
+      helpString.push_back("@return true/false on pulling or not ");
     }
     if (functionName=="askForTool") {
       helpString.push_back("bool askForTool(const std::string& handName, const int32_t xpos, const int32_t ypos) ");
@@ -1267,6 +1318,11 @@ std::vector<std::string> activityInterface_IDLServer::help(const std::string& fu
       helpString.push_back("Get the speech instruction and sends it to the praxicon ");
       helpString.push_back("@param request specifies the request to be asked to the praxicon ");
       helpString.push_back("@return Bottle containing list of goals to achieve ");
+    }
+    if (functionName=="goHome") {
+      helpString.push_back("bool goHome() ");
+      helpString.push_back("Return to home position ");
+      helpString.push_back("@return true/false on homeing or not ");
     }
     if (functionName=="quit") {
       helpString.push_back("bool quit() ");
