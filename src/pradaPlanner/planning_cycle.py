@@ -338,6 +338,7 @@ def planning_cycle():
             
             flag_kill = 0
             cont = 0
+            yarp.Time.delay(0.1)
             if mode != 3:
                 while 1:
                     print "communicating..."
