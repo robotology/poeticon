@@ -13,6 +13,7 @@ import subprocess
 import os
 import yarp
 import re
+import copy
 
 yarp.Network.init()
 
@@ -489,7 +490,7 @@ def planning_cycle():
                 object_IDs[h] = object_IDs[h].split(',')
             goal = subgoal_file.read().split(' ')
             subgoal_file.close()
-            prtmess = goal
+            prtmess = copy.deepcopy(goal)
             for i in range(len(goal)):
                 for t in range(len(object_IDs)):
                     prtmess[i] = prtmess[i].replace(object_IDs[t][0], object_IDs[t][1])
@@ -498,7 +499,7 @@ def planning_cycle():
             not_comp_goals = []
             for t in range(len(goal)):
                 if goal[t] not in state:
-                    prtmess = goal[t]
+                    prtmess = copy.deepcopy(goal[t])
                     for o in range(len(object_IDs)):
                         prtmess = prtmess.replace(object_IDs[o][0], object_IDs[o][1])
                     not_comp_goals = not_comp_goals + [goal[t]]
