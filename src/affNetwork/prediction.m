@@ -30,8 +30,8 @@ switch bn
     case 'pca6merge'
 		load('pca6mergecomp.mat');
 	case 'pca4sep'
-		%load('pca_2n_2C_noise_25b.mat');
-        load('pca_2n_2C_noise_2b.mat');
+		load('pca_2n_2C_noise_25b.mat');
+        %load('pca_2n_2C_noise_2b.mat');
     case 'pca6sep'
 		load('pca_2n_3C.mat');
     otherwise
@@ -67,7 +67,7 @@ portOutput.open('/Eprediction/write:o');
 disp('opened port /Eprediction/write:o');
 pause(0.5);
 disp('Done opening ports');
-
+i=1;
 %% Run until you get the quit signal:
 while(~done)
     
@@ -175,8 +175,30 @@ while(~done)
             answer_string=[answer_string ')'];
             %answer_string(end) = '';
             answer.fromString(answer_string);
-            portOutput.write(answer);        
-
+                    
+            x = [0.5,1.5,2.5,3.5,4.5];
+            
+            hFig(i) = figure(i);
+            str = sprintf('Affordances of iteration %d',i); % maybe change the title :p
+            title(str);
+            set(hFig(i), 'Position', [500 500 450 430]) % maybe change the position of the window
+            axis([0 5 0 5.5])
+            hold on;
+            scatter (x, 0.5*ones(1,5) , 5000,prob.T(1,:),'filled','s')
+            hold on;
+            scatter (x, 1.5*ones(1,5) , 5000,prob.T(2,:),'filled','s')
+            hold on;
+            scatter (x, 2.5*ones(1,5) , 5000, prob.T(3,:),'filled','s')
+            hold on;
+            scatter (x, 3.5*ones(1,5) , 5000,prob.T(4,:), 'filled','s')
+            hold on;
+            scatter (x, 4.5*ones(1,5) , 5000, prob.T(5,:),'filled','s')
+            hold on;
+            colormap gray;
+            plot(2.5,5.25,'r*','LineWidth',8) ; % Display robot position
+            pause(1);
+            i=i+1;
+            portOutput.write(answer);
             disp('Done');            
         end
     end
@@ -185,4 +207,5 @@ end
 disp('Going to close the ports');
 portInput.close;
 portOutput.close;
+close all;
 clear;
