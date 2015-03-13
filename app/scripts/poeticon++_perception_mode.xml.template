@@ -205,7 +205,7 @@
     <to>/planner/goal_cmd:io</to>
 </connection>
 <connection>
-    <from>/activityInterface/rpc:i</from>
+    <from>/activityInterface/praxicon:o</from>
     <to>/goal_imag/prax_inst:i</to>
 </connection>
 <connection>
