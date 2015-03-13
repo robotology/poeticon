@@ -60,7 +60,7 @@ def goal_imaginer():
                 if prax_bottle_in:
                     instructions = []
                     print 'bottle received: \n', prax_bottle_in.toString()
-                    if instructions != []:
+                    if prax_bottle_in.toString() != '':
                         for g in range(prax_bottle_in.size()):
                             temp_instructions = []
                             for y in range(prax_bottle_in.get(g).asList().size()):
