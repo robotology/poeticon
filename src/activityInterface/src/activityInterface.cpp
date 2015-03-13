@@ -427,8 +427,8 @@ bool ActivityInterface::processSpeech(const Bottle &speech)
 
     if ( speech.size() > 0 )
     {
-        fprintf(stdout,"processSpeech]: %s \n", speech.toString().c_str());
-        askPraxicon(speech.toString().c_str());
+        
+        askPraxicon(speech.toString());
     }
     
     return true;
@@ -1339,9 +1339,9 @@ Bottle ActivityInterface::reachableWith(const string &objName)
         //fprintf(stdout, "\nleftManip: %lf and rightManip: %lf\n", leftManip, rightManip);
         
         //using 3D instead of manip for testing
-        if(position.get(1).asDouble() < - 0.1 )
+        if(position.get(1).asDouble() < - 0.2 )
             replyList.addString("left");
-        else if (position.get(1).asDouble() >  0.1)
+        else if (position.get(1).asDouble() >  0.2 )
             replyList.addString("right");
         else
         {
