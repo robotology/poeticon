@@ -356,7 +356,7 @@ Bottle ActivityInterface::askPraxicon(const string &request)
     
     
     Bottle &tmpList = listOfGoals.addList();
-    listOfGoals.clear();
+    //listOfGoals.clear();
     vector<string> tokens;
     
     if (replyPrax.size() > 0)
