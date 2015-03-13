@@ -117,10 +117,15 @@ public:
    */
   virtual yarp::os::Bottle pullableWith(const std::string& objName);
   /**
-   * Ask which objects are available in the opc
-   * @return Bottle containing list of labels that are available
+   * Get objects list that are currently recognized.
+   * @return Bottle containing list of labels that are currently recognized
    */
   virtual yarp::os::Bottle getNames();
+  /**
+   * Get all known object that are available in the opc.
+   * @return Bottle containing list of all known object
+   */
+  virtual yarp::os::Bottle getOPCNames();
   /**
    * Get the speech instruction and sends it to the praxicon
    * @param request specifies the request to be asked to the praxicon
@@ -132,6 +137,16 @@ public:
    * @return true/false on homeing or not
    */
   virtual bool goHome();
+  /**
+   * Ask to pause all trackers
+   * @return true/false on pausing or not
+   */
+  virtual bool pauseAllTrackers();
+  /**
+   * Ask to resume position
+   * @return true/false on homeing or not
+   */
+  virtual bool resumeAllTrackers();
   /**
    * Quit the module.
    * @return true/false on success/failure

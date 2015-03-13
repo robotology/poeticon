@@ -222,6 +222,8 @@ bool ActivityInterface::configure(yarp::os::ResourceFinder &rf)
     cmd.addString("head");
     rpcAREcmd.write(cmd, reply);
     
+    allPaused = false;
+    
     fprintf(stdout, "done initialization\n");
     
     return true ;
@@ -281,10 +283,12 @@ bool ActivityInterface::goHome()
     rpcAREcmd.write(are,replyAre);
     
     if (strcmp (replyAre.toString().c_str(),"[ack]") == 0)
-        reply = false;
-    else
         reply = true;
-    return reply;
+    else
+        reply = false;
+    
+    
+    return true;
 }
 
 /**********************************************************/
@@ -320,7 +324,6 @@ bool ActivityInterface::executeSpeech (const string &speech)
     cmdIol.addString("say");
     cmdIol.addString(speech.c_str());
     rpcIolState.write(cmdIol,replyIol);
-    fprintf(stdout,"%s\n", replyIol.toString().c_str());
     return true;
 }
 
@@ -332,7 +335,6 @@ Bottle ActivityInterface::askPraxicon(const string &request)
     
     Bottle toolLikeMemory = getToolLikeNames();
     Bottle objectsMemory = getNames();
-    
     
     fprintf(stdout, "tool names: %s \n", toolLikeMemory.toString().c_str());
     fprintf(stdout, "object names: %s \n", objectsMemory.toString().c_str());
@@ -356,8 +358,6 @@ Bottle ActivityInterface::askPraxicon(const string &request)
         int total=0;
         for (int x=0; x<toolLikeMemory.size(); x++)
             total+=passed[x];
-        
-        //fprintf(stdout,"toolLikeMemory size: %d and total %d\n", toolLikeMemory.size(), total);
         
         if (total==toolLikeMemory.size())
             listOfObjects.addString(objectsMemory.get(i).asString().c_str());
@@ -386,7 +386,7 @@ Bottle ActivityInterface::askPraxicon(const string &request)
     if (replyPrax.size() > 0)
     {
     
-        for (int i=0; i<replyPrax.size()-1; i++) //-1 to remove mouth speak
+        for (int i=0; i<replyPrax.size()-1; i++) //-1 to remove (mouth speak goal from praxicon)
         {
             string replytmp = replyPrax.get(i).asString().c_str();
             istringstream iss(replytmp);
@@ -396,8 +396,7 @@ Bottle ActivityInterface::askPraxicon(const string &request)
                   back_inserter(tokens));
         }
         
-        //adding this to prevent missing the last goal or going out of range
-        tokens.push_back("endofstring");
+        tokens.push_back("endofstring"); //adding this to prevent missing the last goal or going out of range
         
         int inc = 0;
         Bottle tmp;
@@ -411,12 +410,9 @@ Bottle ActivityInterface::askPraxicon(const string &request)
             }
             tmp.addString(tokens[i].c_str());
         }
-        //fprintf(stdout, "Final praxicon is: %s \n",replyPrax.toString().c_str());
     }
     else
-    {
         executeSpeech("something went terribly wrong. I cannot " + request);
-    }
     
     praxiconToPradaPort.write(listOfGoals);
     
@@ -535,6 +531,46 @@ Bottle ActivityInterface::getIDs()
 }
 
 /**********************************************************/
+bool ActivityInterface::pauseAllTrackers()
+{
+    Bottle objects = getOPCNames();
+    
+    for (int i=0; i<objects.size();i++)
+    {
+        Bottle cmdPauseThread, replyPauseThread;
+        cmdPauseThread.clear();
+        cmdPauseThread.addString("pause");
+        cmdPauseThread.addString(objects.get(i).asString().c_str());
+        
+        fprintf(stdout, "[PAUSE ALL]: %s \n", cmdPauseThread.toString().c_str() );
+        
+        rpcWorldState.write(cmdPauseThread,replyPauseThread);
+    }
+    allPaused = true;
+    return true;
+}
+
+/**********************************************************/
+bool ActivityInterface::resumeAllTrackers()
+{
+    Bottle objects = getOPCNames();
+    
+    for (int i=0; i<objects.size();i++)
+    {
+        Bottle cmdPauseThread, replyPauseThread;
+        cmdPauseThread.clear();
+        cmdPauseThread.addString("resume");
+        cmdPauseThread.addString(objects.get(i).asString().c_str());
+        
+        fprintf(stdout, "[RESUME ALL]: %s \n", cmdPauseThread.toString().c_str() );
+        
+        rpcWorldState.write(cmdPauseThread,replyPauseThread);
+    }
+    allPaused = false;
+    return true;
+}
+
+/**********************************************************/
 bool ActivityInterface::handleTrackers()
 {
     Bottle ids = getIDs();
@@ -598,7 +634,9 @@ bool ActivityInterface::updateModule()
     semaphore.wait();
     
     propagateStatus();
-    handleTrackers();
+    
+    if (!allPaused)
+        handleTrackers();
     
     semaphore.post();
     return !closing;
@@ -953,6 +991,7 @@ string ActivityInterface::inHand(const string &objName)
 /**********************************************************/
 bool ActivityInterface::take(const string &objName, const string &handName)
 {
+    pauseAllTrackers();
     //check for hand status beforehand to make sure that it is empty
     string handStatus = inHand(objName);
     if (strcmp (handStatus.c_str(), "none" ) == 0 )
@@ -1004,12 +1043,14 @@ bool ActivityInterface::take(const string &objName, const string &handName)
         fprintf(stdout, "Cannot grasp already have something in hand\n");
     }
 
+    resumeAllTrackers();
     return true;
 }
 
 /**********************************************************/
 bool ActivityInterface::drop(const string &objName)
 {
+    pauseAllTrackers();
     string handName = inHand(objName);
     if (strcmp (handName.c_str(), "none" ) != 0 )
     {
@@ -1025,12 +1066,14 @@ bool ActivityInterface::drop(const string &objName)
     {
         fprintf(stdout, "I am not holding anything\n");
     }
+    resumeAllTrackers();
     return true;
 }
 
 /**********************************************************/
 bool ActivityInterface::put(const string &objName, const string &targetName)
 {
+    pauseAllTrackers();
     string handName = inHand(objName);
     if (strcmp (handName.c_str(), "none" ) != 0 )
     {
@@ -1075,15 +1118,16 @@ bool ActivityInterface::put(const string &objName, const string &targetName)
                 }
             }
         }
+        executeSpeech("There seems to be an issue with the command");
     }
-    
+    resumeAllTrackers();
     return true;
 }
 
 /**********************************************************/
 bool ActivityInterface::askForTool(const std::string &handName, const int32_t pos_x, const int32_t pos_y)
 {
-
+    
     // Get the label of the object requested
     int whichArm = 0;
     string label = getLabel(pos_x, pos_y);
@@ -1099,6 +1143,7 @@ bool ActivityInterface::askForTool(const std::string &handName, const int32_t po
     
     fprintf(stdout, "tool label is: %s \n",label.c_str());
     
+    pauseAllTrackers();
     Bottle cmdAre, replyAre;
     cmdAre.clear();
     replyAre.clear();
@@ -1145,22 +1190,28 @@ bool ActivityInterface::askForTool(const std::string &handName, const int32_t po
     cmdAre.addString("head");
     rpcAREcmd.write(cmdAre, replyAre);
     
+    resumeAllTrackers();
+    
     return true;
 }
 
 /**********************************************************/
 bool ActivityInterface::pull(const string &objName, const string &toolName)
 {
+    pauseAllTrackers();
     //ask for tool
     //do the pulling action
+    resumeAllTrackers();
     return true;
 }
 
 /**********************************************************/
 bool ActivityInterface::push(const string &objName, const string &toolName)
 {
+    pauseAllTrackers();
     //ask for tool
     //do the pushing action
+    resumeAllTrackers();
     return true;
 }
 
@@ -1202,6 +1253,25 @@ Bottle ActivityInterface::getNames()
                 {
                     names.addString(propField->find("name").asString());
                 }
+            }
+        }
+    }
+    return names;
+}
+
+/**********************************************************/
+Bottle ActivityInterface::getOPCNames()
+{
+    Bottle Memory = getMemoryBottle();
+    Bottle names;
+    
+    for (int i=0; i<Memory.size(); i++)
+    {
+        if (Bottle *propField = Memory.get(i).asList())
+        {
+            if (propField->check("name"))
+            {
+                names.addString(propField->find("name").asString());
             }
         }
     }
