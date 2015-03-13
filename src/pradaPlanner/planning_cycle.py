@@ -77,8 +77,8 @@ class ActionExecutorCommunication:
                 print 'in'
                 for i in range(len(toolhandle)):
                     if str(toolhandle[i]) == (obj):
-                        positx = int(toolhandle[i+1])
-                        posity = int(toolhandle[i+2])
+                        positx = int(float(toolhandle[i+1]))
+                        posity = int(float(toolhandle[i+2]))
                         ind = i
         for k in range(len(Object_list)):
             if str(act) == Object_list[k][0]:
