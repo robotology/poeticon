@@ -157,6 +157,14 @@ public:
   virtual bool read(yarp::os::ConnectionReader& connection);
 };
 
+class activityInterface_IDLServer_getOPCNames : public yarp::os::Portable {
+public:
+  yarp::os::Bottle _return;
+  void init();
+  virtual bool write(yarp::os::ConnectionWriter& connection);
+  virtual bool read(yarp::os::ConnectionReader& connection);
+};
+
 class activityInterface_IDLServer_askPraxicon : public yarp::os::Portable {
 public:
   std::string request;
@@ -167,6 +175,22 @@ public:
 };
 
 class activityInterface_IDLServer_goHome : public yarp::os::Portable {
+public:
+  bool _return;
+  void init();
+  virtual bool write(yarp::os::ConnectionWriter& connection);
+  virtual bool read(yarp::os::ConnectionReader& connection);
+};
+
+class activityInterface_IDLServer_pauseAllTrackers : public yarp::os::Portable {
+public:
+  bool _return;
+  void init();
+  virtual bool write(yarp::os::ConnectionWriter& connection);
+  virtual bool read(yarp::os::ConnectionReader& connection);
+};
+
+class activityInterface_IDLServer_resumeAllTrackers : public yarp::os::Portable {
 public:
   bool _return;
   void init();
@@ -558,6 +582,26 @@ bool activityInterface_IDLServer_getNames::read(yarp::os::ConnectionReader& conn
 void activityInterface_IDLServer_getNames::init() {
 }
 
+bool activityInterface_IDLServer_getOPCNames::write(yarp::os::ConnectionWriter& connection) {
+  yarp::os::idl::WireWriter writer(connection);
+  if (!writer.writeListHeader(1)) return false;
+  if (!writer.writeTag("getOPCNames",1,1)) return false;
+  return true;
+}
+
+bool activityInterface_IDLServer_getOPCNames::read(yarp::os::ConnectionReader& connection) {
+  yarp::os::idl::WireReader reader(connection);
+  if (!reader.readListReturn()) return false;
+  if (!reader.read(_return)) {
+    reader.fail();
+    return false;
+  }
+  return true;
+}
+
+void activityInterface_IDLServer_getOPCNames::init() {
+}
+
 bool activityInterface_IDLServer_askPraxicon::write(yarp::os::ConnectionWriter& connection) {
   yarp::os::idl::WireWriter writer(connection);
   if (!writer.writeListHeader(2)) return false;
@@ -598,6 +642,48 @@ bool activityInterface_IDLServer_goHome::read(yarp::os::ConnectionReader& connec
 }
 
 void activityInterface_IDLServer_goHome::init() {
+  _return = false;
+}
+
+bool activityInterface_IDLServer_pauseAllTrackers::write(yarp::os::ConnectionWriter& connection) {
+  yarp::os::idl::WireWriter writer(connection);
+  if (!writer.writeListHeader(1)) return false;
+  if (!writer.writeTag("pauseAllTrackers",1,1)) return false;
+  return true;
+}
+
+bool activityInterface_IDLServer_pauseAllTrackers::read(yarp::os::ConnectionReader& connection) {
+  yarp::os::idl::WireReader reader(connection);
+  if (!reader.readListReturn()) return false;
+  if (!reader.readBool(_return)) {
+    reader.fail();
+    return false;
+  }
+  return true;
+}
+
+void activityInterface_IDLServer_pauseAllTrackers::init() {
+  _return = false;
+}
+
+bool activityInterface_IDLServer_resumeAllTrackers::write(yarp::os::ConnectionWriter& connection) {
+  yarp::os::idl::WireWriter writer(connection);
+  if (!writer.writeListHeader(1)) return false;
+  if (!writer.writeTag("resumeAllTrackers",1,1)) return false;
+  return true;
+}
+
+bool activityInterface_IDLServer_resumeAllTrackers::read(yarp::os::ConnectionReader& connection) {
+  yarp::os::idl::WireReader reader(connection);
+  if (!reader.readListReturn()) return false;
+  if (!reader.readBool(_return)) {
+    reader.fail();
+    return false;
+  }
+  return true;
+}
+
+void activityInterface_IDLServer_resumeAllTrackers::init() {
   _return = false;
 }
 
@@ -785,6 +871,16 @@ yarp::os::Bottle activityInterface_IDLServer::getNames() {
   bool ok = yarp().write(helper,helper);
   return ok?helper._return:_return;
 }
+yarp::os::Bottle activityInterface_IDLServer::getOPCNames() {
+  yarp::os::Bottle _return;
+  activityInterface_IDLServer_getOPCNames helper;
+  helper.init();
+  if (!yarp().canWrite()) {
+    fprintf(stderr,"Missing server method '%s'?\n","yarp::os::Bottle activityInterface_IDLServer::getOPCNames()");
+  }
+  bool ok = yarp().write(helper,helper);
+  return ok?helper._return:_return;
+}
 yarp::os::Bottle activityInterface_IDLServer::askPraxicon(const std::string& request) {
   yarp::os::Bottle _return;
   activityInterface_IDLServer_askPraxicon helper;
@@ -801,6 +897,26 @@ bool activityInterface_IDLServer::goHome() {
   helper.init();
   if (!yarp().canWrite()) {
     fprintf(stderr,"Missing server method '%s'?\n","bool activityInterface_IDLServer::goHome()");
+  }
+  bool ok = yarp().write(helper,helper);
+  return ok?helper._return:_return;
+}
+bool activityInterface_IDLServer::pauseAllTrackers() {
+  bool _return = false;
+  activityInterface_IDLServer_pauseAllTrackers helper;
+  helper.init();
+  if (!yarp().canWrite()) {
+    fprintf(stderr,"Missing server method '%s'?\n","bool activityInterface_IDLServer::pauseAllTrackers()");
+  }
+  bool ok = yarp().write(helper,helper);
+  return ok?helper._return:_return;
+}
+bool activityInterface_IDLServer::resumeAllTrackers() {
+  bool _return = false;
+  activityInterface_IDLServer_resumeAllTrackers helper;
+  helper.init();
+  if (!yarp().canWrite()) {
+    fprintf(stderr,"Missing server method '%s'?\n","bool activityInterface_IDLServer::resumeAllTrackers()");
   }
   bool ok = yarp().write(helper,helper);
   return ok?helper._return:_return;
@@ -1116,6 +1232,17 @@ bool activityInterface_IDLServer::read(yarp::os::ConnectionReader& connection) {
       reader.accept();
       return true;
     }
+    if (tag == "getOPCNames") {
+      yarp::os::Bottle _return;
+      _return = getOPCNames();
+      yarp::os::idl::WireWriter writer(reader);
+      if (!writer.isNull()) {
+        if (!writer.writeListHeader(1)) return false;
+        if (!writer.write(_return)) return false;
+      }
+      reader.accept();
+      return true;
+    }
     if (tag == "askPraxicon") {
       std::string request;
       if (!reader.readString(request)) {
@@ -1135,6 +1262,28 @@ bool activityInterface_IDLServer::read(yarp::os::ConnectionReader& connection) {
     if (tag == "goHome") {
       bool _return;
       _return = goHome();
+      yarp::os::idl::WireWriter writer(reader);
+      if (!writer.isNull()) {
+        if (!writer.writeListHeader(1)) return false;
+        if (!writer.writeBool(_return)) return false;
+      }
+      reader.accept();
+      return true;
+    }
+    if (tag == "pauseAllTrackers") {
+      bool _return;
+      _return = pauseAllTrackers();
+      yarp::os::idl::WireWriter writer(reader);
+      if (!writer.isNull()) {
+        if (!writer.writeListHeader(1)) return false;
+        if (!writer.writeBool(_return)) return false;
+      }
+      reader.accept();
+      return true;
+    }
+    if (tag == "resumeAllTrackers") {
+      bool _return;
+      _return = resumeAllTrackers();
       yarp::os::idl::WireWriter writer(reader);
       if (!writer.isNull()) {
         if (!writer.writeListHeader(1)) return false;
@@ -1204,8 +1353,11 @@ std::vector<std::string> activityInterface_IDLServer::help(const std::string& fu
     helpString.push_back("reachableWith");
     helpString.push_back("pullableWith");
     helpString.push_back("getNames");
+    helpString.push_back("getOPCNames");
     helpString.push_back("askPraxicon");
     helpString.push_back("goHome");
+    helpString.push_back("pauseAllTrackers");
+    helpString.push_back("resumeAllTrackers");
     helpString.push_back("quit");
     helpString.push_back("help");
   }
@@ -1310,8 +1462,13 @@ std::vector<std::string> activityInterface_IDLServer::help(const std::string& fu
     }
     if (functionName=="getNames") {
       helpString.push_back("yarp::os::Bottle getNames() ");
-      helpString.push_back("Ask which objects are available in the opc ");
-      helpString.push_back("@return Bottle containing list of labels that are available ");
+      helpString.push_back("Get objects list that are currently recognized. ");
+      helpString.push_back("@return Bottle containing list of labels that are currently recognized ");
+    }
+    if (functionName=="getOPCNames") {
+      helpString.push_back("yarp::os::Bottle getOPCNames() ");
+      helpString.push_back("Get all known object that are available in the opc. ");
+      helpString.push_back("@return Bottle containing list of all known object ");
     }
     if (functionName=="askPraxicon") {
       helpString.push_back("yarp::os::Bottle askPraxicon(const std::string& request) ");
@@ -1322,6 +1479,16 @@ std::vector<std::string> activityInterface_IDLServer::help(const std::string& fu
     if (functionName=="goHome") {
       helpString.push_back("bool goHome() ");
       helpString.push_back("Return to home position ");
+      helpString.push_back("@return true/false on homeing or not ");
+    }
+    if (functionName=="pauseAllTrackers") {
+      helpString.push_back("bool pauseAllTrackers() ");
+      helpString.push_back("Ask to pause all trackers ");
+      helpString.push_back("@return true/false on pausing or not ");
+    }
+    if (functionName=="resumeAllTrackers") {
+      helpString.push_back("bool resumeAllTrackers() ");
+      helpString.push_back("Ask to resume position ");
       helpString.push_back("@return true/false on homeing or not ");
     }
     if (functionName=="quit") {

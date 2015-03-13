@@ -166,8 +166,11 @@ public:
     double              getPairMin(std::map<int, double> pairmap);
     double              getPairMax(std::map<int, double> pairmap);
     bool                processPradaStatus(const yarp::os::Bottle &status);
+    bool                pauseAllTrackers();
+    bool                resumeAllTrackers();
     
     bool                with_robot;
+    bool                allPaused;
     
     int                 incrementSize[10];
 
@@ -186,6 +189,7 @@ public:
     yarp::os::Bottle    reachableWith(const std::string &objName);
     yarp::os::Bottle    pullableWith(const std::string &objName);
     yarp::os::Bottle    getNames();
+    yarp::os::Bottle    getOPCNames();
     yarp::os::Bottle    askPraxicon(const std::string &request);
     bool                drop(const std::string &objName);
     bool                push(const std::string &objName, const std::string &toolName);

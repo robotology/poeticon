@@ -132,10 +132,16 @@ service activityInterface_IDLServer
     Bottle pullableWith(1:string objName)
     
     /**
-     * Ask which objects are available in the opc
-     * @return Bottle containing list of labels that are available
+     * Get objects list that are currently recognized.
+     * @return Bottle containing list of labels that are currently recognized
      **/
     Bottle getNames()
+    
+    /**
+     * Get all known object that are available in the opc.
+     * @return Bottle containing list of all known object
+     **/
+    Bottle getOPCNames()
     
     /**
      * Get the speech instruction and sends it to the praxicon
@@ -149,6 +155,18 @@ service activityInterface_IDLServer
      * @return true/false on homeing or not
      **/
     bool goHome()
+    
+    /**
+     * Ask to pause all trackers
+     * @return true/false on pausing or not
+     **/
+    bool pauseAllTrackers()
+    
+    /**
+     * Ask to resume position
+     * @return true/false on homeing or not
+     **/
+    bool resumeAllTrackers()
     
     /**
      * Quit the module.
