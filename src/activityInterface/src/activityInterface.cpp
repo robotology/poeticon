@@ -273,7 +273,7 @@ bool ActivityInterface::goHome()
 {
     bool reply;
 
-    fprintf(stdout, "[goHome] request\n");
+    fprintf(stdout, "[goHome] requested\n");
     Bottle are, replyAre;
     are.clear(),replyAre.clear();
     are.addString("home");
@@ -285,7 +285,7 @@ bool ActivityInterface::goHome()
     else
         reply = false;
     
-    fprintf(stdout, "[goHome] done\n");
+    fprintf(stdout, "[goHome] excecuted\n");
     return true;
 }
 
