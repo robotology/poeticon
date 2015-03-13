@@ -332,7 +332,12 @@ def planning_cycle():
 ##        for j in range(len(toolhandle)):
 ##            toolhandle[j] = toolhandle[j].split(' ')
 ##        print toolhandle
-            
+        object_file = open(''.join(PathName + "/Object_names-IDs.dat"))
+        object_IDs = object_file.read().replace(')','').replace('(','').split(';')
+        object_file.close()
+        object_IDs.pop()
+        for h in range(len(object_IDs)):
+            object_IDs[h] = object_IDs[h].split(',')    
         while(True):
             ## Plan!!!
             
@@ -434,7 +439,9 @@ def planning_cycle():
                 prax_bottle_out.clear()
                 prax_bottle_out.addString('OK')
                 for u in range(len(objects_used)):
-                    prax_bottle_out.addString(objects_used[u])
+                    for inde in range(len(object_IDs)):
+                        if object_IDs[inde][0] == objects_used[u]:
+                            prax_bottle_out.addString(object_IDs[inde][1])
                 prax_yarp_out.write()
 ##                geo_bottle_out = geo_yarp.prepare()
 ##                geo_bottle_out.clear()
@@ -483,12 +490,7 @@ def planning_cycle():
             ## executes next action
             
             subgoal_file = open(''.join(PathName +"/goal.dat"),'r')
-            object_file = open(''.join(PathName + "/Object_names-IDs.dat"))
-            object_IDs = object_file.read().replace(')','').replace('(','').split(';')
-            object_file.close()
-            object_IDs.pop()
-            for h in range(len(object_IDs)):
-                object_IDs[h] = object_IDs[h].split(',')
+            
             goal = subgoal_file.read().split(' ')
             subgoal_file.close()
             prtmess = copy.deepcopy(goal)
@@ -669,7 +671,9 @@ def planning_cycle():
                 prax_bottle_out.clear()
                 prax_bottle_out.addString('FAIL')
                 for u in range(len(fail_obj_now)):
-                    prax_bottle_out.addString(fail_obj_now[u])
+                    for inde in range(len(object_IDs)):
+                        if object_IDs[inde][0] == fail_obj_now[u]:
+                            prax_bottle_out.addString(object_IDs[inde][1])
                 prax_yarp_out.write()
 ##                geo_bottle_out = geo_yarp.prepare()
 ##                geo_bottle_out.clear()
