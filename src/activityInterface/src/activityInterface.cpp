@@ -1193,7 +1193,7 @@ Bottle ActivityInterface::reachableWith(const string &objName)
     
     position = get3D(objName);
 
-    if (position.get(0).asDouble() < -0.47)
+    if (position.get(0).asDouble() < -0.55)
     {
         Bottle list = pullableWith(objName);
         for (int i = 0; i<list.size(); i++)
