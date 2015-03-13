@@ -885,7 +885,6 @@ double ActivityInterface::getManip(const string &objName, const std::string &han
             
             manip_right*=(1-exp(-limits_right));
             
-            
             if (strcmp (handName.c_str(),"left") == 0)
                 manip = manip_left;
             else if (strcmp (handName.c_str(),"right") == 0)
@@ -898,12 +897,38 @@ double ActivityInterface::getManip(const string &objName, const std::string &han
     }
     else
     {
-        if (strcmp (handName.c_str(),"left") == 0)
-            manip = 0.6;
-        else if (strcmp (handName.c_str(),"right") == 0)
-            manip = 0.4;
+        //adding this in case of no robot
+        Bottle position = get3D(objName);
+        
+        if (position.get(0).asDouble() > -0.55 && position.get(1).asDouble() < - 0.07)
+        {
+            if (strcmp (handName.c_str(),"left") == 0)
+                manip = 0.8;
+            if (strcmp (handName.c_str(),"right") == 0)
+                manip = 0.3;
+        }
+        else if (position.get(0).asDouble() > -0.55 && position.get(1).asDouble() > 0.07)
+        {
+            if (strcmp (handName.c_str(),"left") == 0)
+                manip = 0.3;
+            if (strcmp (handName.c_str(),"right") == 0)
+                manip = 0.8;
+        }
+        else if (position.get(0).asDouble() > -0.55 && position.get(1).asDouble() < 0.07 && position.get(1).asDouble() > - 0.07)
+        {
+            if (strcmp (handName.c_str(),"left") == 0)
+                manip = 0.8;
+            if (strcmp (handName.c_str(),"right") == 0)
+                manip = 0.8;
+        }
         else
-            manip = 0.0;
+        {
+            if (strcmp (handName.c_str(),"left") == 0)
+                manip = 0.1;
+            if (strcmp (handName.c_str(),"right") == 0)
+                manip = 0.1;
+        }
+
     }
     return manip;
 }
