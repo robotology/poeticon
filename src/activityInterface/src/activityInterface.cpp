@@ -272,12 +272,19 @@ bool ActivityInterface::close()
 /**********************************************************/
 bool ActivityInterface::goHome()
 {
+    bool reply;
+    
     Bottle are, replyAre;
     are.clear(),replyAre.clear();
     are.addString("home");
     are.addString("head");
     rpcAREcmd.write(are,replyAre);
-    return true;
+    
+    if (strcmp (replyAre.toString().c_str(),"[ack]") == 0)
+        reply = false;
+    else
+        reply = true;
+    return reply;
 }
 
 /**********************************************************/
@@ -794,7 +801,7 @@ string ActivityInterface::getLabel(const int32_t pos_x, const int32_t pos_y)
                 int diffx = abs(cog.get(0).asInt() - pos_x);
                 int diffy = abs(cog.get(1).asInt() - pos_y);
                 
-                if ( diffx < 10 && diffy < 10)
+                if ( abs (diffx + diffy) < 50)
                 {
                     if (propField->check("name"))
                     {
@@ -1164,9 +1171,12 @@ Bottle ActivityInterface::getNames()
     {
         if (Bottle *propField = Memory.get(i).asList())
         {
-            if (propField->check("name"))
+            if (propField->check("position_2d_left"))
             {
-                names.addString(propField->find("name").asString());
+                if (propField->check("name"))
+                {
+                    names.addString(propField->find("name").asString());
+                }
             }
         }
     }
