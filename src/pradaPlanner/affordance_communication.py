@@ -72,7 +72,7 @@ class ActionQueryCommunication:
 
 def Affordance_comm():
 
-    mode = 0
+    mode = 1
     ## set mode  = 0 for no motor engine, 1 for motor engine active 
     yarp.Network.init()
     geo_yarp = yarp.BufferedPortBottle()
@@ -173,8 +173,8 @@ def Affordance_comm():
                     for t in range(len(data)):
                         data[0][t] = float(data[0][t])
                         data[1][t] = float(data[1][t])
-                    data[0] = data[0][2:-1]
-                    data[1] = data[1][2:-1]
+##                    data[0] = data[0][2:-1]
+##                    data[1] = data[1][2:-1]
                     break
                 desc_bottle_out = desc_yarp.prepare()
                 desc_bottle_out.clear()
@@ -188,6 +188,8 @@ def Affordance_comm():
     translation = []
     for i in range(len(aux_translation)):
         translation = translation + [aux_translation[i].split(' ')]
+    
+    posit = []
     while 1:
         command = ''
         while 1:
@@ -197,6 +199,23 @@ def Affordance_comm():
                 command = Affor_bottle_in.toString()
                 print "updating rule..."
                 break
+            planner_bottle_in = planner_yarp.read(False)
+            if planner_bottle_in:
+                comm = planner_bottle_in.toString()
+                if comm == 'query':
+                    new_posit = []
+                    for g in range(len(posit)/3):
+                        if posit[g] not in new_posit:
+                            new_posit = new_posit + [posit[g],posit[g+1],posit[g+2]]
+                    for g in range(len(new_posit)):
+                        new_posit[g] = str(new_posit[g])
+                    message = ' '.join(new_posit)
+                    print message
+                    planner_bottle_out = planner_yarp.prepare()
+                    planner_bottle_out.clear()
+                    planner_bottle_out.addString(message)
+                    planner_yarp.write()
+                    break
 ##            planner_bottle_in = planner_yarp.read(False)
 ##            if planner_bottle_in:
 ##                data = planner_bottle_in.toString()
@@ -211,9 +230,12 @@ def Affordance_comm():
 ##                        print planner_bottle_out
 ##                    planner_yarp.write()
 ##                    break
+##            planner_yarp_bottle = planner_yarp.prepare()
+##            planner_yarp_bottle.clear()
+##            planner_yarp_bottle.addString(' '.join(posit))
+##            planner_yarp.write()
         new_rule = []
-        posit = []
-                    
+        print posit          
                 
                     
         if command == 'kill':
@@ -319,7 +341,6 @@ def Affordance_comm():
                                 affnet_yarp.write()
                                 while 1:
                                     affnet_bottle_in = affnet_yarp.read(False)
-                                    yarp.Time.delay(0.1)
                                     if affnet_bottle_in:
                                         data = affnet_bottle_in.toString().replace('((','').replace('))','').split(') (')
                                         for j in range(len(data)):
@@ -328,6 +349,7 @@ def Affordance_comm():
                                             for j in range(len(data[g])):
                                                 data[g][j] = float(data[g][j])
                                         break
+                                    yarp.Time.delay(0.1)
                                 prob_succ1 = 0
                                 for g in range(len(data)):
                                     if g > 3:
@@ -427,7 +449,6 @@ def Affordance_comm():
                                 affnet_yarp.write()
                                 while 1:
                                     affnet_bottle_in = affnet_yarp.read(False)
-                                    yarp.Time.delay(0.1)
                                     if affnet_bottle_in:
                                         data = affnet_bottle_in.toString().replace('((','').replace('))','').split(') (')
                                         for j in range(len(data)):
@@ -436,6 +457,7 @@ def Affordance_comm():
                                             for j in range(len(data[g])):
                                                 data[g][j] = float(data[g][j])
                                         break
+                                    yarp.Time.delay(0.1)
                                 prob_succ1 = 0
                                 for g in range(len(data)):
                                     if g < 3:
@@ -523,10 +545,7 @@ def Affordance_comm():
                     new_rule = new_rule + [outcome2]
                     new_rule = new_rule + [outcome3]
         
-        planner_yarp_bottle = planner_yarp.prepare()
-        planner_yarp_bottle.clear()
-        planner_yarp_bottle.addString(' '.join(posit))
-        planner_yarp.write()
+
         
     translation_file.close()
 

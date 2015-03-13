@@ -13,6 +13,7 @@ import subprocess
 import os
 import yarp
 import re
+import copy
 
 yarp.Network.init()
 
@@ -51,6 +52,8 @@ class ActionExecutorCommunication:
         Object_list = Objects_file.read().split(';')
         Object_list.pop()
         Objects_file.close()
+        message = yarp.Bottle()
+        message.clear()
         for k in range(len(Object_list)):
             Object_list[k] = Object_list[k].replace('(','').replace(')','').split(',')
         cmd = cmd.split('_')
@@ -70,12 +73,14 @@ class ActionExecutorCommunication:
                     tool1 = Object_list[objID][0]
                 if Object_list[objID][1] == 'stick':
                     tool2 = Object_list[objID][0]
-                    
             if act == 'grasp' and ( obj == tool1 or obj == tool2):
                 for i in range(len(toolhandle)):
-                    if toolhandle[i] == obj:
-                        positx = toolhandle[i+1]
-                        posity = toolhandle[i+2]
+                    if str(toolhandle[i]) == (obj):
+                        print toolhandle[i+1]
+                        print float(toolhandle[i+1])
+                        print int(float(toolhandle[i+1]))
+                        positx = int(float(toolhandle[i+1]))
+                        posity = int(float(toolhandle[i+2]))
                         ind = i
         for k in range(len(Object_list)):
             if str(act) == Object_list[k][0]:
@@ -86,16 +91,20 @@ class ActionExecutorCommunication:
                 hand = Object_list[k][1].replace('hand','')
         if act == 'grasp' and (obj == 'rake' or obj == 'stick'):
             act = 'askForTool'
-            obj = hand
-            hand = ' '.join([positx]+[posity])
+            print 'hand used:', hand
+            message.addString(act)
+            message.addString(hand)
+            print 'positions:', positx, posity
+            message.addInt(positx)
+            message.addInt(posity)
+            print 'full message:' , message.toString()
         elif act == 'grasp' and (obj != 'rake' and obj != 'stick'):
             act = 'take'
-            
+            map(message.addString, [act, obj, hand])
+        else:
+            map(message.addString, [act, obj, hand])
             
         print act, obj, hand
-        message = yarp.Bottle()
-        message.clear()
-        map(message.addString, [act, obj, hand])
         ans = yarp.Bottle()
         self._rpc_client.write(message, ans)
         return ans
@@ -239,7 +248,6 @@ def planning_cycle():
         goal_bottle_out = goal_yarp.prepare()
         goal_bottle_out.clear()
         goal_bottle_out.addString('update')
-        print goal_bottle_out.toString()
         goal_yarp.write()
         while 1:
             goal_bottle_in = goal_yarp.read(False)
@@ -285,11 +293,16 @@ def planning_cycle():
                     print 'ready'
                     break
                 yarp.Time.delay(1)
+        Aff_bottle_out = Aff_yarp.prepare()
+        Aff_bottle_out.clear()
+        Aff_bottle_out.addString('query')
+        Aff_yarp.write() 
         while 1:
             Aff_bottle_in = Aff_yarp.read(False)
             if Aff_bottle_in:
                 data = Aff_bottle_in.toString()
-                data = data.replace('((','').replace('))','').split(' ')
+                data = data.replace('"','').split(' ')
+                print "tool position received:\n", data
                 toolhandle = data
                 break
             yarp.Time.delay(0.1)
@@ -327,11 +340,18 @@ def planning_cycle():
 ##        for j in range(len(toolhandle)):
 ##            toolhandle[j] = toolhandle[j].split(' ')
 ##        print toolhandle
-            
+        object_file = open(''.join(PathName + "/Object_names-IDs.dat"))
+        object_IDs = object_file.read().replace(')','').replace('(','').split(';')
+        object_file.close()
+        object_IDs.pop()
+        for h in range(len(object_IDs)):
+            object_IDs[h] = object_IDs[h].split(',')    
         while(True):
             ## Plan!!!
+            
             flag_kill = 0
             cont = 0
+            yarp.Time.delay(1)
             if mode != 3:
                 while 1:
                     print "communicating..."
@@ -360,7 +380,7 @@ def planning_cycle():
             yarp.Time.delay(0.1)
                    
             update_state(PathName)
-            
+            yarp.Time.delay(0.1)
 ################# function under construction, updating when objects change ################
 ## requires the geometric grounding to change, to ground object by object
 ## will take two types of commands: a "complete", to make the full grounding
@@ -427,7 +447,10 @@ def planning_cycle():
                 prax_bottle_out.clear()
                 prax_bottle_out.addString('OK')
                 for u in range(len(objects_used)):
-                    prax_bottle_out.addString(objects_used[u])
+                    for inde in range(len(object_IDs)):
+                        if object_IDs[inde][0] == objects_used[u]:
+                            if object_IDs[inde][1] != 'rake' and object_IDs[inde][1] != 'stick' and object_IDs[inde][1] != 'left' and object_IDs[inde][1] != 'right':
+                                prax_bottle_out.addString(object_IDs[inde][1])
                 prax_yarp_out.write()
 ##                geo_bottle_out = geo_yarp.prepare()
 ##                geo_bottle_out.clear()
@@ -476,34 +499,25 @@ def planning_cycle():
             ## executes next action
             
             subgoal_file = open(''.join(PathName +"/goal.dat"),'r')
-            object_file = open(''.join(PathName + "/Object_names-IDs.dat"))
-            object_IDs = object_file.read().replace(')','').replace('(','').split(';')
-            object_file.close()
-            object_IDs.pop()
-            for h in range(len(object_IDs)):
-                object_IDs[h] = object_IDs[h].split(',')
+            
             goal = subgoal_file.read().split(' ')
             subgoal_file.close()
-            prtmess = goal
+            prtmess = copy.deepcopy(goal)
             for i in range(len(goal)):
                 for t in range(len(object_IDs)):
-                    print object_IDs[t][0], object_IDs[t][1]
                     prtmess[i] = prtmess[i].replace(object_IDs[t][0], object_IDs[t][1])
             print 'goals: \n',prtmess
-            print '\n goals not met:'
+            print '\ngoals not met:'
             not_comp_goals = []
             for t in range(len(goal)):
                 if goal[t] not in state:
-                    prtmess = goal[t]
+                    prtmess = copy.deepcopy(goal[t])
                     for o in range(len(object_IDs)):
-                        print prtmess
                         prtmess = prtmess.replace(object_IDs[o][0], object_IDs[o][1])
-                        print prtmess
                     not_comp_goals = not_comp_goals + [goal[t]]
                     print prtmess
                     cont = 1
             print '\n'
-            raw_input("press enter to continue")
             
             holding_symbols = []
             for t in range(len(aux_subgoals[plan_level-1])):
@@ -558,7 +572,6 @@ def planning_cycle():
                 rules_file.close()
             act_check = '  %s' %next_action
             if act_check in rules:
-                toolhandle = ['16',['1','1']]
                 objects_used_now = re.findall(r'\d+',next_action)
                 for u in range(len(objects_used_now)):
                     if objects_used_now[u] not in toolhandle and objects_used_now[u] not in objects_used:
@@ -567,9 +580,8 @@ def planning_cycle():
                 for t in range(len(object_IDs)):
                     prtmess = prtmess.replace(object_IDs[t][0], object_IDs[t][1])
                 print 'action to be executed: ', prtmess, '\n'
-                motor_rpc._is_success(motor_rpc._execute(PathName, next_action, toolhandle))
-                world_rpc._is_success(world_rpc._execute("update"))
                 raw_input("press any key")
+                motor_rpc._is_success(motor_rpc._execute(PathName, next_action, toolhandle))
 
 
 
@@ -644,7 +656,8 @@ def planning_cycle():
                     state_file.write(state)
                     state_file.close()
     ##########################################################################
-                
+            
+            world_rpc._is_success(world_rpc._execute("update"))
             print 'planning step: ' ,plan_level
             print 'planning horizon: ',horizon
             if horizon > 15:
@@ -667,7 +680,10 @@ def planning_cycle():
                 prax_bottle_out.clear()
                 prax_bottle_out.addString('FAIL')
                 for u in range(len(fail_obj_now)):
-                    prax_bottle_out.addString(fail_obj_now[u])
+                    for inde in range(len(object_IDs)):
+                        if object_IDs[inde][0] == fail_obj_now[u]:
+                            if object_IDs[inde][1] != 'rake' and object_IDs[inde][1] != 'stick' and object_IDs[inde][1] != 'left' and object_IDs[inde][1] != 'right':
+                                prax_bottle_out.addString(object_IDs[inde][1])
                 prax_yarp_out.write()
 ##                geo_bottle_out = geo_yarp.prepare()
 ##                geo_bottle_out.clear()

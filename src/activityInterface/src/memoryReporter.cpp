@@ -41,22 +41,42 @@ void MemoryReporter::report(const PortInfo &info)
 }
 
 /**********************************************************/
-PradaStatus::PradaStatus()
+PradaReporter::PradaReporter()
 {
     manager=NULL;
     useCallback();
 }
 
 /**********************************************************/
-void PradaStatus::setManager(ActivityInterface *manager)
+void PradaReporter::setManager(ActivityInterface *manager)
 {
     this->manager=manager;
 }
 
 /**********************************************************/
-void PradaStatus::onRead(Bottle &status)
+void PradaReporter::onRead(Bottle &status)
 {
     if (status.size()>1)
         manager->processPradaStatus(status);
+}
+
+/**********************************************************/
+SpeechReporter::SpeechReporter()
+{
+    manager=NULL;
+    useCallback();
+}
+
+/**********************************************************/
+void SpeechReporter::setManager(ActivityInterface *manager)
+{
+    this->manager=manager;
+}
+
+/**********************************************************/
+void SpeechReporter::onRead(Bottle &speech)
+{
+    if (speech.size()>0)
+        manager->processSpeech(speech);
 }
 //empty line to make gcc happy

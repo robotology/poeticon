@@ -114,11 +114,13 @@ bool ActivityInterface::configure(yarp::os::ResourceFinder &rf)
     rpcPraxiconInterface.setReporter(memoryReporter);
     rpcPraxiconInterface.open(("/"+moduleName+"/praxicon:rpc").c_str());
     
-    pradaStatus.setManager(this);
-    pradaStatus.open(("/"+moduleName+"/prada:i").c_str());
+    pradaReporter.setManager(this);
+    pradaReporter.open(("/"+moduleName+"/prada:i").c_str());
+    
+    speechReporter.setManager(this);
+    speechReporter.open(("/"+moduleName+"/speech:i").c_str());
     
     praxiconToPradaPort.open(("/"+moduleName+"/praxicon:o").c_str());
-    
     
     yarp::os::Network::connect(("/"+moduleName+"/arecmd:rpc").c_str(), "/actionsRenderingEngine/cmd:io");
     yarp::os::Network::connect(("/"+moduleName+"/are:rpc").c_str(), "/actionsRenderingEngine/get:io");
@@ -217,14 +219,11 @@ bool ActivityInterface::configure(yarp::os::ResourceFinder &rf)
     cmd.addString("stop");
     rpcIolState.write(cmd, reply);
     
-    cmd.clear(), reply.clear();
-    cmd.addString("home");
-    cmd.addString("head");
-    rpcAREcmd.write(cmd, reply);
+    goHome();
     
     allPaused = false;
     
-    fprintf(stdout, "done initialization\n");
+    fprintf(stdout, "[configure] done initialization\n");
     
     return true ;
 }
@@ -242,7 +241,8 @@ bool ActivityInterface::interruptModule()
     rpcIolState.interrupt();
     blobPortIn.interrupt();
     rpcPraxiconInterface.interrupt();
-    pradaStatus.interrupt();
+    pradaReporter.interrupt();
+    speechReporter.interrupt();
     praxiconToPradaPort.interrupt();
     semaphore.post();
     return true;
@@ -252,7 +252,7 @@ bool ActivityInterface::interruptModule()
 bool ActivityInterface::close()
 {
     semaphore.wait();
-    fprintf(stdout, "starting the shutdown procedure\n");
+    fprintf(stdout, "[closing] starting the shutdown procedure\n");
     rpcPort.close();
     client_left.close();
     client_right.close();
@@ -264,9 +264,10 @@ bool ActivityInterface::close()
     rpcIolState.close();
     blobPortIn.close();
     rpcPraxiconInterface.close();
-    pradaStatus.close();
+    pradaReporter.close();
+    speechReporter.close();
     praxiconToPradaPort.close();
-    fprintf(stdout, "finished shutdown procedure\n");
+    fprintf(stdout, "[closing] finished shutdown procedure\n");
     semaphore.post();
     return true;
 }
@@ -275,7 +276,8 @@ bool ActivityInterface::close()
 bool ActivityInterface::goHome()
 {
     bool reply;
-    
+
+    fprintf(stdout, "[goHome] requested\n");
     Bottle are, replyAre;
     are.clear(),replyAre.clear();
     are.addString("home");
@@ -287,7 +289,7 @@ bool ActivityInterface::goHome()
     else
         reply = false;
     
-    
+    fprintf(stdout, "[goHome] excecuted\n");
     return true;
 }
 
@@ -336,8 +338,8 @@ Bottle ActivityInterface::askPraxicon(const string &request)
     Bottle toolLikeMemory = getToolLikeNames();
     Bottle objectsMemory = getNames();
     
-    fprintf(stdout, "tool names: %s \n", toolLikeMemory.toString().c_str());
-    fprintf(stdout, "object names: %s \n", objectsMemory.toString().c_str());
+    fprintf(stdout, "[askPraxicon] tool names: %s \n", toolLikeMemory.toString().c_str());
+    fprintf(stdout, "[askPraxicon] object names: %s \n", objectsMemory.toString().c_str());
     
     Bottle &listOfObjects = cmdPrax.addList();
     
@@ -374,7 +376,7 @@ Bottle ActivityInterface::askPraxicon(const string &request)
     //missing.addString("stirrer");
     //missing.addString("plate");
     
-    fprintf(stdout, "sending: \n %s \n", cmdPrax.toString().c_str());
+    fprintf(stdout, "[askPraxicon] sending \n %s \n", cmdPrax.toString().c_str());
     //send it all to praxicon
     rpcPraxiconInterface.write(cmdPrax,replyPrax);
     
@@ -420,13 +422,28 @@ Bottle ActivityInterface::askPraxicon(const string &request)
 }
 
 /**********************************************************/
+bool ActivityInterface::processSpeech(const Bottle &speech)
+{
+    if ( speech.size() > 0 )
+    {
+        string s = speech.toString();
+        //remove extra characters
+        //    "\"make a sandwich\""
+        s.erase(0,1);
+        s.erase(s.size()-1,1);
+        askPraxicon(s.c_str());
+    }
+    return true;
+}
+
+/**********************************************************/
 bool ActivityInterface::processPradaStatus(const Bottle &status)
 {
     Bottle objectsUsed;
     if ( status.size() > 0 )
     {
-        fprintf(stdout, "the status is %s \n", status.toString().c_str());
-        if (strcmp (status.get(0).asString().c_str(), "ok" ) == 0)
+        fprintf(stdout, "[processPradaStatus] the status is %s \n", status.toString().c_str());
+        if (strcmp (status.get(0).asString().c_str(), "OK" ) == 0)
         {
             for (int i=1; i< status.size(); i++)
             {
@@ -436,7 +453,7 @@ bool ActivityInterface::processPradaStatus(const Bottle &status)
             }
             executeSpeech("I made a " + objectsUsed.toString() + " sandwich");
         }
-        else if (strcmp (status.get(0).asString().c_str(), "fail" ) == 0)
+        else if (strcmp (status.get(0).asString().c_str(), "FAIL" ) == 0)
         {
             Bottle objectsMissing;
             for (int i=1; i< status.size(); i++)
@@ -458,7 +475,7 @@ bool ActivityInterface::processPradaStatus(const Bottle &status)
         }
         else
         {
-            fprintf(stdout, "Something is wrong with the status\n");
+            fprintf(stdout, "[processPradaStatus] Something is wrong with the status\n");
         }
     }
     return true;
@@ -542,7 +559,7 @@ bool ActivityInterface::pauseAllTrackers()
         cmdPauseThread.addString("pause");
         cmdPauseThread.addString(objects.get(i).asString().c_str());
         
-        fprintf(stdout, "[PAUSE ALL]: %s \n", cmdPauseThread.toString().c_str() );
+        fprintf(stdout, "[pauseAll]: %s \n", cmdPauseThread.toString().c_str() );
         
         rpcWorldState.write(cmdPauseThread,replyPauseThread);
     }
@@ -562,7 +579,7 @@ bool ActivityInterface::resumeAllTrackers()
         cmdPauseThread.addString("resume");
         cmdPauseThread.addString(objects.get(i).asString().c_str());
         
-        fprintf(stdout, "[RESUME ALL]: %s \n", cmdPauseThread.toString().c_str() );
+        fprintf(stdout, "[resumeAll]: %s \n", cmdPauseThread.toString().c_str() );
         
         rpcWorldState.write(cmdPauseThread,replyPauseThread);
     }
@@ -600,7 +617,7 @@ bool ActivityInterface::handleTrackers()
                 cmdPauseThread.addString("pause");
                 cmdPauseThread.addString(name.c_str());
                 
-                fprintf(stdout, "will send: %s \n", cmdPauseThread.toString().c_str() );
+                fprintf(stdout, "[handleTrackers] will send: %s \n", cmdPauseThread.toString().c_str() );
                 
                 rpcWorldState.write(cmdPauseThread,replyPauseThread);
                 pausedThreads.push_back(id);
@@ -618,7 +635,7 @@ bool ActivityInterface::handleTrackers()
                 cmdPauseThread.addString("resume");
                 cmdPauseThread.addString(name.c_str());
                 
-                fprintf(stdout, "will send: %s \n", cmdPauseThread.toString().c_str() );
+                fprintf(stdout, "[handleTrackers] will send: %s \n", cmdPauseThread.toString().c_str() );
                 
                 rpcWorldState.write(cmdPauseThread,replyPauseThread);
                 pausedThreads.erase(std::remove(pausedThreads.begin(), pausedThreads.end(), id), pausedThreads.end());
@@ -1001,7 +1018,7 @@ bool ActivityInterface::take(const string &objName, const string &handName)
     
         if (position.size()>0)
         {
-            fprintf(stdout, "object is visible at %s will do the take action \n", position.toString().c_str());
+            fprintf(stdout, "[take] object is visible at %s will do the take action \n", position.toString().c_str());
             
             executeSpeech("ok, I will take the " + objName);
             //do the take actions
@@ -1040,7 +1057,7 @@ bool ActivityInterface::take(const string &objName, const string &handName)
     else
     {
         executeSpeech("I already have the " + objName + " in my hand");
-        fprintf(stdout, "Cannot grasp already have something in hand\n");
+        fprintf(stdout, "[take] Cannot grasp already have something in hand\n");
     }
 
     resumeAllTrackers();
@@ -1061,10 +1078,23 @@ bool ActivityInterface::drop(const string &objName)
         cmd.addString("drop");
         cmd.addString(handName.c_str());
         rpcAREcmd.write(cmd, reply);
+        
+        if (reply.get(0).asVocab()==Vocab::encode("ack"))
+        {
+            for (std::map<string, string>::iterator it=inHandStatus.begin(); it!=inHandStatus.end(); ++it)
+            {
+                if (strcmp (it->first.c_str(), objName.c_str() ) == 0)
+                {
+                    inHandStatus.erase(objName.c_str());
+                    break;
+                }
+            }
+        }
     }
     else
     {
-        fprintf(stdout, "I am not holding anything\n");
+        executeSpeech("I am not holding anything");
+        fprintf(stdout, "[drop]I am not holding anything\n");
     }
     resumeAllTrackers();
     return true;
@@ -1118,7 +1148,11 @@ bool ActivityInterface::put(const string &objName, const string &targetName)
                 }
             }
         }
-        executeSpeech("There seems to be an issue with the command");
+        else
+        {
+            fprintf(stdout, "[put] there seems to be a problem with the object\n");
+            executeSpeech("There seems to be an issue with the command");
+        }
     }
     resumeAllTrackers();
     return true;
@@ -1127,7 +1161,6 @@ bool ActivityInterface::put(const string &objName, const string &targetName)
 /**********************************************************/
 bool ActivityInterface::askForTool(const std::string &handName, const int32_t pos_x, const int32_t pos_y)
 {
-    
     // Get the label of the object requested
     int whichArm = 0;
     string label = getLabel(pos_x, pos_y);
@@ -1141,7 +1174,7 @@ bool ActivityInterface::askForTool(const std::string &handName, const int32_t po
     
     executeSpeech ("can you give me the " + label + "please?");
     
-    fprintf(stdout, "tool label is: %s \n",label.c_str());
+    fprintf(stdout, "[askForTool] tool label is: %s \n",label.c_str());
     
     pauseAllTrackers();
     Bottle cmdAre, replyAre;
@@ -1173,7 +1206,7 @@ bool ActivityInterface::askForTool(const std::string &handName, const int32_t po
     cmdAre.addString(handName.c_str());
     rpcAREcmd.write(cmdAre, replyAre);
     
-    printf("done requesting\n");
+    fprintf(stdout, "[askForTool] done tato\n");
     
     cmdAre.clear();
     replyAre.clear();
@@ -1181,7 +1214,7 @@ bool ActivityInterface::askForTool(const std::string &handName, const int32_t po
     cmdAre.addString(handName.c_str());
     rpcAREcmd.write(cmdAre, replyAre);
     Time::delay(5.0);
-    printf("done closing\n");
+    fprintf(stdout, "[askForTool] done close\n");
     
     cmdAre.clear();
     replyAre.clear();
@@ -1199,8 +1232,10 @@ bool ActivityInterface::askForTool(const std::string &handName, const int32_t po
 bool ActivityInterface::pull(const string &objName, const string &toolName)
 {
     pauseAllTrackers();
+    fprintf(stdout, "[pull] asked to pull %s with %s\n", objName.c_str(), toolName.c_str());
     //ask for tool
     //do the pulling action
+    fprintf(stdout, "[pull] done");
     resumeAllTrackers();
     return true;
 }
@@ -1209,8 +1244,10 @@ bool ActivityInterface::pull(const string &objName, const string &toolName)
 bool ActivityInterface::push(const string &objName, const string &toolName)
 {
     pauseAllTrackers();
+    fprintf(stdout, "[push] asked to push %s with %s\n", objName.c_str(), toolName.c_str());
     //ask for tool
     //do the pushing action
+    fprintf(stdout, "[push] done");
     resumeAllTrackers();
     return true;
 }
@@ -1308,9 +1345,9 @@ Bottle ActivityInterface::reachableWith(const string &objName)
         //fprintf(stdout, "\nleftManip: %lf and rightManip: %lf\n", leftManip, rightManip);
         
         //using 3D instead of manip for testing
-        if(position.get(1).asDouble() < - 0.1 )
+        if(position.get(1).asDouble() < - 0.2 )
             replyList.addString("left");
-        else if (position.get(1).asDouble() >  0.1)
+        else if (position.get(1).asDouble() >  0.2 )
             replyList.addString("right");
         else
         {

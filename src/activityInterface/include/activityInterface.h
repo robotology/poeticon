@@ -119,10 +119,12 @@ protected:
     yarp::sig::Vector                   thetaMin, thetaMax;
     
     MemoryReporter                      memoryReporter;
-    PradaStatus                         pradaStatus;
+    PradaReporter                       pradaReporter;
+    SpeechReporter                      speechReporter;
     
     friend class                        MemoryReporter;
-    friend class                        PradaStatus;
+    friend class                        PradaReporter;
+    friend class                        SpeechReporter;
 
     bool                                first;
     int                                 ctxt_left;
@@ -166,6 +168,7 @@ public:
     double              getPairMin(std::map<int, double> pairmap);
     double              getPairMax(std::map<int, double> pairmap);
     bool                processPradaStatus(const yarp::os::Bottle &status);
+    bool                processSpeech(const yarp::os::Bottle &speech);
     bool                pauseAllTrackers();
     bool                resumeAllTrackers();
     

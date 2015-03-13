@@ -16,6 +16,11 @@ PRADA probabilistic planner dependencies:
 - Python 2.7
 - [YARP Python bindings](http://wiki.icub.org/yarpdoc/yarp_swig.html)
 
+Affordance network dependencies:
+- MATLAB
+- [pmtk3](https://github.com/probml/pmtk3)
+- [YARP Java bindings](http://wiki.icub.org/yarpdoc/yarp_swig.html)
+
 SLIC Superpixels dependencies:
 - [TBB](https://www.threadingbuildingblocks.org/)
 

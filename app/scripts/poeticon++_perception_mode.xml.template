@@ -3,6 +3,7 @@
 
 <dependencies>
     <port>/icub/camcalib/left/out</port>
+    <port>/blobSpotter/image:o</port>
 </dependencies>
 
 <module>
@@ -31,7 +32,7 @@
 </module>
 <module>
     <name>objectsPropertiesCollector</name>
-    <parameters>--name wsopc --context poeticon --db dbhands.ini --nosave</parameters>
+    <parameters>--name wsopc --context poeticon --db dbhands.ini --nosave --async_bc</parameters>
     <node>console</node>
 </module>
 <module>
@@ -57,13 +58,8 @@
 
 <module>
     <name>yarpview</name>
-    <node>console</node>
-    <parameters>--name /view/bsinput --x 0 --y 0 --RefreshTime 33 --out /desiredRoi</parameters>
-</module>
-<module>
-    <name>yarpview</name>
-    <parameters>--name /view/bsoutput --x 330 --y 0 --RefreshTime 33</parameters>
-    <node>console</node>
+    <parameters>--name /view/blobdesc --x 320 --y 0</parameters>
+    <node>icub-laptop</node>
 </module>
 <module>
     <name>yarpview</name>
@@ -71,25 +67,6 @@
     <node>console</node>
 </module>
 
-<connection>
-    <from>/icub/camcalib/left/out</from>
-    <to>/blobSpotter/image:i</to>
-    <protocol>udp</protocol>
-</connection>
-<connection>
-    <from>/blobSpotter/propagated:o</from>
-    <to>/view/bsinput</to>
-    <protocol>udp</protocol>
-</connection>
-<connection>
-    <from>/blobSpotter/image:o</from>
-    <to>/view/bsoutput</to>
-    <protocol>udp</protocol>
-</connection>
-<connection>
-    <from>/desiredRoi</from>
-    <to>/blobSpotter/fixRoi:i</to>
-</connection>
 <connection>
     <from>/blobSpotter/propagated:o</from>
     <to>/sequentialLabeller/rawImg:i</to>
@@ -113,6 +90,11 @@
 <connection>
     <from>/sequentialLabeller/labeledImg:o</from>
     <to>/blobDescriptor/labeledImg:i</to>
+    <protocol>udp</protocol>
+</connection>
+<connection>
+    <from>/blobDescriptor/viewImg:o</from>
+    <to>/view/blobdesc</to>
     <protocol>udp</protocol>
 </connection>
 <connection>
@@ -212,16 +194,6 @@
     <from>/planner/prax_inst:o</from>
     <to>/activityInterface/prada:i</to>
 </connection>
-<!--
-<connection>
-    <from>/planner/prax_inst:io</from>
-    <to>/praxicon/planner_cmd:io</to>
-</connection>
-<connection>
-    <from>/praxicon/planner_cmd:io</from>
-    <to>/planner/prax_inst:io</to>
-</connection>
--->
 <connection>
     <from>/AffordanceComm/ground_cmd:io</from>
     <to>/grounding/Aff_cmd:io</to>
