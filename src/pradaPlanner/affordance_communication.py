@@ -173,8 +173,8 @@ def Affordance_comm():
                     for t in range(len(data)):
                         data[0][t] = float(data[0][t])
                         data[1][t] = float(data[1][t])
-                    data[0] = data[0][2:-1]
-                    data[1] = data[1][2:-1]
+##                    data[0] = data[0][2:-1]
+##                    data[1] = data[1][2:-1]
                     break
                 desc_bottle_out = desc_yarp.prepare()
                 desc_bottle_out.clear()
