@@ -496,7 +496,7 @@ def planning_cycle():
                 for t in range(len(object_IDs)):
                     prtmess[i] = prtmess[i].replace(object_IDs[t][0], object_IDs[t][1])
             print 'goals: \n',prtmess
-            print '\n goals not met:'
+            print '\ngoals not met:'
             not_comp_goals = []
             for t in range(len(goal)):
                 if goal[t] not in state:
