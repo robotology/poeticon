@@ -72,7 +72,7 @@ class ActionQueryCommunication:
 
 def Affordance_comm():
 
-    mode = 0
+    mode = 1
     ## set mode  = 0 for no motor engine, 1 for motor engine active 
     yarp.Network.init()
     geo_yarp = yarp.BufferedPortBottle()
@@ -341,7 +341,6 @@ def Affordance_comm():
                                 affnet_yarp.write()
                                 while 1:
                                     affnet_bottle_in = affnet_yarp.read(False)
-                                    yarp.Time.delay(0.1)
                                     if affnet_bottle_in:
                                         data = affnet_bottle_in.toString().replace('((','').replace('))','').split(') (')
                                         for j in range(len(data)):
@@ -350,6 +349,7 @@ def Affordance_comm():
                                             for j in range(len(data[g])):
                                                 data[g][j] = float(data[g][j])
                                         break
+                                    yarp.Time.delay(0.1)
                                 prob_succ1 = 0
                                 for g in range(len(data)):
                                     if g > 3:
@@ -449,7 +449,6 @@ def Affordance_comm():
                                 affnet_yarp.write()
                                 while 1:
                                     affnet_bottle_in = affnet_yarp.read(False)
-                                    yarp.Time.delay(0.1)
                                     if affnet_bottle_in:
                                         data = affnet_bottle_in.toString().replace('((','').replace('))','').split(') (')
                                         for j in range(len(data)):
@@ -458,6 +457,7 @@ def Affordance_comm():
                                             for j in range(len(data[g])):
                                                 data[g][j] = float(data[g][j])
                                         break
+                                    yarp.Time.delay(0.1)
                                 prob_succ1 = 0
                                 for g in range(len(data)):
                                     if g < 3:
