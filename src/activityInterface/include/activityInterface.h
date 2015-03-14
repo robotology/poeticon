@@ -124,6 +124,7 @@ protected:
     MemoryReporter                      memoryReporter;
     PradaReporter                       pradaReporter;
     SpeechReporter                      speechReporter;
+    ActiveSeg                           activeSeg;
     
     friend class                        MemoryReporter;
     friend class                        PradaReporter;
@@ -174,7 +175,7 @@ public:
     bool                processSpeech(const yarp::os::Bottle &speech);
     bool                pauseAllTrackers();
     bool                resumeAllTrackers();
-    void                initialiseObjectTracker();
+    bool                initialiseObjectTracker(const std::string &handName);
     
     bool                with_robot;
     bool                allPaused;

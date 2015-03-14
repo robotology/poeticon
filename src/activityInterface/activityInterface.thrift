@@ -176,6 +176,12 @@ service activityInterface_IDLServer
     bool resumeAllTrackers()
     
     /**
+     * initialiseObjectTracker Function
+     * @return true/false
+     **/
+    bool initialiseObjectTracker(1:string objName)
+    
+    /**
      * Quit the module.
      * @return true/false on success/failure
      */

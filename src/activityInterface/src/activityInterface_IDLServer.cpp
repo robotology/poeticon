@@ -207,6 +207,15 @@ public:
   virtual bool read(yarp::os::ConnectionReader& connection);
 };
 
+class activityInterface_IDLServer_initialiseObjectTracker : public yarp::os::Portable {
+public:
+  std::string objName;
+  bool _return;
+  void init(const std::string& objName);
+  virtual bool write(yarp::os::ConnectionWriter& connection);
+  virtual bool read(yarp::os::ConnectionReader& connection);
+};
+
 class activityInterface_IDLServer_quit : public yarp::os::Portable {
 public:
   bool _return;
@@ -718,6 +727,29 @@ void activityInterface_IDLServer_resumeAllTrackers::init() {
   _return = false;
 }
 
+bool activityInterface_IDLServer_initialiseObjectTracker::write(yarp::os::ConnectionWriter& connection) {
+  yarp::os::idl::WireWriter writer(connection);
+  if (!writer.writeListHeader(2)) return false;
+  if (!writer.writeTag("initialiseObjectTracker",1,1)) return false;
+  if (!writer.writeString(objName)) return false;
+  return true;
+}
+
+bool activityInterface_IDLServer_initialiseObjectTracker::read(yarp::os::ConnectionReader& connection) {
+  yarp::os::idl::WireReader reader(connection);
+  if (!reader.readListReturn()) return false;
+  if (!reader.readBool(_return)) {
+    reader.fail();
+    return false;
+  }
+  return true;
+}
+
+void activityInterface_IDLServer_initialiseObjectTracker::init(const std::string& objName) {
+  _return = false;
+  this->objName = objName;
+}
+
 bool activityInterface_IDLServer_quit::write(yarp::os::ConnectionWriter& connection) {
   yarp::os::idl::WireWriter writer(connection);
   if (!writer.writeListHeader(1)) return false;
@@ -958,6 +990,16 @@ bool activityInterface_IDLServer::resumeAllTrackers() {
   helper.init();
   if (!yarp().canWrite()) {
     fprintf(stderr,"Missing server method '%s'?\n","bool activityInterface_IDLServer::resumeAllTrackers()");
+  }
+  bool ok = yarp().write(helper,helper);
+  return ok?helper._return:_return;
+}
+bool activityInterface_IDLServer::initialiseObjectTracker(const std::string& objName) {
+  bool _return = false;
+  activityInterface_IDLServer_initialiseObjectTracker helper;
+  helper.init(objName);
+  if (!yarp().canWrite()) {
+    fprintf(stderr,"Missing server method '%s'?\n","bool activityInterface_IDLServer::initialiseObjectTracker(const std::string& objName)");
   }
   bool ok = yarp().write(helper,helper);
   return ok?helper._return:_return;
@@ -1349,6 +1391,22 @@ bool activityInterface_IDLServer::read(yarp::os::ConnectionReader& connection) {
       reader.accept();
       return true;
     }
+    if (tag == "initialiseObjectTracker") {
+      std::string objName;
+      if (!reader.readString(objName)) {
+        reader.fail();
+        return false;
+      }
+      bool _return;
+      _return = initialiseObjectTracker(objName);
+      yarp::os::idl::WireWriter writer(reader);
+      if (!writer.isNull()) {
+        if (!writer.writeListHeader(1)) return false;
+        if (!writer.writeBool(_return)) return false;
+      }
+      reader.accept();
+      return true;
+    }
     if (tag == "quit") {
       bool _return;
       _return = quit();
@@ -1416,6 +1474,7 @@ std::vector<std::string> activityInterface_IDLServer::help(const std::string& fu
     helpString.push_back("goHome");
     helpString.push_back("pauseAllTrackers");
     helpString.push_back("resumeAllTrackers");
+    helpString.push_back("initialiseObjectTracker");
     helpString.push_back("quit");
     helpString.push_back("help");
   }
@@ -1554,6 +1613,11 @@ std::vector<std::string> activityInterface_IDLServer::help(const std::string& fu
       helpString.push_back("bool resumeAllTrackers() ");
       helpString.push_back("Ask to resume position ");
       helpString.push_back("@return true/false on homeing or not ");
+    }
+    if (functionName=="initialiseObjectTracker") {
+      helpString.push_back("bool initialiseObjectTracker(const std::string& objName) ");
+      helpString.push_back("initialiseObjectTracker Function ");
+      helpString.push_back("@return true/false ");
     }
     if (functionName=="quit") {
       helpString.push_back("bool quit() ");

@@ -154,6 +154,11 @@ public:
    */
   virtual bool resumeAllTrackers();
   /**
+   * initialiseObjectTracker Function
+   * @return true/false
+   */
+  virtual bool initialiseObjectTracker(const std::string& objName);
+  /**
    * Quit the module.
    * @return true/false on success/failure
    */

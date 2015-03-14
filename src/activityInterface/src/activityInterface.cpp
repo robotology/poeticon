@@ -1057,7 +1057,7 @@ bool ActivityInterface::take(const string &objName, const string &handName)
             fprintf(stdout, "[take] object is visible at %s will do the take action \n", position.toString().c_str());
             
             fprintf(stdout, "[take] will initialise obj \n");
-            initialiseObjectTracker();
+            initialiseObjectTracker(objName);
             fprintf(stdout, "[take] done initialising obj \n");
             
             executeSpeech("ok, I will take the " + objName);
@@ -1225,13 +1225,13 @@ bool ActivityInterface::askForTool(const std::string &handName, const int32_t po
     tmp.addInt (pos_x);
     tmp.addInt (pos_y);
     
-    if (pos_x > 0 && pos_y <= 160 )
+    if (pos_x > 0 && pos_x <= 160 )
     {
         whichArm = LEFT;
         cmdAre.addString("left");
         rpcAREcmd.write(cmdAre,replyAre);
     }
-    else if (pos_x > 160 && pos_y < 320 )
+    else if (pos_x > 160 && pos_x < 320 )
     {
         whichArm = RIGHT;
         cmdAre.addString("right");
@@ -1542,19 +1542,39 @@ double ActivityInterface::getPairMax(std::map<int, double> pairmap)
     return min.second;
 }
 
-void ActivityInterface::initialiseObjectTracker()
+/**********************************************************/
+bool ActivityInterface::initialiseObjectTracker(const string &objName)
 {
     IplImage *image_in = (IplImage *) imagePortIn.read(true)->getIplImage();
     
     if( image_in != NULL )
     {
-        cv::Mat img(image_in);
+        cvCvtColor(image_in,image_in,CV_BGR2RGB);
+        Bottle BB = get2D(objName);
         
+        fprintf(stdout, "[initialiseObjectTracker] the BB is %s\n",BB.toString().c_str());
         
+        int cropSizeWidth = abs((int)BB.get(2).asDouble()-(int)BB.get(0).asDouble());
+        int cropSizeHeight = abs((int)BB.get(3).asDouble()-(int)BB.get(1).asDouble());
+        
+        fprintf(stdout, "[initialiseObjectTracker] cropSizeWidth is %d\n",cropSizeWidth);
+        fprintf(stdout, "[initialiseObjectTracker] cropSizeHeight is %d\n",cropSizeHeight);
+        
+        cv::Point cog;
+        int X = ((int)BB.get(0).asDouble()+(int)BB.get(2).asDouble())>>1;
+        int Y = ((int)BB.get(1).asDouble()+(int)BB.get(3).asDouble())>>1;
+        
+        cog.x = X;
+        cog.y = Y;
+        
+        fprintf(stdout, "[initialiseObjectTracker] the cog is %d %d\n", cog.x, cog.y);
+        
+        //IplImage *tpl;
+        SegInfo info (cog.x, cog.y, cropSizeWidth,  cropSizeHeight);
+        
+        cvSaveImage("foo.png",image_in);
         
         
     }
-    
-    
-    
+    return true;
 }
