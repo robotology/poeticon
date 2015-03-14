@@ -97,8 +97,9 @@ protected:
     std::string                         inputBlobPortName;
     std::string                         inputImagePortName;
     
+    yarp::os::BufferedPort<yarp::os::Bottle>                                blobsPort;
     yarp::os::BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelRgb> >        imagePortIn;
-    yarp::os::BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelMono> >       blobPortIn;
+    yarp::os::BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelMono> >       imgeBlobPort;
     
     /* left & right cartesian interfaces */
     yarp::dev::PolyDriver               client_left;
@@ -140,6 +141,9 @@ protected:
     
     std::map<std::string, std::string>  inHandStatus;
     std::map<int, std::string>          onTopElements;
+    
+    std::map<std::string, cv::Scalar>   stakedObject;
+    
     int                                 elements;
     std::vector<int>                    pausedThreads;
     
@@ -169,15 +173,20 @@ public:
     bool                executeSpeech(const std::string &speech);
     yarp::os::Bottle    getToolLikeNames();
     double              getAxes(std::vector<cv::Point> &pts, cv::Mat &img);
+    
+    int                 getPairMinIndex(std::map<int, double> pairmap);
     double              getPairMin(std::map<int, double> pairmap);
     double              getPairMax(std::map<int, double> pairmap);
+    
     bool                processPradaStatus(const yarp::os::Bottle &status);
     bool                processSpeech(const yarp::os::Bottle &speech);
     bool                pauseAllTrackers();
     bool                resumeAllTrackers();
-    bool                initialiseObjectTracker(const std::string &handName);
+    bool                initObjectTracker(const std::string &objName);
+    yarp::os::Bottle    trackStackedObject(const std::string &objName);
     
     bool                with_robot;
+    bool                shouldUpdate;
     bool                allPaused;
     
     int                 incrementSize[10];

@@ -47,7 +47,8 @@ ActivityInterface::~ActivityInterface()
 /**********************************************************/
 bool ActivityInterface::configure(yarp::os::ResourceFinder &rf)
 {
-    with_robot = true;
+    with_robot = false; //make sure it does not go here
+    shouldUpdate = true;
     
     moduleName = rf.check("name", Value("activityInterface"), "module name (string)").asString();
     Bottle bArm[2];
@@ -55,7 +56,10 @@ bool ActivityInterface::configure(yarp::os::ResourceFinder &rf)
     bArm[LEFT]=rf.findGroup("left_arm");
     bArm[RIGHT]=rf.findGroup("right_arm");
     
-    if (rf.check("no_robot"))
+    if (rf.check("no_update"))
+        shouldUpdate = false;
+    
+    if (rf.check("no_kinematics"))
         with_robot = false;
     
     if (Bottle *pB=bArm[LEFT].find("reach_above_orientation").asList())
@@ -108,8 +112,8 @@ bool ActivityInterface::configure(yarp::os::ResourceFinder &rf)
     rpcIolState.setReporter(memoryReporter);
     rpcIolState.open(("/"+moduleName+"/iolState:rpc").c_str());
     
-    inputBlobPortName = "/" + moduleName + "/blobs:i";
-    blobPortIn.open( inputBlobPortName.c_str() );
+    inputBlobPortName = "/" + moduleName + "/blobImg:i";
+    imgeBlobPort.open( inputBlobPortName.c_str() );
     
     inputImagePortName= "/" + moduleName + "/image:i";
     imagePortIn.open(inputImagePortName.c_str());
@@ -125,6 +129,8 @@ bool ActivityInterface::configure(yarp::os::ResourceFinder &rf)
     
     praxiconToPradaPort.open(("/"+moduleName+"/praxicon:o").c_str());
     
+    blobsPort.open(("/"+moduleName+"/blobs:i").c_str());
+    
     yarp::os::Network::connect(("/"+moduleName+"/arecmd:rpc").c_str(), "/actionsRenderingEngine/cmd:io");
     yarp::os::Network::connect(("/"+moduleName+"/are:rpc").c_str(), "/actionsRenderingEngine/get:io");
     yarp::os::Network::connect(("/"+moduleName+"/memory:rpc").c_str(), "/memory/rpc");
@@ -133,6 +139,7 @@ bool ActivityInterface::configure(yarp::os::ResourceFinder &rf)
     yarp::os::Network::connect("/blobSpotter/image:o", inputBlobPortName.c_str());
     yarp::os::Network::connect("/icub/camcalib/left/out", inputImagePortName.c_str());
     yarp::os::Network::connect(("/"+moduleName+"/praxicon:rpc").c_str(), "/praxInterface/speech:i");
+    yarp::os::Network::connect(("/blobSpotter/blobs:o"), ("/"+moduleName+"/blobs:i").c_str());
     
     if (with_robot)
     {
@@ -227,6 +234,8 @@ bool ActivityInterface::configure(yarp::os::ResourceFinder &rf)
     
     allPaused = false;
     
+    activeSeg.configure(rf);
+    
     fprintf(stdout, "[configure] done initialization\n");
     
     return true ;
@@ -243,12 +252,13 @@ bool ActivityInterface::interruptModule()
     rpcWorldState.interrupt();
     robotStatus.interrupt();
     rpcIolState.interrupt();
-    blobPortIn.interrupt();
+    imgeBlobPort.interrupt();
     rpcPraxiconInterface.interrupt();
     pradaReporter.interrupt();
     speechReporter.interrupt();
     praxiconToPradaPort.interrupt();
     imagePortIn.interrupt();
+    blobsPort.interrupt();
     semaphore.post();
     return true;
 }
@@ -267,12 +277,13 @@ bool ActivityInterface::close()
     robotStatus.close();
     rpcWorldState.close();
     rpcIolState.close();
-    blobPortIn.close();
+    imgeBlobPort.close();
     rpcPraxiconInterface.close();
     pradaReporter.close();
     speechReporter.close();
     praxiconToPradaPort.close();
     imagePortIn.close();
+    blobsPort.close();
     fprintf(stdout, "[closing] finished shutdown procedure\n");
     semaphore.post();
     return true;
@@ -655,12 +666,13 @@ bool ActivityInterface::handleTrackers()
 bool ActivityInterface::updateModule()
 {
     semaphore.wait();
-    
-    propagateStatus();
-    
-    if (!allPaused)
-        handleTrackers();
-    
+    if(shouldUpdate)
+    {
+        propagateStatus();
+        
+        if (!allPaused)
+            handleTrackers();
+    }
     semaphore.post();
     return !closing;
 }
@@ -1071,10 +1083,13 @@ bool ActivityInterface::take(const string &objName, const string &handName)
             fprintf(stdout, "[take] object is visible at %s will do the take action \n", position.toString().c_str());
             
             fprintf(stdout, "[take] will initialise obj \n");
-            initialiseObjectTracker(objName);
+            initObjectTracker(objName);
             fprintf(stdout, "[take] done initialising obj \n");
             
             executeSpeech("ok, I will take the " + objName);
+            
+            initObjectTracker(objName);
+            
             //do the take actions
             Bottle cmd, reply;
             cmd.clear(), reply.clear();
@@ -1437,7 +1452,7 @@ Bottle ActivityInterface::getToolLikeNames()
     Bottle names;
     cv::Point res;
     
-    IplImage *blob_in = (IplImage *) blobPortIn.read(true)->getIplImage();
+    IplImage *blob_in = (IplImage *) imgeBlobPort.read(true)->getIplImage();
     
     cv::Mat img(blob_in);
     
@@ -1452,7 +1467,6 @@ Bottle ActivityInterface::getToolLikeNames()
     
     findContours( temp, contours, hierarchy,CV_RETR_CCOMP, CV_CHAIN_APPROX_SIMPLE );
     
-    //std::vector<double> allLenghts;
     std::map<int, double> allLengths;
     
     for( int i = 0; i< contours.size(); i++ )
@@ -1552,6 +1566,14 @@ double ActivityInterface::getPairMin(std::map<int, double> pairmap)
 }
 
 /**********************************************************/
+int ActivityInterface::getPairMinIndex(std::map<int, double> pairmap)
+{
+    std::pair<int, double> min
+    = *min_element(pairmap.begin(), pairmap.end(), compare());
+    return min.first;
+}
+
+/**********************************************************/
 double ActivityInterface::getPairMax(std::map<int, double> pairmap)
 {
     std::pair<int, double> min
@@ -1560,45 +1582,152 @@ double ActivityInterface::getPairMax(std::map<int, double> pairmap)
 }
 
 /**********************************************************/
-bool ActivityInterface::initialiseObjectTracker(const string &objName)
+bool ActivityInterface::initObjectTracker(const string &objName)
 {
     IplImage *image_in = (IplImage *) imagePortIn.read(true)->getIplImage();
     
+    bool toReturn = false;
     if( image_in != NULL )
     {
         cvCvtColor(image_in,image_in,CV_BGR2RGB);
         Bottle BB = get2D(objName);
         
-        fprintf(stdout, "[initialiseObjectTracker] the BB is %s\n",BB.toString().c_str());
-        
-        int cropSizeWidth = abs((int)BB.get(2).asDouble()-(int)BB.get(0).asDouble());
-        int cropSizeHeight = abs((int)BB.get(3).asDouble()-(int)BB.get(1).asDouble());
-        
-        fprintf(stdout, "[initialiseObjectTracker] cropSizeWidth is %d\n",cropSizeWidth);
-        fprintf(stdout, "[initialiseObjectTracker] cropSizeHeight is %d\n",cropSizeHeight);
-        
-        cv::Point cog;
-        int X = ((int)BB.get(0).asDouble()+(int)BB.get(2).asDouble())>>1;
-        int Y = ((int)BB.get(1).asDouble()+(int)BB.get(3).asDouble())>>1;
-        
-        cog.x = X;
-        cog.y = Y;
-        
-        fprintf(stdout, "[initialiseObjectTracker] the cog is %d %d\n", cog.x, cog.y);
-        
-        IplImage *tpl;
-        IplImage *seg;
-        
-        SegInfo info (cog.x, cog.y, cropSizeWidth,  cropSizeHeight);
-        
-        activeSeg.getSegWithFixation(image_in, seg, info);
-        
-        activeSeg.getTemplateFromSeg(image_in, seg, tpl, info);
-        
-        //cvSaveImage("foo.png",image_in);
-        //cvSaveImage("seg.png",tpl);
-        
-        
+        if (BB.size()>0)
+        {
+            fprintf(stdout, "[initialiseObjectTracker] the BB is %s\n",BB.toString().c_str());
+            
+            int cropSizeWidth = abs((int)BB.get(2).asDouble()-(int)BB.get(0).asDouble());
+            int cropSizeHeight = abs((int)BB.get(3).asDouble()-(int)BB.get(1).asDouble());
+            
+            fprintf(stdout, "[initialiseObjectTracker] cropSizeWidth is %d\n",cropSizeWidth);
+            fprintf(stdout, "[initialiseObjectTracker] cropSizeHeight is %d\n",cropSizeHeight);
+            
+            cv::Point cog;
+            cog.x = ((int)BB.get(0).asDouble()+(int)BB.get(2).asDouble())>>1;
+            cog.y = ((int)BB.get(1).asDouble()+(int)BB.get(3).asDouble())>>1;
+            
+            fprintf(stdout, "[initialiseObjectTracker] the cog is %d %d\n", cog.x, cog.y);
+            
+            IplImage *tpl;
+            IplImage *seg;
+            
+            SegInfo info (cog.x, cog.y, cropSizeWidth,  cropSizeHeight);
+            
+            activeSeg.getSegWithFixation(image_in, seg, info);
+            
+            activeSeg.getTemplateFromSeg(image_in, seg, tpl, info);
+            
+            cvCvtColor(tpl,tpl,CV_BGR2RGB);
+            
+            cvSaveImage("foo.png",image_in);
+            cvSaveImage("seg.png",tpl);
+            
+            cv::Mat segmentation(cv::Mat(tpl, true));
+            
+            //computes mean over seg
+            cv::Scalar avgPixel = cv::mean( segmentation );
+            
+            fprintf(stdout, "[initialiseObjectTracker] The %s average is: %lf %lf %lf \n",objName.c_str(), avgPixel.val[0], avgPixel.val[1], avgPixel.val[2]);
+            
+            string name;
+            bool shouldDelete = false;
+            for (std::map<string, cv::Scalar>::iterator it=stakedObject.begin(); it!=stakedObject.end(); ++it)
+            {
+                if (strcmp (it->first.c_str(), objName.c_str() ) == 0)
+                {
+                    fprintf(stdout, "[initialiseObjectTracker] Already have the %s will delete the old one\n", it->first.c_str());
+                    name = it->first.c_str();
+                    shouldDelete = true;
+                }
+            }
+            
+            if (shouldDelete)
+                stakedObject.erase(name.c_str());
+
+            //update stakedObject map
+            stakedObject.insert(pair<string, cv::Scalar>(objName.c_str(), avgPixel));
+            
+            toReturn = true;
+            cvReleaseImage(&tpl);
+            cvReleaseImage(&seg);
+        }
     }
-    return true;
+    return toReturn;
+}
+
+/**********************************************************/
+Bottle ActivityInterface::trackStackedObject(const string &objName)
+{
+    Bottle position;
+    
+    Bottle names;
+    cv::Point res;
+    
+    std::map<int, double> allDistances;
+    
+    Bottle *blobsList = blobsPort.read(false);
+    
+    cv::Mat img((IplImage *) imagePortIn.read(true)->getIplImage(),true);
+    
+    if (blobsList->size()>0)
+    {
+        cv::Point point;
+        for (int i=0; i<blobsList->size(); i++)
+        {
+            Bottle *item=blobsList->get(i).asList();
+           
+            int blobWidth = abs((int)item->get(2).asDouble()-(int)item->get(0).asDouble());
+            int blobHeight = abs((int)item->get(3).asDouble()-(int)item->get(1).asDouble());
+            
+            
+            if (blobHeight < 60)
+            {
+                cv::Rect roi( (int)item->get(0).asDouble(), (int)item->get(1).asDouble(), blobWidth, blobHeight );
+                
+                //copies input image in roi
+                cv::Mat image_roi = img( roi );
+                
+                cvtColor( image_roi, image_roi, CV_BGR2RGB );
+                
+                /*std::string text = "roi_ ";
+                text += std::to_string( i );
+                text += ".jpg";
+                
+                imwrite(text.c_str(), image_roi);*/
+                
+                //computes mean over roi
+                cv::Scalar avgPixel = cv::mean( image_roi );
+                
+                double dist[3];
+                double totalDistance;
+                
+                for (std::map<string, cv::Scalar>::iterator it=stakedObject.begin(); it!=stakedObject.end(); ++it)
+                {
+                    if (strcmp (it->first.c_str(), objName.c_str() ) == 0)
+                    {
+                        fprintf(stdout, "[trackStackedObject] The %s average is: %lf %lf %lf \n",it->first.c_str(), avgPixel.val[0], avgPixel.val[1], avgPixel.val[2]);
+                        dist[0] = fabs( it->second.val[0] - avgPixel.val[0]);
+                        dist[1] = fabs( it->second.val[1] - avgPixel.val[1]);
+                        dist[2] = fabs( it->second.val[2] - avgPixel.val[2]);
+                        
+                        totalDistance = dist[0] + dist[1] + dist[2];
+                        allDistances.insert(pair<int, double>(i, totalDistance));
+                        
+                    }
+                }
+            }
+        }
+        int winner = getPairMinIndex(allDistances);
+        double distance = getPairMin(allDistances);
+        
+        Bottle *item=blobsList->get(winner).asList();
+        point.x = ((int)item->get(0).asDouble() + (int)item->get(2).asDouble())>>1;
+        point.y = ((int)item->get(1).asDouble() + (int)item->get(3).asDouble())>>1;
+        
+        fprintf(stdout, "[trackStackedObject] the winner is blob %d with distance %lf and cog %d %d \n", winner, distance, point.x, point.y);
+        
+        position.addInt(point.x);
+        position.addInt(point.y);
+    }
+    return position;
 }

@@ -178,7 +178,13 @@ service activityInterface_IDLServer
      * initialiseObjectTracker Function
      * @return true/false
      **/
-    bool initialiseObjectTracker(1:string objName)
+    bool initObjectTracker(1:string objName)
+    
+    /**
+     * trackStackedObject Function
+     * @return true/false
+     **/
+    Bottle trackStackedObject(1:string objName)
     
     /**
      * Quit the module.

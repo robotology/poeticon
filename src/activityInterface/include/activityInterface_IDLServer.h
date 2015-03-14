@@ -157,7 +157,12 @@ public:
    * initialiseObjectTracker Function
    * @return true/false
    */
-  virtual bool initialiseObjectTracker(const std::string& objName);
+  virtual bool initObjectTracker(const std::string& objName);
+  /**
+   * trackStackedObject Function
+   * @return true/false
+   */
+  virtual yarp::os::Bottle trackStackedObject(const std::string& objName);
   /**
    * Quit the module.
    * @return true/false on success/failure

@@ -207,10 +207,19 @@ public:
   virtual bool read(yarp::os::ConnectionReader& connection);
 };
 
-class activityInterface_IDLServer_initialiseObjectTracker : public yarp::os::Portable {
+class activityInterface_IDLServer_initObjectTracker : public yarp::os::Portable {
 public:
   std::string objName;
   bool _return;
+  void init(const std::string& objName);
+  virtual bool write(yarp::os::ConnectionWriter& connection);
+  virtual bool read(yarp::os::ConnectionReader& connection);
+};
+
+class activityInterface_IDLServer_trackStackedObject : public yarp::os::Portable {
+public:
+  std::string objName;
+  yarp::os::Bottle _return;
   void init(const std::string& objName);
   virtual bool write(yarp::os::ConnectionWriter& connection);
   virtual bool read(yarp::os::ConnectionReader& connection);
@@ -727,15 +736,15 @@ void activityInterface_IDLServer_resumeAllTrackers::init() {
   _return = false;
 }
 
-bool activityInterface_IDLServer_initialiseObjectTracker::write(yarp::os::ConnectionWriter& connection) {
+bool activityInterface_IDLServer_initObjectTracker::write(yarp::os::ConnectionWriter& connection) {
   yarp::os::idl::WireWriter writer(connection);
   if (!writer.writeListHeader(2)) return false;
-  if (!writer.writeTag("initialiseObjectTracker",1,1)) return false;
+  if (!writer.writeTag("initObjectTracker",1,1)) return false;
   if (!writer.writeString(objName)) return false;
   return true;
 }
 
-bool activityInterface_IDLServer_initialiseObjectTracker::read(yarp::os::ConnectionReader& connection) {
+bool activityInterface_IDLServer_initObjectTracker::read(yarp::os::ConnectionReader& connection) {
   yarp::os::idl::WireReader reader(connection);
   if (!reader.readListReturn()) return false;
   if (!reader.readBool(_return)) {
@@ -745,8 +754,30 @@ bool activityInterface_IDLServer_initialiseObjectTracker::read(yarp::os::Connect
   return true;
 }
 
-void activityInterface_IDLServer_initialiseObjectTracker::init(const std::string& objName) {
+void activityInterface_IDLServer_initObjectTracker::init(const std::string& objName) {
   _return = false;
+  this->objName = objName;
+}
+
+bool activityInterface_IDLServer_trackStackedObject::write(yarp::os::ConnectionWriter& connection) {
+  yarp::os::idl::WireWriter writer(connection);
+  if (!writer.writeListHeader(2)) return false;
+  if (!writer.writeTag("trackStackedObject",1,1)) return false;
+  if (!writer.writeString(objName)) return false;
+  return true;
+}
+
+bool activityInterface_IDLServer_trackStackedObject::read(yarp::os::ConnectionReader& connection) {
+  yarp::os::idl::WireReader reader(connection);
+  if (!reader.readListReturn()) return false;
+  if (!reader.read(_return)) {
+    reader.fail();
+    return false;
+  }
+  return true;
+}
+
+void activityInterface_IDLServer_trackStackedObject::init(const std::string& objName) {
   this->objName = objName;
 }
 
@@ -994,12 +1025,22 @@ bool activityInterface_IDLServer::resumeAllTrackers() {
   bool ok = yarp().write(helper,helper);
   return ok?helper._return:_return;
 }
-bool activityInterface_IDLServer::initialiseObjectTracker(const std::string& objName) {
+bool activityInterface_IDLServer::initObjectTracker(const std::string& objName) {
   bool _return = false;
-  activityInterface_IDLServer_initialiseObjectTracker helper;
+  activityInterface_IDLServer_initObjectTracker helper;
   helper.init(objName);
   if (!yarp().canWrite()) {
-    fprintf(stderr,"Missing server method '%s'?\n","bool activityInterface_IDLServer::initialiseObjectTracker(const std::string& objName)");
+    fprintf(stderr,"Missing server method '%s'?\n","bool activityInterface_IDLServer::initObjectTracker(const std::string& objName)");
+  }
+  bool ok = yarp().write(helper,helper);
+  return ok?helper._return:_return;
+}
+yarp::os::Bottle activityInterface_IDLServer::trackStackedObject(const std::string& objName) {
+  yarp::os::Bottle _return;
+  activityInterface_IDLServer_trackStackedObject helper;
+  helper.init(objName);
+  if (!yarp().canWrite()) {
+    fprintf(stderr,"Missing server method '%s'?\n","yarp::os::Bottle activityInterface_IDLServer::trackStackedObject(const std::string& objName)");
   }
   bool ok = yarp().write(helper,helper);
   return ok?helper._return:_return;
@@ -1391,18 +1432,34 @@ bool activityInterface_IDLServer::read(yarp::os::ConnectionReader& connection) {
       reader.accept();
       return true;
     }
-    if (tag == "initialiseObjectTracker") {
+    if (tag == "initObjectTracker") {
       std::string objName;
       if (!reader.readString(objName)) {
         reader.fail();
         return false;
       }
       bool _return;
-      _return = initialiseObjectTracker(objName);
+      _return = initObjectTracker(objName);
       yarp::os::idl::WireWriter writer(reader);
       if (!writer.isNull()) {
         if (!writer.writeListHeader(1)) return false;
         if (!writer.writeBool(_return)) return false;
+      }
+      reader.accept();
+      return true;
+    }
+    if (tag == "trackStackedObject") {
+      std::string objName;
+      if (!reader.readString(objName)) {
+        reader.fail();
+        return false;
+      }
+      yarp::os::Bottle _return;
+      _return = trackStackedObject(objName);
+      yarp::os::idl::WireWriter writer(reader);
+      if (!writer.isNull()) {
+        if (!writer.writeListHeader(1)) return false;
+        if (!writer.write(_return)) return false;
       }
       reader.accept();
       return true;
@@ -1474,7 +1531,8 @@ std::vector<std::string> activityInterface_IDLServer::help(const std::string& fu
     helpString.push_back("goHome");
     helpString.push_back("pauseAllTrackers");
     helpString.push_back("resumeAllTrackers");
-    helpString.push_back("initialiseObjectTracker");
+    helpString.push_back("initObjectTracker");
+    helpString.push_back("trackStackedObject");
     helpString.push_back("quit");
     helpString.push_back("help");
   }
@@ -1614,9 +1672,14 @@ std::vector<std::string> activityInterface_IDLServer::help(const std::string& fu
       helpString.push_back("Ask to resume position ");
       helpString.push_back("@return true/false on homeing or not ");
     }
-    if (functionName=="initialiseObjectTracker") {
-      helpString.push_back("bool initialiseObjectTracker(const std::string& objName) ");
+    if (functionName=="initObjectTracker") {
+      helpString.push_back("bool initObjectTracker(const std::string& objName) ");
       helpString.push_back("initialiseObjectTracker Function ");
+      helpString.push_back("@return true/false ");
+    }
+    if (functionName=="trackStackedObject") {
+      helpString.push_back("yarp::os::Bottle trackStackedObject(const std::string& objName) ");
+      helpString.push_back("trackStackedObject Function ");
       helpString.push_back("@return true/false ");
     }
     if (functionName=="quit") {
