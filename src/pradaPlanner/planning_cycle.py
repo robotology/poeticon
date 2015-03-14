@@ -102,7 +102,7 @@ class ActionExecutorCommunication:
         print message.toString()
         ans = yarp.Bottle()
         self._rpc_client.write(message, ans)
-        return ans
+        return [ans, message]
     def _is_success(self, ans):
         return ans.size() == 1 and ans.get(0).asVocab() == 27503
     
@@ -609,8 +609,8 @@ def planning_cycle():
                 print 'action to be executed: ', prtmess, '\n'
                 raw_input("press any key")
                 message = motor_rpc._execute(PathName, next_action, toolhandle)
-                motor_rpc._is_success(message)
-                prev_act = message.toString()
+                motor_rpc._is_success(message[0])
+                prev_act = message[1].toString()
 
 
 
