@@ -265,42 +265,42 @@ def Affordance_comm():
                     print "checking probabilities"
                     if translation[i][2].replace('\r','').replace(' ','') == 'grasp':
                         print "grasp detected"
-                        if mode != 0:
-                            print "checking for motor executer"
-                            ans = ActionQuery._execute(PathName, rule)
-                            if ActionQuery._is_success(ans):
-                                probability = ans.get(0).asDouble()
-                                if float(probability) == 1.0:
-                                    probability = 0.95
-                                new_outcome = outcome.split(' ')
-                                new_outcome[2] = str(probability)
-                                new_outcome = ' '.join(new_outcome)
-                                new_outcome2 = outcome2.split(' ')
-                                new_outcome2[2] = str(1-probability)
-                                new_outcome2 = ' '.join(new_outcome2)
-                                Affor_bottle_out = geo_yarp.prepare()
-                                Affor_bottle_out.clear()
-                                Affor_bottle_out.addString(new_outcome)
-                                Affor_bottle_out.addString(new_outcome2)
-                                Affor_bottle_out.addString(outcome3)
-                                geo_yarp.write()
-                            else:
-                                print "failed query, going for default"
-                                Affor_bottle_out = geo_yarp.prepare()
-                                Affor_bottle_out.clear()
-                                Affor_bottle_out.addString(outcome)
-                                Affor_bottle_out.addString(outcome2)
-                                Affor_bottle_out.addString(outcome3)
-                                geo_yarp.write()
+##                        if mode != 0:
+##                            print "checking for motor executer"
+##                            ans = ActionQuery._execute(PathName, rule)
+##                            if ActionQuery._is_success(ans):
+##                                probability = ans.get(0).asDouble()
+##                                if float(probability) == 1.0:
+##                                    probability = 0.95
+##                                new_outcome = outcome.split(' ')
+##                                new_outcome[2] = str(probability)
+##                                new_outcome = ' '.join(new_outcome)
+##                                new_outcome2 = outcome2.split(' ')
+##                                new_outcome2[2] = str(1-probability)
+##                                new_outcome2 = ' '.join(new_outcome2)
+##                                Affor_bottle_out = geo_yarp.prepare()
+##                                Affor_bottle_out.clear()
+##                                Affor_bottle_out.addString(new_outcome)
+##                                Affor_bottle_out.addString(new_outcome2)
+##                                Affor_bottle_out.addString(outcome3)
+##                                geo_yarp.write()
+##                            else:
+##                                print "failed query, going for default"
+##                                Affor_bottle_out = geo_yarp.prepare()
+##                                Affor_bottle_out.clear()
+##                                Affor_bottle_out.addString(outcome)
+##                                Affor_bottle_out.addString(outcome2)
+##                                Affor_bottle_out.addString(outcome3)
+##                                geo_yarp.write()
 
-                        if mode == 0:
-                            print "going for default probability"
-                            Affor_bottle_out = geo_yarp.prepare()
-                            Affor_bottle_out.clear()
-                            Affor_bottle_out.addString(outcome)
-                            Affor_bottle_out.addString(outcome2)
-                            Affor_bottle_out.addString(outcome3)
-                            geo_yarp.write()
+##                        if mode == 0:
+                        print "going for default probability"
+                        Affor_bottle_out = geo_yarp.prepare()
+                        Affor_bottle_out.clear()
+                        Affor_bottle_out.addString(outcome)
+                        Affor_bottle_out.addString(outcome2)
+                        Affor_bottle_out.addString(outcome3)
+                        geo_yarp.write()
 
 ## Se for pull/push, -> ask Affordances
                     if translation[i][2].replace('\r','').replace(' ','') == 'push':
@@ -330,69 +330,74 @@ def Affordance_comm():
                                         tool_desc2 = tooldesc[o][1][1]
                                         toolhandle[o] = [tool] + [tooldesc[o]]
                                         toolnum = o
-                                message = tool_desc1[3:-1] + obj_desc[1:] + [2]
-                                print '******', message
-                                mess_list = []
-                                for t in range(len(message)):
-                                    mess_num = float(message[t])
-                                    mess_list = mess_list + [mess_num]
-                                    affnet_bottle_out.addDouble(mess_num)
-                                print '*****',affnet_bottle_out.toString()
-                                affnet_yarp.write()
-                                while 1:
-                                    affnet_bottle_in = affnet_yarp.read(False)
-                                    if affnet_bottle_in:
-                                        data = affnet_bottle_in.toString().replace('((','').replace('))','').split(') (')
-                                        for j in range(len(data)):
-                                            data[j] = data[j].split(' ')
-                                        for g in range(len(data)):
+                                if tooldesc[toolnum][1][0][1] > tooldesc[toolnum][1][1][1]:
+                                    message = tool_desc1[3:-1] + obj_desc[1:] + [2]
+                                    print '******', message
+                                    mess_list = []
+                                    for t in range(len(message)):
+                                        mess_num = float(message[t])
+                                        mess_list = mess_list + [mess_num]
+                                        affnet_bottle_out.addDouble(mess_num)
+                                    print '*****',affnet_bottle_out.toString()
+                                    affnet_yarp.write()
+                                    while 1:
+                                        affnet_bottle_in = affnet_yarp.read(False)
+                                        if affnet_bottle_in:
+                                            data = affnet_bottle_in.toString().replace('((','').replace('))','').split(') (')
+                                            for j in range(len(data)):
+                                                data[j] = data[j].split(' ')
+                                            for g in range(len(data)):
+                                                for j in range(len(data[g])):
+                                                    data[g][j] = float(data[g][j])
+                                            break
+                                        yarp.Time.delay(0.1)
+                                    prob_succ1 = 0
+                                    for g in range(len(data)):
+                                        if g < 3:
                                             for j in range(len(data[g])):
-                                                data[g][j] = float(data[g][j])
-                                        break
-                                    yarp.Time.delay(0.1)
-                                prob_succ1 = 0
-                                for g in range(len(data)):
-                                    if g > 3:
-                                        for j in range(len(data[g])):
-                                            prob_succ1 = prob_succ1 + data[g][j]
-                                if prob_succ1 == 1.0:
-                                    prob_succ1 = 0.95
-
-                                message = tool_desc2[3:-1] + obj_desc[1:] + [2]
-                                affnet_bottle_out = affnet_yarp.prepare()
-                                affnet_bottle_out.clear()
-                                for t in range(len(message)):
-                                    mess_num = float(message[t])
-                                    mess_list = mess_list + [mess_num]
-                                    affnet_bottle_out.addDouble(mess_num)
-                                affnet_yarp.write()
-                                while 1:
-                                    affnet_bottle_in = affnet_yarp.read(False)
-                                    yarp.Time.delay(0.1)
-                                    if affnet_bottle_in:
-                                        data = affnet_bottle_in.toString().replace('((','').replace('))','').split(') (')
-                                        for j in range(len(data)):
-                                            data[j] = data[j].split(' ')
-                                        for g in range(len(data)):
-                                            for j in range(len(data[g])):
-                                                data[g][j] = float(data[g][j])
-                                        break
-                                prob_succ2 = 0
-                                for g in range(len(data)):
-                                    if g > 3:
-                                        for j in range(len(data[g])):
-                                            prob_succ2 = prob_succ2 + data[g][j]
-                                if prob_succ2 == 1.0:
-                                    prob_succ2 = 0.95
-
-                                if prob_succ1 >= prob_succ2:
+                                                prob_succ1 = prob_succ1 + data[g][j]
+                                    if prob_succ1 == 1.0:
+                                        prob_succ1 = 0.95
                                     prob_succ = prob_succ1
                                     posit = posit + [tool, tooldesc[toolnum][1][0][0], tooldesc[toolnum][1][0][1]]
-                                   ## posit = posit + [toolhandle[toolnum][0],toolhandle[toolnum][1][0],toolhandle[toolnum][1][1]]
                                 else:
+                                    message = tool_desc2[3:-1] + obj_desc[1:] + [2]
+                                    affnet_bottle_out = affnet_yarp.prepare()
+                                    affnet_bottle_out.clear()
+                                    for t in range(len(message)):
+                                        mess_num = float(message[t])
+                                        mess_list = mess_list + [mess_num]
+                                        affnet_bottle_out.addDouble(mess_num)
+                                    affnet_yarp.write()
+                                    while 1:
+                                        affnet_bottle_in = affnet_yarp.read(False)
+                                        yarp.Time.delay(0.1)
+                                        if affnet_bottle_in:
+                                            data = affnet_bottle_in.toString().replace('((','').replace('))','').split(') (')
+                                            for j in range(len(data)):
+                                                data[j] = data[j].split(' ')
+                                            for g in range(len(data)):
+                                                for j in range(len(data[g])):
+                                                    data[g][j] = float(data[g][j])
+                                            break
+                                    prob_succ2 = 0
+                                    for g in range(len(data)):
+                                        if g < 3:
+                                            for j in range(len(data[g])):
+                                                prob_succ2 = prob_succ2 + data[g][j]
+                                    if prob_succ2 == 1.0:
+                                        prob_succ2 = 0.95
                                     prob_succ = prob_succ2
                                     posit = posit + [tool, tooldesc[toolnum][1][1][0], tooldesc[toolnum][1][1][1]]
-                                   ## posit = posit + [toolhandle[toolnum][0],toolhandle[toolnum][2][0],toolhandle[toolnum][2][1]]
+
+##                                if prob_succ1 >= prob_succ2:
+##                                    prob_succ = prob_succ1
+##                                    posit = posit + [tool, tooldesc[toolnum][1][0][0], tooldesc[toolnum][1][0][1]]
+##                                   ## posit = posit + [toolhandle[toolnum][0],toolhandle[toolnum][1][0],toolhandle[toolnum][1][1]]
+##                                else:
+##                                    prob_succ = prob_succ2
+##                                    posit = posit + [tool, tooldesc[toolnum][1][1][0], tooldesc[toolnum][1][1][1]]
+##                                   ## posit = posit + [toolhandle[toolnum][0],toolhandle[toolnum][2][0],toolhandle[toolnum][2][1]]
                                 prob_fail = 1 - prob_succ
                                 
                                 new_outcome = outcome.split(' ')
@@ -441,69 +446,74 @@ def Affordance_comm():
                                         tool_desc2 = tooldesc[o][1][1]
                                         toolhandle[o] = [tool] + [tooldesc[o]]
                                         toolnum = o
-                                message = tool_desc1[3:-1] + obj_desc[1:] + [1]
-                                for t in range(len(message)):
-                                    mess_num = float(message[t])
-                                    mess_list = mess_list + [mess_num]
-                                    affnet_bottle_out.addDouble(mess_num)
-                                affnet_yarp.write()
-                                while 1:
-                                    affnet_bottle_in = affnet_yarp.read(False)
-                                    if affnet_bottle_in:
-                                        data = affnet_bottle_in.toString().replace('((','').replace('))','').split(') (')
-                                        for j in range(len(data)):
-                                            data[j] = data[j].split(' ')
-                                        for g in range(len(data)):
-                                            for j in range(len(data[g])):
-                                                data[g][j] = float(data[g][j])
-                                        break
-                                    yarp.Time.delay(0.1)
-                                prob_succ1 = 0
-                                for g in range(len(data)):
-                                    if g < 3:
-                                        for j in range(len(data[g])):
-                                            prob_succ1 = prob_succ1 + data[g][j]
-                                if prob_succ1 == 1.0:
-                                    prob_succ1 = 0.95
 
-                                
-                                message = tool_desc2[3:-1] + obj_desc[1:] + [1]
-                                affnet_bottle_out = affnet_yarp.prepare()
-                                affnet_bottle_out.clear()
-                                for t in range(len(message)):
-                                    mess_num = float(message[t])
-                                    mess_list = mess_list + [mess_num]
-                                    affnet_bottle_out.addDouble(mess_num)
-                                affnet_yarp.write()
-                                while 1:
-                                    affnet_bottle_in = affnet_yarp.read(False)
-                                    yarp.Time.delay(0.1)
-                                    if affnet_bottle_in:
-                                        data = affnet_bottle_in.toString().replace('((','').replace('))','').split(') (')
-                                        for j in range(len(data)):
-                                            data[j] = data[j].split(' ')
-                                        for g in range(len(data)):
+                                if tooldesc[toolnum][1][0][1] > tooldesc[toolnum][1][1][1]:
+                                    message = tool_desc1[3:-1] + obj_desc[1:] + [1]
+                                    for t in range(len(message)):
+                                        mess_num = float(message[t])
+                                        mess_list = mess_list + [mess_num]
+                                        affnet_bottle_out.addDouble(mess_num)
+                                    affnet_yarp.write()
+                                    while 1:
+                                        affnet_bottle_in = affnet_yarp.read(False)
+                                        if affnet_bottle_in:
+                                            data = affnet_bottle_in.toString().replace('((','').replace('))','').split(') (')
+                                            for j in range(len(data)):
+                                                data[j] = data[j].split(' ')
+                                            for g in range(len(data)):
+                                                for j in range(len(data[g])):
+                                                    data[g][j] = float(data[g][j])
+                                            break
+                                        yarp.Time.delay(0.1)
+                                    prob_succ1 = 0
+                                    for g in range(len(data)):
+                                        if g > 3:
                                             for j in range(len(data[g])):
-                                                data[g][j] = float(data[g][j])
-                                        break
-                                prob_succ2 = 0
-                                for g in range(len(data)):
-                                    if g < 3:
-                                        for j in range(len(data[g])):
-                                            prob_succ2 = prob_succ2 + data[g][j]
-                                if prob_succ2 == 1.0:
-                                    prob_succ2 = 0.95
-
-                                if prob_succ1 >= prob_succ2:
+                                                prob_succ1 = prob_succ1 + data[g][j]
+                                    if prob_succ1 == 1.0:
+                                        prob_succ1 = 0.95
                                     prob_succ = prob_succ1
                                     posit = posit + [tool, tooldesc[toolnum][1][0][0], tooldesc[toolnum][1][0][1]]
-##                                    posit = posit + [toolhandle[toolnum][0],toolhandle[toolnum][1][0],toolhandle[toolnum][1][1]]
-##                                    toolhandle[toolnum] = toolhandle[toolnum]+['1']
                                 else:
+                                    message = tool_desc2[3:-1] + obj_desc[1:] + [1]
+                                    affnet_bottle_out = affnet_yarp.prepare()
+                                    affnet_bottle_out.clear()
+                                    for t in range(len(message)):
+                                        mess_num = float(message[t])
+                                        mess_list = mess_list + [mess_num]
+                                        affnet_bottle_out.addDouble(mess_num)
+                                    affnet_yarp.write()
+                                    while 1:
+                                        affnet_bottle_in = affnet_yarp.read(False)
+                                        yarp.Time.delay(0.1)
+                                        if affnet_bottle_in:
+                                            data = affnet_bottle_in.toString().replace('((','').replace('))','').split(') (')
+                                            for j in range(len(data)):
+                                                data[j] = data[j].split(' ')
+                                            for g in range(len(data)):
+                                                for j in range(len(data[g])):
+                                                    data[g][j] = float(data[g][j])
+                                            break
+                                    prob_succ2 = 0
+                                    for g in range(len(data)):
+                                        if g > 3:
+                                            for j in range(len(data[g])):
+                                                prob_succ2 = prob_succ2 + data[g][j]
+                                    if prob_succ2 == 1.0:
+                                        prob_succ2 = 0.95
                                     prob_succ = prob_succ2
                                     posit = posit + [tool, tooldesc[toolnum][1][1][0], tooldesc[toolnum][1][1][1]]
-##                                    posit = posit + [toolhandle[toolnum][0],toolhandle[toolnum][2][0],toolhandle[toolnum][2][1]]
-##                                    toolhandle[toolnum] = toolhandle[toolnum]+['2']
+
+##                                if prob_succ1 >= prob_succ2:
+##                                    prob_succ = prob_succ1
+##                                    posit = posit + [tool, tooldesc[toolnum][1][0][0], tooldesc[toolnum][1][0][1]]
+####                                    posit = posit + [toolhandle[toolnum][0],toolhandle[toolnum][1][0],toolhandle[toolnum][1][1]]
+####                                    toolhandle[toolnum] = toolhandle[toolnum]+['1']
+##                                else:
+##                                    prob_succ = prob_succ2
+##                                    posit = posit + [tool, tooldesc[toolnum][1][1][0], tooldesc[toolnum][1][1][1]]
+####                                    posit = posit + [toolhandle[toolnum][0],toolhandle[toolnum][2][0],toolhandle[toolnum][2][1]]
+####                                    toolhandle[toolnum] = toolhandle[toolnum]+['2']
                                 prob_fail = 1 - prob_succ
                                 
                                 new_outcome = outcome.split(' ')
