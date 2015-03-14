@@ -387,12 +387,12 @@ def Affordance_comm():
 
                                 if prob_succ1 >= prob_succ2:
                                     prob_succ = prob_succ1
-                                    posit = posit + [toolhandle[toolnum][0],toolhandle[toolnum][1][0],toolhandle[toolnum][1][1]]
-                                    toolhandle[toolnum] = toolhandle[toolnum]+['1']
+                                    posit = posit + [tool, tooldesc[toolnum][1][0][0], tooldesc[toolnum][1][0][1]]
+                                   ## posit = posit + [toolhandle[toolnum][0],toolhandle[toolnum][1][0],toolhandle[toolnum][1][1]]
                                 else:
                                     prob_succ = prob_succ2
-                                    posit = posit + [toolhandle[toolnum][0],toolhandle[toolnum][2][0],toolhandle[toolnum][2][1]]
-                                    toolhandle[toolnum] = toolhandle[toolnum]+['2']
+                                    posit = posit + [tool, tooldesc[toolnum][1][1][0], tooldesc[toolnum][1][1][1]]
+                                   ## posit = posit + [toolhandle[toolnum][0],toolhandle[toolnum][2][0],toolhandle[toolnum][2][1]]
                                 prob_fail = 1 - prob_succ
                                 
                                 new_outcome = outcome.split(' ')
@@ -496,12 +496,14 @@ def Affordance_comm():
 
                                 if prob_succ1 >= prob_succ2:
                                     prob_succ = prob_succ1
-                                    posit = posit + [toolhandle[toolnum][0],toolhandle[toolnum][1][0],toolhandle[toolnum][1][1]]
-                                    toolhandle[toolnum] = toolhandle[toolnum]+['1']
+                                    posit = posit + [tool, tooldesc[toolnum][1][0][0], tooldesc[toolnum][1][0][1]]
+##                                    posit = posit + [toolhandle[toolnum][0],toolhandle[toolnum][1][0],toolhandle[toolnum][1][1]]
+##                                    toolhandle[toolnum] = toolhandle[toolnum]+['1']
                                 else:
                                     prob_succ = prob_succ2
-                                    posit = posit + [toolhandle[toolnum][0],toolhandle[toolnum][2][0],toolhandle[toolnum][2][1]]
-                                    toolhandle[toolnum] = toolhandle[toolnum]+['2']
+                                    posit = posit + [tool, tooldesc[toolnum][1][1][0], tooldesc[toolnum][1][1][1]]
+##                                    posit = posit + [toolhandle[toolnum][0],toolhandle[toolnum][2][0],toolhandle[toolnum][2][1]]
+##                                    toolhandle[toolnum] = toolhandle[toolnum]+['2']
                                 prob_fail = 1 - prob_succ
                                 
                                 new_outcome = outcome.split(' ')
