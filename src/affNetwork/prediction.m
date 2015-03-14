@@ -22,7 +22,7 @@ clear;
 % initPmtk3;
 
 %% Choice of network:
-bn = 'pca6merge';
+bn = 'pca4sep';
 
 switch bn
     case 'pca4merge'
@@ -31,6 +31,9 @@ switch bn
 		load('pca6mergecomp.mat');
 	case 'pca4sep'
 		load('pca_2n_2C_noise_25b.mat');
+        %load('pca_2n_2C_noise_2b.mat');
+    case 'pca6sep'
+		load('pca_2n_3C.mat');
     otherwise
         error([bn ' is not a known Network']);
         
@@ -64,7 +67,7 @@ portOutput.open('/Eprediction/write:o');
 disp('opened port /Eprediction/write:o');
 pause(0.5);
 disp('Done opening ports');
-
+i=1;
 %% Run until you get the quit signal:
 while(~done)
     
@@ -88,6 +91,12 @@ while(~done)
             prior = query;
             %posterior = query.get(1);
             %% Test if yarp bottle is with a good structure/size
+            if(query.size()~=11)
+                answer.fromString('nack')
+                portOutput.write(answer);
+                disp('Warning: Wrong Input size')
+                continue;
+            end
             %%
             switch bn
                case 'pca4merge'
@@ -128,6 +137,20 @@ while(~done)
                     score = discretize(score,ranges);
                     prior_values = [score action]; % and add the action to prior
                     posterior_nodes = [6 7]; % X and Y effect 
+                case 'pca6sep'
+                    prior_nodes  = [1 2 3 4 5 6 7]; % pca1_T pca2_T pca3_O pca4_O action
+                    %prior_values = zeros(1, size(prior_nodes,2));
+                    for n = 1:10 % features of the tool and object
+                        features(n) = prior.get(n-1).asDouble;
+                    end
+                    %action = prior.get(0).asList().get(10).asDouble;
+                    action = prior.get(10).asDouble;
+                    featuresT = features(1:5);
+                    featuresO = features(6:10);
+                    score=[ featuresT*pinv(pcT(:,1:components)') featuresO*pinv(pcO(:,1:components)')];
+                    score = discretize(score,ranges);
+                    prior_values = [score action]; % and add the action to prior
+                    posterior_nodes = [8 9]; % X and Y effect
                     
                 otherwise
                     error([bn ' is not a known Network']);
@@ -152,8 +175,30 @@ while(~done)
             answer_string=[answer_string ')'];
             %answer_string(end) = '';
             answer.fromString(answer_string);
-            portOutput.write(answer);        
-
+                    
+            x = [0.5,1.5,2.5,3.5,4.5];
+            
+            hFig(i) = figure(i);
+            str = sprintf('Affordances of iteration %d',i); % maybe change the title :p
+            title(str);
+            set(hFig(i), 'Position', [500 500 450 430]) % maybe change the position of the window
+            axis([0 5 0 5.5])
+            hold on;
+            scatter (x, 0.5*ones(1,5) , 5000,prob.T(1,:),'filled','s')
+            hold on;
+            scatter (x, 1.5*ones(1,5) , 5000,prob.T(2,:),'filled','s')
+            hold on;
+            scatter (x, 2.5*ones(1,5) , 5000, prob.T(3,:),'filled','s')
+            hold on;
+            scatter (x, 3.5*ones(1,5) , 5000,prob.T(4,:), 'filled','s')
+            hold on;
+            scatter (x, 4.5*ones(1,5) , 5000, prob.T(5,:),'filled','s')
+            hold on;
+            colormap gray;
+            plot(2.5,5.25,'r*','LineWidth',8) ; % Display robot position
+            pause(1);
+            i=i+1;
+            portOutput.write(answer);
             disp('Done');            
         end
     end
@@ -162,4 +207,5 @@ end
 disp('Going to close the ports');
 portInput.close;
 portOutput.close;
+close all;
 clear;
