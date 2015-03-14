@@ -1323,7 +1323,7 @@ bool ActivityInterface::askForTool(const std::string &handName, const int32_t po
     
     cmdAre.clear();
     replyAre.clear();
-    cmdAre.addString("close");
+    cmdAre.addString("clto");
     cmdAre.addString(handName.c_str());
     rpcAREcmd.write(cmdAre, replyAre);
     Time::delay(5.0);
