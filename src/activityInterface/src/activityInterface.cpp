@@ -1196,6 +1196,7 @@ bool ActivityInterface::put(const string &objName, const string &targetName)
                 useStackedObjs = true;
             }
         }
+        Bottle cmd, reply;
         if(useStackedObjs)
         {
             Bottle position = trackStackedObject(targetName);
@@ -1204,7 +1205,7 @@ bool ActivityInterface::put(const string &objName, const string &targetName)
             fprintf(stdout,"I will place %s on the %s with position %d %d ", objName.c_str(), targetName.c_str(), position.get(0).asInt(), position.get(1).asInt() );
             
             //do the take actions
-            Bottle cmd, reply;
+            
             cmd.clear(), reply.clear();
             cmd.addString("drop");
             cmd.addString("over");
@@ -1225,7 +1226,6 @@ bool ActivityInterface::put(const string &objName, const string &targetName)
                 executeSpeech("ok, I will place the " + objName + " on the " + targetName);
                 
                 //do the take actions
-                Bottle cmd, reply;
                 cmd.clear(), reply.clear();
                 cmd.addString("drop");
                 cmd.addString("over");
@@ -1233,30 +1233,7 @@ bool ActivityInterface::put(const string &objName, const string &targetName)
                 cmd.addString("gently");
                 cmd.addString(handName.c_str());
                 rpcAREcmd.write(cmd, reply);
-                
-                if (reply.get(0).asVocab()==Vocab::encode("ack"))
-                {
-                    if (!targetName.empty())
-                    {
-                        if (elements == 0)
-                        {
-                            onTopElements.insert(pair<int, string>(elements, targetName.c_str()));
-                            elements++;
-                        }
-                        
-                        onTopElements.insert(pair<int, string>(elements, objName.c_str()));
-                        elements++;
-                    }
-                    
-                    for (std::map<string, string>::iterator it=inHandStatus.begin(); it!=inHandStatus.end(); ++it)
-                    {
-                        if (strcmp (it->first.c_str(), objName.c_str() ) == 0)
-                        {
-                            inHandStatus.erase(objName.c_str());
-                            break;
-                        }
-                    }
-                }
+
             }
             else
             {
@@ -1264,6 +1241,31 @@ bool ActivityInterface::put(const string &objName, const string &targetName)
                 executeSpeech("There seems to be an issue with the command");
             }
         }
+        
+        if (reply.get(0).asVocab()==Vocab::encode("ack"))
+        {
+            if (!targetName.empty())
+            {
+                if (elements == 0)
+                {
+                    onTopElements.insert(pair<int, string>(elements, targetName.c_str()));
+                    elements++;
+                }
+                
+                onTopElements.insert(pair<int, string>(elements, objName.c_str()));
+                elements++;
+            }
+            
+            for (std::map<string, string>::iterator it=inHandStatus.begin(); it!=inHandStatus.end(); ++it)
+            {
+                if (strcmp (it->first.c_str(), objName.c_str() ) == 0)
+                {
+                    inHandStatus.erase(objName.c_str());
+                    break;
+                }
+            }
+        }
+        
     }
     resumeAllTrackers();
     return true;
