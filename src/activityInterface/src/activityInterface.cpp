@@ -1155,6 +1155,7 @@ bool ActivityInterface::drop(const string &objName)
         Bottle cmd, reply;
         cmd.clear(), reply.clear();
         cmd.addString("drop");
+        cmd.addString("away");
         cmd.addString(handName.c_str());
         rpcAREcmd.write(cmd, reply);
         
