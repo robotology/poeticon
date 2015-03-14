@@ -76,9 +76,6 @@ class ActionExecutorCommunication:
             if act == 'grasp' and ( obj == tool1 or obj == tool2):
                 for i in range(len(toolhandle)):
                     if str(toolhandle[i]) == (obj):
-                        print 'full list:',toolhandle[i+1]
-                        print 'for this tool only:',float(toolhandle[i+1])
-                        print 'integer:',int(float(toolhandle[i+1]))
                         positx = int(float(toolhandle[i+1]))
                         posity = int(float(toolhandle[i+2]))
                         ind = i
@@ -483,6 +480,7 @@ def planning_cycle():
                             horizon = int(temp_var[1])
                             horizon = horizon + 1
                             config_data[w+2] = 'PRADA_horizon %d' %horizon
+                            raw_input('no action found, press enter to continue.')
                             break
                     config_file.close()
                     config_file = open(''.join(PathName +"/config"), 'w')
