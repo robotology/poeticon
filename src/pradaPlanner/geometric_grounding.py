@@ -245,7 +245,7 @@ def geometric_grounding():
                 prerules = prerule_file.read().split('\n\n')
                 for i in range(len(prerules)):
                     rules = rules + create_rules(objects, prerules[i], tools)
-
+                
 
 ## grounding geometrico
                 l = 0
@@ -255,6 +255,11 @@ def geometric_grounding():
                 new_rules = []
                 print 'creating rules...'
                 for i in range(len(rules)):
+                    print rules[i]
+                    print rules[i+1]
+                    print rules[i+6]
+                    print rules[i+7]
+                    print rules[i+8]
                     proba = 0
                     ran = rules[i].find('Rule')
                     if ran != -1:
