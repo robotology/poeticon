@@ -1263,6 +1263,9 @@ bool ActivityInterface::askForTool(const std::string &handName, const int32_t po
     cmdAre.addString("head");
     rpcAREcmd.write(cmdAre, replyAre);
     
+    //update inHandStatus map
+    inHandStatus.insert(pair<string, string>(label.c_str(), handName.c_str()));
+    
     resumeAllTrackers();
     
     return true;
@@ -1569,10 +1572,17 @@ bool ActivityInterface::initialiseObjectTracker(const string &objName)
         
         fprintf(stdout, "[initialiseObjectTracker] the cog is %d %d\n", cog.x, cog.y);
         
-        //IplImage *tpl;
+        IplImage *tpl;
+        IplImage *seg;
+        
         SegInfo info (cog.x, cog.y, cropSizeWidth,  cropSizeHeight);
         
-        cvSaveImage("foo.png",image_in);
+        activeSeg.getSegWithFixation(image_in, seg, info);
+        
+        activeSeg.getTemplateFromSeg(image_in, seg, tpl, info);
+        
+        //cvSaveImage("foo.png",image_in);
+        //cvSaveImage("seg.png",tpl);
         
         
     }

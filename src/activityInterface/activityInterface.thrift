@@ -107,7 +107,6 @@ service activityInterface_IDLServer
      **/
     bool pull(1:string objName, 2:string toolName)
 
-    
     /**
      * Perform the take action on the particular tool with the particular hand
      * @param handName specifies the name of the hand to use
