@@ -199,7 +199,7 @@ def planning_cycle():
                                 state_check = state_file.read().split(' ')
                                 state_file.close()
                                 state_check.pop()
-                                if len(state_check) < 3:
+                                if len(state_check) >= 3:
                                     state_flag = 1
                                     break
                             else:
