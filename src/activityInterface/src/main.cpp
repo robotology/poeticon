@@ -34,7 +34,7 @@ int main(int argc, char * argv[])
     /* prepare and configure the resource finder */
     ResourceFinder rf;
     rf.setVerbose( true );
-    rf.setDefaultContext( "activityInterface" );
+    rf.setDefaultContext( "poeticon" );
     rf.setDefaultConfigFile( "activityInterface.ini" );
     rf.setDefault("name","activityInterface");
     rf.configure( argc, argv );
