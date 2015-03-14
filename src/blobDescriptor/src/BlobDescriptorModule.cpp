@@ -921,6 +921,8 @@ bool BlobDescriptorModule::updateModule()
             // consider the centers of newly-estimated (upright) rectangles as the new top, bottom centers
             cv::Point2f top_new, bot_new;
 
+            /*
+            // commented 2015-03-14
             top_new.x = top_bounding_rect.width/2.;
             top_new.y = top_bounding_rect.height/2.;
             bot_new.x = bot_bounding_rect.width/2.;
@@ -930,6 +932,7 @@ bool BlobDescriptorModule::updateModule()
             top_new.y += top_bounding_rect.tl().y-1;
             bot_new.x += bot_bounding_rect.tl().x-1;
             bot_new.y += bot_bounding_rect.tl().y-1;
+            */
 
             // FIXME: similar but with newly-estimated rotated rectangles
             /*
@@ -955,7 +958,30 @@ bool BlobDescriptorModule::updateModule()
             top_new.y =  cbot_a*bot_enclosing_rect.center.y + (-sbot_a)*bot_enclosing_rect.center.x;
             */
 
-            // translation from (upright) crop frame to whole image frame
+            // compute top_new, bot_new as respective convex hull centres of gravity - Vadim 2015-03-14
+            cv::Moments top_mo = cv::moments(top_hull);
+            top_new = cv::Point( top_mo.m10/top_mo.m00, top_mo.m01/top_mo.m00 );
+            cv::Moments bot_mo = cv::moments(bot_hull);
+            bot_new = cv::Point( bot_mo.m10/bot_mo.m00, bot_mo.m01/bot_mo.m00 );
+            // transform back from (upright) crop frame to whole image frame
+            top_new.x += top_center.x;
+            top_new.x -= top_bounding_rect.width/2.;
+            top_new.x -= HORIZ_CROPAREA_SHIFT;
+
+            top_new.y += top_center.y;
+            top_new.y -= top_bounding_rect.height/2.;
+            top_new.y -= VERT_CROPAREA_SHIFT;
+
+            bot_new.x += bot_center.x;
+            bot_new.x -= bot_bounding_rect.width/2.;
+            bot_new.x -= HORIZ_CROPAREA_SHIFT;
+
+            bot_new.y += bot_center.y;
+            bot_new.y -= bot_bounding_rect.height/2.;
+            bot_new.y -= VERT_CROPAREA_SHIFT;
+
+            /*
+            // commented 2015-03-14
             top_new.x += top_tl2.x;
             top_new.y += top_tl2.y;
             bot_new.x += bot_tl2.x;
@@ -968,6 +994,7 @@ bool BlobDescriptorModule::updateModule()
                 top_new = top_center;
                 bot_new = bot_center;
             }
+            */
 
             /*
             cout << "\tTool Bottom largest contour (#" << bot_largest_cnt_index << "): area=" << bot_area;
