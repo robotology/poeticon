@@ -255,14 +255,18 @@ def geometric_grounding():
                 new_rules = []
                 print 'creating rules...'
                 for i in range(len(rules)):
-                    print rules[i]
-                    print rules[i+1]
-                    print rules[i+6]
-                    print rules[i+7]
-                    print rules[i+8]
                     proba = 0
                     ran = rules[i].find('Rule')
                     if ran != -1:
+                        print rules[i]
+                        print rules[i+1]
+                        print rules[i+2]
+                        print rules[i+3]
+                        print rules[i+4]
+                        print rules[i+5]
+                        print rules[i+6]
+                        print rules[i+7]
+                        print rules[i+8]
                         
 ## Sends instruction to start updating this rule
                         Affor_bottle_out = Affor_yarp.prepare()
