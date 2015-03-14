@@ -439,7 +439,7 @@ def planning_cycle():
 ##                            print state[j].split('_')[3].replace('()',''), tool
                             if (state[j].split('_')[3].replace('()','') == tool) and (state[j] not in old_state):
                                 print 'pullable/reachable changed'
-                                new_sym = state[j]
+                                new_sym = copy.deepcopy(state[j])
 ##                                print new_sym.find('-')
 ##                                print new_sym
                                 if new_sym.find('-') == -1:
@@ -450,7 +450,8 @@ def planning_cycle():
                                     print new_sym
                                     state[j] = new_sym
                                 else:
-                                    new_sym.replace('-','')
+                                    print '\n', new_sym
+                                    new_sym = new_sym.replace('-','')
                                     print 'symbol was negative, should be positive'
 ##                                    print old_state[j]
 ##                                    print state[j]
