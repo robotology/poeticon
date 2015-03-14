@@ -92,11 +92,9 @@ class ActionExecutorCommunication:
         if act == 'grasp' and (obj == 'rake' or obj == 'stick'):
             act = 'askForTool'
             print 'hand used:', hand
-            map(message.addString, act)
-            map(message.addString, hand)
+            map(message.addString, [act, hand])
             print 'positions:', positx, posity
-            map(message.addInt, positx)
-            map(message.addInt, posity)
+            map(message.addInt, [positx, posity])
             print 'full message:' , message.toString()
         elif act == 'grasp' and (obj != 'rake' and obj != 'stick'):
             act = 'take'
@@ -290,7 +288,7 @@ def planning_cycle():
                 if geo_bottle_in:
                     command = geo_bottle_in.toString()
                 if command == 'ready':
-                    print 'ready'
+                    print 'Grounding complete!\n\n'
                     break
                 yarp.Time.delay(1)
         Aff_bottle_out = Aff_yarp.prepare()
