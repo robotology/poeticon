@@ -842,13 +842,18 @@ bool ActivityInterface::handStat(const string &handName)
 {
     Bottle toolLikeMemory = getToolLikeNames();
     bool isTool = false;
-    int total=0;
-    for (int x=0; x<toolLikeMemory.size(); x++)
-        total++;
+    
+    string handStatus;
+    for (int i =0; i< toolLikeMemory.size(); i++)
+    {
+        handStatus = inHand(toolLikeMemory.get(i).toString().c_str());
         
-    if (total==toolLikeMemory.size())
-        isTool = true;
-
+        if (strcmp (handStatus.c_str() , handName.c_str()) == 0)
+        {
+            isTool = true;
+        }
+    }
+    
     if (!isTool)
     {
         Bottle are, replyAre;
@@ -865,8 +870,10 @@ bool ActivityInterface::handStat(const string &handName)
         else
             return false;
     }
-    else
+    else if (isTool)
         return true;
+    else
+        return false;
 }
 
 /**********************************************************/
@@ -1071,8 +1078,10 @@ string ActivityInterface::inHand(const string &objName)
 bool ActivityInterface::take(const string &objName, const string &handName)
 {
     pauseAllTrackers();
+    
     //check for hand status beforehand to make sure that it is empty
     string handStatus = inHand(objName);
+    
     if (strcmp (handStatus.c_str(), "none" ) == 0 )
     {
         //talk to iolStateMachineHandler
@@ -1088,6 +1097,7 @@ bool ActivityInterface::take(const string &objName, const string &handName)
             
             executeSpeech("ok, I will take the " + objName);
             
+            //check that objName ! = tools
             initObjectTracker(objName);
             
             //do the take actions
@@ -1176,13 +1186,19 @@ bool ActivityInterface::put(const string &objName, const string &targetName)
     string handName = inHand(objName);
     if (strcmp (handName.c_str(), "none" ) != 0 )
     {
-        //talk to iolStateMachineHandler
-        Bottle position = get3D(targetName);
+        bool useStackedObjs = false;
         
-        if (position.size()>0)
+        for (std::map<string, cv::Scalar>::iterator it=stakedObject.begin(); it!=stakedObject.end(); ++it)
         {
+            if (strcmp (it->first.c_str(), targetName.c_str() ) == 0)
+            {
+                useStackedObjs = true;
+            }
+        }
+        if(useStackedObjs)
+        {
+            Bottle position = trackStackedObject(targetName);
             executeSpeech("ok, I will place the " + objName + " on the " + targetName);
-            
             //do the take actions
             Bottle cmd, reply;
             cmd.clear(), reply.clear();
@@ -1192,35 +1208,55 @@ bool ActivityInterface::put(const string &objName, const string &targetName)
             cmd.addString("gently");
             cmd.addString(handName.c_str());
             rpcAREcmd.write(cmd, reply);
-            
-            if (reply.get(0).asVocab()==Vocab::encode("ack"))
-            {
-                if (!targetName.empty())
-                {
-                    if (elements == 0)
-                    {
-                        onTopElements.insert(pair<int, string>(elements, targetName.c_str()));
-                        elements++;
-                    }
-                    
-                    onTopElements.insert(pair<int, string>(elements, objName.c_str()));
-                    elements++;
-                }
-                
-                for (std::map<string, string>::iterator it=inHandStatus.begin(); it!=inHandStatus.end(); ++it)
-                {
-                    if (strcmp (it->first.c_str(), objName.c_str() ) == 0)
-                    {
-                        inHandStatus.erase(objName.c_str());
-                        break;
-                    }
-                }
-            }
         }
         else
         {
-            fprintf(stdout, "[put] there seems to be a problem with the object\n");
-            executeSpeech("There seems to be an issue with the command");
+            //talk to iolStateMachineHandler
+            Bottle position = get3D(targetName);
+            
+            if (position.size()>0)
+            {
+                executeSpeech("ok, I will place the " + objName + " on the " + targetName);
+                
+                //do the take actions
+                Bottle cmd, reply;
+                cmd.clear(), reply.clear();
+                cmd.addString("drop");
+                cmd.addString("over");
+                cmd.addString(targetName.c_str());
+                cmd.addString("gently");
+                cmd.addString(handName.c_str());
+                rpcAREcmd.write(cmd, reply);
+                
+                if (reply.get(0).asVocab()==Vocab::encode("ack"))
+                {
+                    if (!targetName.empty())
+                    {
+                        if (elements == 0)
+                        {
+                            onTopElements.insert(pair<int, string>(elements, targetName.c_str()));
+                            elements++;
+                        }
+                        
+                        onTopElements.insert(pair<int, string>(elements, objName.c_str()));
+                        elements++;
+                    }
+                    
+                    for (std::map<string, string>::iterator it=inHandStatus.begin(); it!=inHandStatus.end(); ++it)
+                    {
+                        if (strcmp (it->first.c_str(), objName.c_str() ) == 0)
+                        {
+                            inHandStatus.erase(objName.c_str());
+                            break;
+                        }
+                    }
+                }
+            }
+            else
+            {
+                fprintf(stdout, "[put] there seems to be a problem with the object\n");
+                executeSpeech("There seems to be an issue with the command");
+            }
         }
     }
     resumeAllTrackers();
