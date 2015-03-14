@@ -76,9 +76,9 @@ class ActionExecutorCommunication:
             if act == 'grasp' and ( obj == tool1 or obj == tool2):
                 for i in range(len(toolhandle)):
                     if str(toolhandle[i]) == (obj):
-                        print toolhandle[i+1]
-                        print float(toolhandle[i+1])
-                        print int(float(toolhandle[i+1]))
+                        print 'full list:',toolhandle[i+1]
+                        print 'for this tool only:',float(toolhandle[i+1])
+                        print 'integer:',int(float(toolhandle[i+1]))
                         positx = int(float(toolhandle[i+1]))
                         posity = int(float(toolhandle[i+2]))
                         ind = i
@@ -92,11 +92,11 @@ class ActionExecutorCommunication:
         if act == 'grasp' and (obj == 'rake' or obj == 'stick'):
             act = 'askForTool'
             print 'hand used:', hand
-            message.addString(act)
-            message.addString(hand)
+            map(message.addString, act)
+            map(message.addString, hand)
             print 'positions:', positx, posity
-            message.addInt(positx)
-            message.addInt(posity)
+            map(message.addInt, positx)
+            map(message.addInt, posity)
             print 'full message:' , message.toString()
         elif act == 'grasp' and (obj != 'rake' and obj != 'stick'):
             act = 'take'
@@ -104,7 +104,7 @@ class ActionExecutorCommunication:
         else:
             map(message.addString, [act, obj, hand])
             
-        print act, obj, hand
+        print message.toString()
         ans = yarp.Bottle()
         self._rpc_client.write(message, ans)
         return ans
