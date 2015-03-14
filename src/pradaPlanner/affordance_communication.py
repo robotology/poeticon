@@ -362,6 +362,8 @@ def Affordance_comm():
                                     posit = posit + [tool, tooldesc[toolnum][1][0][0], tooldesc[toolnum][1][0][1]]
                                 else:
                                     message = tool_desc2[3:-1] + obj_desc[1:] + [2]
+                                    print '******', message
+                                    mess_list = []
                                     affnet_bottle_out = affnet_yarp.prepare()
                                     affnet_bottle_out.clear()
                                     for t in range(len(message)):
@@ -449,6 +451,8 @@ def Affordance_comm():
 
                                 if tooldesc[toolnum][1][0][1] > tooldesc[toolnum][1][1][1]:
                                     message = tool_desc1[3:-1] + obj_desc[1:] + [1]
+                                    print '******', message
+                                    mess_list = []
                                     for t in range(len(message)):
                                         mess_num = float(message[t])
                                         mess_list = mess_list + [mess_num]
@@ -476,6 +480,8 @@ def Affordance_comm():
                                     posit = posit + [tool, tooldesc[toolnum][1][0][0], tooldesc[toolnum][1][0][1]]
                                 else:
                                     message = tool_desc2[3:-1] + obj_desc[1:] + [1]
+                                    print '******', message
+                                    mess_list = []
                                     affnet_bottle_out = affnet_yarp.prepare()
                                     affnet_bottle_out.clear()
                                     for t in range(len(message)):
