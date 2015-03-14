@@ -92,11 +92,11 @@ class ActionExecutorCommunication:
         if act == 'grasp' and (obj == 'rake' or obj == 'stick'):
             act = 'askForTool'
             print 'hand used:', hand
-            message.addString(act)
-            message.addString(hand)
+            map(message.addString, act)
+            map(message.addString, hand)
             print 'positions:', positx, posity
-            message.addInt(positx)
-            message.addInt(posity)
+            map(message.addInt, positx)
+            map(message.addInt, posity)
             print 'full message:' , message.toString()
         elif act == 'grasp' and (obj != 'rake' and obj != 'stick'):
             act = 'take'
@@ -104,7 +104,7 @@ class ActionExecutorCommunication:
         else:
             map(message.addString, [act, obj, hand])
             
-        print act, obj, hand
+        print message.toString()
         ans = yarp.Bottle()
         self._rpc_client.write(message, ans)
         return ans
