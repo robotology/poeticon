@@ -429,7 +429,7 @@ def planning_cycle():
 ##            state[-1] = state[-1].replace('\r','').replace('\n','')
 ##            state.pop()
 ##            state_file.close()
-            if prev_act != '':
+            if prev_act != '' and next_action != '':
                 if prev_act.split(' ')[0] == 'askForTool':
                     tool = next_action.split('_')[1]
 ##                    print 'grasped tool:', tool
