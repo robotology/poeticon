@@ -925,7 +925,9 @@ string ActivityInterface::getLabel(const int32_t pos_x, const int32_t pos_y)
                 int diffx = abs(cog.get(0).asInt() - pos_x);
                 int diffy = abs(cog.get(1).asInt() - pos_y);
                 
-                if ( abs (diffx + diffy) < 50)
+                fprintf(stdout,"the dffs are %d %d total %d\n", diffx, diffy, abs (diffx + diffy));
+                
+                if ( abs (diffx + diffy) < 55)
                 {
                     if (propField->check("name"))
                     {
