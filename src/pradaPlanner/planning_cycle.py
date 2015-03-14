@@ -195,8 +195,13 @@ def planning_cycle():
                             Objects = Object_file.read().split(';')
                             Object_file.close()
                             if len(Objects) > 3:
-                                state_flag = 1
-                                break
+                                state_file = open(''.join(PathName + "/state.dat"))
+                                state_check = state_file.read().split(' ')
+                                state_file.close()
+                                state_check.pop()
+                                if len(state_check) < 3:
+                                    state_flag = 1
+                                    break
                             else:
                                 print 'number of objects too low, updating'
                                 break
