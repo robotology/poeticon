@@ -415,22 +415,23 @@ def planning_cycle():
             not_to_add = []
 
             print 'previous action:', prev_act
-            if prev_act.split(' ')[0] == 'askForTool':
-                tool = next_action.split('_')[1]
-                print 'grasped tool:', tool
-                for j in range(len(state)):
-                    if (state[j].split('_')[1] == 'ispullable' or state[j].split('_')[1] == 'isreachable') and state[j].split('_')[3] == tool and state[j] not in old_state:
-                        new_sym = state[j]
-                        if new_sym.find('-') != -1:
-                            new_sym = ''.join(['-'] + [new_sym])
-                            state[j] = new_symb
-                        else:
-                            new_sym.replace('-','')
-                            state[j] = new_symb
-                state_file = open(''.join(PathName + "/state.dat"),'w')
-                state_write = ' '.join([state,'\n'])
-                state_file.write(state_write)
-                state_file.close()
+            if prev_act != '':
+                if prev_act.split(' ')[0] == 'askForTool':
+                    tool = next_action.split('_')[1]
+                    print 'grasped tool:', tool
+                    for j in range(len(state)):
+                        if (state[j].split('_')[1] == 'ispullable' or state[j].split('_')[1] == 'isreachable') and state[j].split('_')[3] == tool and state[j] not in old_state:
+                            new_sym = state[j]
+                            if new_sym.find('-') != -1:
+                                new_sym = ''.join(['-'] + [new_sym])
+                                state[j] = new_symb
+                            else:
+                                new_sym.replace('-','')
+                                state[j] = new_symb
+                    state_file = open(''.join(PathName + "/state.dat"),'w')
+                    state_write = ' '.join([state,'\n'])
+                    state_file.write(state_write)
+                    state_file.close()
 ##                        for h in range(len(old_state)):
                         
 
