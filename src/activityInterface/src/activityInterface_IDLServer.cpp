@@ -53,6 +53,15 @@ public:
   virtual bool read(yarp::os::ConnectionReader& connection);
 };
 
+class activityInterface_IDLServer_get2D : public yarp::os::Portable {
+public:
+  std::string objName;
+  yarp::os::Bottle _return;
+  void init(const std::string& objName);
+  virtual bool write(yarp::os::ConnectionWriter& connection);
+  virtual bool read(yarp::os::ConnectionReader& connection);
+};
+
 class activityInterface_IDLServer_getOffset : public yarp::os::Portable {
 public:
   std::string objName;
@@ -321,6 +330,28 @@ bool activityInterface_IDLServer_get3D::read(yarp::os::ConnectionReader& connect
 }
 
 void activityInterface_IDLServer_get3D::init(const std::string& objName) {
+  this->objName = objName;
+}
+
+bool activityInterface_IDLServer_get2D::write(yarp::os::ConnectionWriter& connection) {
+  yarp::os::idl::WireWriter writer(connection);
+  if (!writer.writeListHeader(2)) return false;
+  if (!writer.writeTag("get2D",1,1)) return false;
+  if (!writer.writeString(objName)) return false;
+  return true;
+}
+
+bool activityInterface_IDLServer_get2D::read(yarp::os::ConnectionReader& connection) {
+  yarp::os::idl::WireReader reader(connection);
+  if (!reader.readListReturn()) return false;
+  if (!reader.read(_return)) {
+    reader.fail();
+    return false;
+  }
+  return true;
+}
+
+void activityInterface_IDLServer_get2D::init(const std::string& objName) {
   this->objName = objName;
 }
 
@@ -761,6 +792,16 @@ yarp::os::Bottle activityInterface_IDLServer::get3D(const std::string& objName) 
   bool ok = yarp().write(helper,helper);
   return ok?helper._return:_return;
 }
+yarp::os::Bottle activityInterface_IDLServer::get2D(const std::string& objName) {
+  yarp::os::Bottle _return;
+  activityInterface_IDLServer_get2D helper;
+  helper.init(objName);
+  if (!yarp().canWrite()) {
+    fprintf(stderr,"Missing server method '%s'?\n","yarp::os::Bottle activityInterface_IDLServer::get2D(const std::string& objName)");
+  }
+  bool ok = yarp().write(helper,helper);
+  return ok?helper._return:_return;
+}
 yarp::os::Bottle activityInterface_IDLServer::getOffset(const std::string& objName) {
   yarp::os::Bottle _return;
   activityInterface_IDLServer_getOffset helper;
@@ -1023,6 +1064,22 @@ bool activityInterface_IDLServer::read(yarp::os::ConnectionReader& connection) {
       }
       yarp::os::Bottle _return;
       _return = get3D(objName);
+      yarp::os::idl::WireWriter writer(reader);
+      if (!writer.isNull()) {
+        if (!writer.writeListHeader(1)) return false;
+        if (!writer.write(_return)) return false;
+      }
+      reader.accept();
+      return true;
+    }
+    if (tag == "get2D") {
+      std::string objName;
+      if (!reader.readString(objName)) {
+        reader.fail();
+        return false;
+      }
+      yarp::os::Bottle _return;
+      _return = get2D(objName);
       yarp::os::idl::WireWriter writer(reader);
       if (!writer.isNull()) {
         if (!writer.writeListHeader(1)) return false;
@@ -1342,6 +1399,7 @@ std::vector<std::string> activityInterface_IDLServer::help(const std::string& fu
     helpString.push_back("getLabel");
     helpString.push_back("inHand");
     helpString.push_back("get3D");
+    helpString.push_back("get2D");
     helpString.push_back("getOffset");
     helpString.push_back("take");
     helpString.push_back("drop");
@@ -1393,6 +1451,12 @@ std::vector<std::string> activityInterface_IDLServer::help(const std::string& fu
       helpString.push_back("Get the 3D position of the object requested by the user. ");
       helpString.push_back("@param objName specifies the name of the object ");
       helpString.push_back("@return Bottle containing 3D position ");
+    }
+    if (functionName=="get2D") {
+      helpString.push_back("yarp::os::Bottle get2D(const std::string& objName) ");
+      helpString.push_back("Get the 2D position of the object requested by the user. ");
+      helpString.push_back("@param objName specifies the name of the object ");
+      helpString.push_back("@return Bottle containing 2D position ");
     }
     if (functionName=="getOffset") {
       helpString.push_back("yarp::os::Bottle getOffset(const std::string& objName) ");

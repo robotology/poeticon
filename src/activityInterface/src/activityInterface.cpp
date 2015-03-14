@@ -111,6 +111,9 @@ bool ActivityInterface::configure(yarp::os::ResourceFinder &rf)
     inputBlobPortName = "/" + moduleName + "/blobs:i";
     blobPortIn.open( inputBlobPortName.c_str() );
     
+    inputImagePortName= "/" + moduleName + "/image:i";
+    imagePortIn.open(inputImagePortName.c_str());
+    
     rpcPraxiconInterface.setReporter(memoryReporter);
     rpcPraxiconInterface.open(("/"+moduleName+"/praxicon:rpc").c_str());
     
@@ -128,6 +131,7 @@ bool ActivityInterface::configure(yarp::os::ResourceFinder &rf)
     yarp::os::Network::connect(("/"+moduleName+"/iolState:rpc").c_str(), "/iolStateMachineHandler/human:rpc");
 
     yarp::os::Network::connect("/blobSpotter/image:o", inputBlobPortName.c_str());
+    yarp::os::Network::connect("/icub/camcalib/left/out", inputImagePortName.c_str());
     yarp::os::Network::connect(("/"+moduleName+"/praxicon:rpc").c_str(), "/praxInterface/speech:i");
     
     if (with_robot)
@@ -244,6 +248,7 @@ bool ActivityInterface::interruptModule()
     pradaReporter.interrupt();
     speechReporter.interrupt();
     praxiconToPradaPort.interrupt();
+    imagePortIn.interrupt();
     semaphore.post();
     return true;
 }
@@ -267,6 +272,7 @@ bool ActivityInterface::close()
     pradaReporter.close();
     speechReporter.close();
     praxiconToPradaPort.close();
+    imagePortIn.close();
     fprintf(stdout, "[closing] finished shutdown procedure\n");
     semaphore.post();
     return true;
@@ -749,6 +755,36 @@ Bottle ActivityInterface::get3D(const string &objName)
 }
 
 /**********************************************************/
+Bottle ActivityInterface::get2D(const string &objName)
+{
+    Bottle Memory = getMemoryBottle();
+    Bottle position2D;
+    
+    for (int i=0; i<Memory.size(); i++)
+    {
+        if (Bottle *propField = Memory.get(i).asList())
+        {
+            if (propField->check("name"))
+            {
+                if (strcmp (propField->find("name").asString().c_str(), objName.c_str() ) == 0)
+                {
+                    if (propField->check("position_2d_left"))
+                    {
+                        Bottle *propFieldPos = propField->find("position_2d_left").asList();
+                        
+                        for (int i=0; i < propFieldPos->size(); i++)
+                        {
+                            position2D.addDouble(propFieldPos->get(i).asDouble());
+                        }
+                    }
+                }
+            }
+        }
+    }
+    return position2D;
+}
+
+/**********************************************************/
 Bottle ActivityInterface::getOffset(const string &objName)
 {
     Bottle toolOffset;
@@ -1020,6 +1056,10 @@ bool ActivityInterface::take(const string &objName, const string &handName)
         {
             fprintf(stdout, "[take] object is visible at %s will do the take action \n", position.toString().c_str());
             
+            fprintf(stdout, "[take] will initialise obj \n");
+            initialiseObjectTracker();
+            fprintf(stdout, "[take] done initialising obj \n");
+            
             executeSpeech("ok, I will take the " + objName);
             //do the take actions
             Bottle cmd, reply;
@@ -1198,7 +1238,7 @@ bool ActivityInterface::askForTool(const std::string &handName, const int32_t po
         rpcAREcmd.write(cmdAre, replyAre);
     }
     else
-        executeSpeech ("oh my...I seemed to have gotten confused...sorry");
+        executeSpeech ("oh my, I seemed to have gotten confused, sorry");
     
     cmdAre.clear();
     replyAre.clear();
@@ -1500,4 +1540,21 @@ double ActivityInterface::getPairMax(std::map<int, double> pairmap)
     std::pair<int, double> min
     = *max_element(pairmap.begin(), pairmap.end(), compare());
     return min.second;
+}
+
+void ActivityInterface::initialiseObjectTracker()
+{
+    IplImage *image_in = (IplImage *) imagePortIn.read(true)->getIplImage();
+    
+    if( image_in != NULL )
+    {
+        cv::Mat img(image_in);
+        
+        
+        
+        
+    }
+    
+    
+    
 }

@@ -55,6 +55,13 @@ service activityInterface_IDLServer
     Bottle get3D(1:string objName)
     
     /**
+     * Get the 2D position of the object requested by the user.
+     * @param objName specifies the name of the object
+     * @return Bottle containing 2D position
+     **/
+    Bottle get2D(1:string objName)
+    
+    /**
      * Get the tool offset position of the object requested by the user.
      * @param objName specifies the name of the object (typically tool)
      * @return Bottle containing 3D offset

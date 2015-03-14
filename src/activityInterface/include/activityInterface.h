@@ -57,6 +57,7 @@
 #include "memoryReporter.h"
 
 #include <iterator>
+#include "iCub/activeSeg.h"
 
 
 typedef std::pair<int, double> Pairs;
@@ -94,8 +95,10 @@ protected:
     yarp::os::Port                      robotStatus;
     
     std::string                         inputBlobPortName;
+    std::string                         inputImagePortName;
     
-    yarp::os::BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelMono> >  blobPortIn;
+    yarp::os::BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelRgb> >        imagePortIn;
+    yarp::os::BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelMono> >       blobPortIn;
     
     /* left & right cartesian interfaces */
     yarp::dev::PolyDriver               client_left;
@@ -171,6 +174,7 @@ public:
     bool                processSpeech(const yarp::os::Bottle &speech);
     bool                pauseAllTrackers();
     bool                resumeAllTrackers();
+    void                initialiseObjectTracker();
     
     bool                with_robot;
     bool                allPaused;
@@ -182,6 +186,7 @@ public:
     double              getManip(const std::string &objName, const std::string &handName);
     bool                handStat(const std::string &handName);
     yarp::os::Bottle    get3D(const std::string &objName);
+    yarp::os::Bottle    get2D(const std::string &objName);
     std::string         getLabel(const int32_t pos_x, const int32_t pos_y);
     std::string         inHand(const std::string &objName);
     bool                take(const std::string &objName, const std::string &handName);
