@@ -139,7 +139,8 @@ def update_state(PathName):
             data = data + [temp_state[i]]
     state= ''
     for i in range(len(data)):
-        state = ' '.join((state,data[i]))
+        temp_data = ''.join((data[i],'()'))
+        state = ' '.join((state,temp_data))
     state = ''.join((state, ' '))
     for j in range(len(symbols)):
         if symbols[j][0] not in data and symbols[j][1] == 'primitive':
@@ -308,6 +309,7 @@ def planning_cycle():
 ##                goal_bottle_out.get(t).addString(' '.join(instructions[t]))                    
 ##            goal_yarp.write()
 ##        else:
+        yarp.Time.delay(0.1)
         goal_bottle_out = goal_yarp.prepare()
         goal_bottle_out.clear()
         goal_bottle_out.addString('update')
