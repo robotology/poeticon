@@ -429,9 +429,9 @@ def planning_cycle():
 ##            state[-1] = state[-1].replace('\r','').replace('\n','')
 ##            state.pop()
 ##            state_file.close()
-            if prev_act != '' and next_action != '':
+            if prev_act != '' and action_exec != '':
                 if prev_act.split(' ')[0] == 'askForTool':
-                    tool = next_action.split('_')[1]
+                    tool = action_exec.split('_')[1]
 ##                    print 'grasped tool:', tool
                     for j in range(len(state)):
                         if (state[j].split('_')[1] == 'ispullable' or state[j].split('_')[1] == 'isreachable'):
@@ -624,6 +624,7 @@ def planning_cycle():
                 rules_file.close()
             act_check = '  %s' %next_action
             if act_check in rules:
+                action_exec = copy.deepcopy(next_action)
                 objects_used_now = re.findall(r'\d+',next_action)
                 for u in range(len(objects_used_now)):
                     if objects_used_now[u] not in toolhandle and objects_used_now[u] not in objects_used:
