@@ -210,7 +210,6 @@ def geometric_grounding():
             if command == 'update':
 
 ## opens files that might have been updated
-                world_file = open(''.join(PathName + "/state.dat"))
                 rule_file = open(''.join(PathName + "/rules.dat"),'w')
                 symbol_file = open(''.join(PathName + "/symbols.dat"),'w')
                 newrule_file = open(''.join(PathName + "/new_rules.dat"),'w')

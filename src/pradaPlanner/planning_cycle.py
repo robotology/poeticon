@@ -169,21 +169,6 @@ def planning_cycle():
         objects_used = []
         toolhandle = []
         while 1:
-            if goal_yarp.getOutputCount() != 0:
-                break
-        if mode == 1 or mode == 4:
-            print 'waiting for praxicon...'
-            goal_bottle_out = goal_yarp.prepare()
-            goal_bottle_out.clear()
-            goal_bottle_out.addString('praxicon')
-            goal_yarp.write()
-            while 1:
-                goal_bottle_in = goal_yarp.read(False)
-                if goal_bottle_in:
-                    break
-                yarp.Time.delay(0.1)
-                    
-        while 1:
             if State_yarp.getOutputCount() != 0:
                 break
 
@@ -228,44 +213,7 @@ def planning_cycle():
         Aff_bottle_out.addString('update')
         Aff_yarp.write()
         command = ''
-        while 1:
-            if goal_yarp.getOutputCount() != 0:
-                break
-        print 'goal connection done'
-##        if mode != 1 and mode != 4:
-##            instructions = [['hand','grasp','cheese'],['cheese','reach','bun-bottom'],['hand','put','cheese'],['hand','grasp','bun-top'],['bun-top','reach','cheese'],['hand','put','bun-top']]
-##            goal_bottle_out = goal_yarp.prepare()
-##            goal_bottle_out.clear()
-##            goal_bottle_out.addList()
-##            for t in range(len(instructions)):
-##                goal_bottle_out.get(t).addString(' '.join(instructions[t]))                    
-##            goal_yarp.write()
-##        else:
-        goal_bottle_out = goal_yarp.prepare()
-        goal_bottle_out.clear()
-        goal_bottle_out.addString('update')
-        goal_yarp.write()
-        while 1:
-            goal_bottle_in = goal_yarp.read(False)
-            print 'waiting...'
-            if goal_bottle_in:
-                command = goal_bottle_in.toString()
-                break
-            yarp.Time.delay(1)
-        print 'goal compiler is complete'
-            
-##        goal_file = open(''.join(PathName +"/final_goal.dat"))
-        subgoalsource_file = open(''.join(PathName +"/subgoals.dat"))
-##        goal = goal_file.read().split(' ')
-##        goal_file.close()
-        plan_level = 0
-
-        subgoals = subgoalsource_file.read().split('\n')
-        subgoalsource_file.close()
-        aux_subgoals = []
-        for t in range(len(subgoals)):
-            aux_subgoals = aux_subgoals + [subgoals[t].split(' ')]
-        print 'started'
+        
         while 1:
             comm = raw_input('update rules? y/n \n')
             if comm == 'y' or comm == 'n':
@@ -306,6 +254,61 @@ def planning_cycle():
         old_rules = rules_file.read().split('\n')
         rules_file.close()
         update_state(PathName)
+
+        while 1:
+            if goal_yarp.getOutputCount() != 0:
+                break
+        if mode == 1 or mode == 4:
+            print 'waiting for praxicon...'
+            goal_bottle_out = goal_yarp.prepare()
+            goal_bottle_out.clear()
+            goal_bottle_out.addString('praxicon')
+            goal_yarp.write()
+            while 1:
+                goal_bottle_in = goal_yarp.read(False)
+                if goal_bottle_in:
+                    break
+                yarp.Time.delay(0.1)
+                    
+        
+            while 1:
+            if goal_yarp.getOutputCount() != 0:
+                break
+        print 'goal connection done'
+##        if mode != 1 and mode != 4:
+##            instructions = [['hand','grasp','cheese'],['cheese','reach','bun-bottom'],['hand','put','cheese'],['hand','grasp','bun-top'],['bun-top','reach','cheese'],['hand','put','bun-top']]
+##            goal_bottle_out = goal_yarp.prepare()
+##            goal_bottle_out.clear()
+##            goal_bottle_out.addList()
+##            for t in range(len(instructions)):
+##                goal_bottle_out.get(t).addString(' '.join(instructions[t]))                    
+##            goal_yarp.write()
+##        else:
+        goal_bottle_out = goal_yarp.prepare()
+        goal_bottle_out.clear()
+        goal_bottle_out.addString('update')
+        goal_yarp.write()
+        while 1:
+            goal_bottle_in = goal_yarp.read(False)
+            print 'waiting...'
+            if goal_bottle_in:
+                command = goal_bottle_in.toString()
+                break
+            yarp.Time.delay(1)
+        print 'goal compiler is complete'
+            
+##        goal_file = open(''.join(PathName +"/final_goal.dat"))
+        subgoalsource_file = open(''.join(PathName +"/subgoals.dat"))
+##        goal = goal_file.read().split(' ')
+##        goal_file.close()
+        plan_level = 0
+
+        subgoals = subgoalsource_file.read().split('\n')
+        subgoalsource_file.close()
+        aux_subgoals = []
+        for t in range(len(subgoals)):
+            aux_subgoals = aux_subgoals + [subgoals[t].split(' ')]
+        print 'started'
 
         config_file = open(''.join(PathName +"/config"),'r')
         config_data = config_file.read().split('\n')
@@ -407,6 +410,25 @@ def planning_cycle():
             state[-1] = state[-1].replace('\r','').replace('\n','')
             state_file.close()
             not_to_add = []
+
+            if prev_act.split(' ')[0] == 'askForTool':
+                tool = next_action.split('_')[1]
+                print 'grasped tool:', tool
+                for j in range(len(state)):
+                    if (state[j].split('_')[1] == 'ispullable' or state[j].split('_')[1] == 'isreachable') and state[j].split('_')[3] == tool and state[j] not in old_state:
+                        new_sym = state[j]
+                        if new_sym.find('-') != -1:
+                            new_sym = ''.join(['-'] + [new_sym])
+                            state[j] = new_symb
+                        else:
+                            new_sym.replace('-','')
+                            state[j] = new_symb
+                state_file = open(''.join(PathName + "/state.dat"),'w')
+                state_write = ' '.join([state,'\n'])
+                state_file.write(state_write)
+                state_file.close()
+##                        for h in range(len(old_state)):
+                        
 
             #####################################
             if state == old_state:
@@ -576,7 +598,9 @@ def planning_cycle():
                     prtmess = prtmess.replace(object_IDs[t][0], object_IDs[t][1])
                 print 'action to be executed: ', prtmess, '\n'
                 raw_input("press any key")
-                motor_rpc._is_success(motor_rpc._execute(PathName, next_action, toolhandle))
+                message = motor_rpc._execute(PathName, next_action, toolhandle)
+                motor_rpc._is_success(message)
+                prev_act = message.toString()
 
 
 
