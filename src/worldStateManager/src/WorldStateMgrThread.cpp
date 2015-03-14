@@ -1226,6 +1226,15 @@ bool WorldStateMgrThread::doPopulateDB()
     mergeMaps(opcMap, trackMap, wsMap);
     //dumpMap(wsMap);
 
+    // send "dump" instruction to WSOPC
+    Bottle opcCmd, opcReply;
+    opcCmd.addVocab(Vocab::encode("dump"));
+    yDebug() << __func__ << "sending command to WSOPC:" << opcCmd.toString().c_str();
+    opcPort.write(opcCmd, opcReply);
+    yDebug() << __func__ << "received response:" << opcReply.toString().c_str();
+    opcCmd.clear();
+    opcReply.clear();
+
     return true;
 }
 
@@ -1898,6 +1907,16 @@ void WorldStateMgrThread::fsmPlayback()
 
                 refreshOPC();
                 dumpWorldState();
+
+                // send "dump" instruction to WSOPC
+                opcCmd.clear();
+                opcReply.clear();
+                opcCmd.addVocab(Vocab::encode("dump"));
+                yDebug() << __func__ << "sending command to WSOPC:" << opcCmd.toString().c_str();
+                opcPort.write(opcCmd, opcReply);
+                yDebug() << __func__ << "received response:" << opcReply.toString().c_str();
+                opcCmd.clear();
+                opcReply.clear();
 
                 ++currPlayback;
                 playbackPaused = true;
