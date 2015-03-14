@@ -1198,13 +1198,18 @@ bool ActivityInterface::put(const string &objName, const string &targetName)
         if(useStackedObjs)
         {
             Bottle position = trackStackedObject(targetName);
-            executeSpeech("ok, I will place the " + objName + " on the " + targetName);
+            executeSpeech("ok, I will place the " + objName + " on the " + targetName );
+            
+            fprintf(stdout,"I will place %s on the %s with position %d %d ", objName.c_str(), targetName.c_str(), position.get(0).asInt(), position.get(1).asInt() );
+            
             //do the take actions
             Bottle cmd, reply;
             cmd.clear(), reply.clear();
             cmd.addString("drop");
             cmd.addString("over");
-            cmd.addString(targetName.c_str());
+            Bottle &tmp=cmd.addList();
+            tmp.addInt (position.get(0).asInt());
+            tmp.addInt (position.get(1).asInt());
             cmd.addString("gently");
             cmd.addString(handName.c_str());
             rpcAREcmd.write(cmd, reply);
