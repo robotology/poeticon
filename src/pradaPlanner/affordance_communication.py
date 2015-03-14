@@ -344,11 +344,13 @@ def Affordance_comm():
                                         affnet_bottle_in = affnet_yarp.read(False)
                                         if affnet_bottle_in:
                                             data = affnet_bottle_in.toString().replace('((','').replace('))','').split(') (')
+                                            print "\nbottle received from matlab:\n", affnet_bottle_in.toString()
                                             for j in range(len(data)):
                                                 data[j] = data[j].split(' ')
                                             for g in range(len(data)):
                                                 for j in range(len(data[g])):
                                                     data[g][j] = float(data[g][j])
+                                            print "processed data: \n", data
                                             break
                                         yarp.Time.delay(0.1)
                                     prob_succ1 = 0
@@ -375,12 +377,14 @@ def Affordance_comm():
                                         affnet_bottle_in = affnet_yarp.read(False)
                                         yarp.Time.delay(0.1)
                                         if affnet_bottle_in:
+                                            print "\nbottle received from matlab:\n", affnet_bottle_in.toString()
                                             data = affnet_bottle_in.toString().replace('((','').replace('))','').split(') (')
                                             for j in range(len(data)):
                                                 data[j] = data[j].split(' ')
                                             for g in range(len(data)):
                                                 for j in range(len(data[g])):
                                                     data[g][j] = float(data[g][j])
+                                            print "processed data: \n", data
                                             break
                                     prob_succ2 = 0
                                     for g in range(len(data)):
@@ -461,12 +465,15 @@ def Affordance_comm():
                                     while 1:
                                         affnet_bottle_in = affnet_yarp.read(False)
                                         if affnet_bottle_in:
+                                            
+                                            print "\nbottle received from matlab:\n", affnet_bottle_in.toString()
                                             data = affnet_bottle_in.toString().replace('((','').replace('))','').split(') (')
                                             for j in range(len(data)):
                                                 data[j] = data[j].split(' ')
                                             for g in range(len(data)):
                                                 for j in range(len(data[g])):
                                                     data[g][j] = float(data[g][j])
+                                            print "processed data: \n", data
                                             break
                                         yarp.Time.delay(0.1)
                                     prob_succ1 = 0
@@ -493,12 +500,15 @@ def Affordance_comm():
                                         affnet_bottle_in = affnet_yarp.read(False)
                                         yarp.Time.delay(0.1)
                                         if affnet_bottle_in:
+                                            
+                                            print "\nbottle received from matlab:\n", affnet_bottle_in.toString()
                                             data = affnet_bottle_in.toString().replace('((','').replace('))','').split(') (')
                                             for j in range(len(data)):
                                                 data[j] = data[j].split(' ')
                                             for g in range(len(data)):
                                                 for j in range(len(data[g])):
                                                     data[g][j] = float(data[g][j])
+                                            print "processed data: \n", data
                                             break
                                     prob_succ2 = 0
                                     for g in range(len(data)):
