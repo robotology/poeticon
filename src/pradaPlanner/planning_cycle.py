@@ -140,7 +140,10 @@ def update_state(PathName):
     state= ''
     for i in range(len(data)):
         temp_data = ''.join((data[i],'()'))
-        state = ' '.join((state,temp_data))
+        if i == 0:
+            state = temp_data
+        else:
+            state = ' '.join((state,temp_data))
     state = ''.join((state, ' '))
     for j in range(len(symbols)):
         if symbols[j][0] not in data and symbols[j][1] == 'primitive':
