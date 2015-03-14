@@ -828,19 +828,33 @@ bool ActivityInterface::quit()
 /**********************************************************/
 bool ActivityInterface::handStat(const string &handName)
 {
-    Bottle are, replyAre;
-    are.clear(),replyAre.clear();
-    are.addString("get");
-    are.addString("holding");
-    are.addString(handName.c_str());
-    rpcARE.write(are,replyAre);
-    
-    if (strcmp (replyAre.toString().c_str(),"[nack]") == 0)
-        return false;
-    else if (strcmp (replyAre.toString().c_str(),"[ack]") == 0)
-        return true;
+    Bottle toolLikeMemory = getToolLikeNames();
+    bool isTool = false;
+    int total=0;
+    for (int x=0; x<toolLikeMemory.size(); x++)
+        total++;
+        
+    if (total==toolLikeMemory.size())
+        isTool = true;
+
+    if (!isTool)
+    {
+        Bottle are, replyAre;
+        are.clear(),replyAre.clear();
+        are.addString("get");
+        are.addString("holding");
+        are.addString(handName.c_str());
+        rpcARE.write(are,replyAre);
+
+        if (strcmp (replyAre.toString().c_str(),"[nack]") == 0)
+            return false;
+        else if (strcmp (replyAre.toString().c_str(),"[ack]") == 0)
+            return true;
+        else
+            return false;
+    }
     else
-        return false;
+        return true;
 }
 
 /**********************************************************/
