@@ -361,6 +361,7 @@ def Affordance_comm():
                                     if prob_succ1 >= 0.95:
                                         prob_succ1 = 0.95
                                     prob_succ = prob_succ1
+                                    print "probability of success:" , prob_succ
                                     posit = posit + [tool, tooldesc[toolnum][1][0][0], tooldesc[toolnum][1][0][1]]
                                 else:
                                     message = tool_desc2[3:-1] + obj_desc[1:] + [2]
@@ -394,6 +395,7 @@ def Affordance_comm():
                                     if prob_succ2 >= 0.95:
                                         prob_succ2 = 0.95
                                     prob_succ = prob_succ2
+                                    print "probability of success:" , prob_succ
                                     posit = posit + [tool, tooldesc[toolnum][1][1][0], tooldesc[toolnum][1][1][1]]
 
 ##                                if prob_succ1 >= prob_succ2:
@@ -484,6 +486,7 @@ def Affordance_comm():
                                     if prob_succ1 >= 0.95:
                                         prob_succ1 = 0.95
                                     prob_succ = prob_succ1
+                                    print "probability of success:" , prob_succ
                                     posit = posit + [tool, tooldesc[toolnum][1][0][0], tooldesc[toolnum][1][0][1]]
                                 else:
                                     message = tool_desc2[3:-1] + obj_desc[1:] + [1]
@@ -518,6 +521,7 @@ def Affordance_comm():
                                     if prob_succ2 >= 0.95:
                                         prob_succ2 = 0.95
                                     prob_succ = prob_succ2
+                                    print "probability of success:" , prob_succ
                                     posit = posit + [tool, tooldesc[toolnum][1][1][0], tooldesc[toolnum][1][1][1]]
 
 ##                                if prob_succ1 >= prob_succ2:
@@ -531,6 +535,7 @@ def Affordance_comm():
 ####                                    posit = posit + [toolhandle[toolnum][0],toolhandle[toolnum][2][0],toolhandle[toolnum][2][1]]
 ####                                    toolhandle[toolnum] = toolhandle[toolnum]+['2']
                                 prob_fail = 1 - prob_succ
+                                print "probability of failute:", prob_fail
                                 
                                 new_outcome = outcome.split(' ')
                                 new_outcome[2] = str(prob_succ)
