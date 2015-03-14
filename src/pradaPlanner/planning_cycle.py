@@ -271,7 +271,7 @@ def planning_cycle():
                 yarp.Time.delay(0.1)
                     
         
-            while 1:
+        while 1:
             if goal_yarp.getOutputCount() != 0:
                 break
         print 'goal connection done'
