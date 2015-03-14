@@ -495,7 +495,8 @@ void WorldStateMgrThread::fsmPerception()
 
                 if (validResponse)
                 {
-                    yDebug() << __func__ <<  "obtained valid response:" << activityReply.toString().c_str();
+                    //yDebug() << __func__ <<  "obtained valid response:" << activityReply.toString().c_str();
+                    ;
                 }
                 else
                 {
@@ -1229,9 +1230,9 @@ bool WorldStateMgrThread::doPopulateDB()
     // send "dump" instruction to WSOPC
     Bottle opcCmd, opcReply;
     opcCmd.addVocab(Vocab::encode("dump"));
-    yDebug() << __func__ << "sending command to WSOPC:" << opcCmd.toString().c_str();
+    //yDebug() << __func__ << "sending command to WSOPC:" << opcCmd.toString().c_str();
     opcPort.write(opcCmd, opcReply);
-    yDebug() << __func__ << "received response:" << opcReply.toString().c_str();
+    //yDebug() << __func__ << "received response:" << opcReply.toString().c_str();
     opcCmd.clear();
     opcReply.clear();
 
@@ -1912,9 +1913,9 @@ void WorldStateMgrThread::fsmPlayback()
                 opcCmd.clear();
                 opcReply.clear();
                 opcCmd.addVocab(Vocab::encode("dump"));
-                yDebug() << __func__ << "sending command to WSOPC:" << opcCmd.toString().c_str();
+                //yDebug() << __func__ << "sending command to WSOPC:" << opcCmd.toString().c_str();
                 opcPort.write(opcCmd, opcReply);
-                yDebug() << __func__ << "received response:" << opcReply.toString().c_str();
+                //yDebug() << __func__ << "received response:" << opcReply.toString().c_str();
                 opcCmd.clear();
                 opcReply.clear();
 
