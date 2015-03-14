@@ -355,7 +355,7 @@ def Affordance_comm():
                                         yarp.Time.delay(0.1)
                                     prob_succ1 = 0
                                     for g in range(len(data)):
-                                        if g > 2:
+                                        if g < 2:
                                             for j in range(len(data[g])):
                                                 prob_succ1 = prob_succ1 + data[g][j]
                                     if prob_succ1 >= 0.95:
@@ -389,7 +389,7 @@ def Affordance_comm():
                                             break
                                     prob_succ2 = 0
                                     for g in range(len(data)):
-                                        if g > 2:
+                                        if g < 2:
                                             for j in range(len(data[g])):
                                                 prob_succ2 = prob_succ2 + data[g][j]
                                     if prob_succ2 >= 0.95:
@@ -480,7 +480,7 @@ def Affordance_comm():
                                         yarp.Time.delay(0.1)
                                     prob_succ1 = 0
                                     for g in range(len(data)):
-                                        if g < 2:
+                                        if g > 2:
                                             for j in range(len(data[g])):
                                                 prob_succ1 = prob_succ1 + data[g][j]
                                     if prob_succ1 >= 0.95:
@@ -515,7 +515,7 @@ def Affordance_comm():
                                             break
                                     prob_succ2 = 0
                                     for g in range(len(data)):
-                                        if g < 2:
+                                        if g > 2:
                                             for j in range(len(data[g])):
                                                 prob_succ2 = prob_succ2 + data[g][j]
                                     if prob_succ2 >= 0.95:
