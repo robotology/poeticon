@@ -330,7 +330,7 @@ def Affordance_comm():
                                         tool_desc2 = tooldesc[o][1][1]
                                         toolhandle[o] = [tool] + [tooldesc[o]]
                                         toolnum = o
-                                message = tool_desc1[2:-1] + obj_desc[1:] + [2]
+                                message = tool_desc1[3:-1] + obj_desc[1:] + [2]
                                 print '******', message
                                 mess_list = []
                                 for t in range(len(message)):
@@ -358,7 +358,7 @@ def Affordance_comm():
                                 if prob_succ1 == 1.0:
                                     prob_succ1 = 0.95
 
-                                message = tool_desc2[2:-1] + obj_desc[1:] + [2]
+                                message = tool_desc2[3:-1] + obj_desc[1:] + [2]
                                 affnet_bottle_out = affnet_yarp.prepare()
                                 affnet_bottle_out.clear()
                                 for t in range(len(message)):
@@ -441,7 +441,7 @@ def Affordance_comm():
                                         tool_desc2 = tooldesc[o][1][1]
                                         toolhandle[o] = [tool] + [tooldesc[o]]
                                         toolnum = o
-                                message = tool_desc1[2:-1] + obj_desc[1:] + [1]
+                                message = tool_desc1[3:-1] + obj_desc[1:] + [1]
                                 for t in range(len(message)):
                                     mess_num = float(message[t])
                                     mess_list = mess_list + [mess_num]
@@ -467,7 +467,7 @@ def Affordance_comm():
                                     prob_succ1 = 0.95
 
                                 
-                                message = tool_desc2[2:-1] + obj_desc[1:] + [1]
+                                message = tool_desc2[3:-1] + obj_desc[1:] + [1]
                                 affnet_bottle_out = affnet_yarp.prepare()
                                 affnet_bottle_out.clear()
                                 for t in range(len(message)):
