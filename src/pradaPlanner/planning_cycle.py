@@ -114,6 +114,11 @@ def update_state(PathName):
     data = symbols.split('\n')
     symbols = []
     data.pop()
+    objects_file = open(''.join(PathName + "/Object_names-IDs.dat"))
+    objs = objects_file.read().split(';')
+    objs.pop()
+    for i in range(len(objs)):
+        objs[i] = objs[i].split(',')
     for i in range(len(data)):
         aux_data = data[i].split(' ')
         symbols = symbols + [[aux_data[0], aux_data[2]]]
@@ -123,6 +128,19 @@ def update_state(PathName):
     data = state.replace('-','').replace('()','').replace('\n','')
     data = data.split(' ')
     state = state.replace('\n','').replace(r'(.+?)_touch_(.+?)','')
+    avail_symb = []
+    temp_state = copy.deepcopy(data)
+    data= []
+    for i in range(len(symbols)):
+        neg_symbol = ''.join(('-',symbols[i][0]))
+        avail_symb = avail_symb + [symbols[i][0]] + [neg_symbol]
+    for i in range(len(temp_state)):
+        if temp_state[i] in avail_symb:
+            data = data + [temp_state[i]]
+    state= ''
+    for i in range(len(data)):
+        state = ' '.join((state,data[i]))
+    state = ''.join((state, ' '))
     for j in range(len(symbols)):
         if symbols[j][0] not in data and symbols[j][1] == 'primitive':
             state = '-'.join((state,''.join((symbols[j][0],'() '))))
