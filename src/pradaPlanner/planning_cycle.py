@@ -164,6 +164,7 @@ def planning_cycle():
     Aff_yarp.open("/planner/Aff_cmd:io")
 
     instructions = []
+    prev_act = ''
     while 1:
         old_state = []
         objects_used = []
@@ -344,7 +345,9 @@ def planning_cycle():
         object_file.close()
         object_IDs.pop()
         for h in range(len(object_IDs)):
-            object_IDs[h] = object_IDs[h].split(',')    
+            object_IDs[h] = object_IDs[h].split(',')
+
+        prev_act = ''
         while(True):
             ## Plan!!!
             
@@ -411,6 +414,7 @@ def planning_cycle():
             state_file.close()
             not_to_add = []
 
+            print 'previous action:', prev_act
             if prev_act.split(' ')[0] == 'askForTool':
                 tool = next_action.split('_')[1]
                 print 'grasped tool:', tool
