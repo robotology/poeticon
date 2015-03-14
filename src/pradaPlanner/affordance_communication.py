@@ -265,42 +265,42 @@ def Affordance_comm():
                     print "checking probabilities"
                     if translation[i][2].replace('\r','').replace(' ','') == 'grasp':
                         print "grasp detected"
-                        if mode != 0:
-                            print "checking for motor executer"
-                            ans = ActionQuery._execute(PathName, rule)
-                            if ActionQuery._is_success(ans):
-                                probability = ans.get(0).asDouble()
-                                if float(probability) == 1.0:
-                                    probability = 0.95
-                                new_outcome = outcome.split(' ')
-                                new_outcome[2] = str(probability)
-                                new_outcome = ' '.join(new_outcome)
-                                new_outcome2 = outcome2.split(' ')
-                                new_outcome2[2] = str(1-probability)
-                                new_outcome2 = ' '.join(new_outcome2)
-                                Affor_bottle_out = geo_yarp.prepare()
-                                Affor_bottle_out.clear()
-                                Affor_bottle_out.addString(new_outcome)
-                                Affor_bottle_out.addString(new_outcome2)
-                                Affor_bottle_out.addString(outcome3)
-                                geo_yarp.write()
-                            else:
-                                print "failed query, going for default"
-                                Affor_bottle_out = geo_yarp.prepare()
-                                Affor_bottle_out.clear()
-                                Affor_bottle_out.addString(outcome)
-                                Affor_bottle_out.addString(outcome2)
-                                Affor_bottle_out.addString(outcome3)
-                                geo_yarp.write()
+##                        if mode != 0:
+##                            print "checking for motor executer"
+##                            ans = ActionQuery._execute(PathName, rule)
+##                            if ActionQuery._is_success(ans):
+##                                probability = ans.get(0).asDouble()
+##                                if float(probability) == 1.0:
+##                                    probability = 0.95
+##                                new_outcome = outcome.split(' ')
+##                                new_outcome[2] = str(probability)
+##                                new_outcome = ' '.join(new_outcome)
+##                                new_outcome2 = outcome2.split(' ')
+##                                new_outcome2[2] = str(1-probability)
+##                                new_outcome2 = ' '.join(new_outcome2)
+##                                Affor_bottle_out = geo_yarp.prepare()
+##                                Affor_bottle_out.clear()
+##                                Affor_bottle_out.addString(new_outcome)
+##                                Affor_bottle_out.addString(new_outcome2)
+##                                Affor_bottle_out.addString(outcome3)
+##                                geo_yarp.write()
+##                            else:
+##                                print "failed query, going for default"
+##                                Affor_bottle_out = geo_yarp.prepare()
+##                                Affor_bottle_out.clear()
+##                                Affor_bottle_out.addString(outcome)
+##                                Affor_bottle_out.addString(outcome2)
+##                                Affor_bottle_out.addString(outcome3)
+##                                geo_yarp.write()
 
-                        if mode == 0:
-                            print "going for default probability"
-                            Affor_bottle_out = geo_yarp.prepare()
-                            Affor_bottle_out.clear()
-                            Affor_bottle_out.addString(outcome)
-                            Affor_bottle_out.addString(outcome2)
-                            Affor_bottle_out.addString(outcome3)
-                            geo_yarp.write()
+##                        if mode == 0:
+                        print "going for default probability"
+                        Affor_bottle_out = geo_yarp.prepare()
+                        Affor_bottle_out.clear()
+                        Affor_bottle_out.addString(outcome)
+                        Affor_bottle_out.addString(outcome2)
+                        Affor_bottle_out.addString(outcome3)
+                        geo_yarp.write()
 
 ## Se for pull/push, -> ask Affordances
                     if translation[i][2].replace('\r','').replace(' ','') == 'push':
