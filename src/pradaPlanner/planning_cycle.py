@@ -252,7 +252,7 @@ def planning_cycle():
                 command = goal_bottle_in.toString()
                 break
             yarp.Time.delay(1)
-        print 'goal is done'
+        print 'goal compiler is complete'
             
 ##        goal_file = open(''.join(PathName +"/final_goal.dat"))
         subgoalsource_file = open(''.join(PathName +"/subgoals.dat"))
