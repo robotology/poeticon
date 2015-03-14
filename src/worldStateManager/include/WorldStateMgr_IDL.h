@@ -6,6 +6,7 @@
 
 #include <yarp/os/Wire.h>
 #include <yarp/os/idl/WireTypes.h>
+#include <yarp/os/Bottle.h>
 
 class WorldStateMgr_IDL;
 
@@ -45,6 +46,13 @@ public:
    * @return true/false on success/failure
    */
   virtual bool resume(const std::string& objName);
+  /**
+   * Get the color histogram of the object requested by the user.
+   * @param u specifies the u coordinate of the object
+   * @param v specifies the v coordinate of the object
+   * @return Bottle containing color histogram
+   */
+  virtual yarp::os::Bottle getColorHist(const int32_t u, const int32_t v);
   /**
    * Quit the module.
    * @return true/false on success/failure

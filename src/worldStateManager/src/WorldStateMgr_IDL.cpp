@@ -40,6 +40,16 @@ public:
   virtual bool read(yarp::os::ConnectionReader& connection);
 };
 
+class WorldStateMgr_IDL_getColorHist : public yarp::os::Portable {
+public:
+  int32_t u;
+  int32_t v;
+  yarp::os::Bottle _return;
+  void init(const int32_t u, const int32_t v);
+  virtual bool write(yarp::os::ConnectionWriter& connection);
+  virtual bool read(yarp::os::ConnectionReader& connection);
+};
+
 class WorldStateMgr_IDL_quit : public yarp::os::Portable {
 public:
   bool _return;
@@ -136,6 +146,30 @@ void WorldStateMgr_IDL_resume::init(const std::string& objName) {
   this->objName = objName;
 }
 
+bool WorldStateMgr_IDL_getColorHist::write(yarp::os::ConnectionWriter& connection) {
+  yarp::os::idl::WireWriter writer(connection);
+  if (!writer.writeListHeader(3)) return false;
+  if (!writer.writeTag("getColorHist",1,1)) return false;
+  if (!writer.writeI32(u)) return false;
+  if (!writer.writeI32(v)) return false;
+  return true;
+}
+
+bool WorldStateMgr_IDL_getColorHist::read(yarp::os::ConnectionReader& connection) {
+  yarp::os::idl::WireReader reader(connection);
+  if (!reader.readListReturn()) return false;
+  if (!reader.read(_return)) {
+    reader.fail();
+    return false;
+  }
+  return true;
+}
+
+void WorldStateMgr_IDL_getColorHist::init(const int32_t u, const int32_t v) {
+  this->u = u;
+  this->v = v;
+}
+
 bool WorldStateMgr_IDL_quit::write(yarp::os::ConnectionWriter& connection) {
   yarp::os::idl::WireWriter writer(connection);
   if (!writer.writeListHeader(1)) return false;
@@ -196,6 +230,16 @@ bool WorldStateMgr_IDL::resume(const std::string& objName) {
   helper.init(objName);
   if (!yarp().canWrite()) {
     fprintf(stderr,"Missing server method '%s'?\n","bool WorldStateMgr_IDL::resume(const std::string& objName)");
+  }
+  bool ok = yarp().write(helper,helper);
+  return ok?helper._return:_return;
+}
+yarp::os::Bottle WorldStateMgr_IDL::getColorHist(const int32_t u, const int32_t v) {
+  yarp::os::Bottle _return;
+  WorldStateMgr_IDL_getColorHist helper;
+  helper.init(u,v);
+  if (!yarp().canWrite()) {
+    fprintf(stderr,"Missing server method '%s'?\n","yarp::os::Bottle WorldStateMgr_IDL::getColorHist(const int32_t u, const int32_t v)");
   }
   bool ok = yarp().write(helper,helper);
   return ok?helper._return:_return;
@@ -274,6 +318,27 @@ bool WorldStateMgr_IDL::read(yarp::os::ConnectionReader& connection) {
       reader.accept();
       return true;
     }
+    if (tag == "getColorHist") {
+      int32_t u;
+      int32_t v;
+      if (!reader.readI32(u)) {
+        reader.fail();
+        return false;
+      }
+      if (!reader.readI32(v)) {
+        reader.fail();
+        return false;
+      }
+      yarp::os::Bottle _return;
+      _return = getColorHist(u,v);
+      yarp::os::idl::WireWriter writer(reader);
+      if (!writer.isNull()) {
+        if (!writer.writeListHeader(1)) return false;
+        if (!writer.write(_return)) return false;
+      }
+      reader.accept();
+      return true;
+    }
     if (tag == "quit") {
       bool _return;
       _return = quit();
@@ -323,6 +388,7 @@ std::vector<std::string> WorldStateMgr_IDL::help(const std::string& functionName
     helpString.push_back("update");
     helpString.push_back("pause");
     helpString.push_back("resume");
+    helpString.push_back("getColorHist");
     helpString.push_back("quit");
     helpString.push_back("help");
   }
@@ -358,6 +424,13 @@ std::vector<std::string> WorldStateMgr_IDL::help(const std::string& functionName
       helpString.push_back("@param objName specifies the label of the tracking thread ");
       helpString.push_back("to be resumed ");
       helpString.push_back("@return true/false on success/failure ");
+    }
+    if (functionName=="getColorHist") {
+      helpString.push_back("yarp::os::Bottle getColorHist(const int32_t u, const int32_t v) ");
+      helpString.push_back("Get the color histogram of the object requested by the user. ");
+      helpString.push_back("@param u specifies the u coordinate of the object ");
+      helpString.push_back("@param v specifies the v coordinate of the object ");
+      helpString.push_back("@return Bottle containing color histogram ");
     }
     if (functionName=="quit") {
       helpString.push_back("bool quit() ");

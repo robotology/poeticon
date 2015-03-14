@@ -10,6 +10,7 @@
 #ifndef __WSM_MODULE_H__
 #define __WSM_MODULE_H__
 
+#include <yarp/os/Bottle.h>
 #include <yarp/os/LogStream.h>
 #include <yarp/os/RFModule.h>
 #include "WorldStateMgr_IDL.h"
@@ -49,6 +50,7 @@ class WorldStateMgrModule : public RFModule, public WorldStateMgr_IDL
         bool update();
         bool pause(const string &objName);
         bool resume(const string &objName);
+        Bottle getColorHist(const int32_t u, const int32_t v);
         bool quit();
 };
 

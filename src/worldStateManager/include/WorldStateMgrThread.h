@@ -138,8 +138,12 @@ class WorldStateMgrThread : public RateThread
         // perception mode
         bool initPerceptionVars();
         bool initTracker();
+
+        // IDL functions
         bool pauseTrack(const string &objName);
         bool resumeTrack(const string &objName);
+        Bottle getColorHistogram(const int32_t &u, const int32_t &v);
+
         void fsmPerception();
         void refreshOPC();
         void refreshOPCIDs();

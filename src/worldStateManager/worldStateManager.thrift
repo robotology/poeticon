@@ -6,6 +6,12 @@
 #
 # worldStateManager.thrift
 
+struct Bottle { }
+(
+yarp.name = "yarp::os::Bottle"
+yarp.includefile="yarp/os/Bottle.h"
+)
+
 service WorldStateMgr_IDL
 {
   /**
@@ -43,6 +49,14 @@ service WorldStateMgr_IDL
    * @return true/false on success/failure
    */
   bool resume(1:string objName);
+
+  /**
+   * Get the color histogram of the object requested by the user.
+   * @param u specifies the u coordinate of the object
+   * @param v specifies the v coordinate of the object
+   * @return Bottle containing color histogram
+   **/
+  Bottle getColorHist(1:i32 u, 2:i32 v);
 
   /**
   * Quit the module.

@@ -114,6 +114,11 @@ bool WorldStateMgrModule::resume(const string &objName)
     return thread->resumeTrack(objName);
 }
 
+Bottle WorldStateMgrModule::getColorHist(const int32_t u, const int32_t v)
+{
+    return thread->getColorHistogram(u,v);
+}
+
 bool WorldStateMgrModule::quit()
 {
     yInfo("quitting");

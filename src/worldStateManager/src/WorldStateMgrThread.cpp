@@ -340,6 +340,48 @@ bool WorldStateMgrThread::resumeTrack(const string &objName)
     return true;
 }
 
+Bottle WorldStateMgrThread::getColorHistogram(const int32_t &u, const int32_t &v)
+{
+    Bottle colors;
+
+    if (inAffPort.getInputCount() < 1)
+    {
+        yWarning("not connected to BlobDescriptor!");
+        return colors;
+    }
+
+    // look for Affordance Bottle Index: between 1 and NumBlobs
+    int abi = 0;
+    if ( !getAffBottleIndexFromTrackROI(u, v, abi) )
+    {
+        yWarning("problem with getAffBottleIndexFromTrackROI");
+        return colors;
+    }
+
+    if (abi > 0)
+    {
+        yDebug() << __func__ << "found affordance blob index" << abi << "from coordinates" << u << v;
+    }
+    else
+    {
+        yDebug() << "getAffBottleIndexFromTrackROI did not find affordance blob index from coordinates" << u << v;
+        return colors;
+    }
+
+    int firstColorIdx = 7;
+    int lastColorIdx = 22;
+    if (inAff != NULL)
+    {
+        for (int col = firstColorIdx; col <= lastColorIdx; ++col)
+        {
+            colors.addDouble(inAff->get(abi).asList()->get(firstColorIdx+col).asDouble());
+        }
+    }
+    yDebug() << "found color histogram:" << colors.toString().c_str();
+
+    return colors;
+}
+
 void WorldStateMgrThread::fsmPerception()
 {
     //yDebug("perception state=%d", fsmState);
@@ -444,9 +486,9 @@ void WorldStateMgrThread::fsmPerception()
                 activityCmd.clear();
                 activityReply.clear();
                 activityCmd.addString("goHome");
-                yDebug() << __func__ <<  "sending query to tracker:" << activityCmd.toString().c_str();
+                //yDebug() << __func__ <<  "sending query to activityInterface:" << activityCmd.toString().c_str();
                 activityPort.write(activityCmd, activityReply);
-                yDebug() << __func__ <<  "obtained response:" << activityReply.toString().c_str();
+                //yDebug() << __func__ <<  "obtained response:" << activityReply.toString().c_str();
                 bool validResponse = false;
                 validResponse = ( activityReply.size()>0 &&
                                   activityReply.get(0).asVocab()==Vocab::encode("ok") );
@@ -1241,8 +1283,8 @@ bool WorldStateMgrThread::getTrackerBottleIndexFromID(const int &id, int &tbi)
 
 bool WorldStateMgrThread::getAffBottleIndexFromTrackROI(const int &u, const int &v, int &abi)
 {
-    // Finds the AffBottleIndex of inTargets->get(tbi) corresponding to
-    // the TrackerBottleIndex inAff->get(abi).
+    // Finds the AffBottleIndex of inAff->get(abi) corresponding to
+    // the TrackerBottleIndex inTargets->get(tbi).
     //
     // Current implementation: from tracker ROI centre, detect the most likely
     // blob index within blobDescriptor Bottle, using Euclidean distance.
@@ -1260,7 +1302,8 @@ bool WorldStateMgrThread::getAffBottleIndexFromTrackROI(const int &u, const int 
     //yDebug() << "trackerROI" << trackerROI.toString().c_str();
 
     int minBlobIdx = -1;
-    float minDist = 1000.0;
+    float minDist = 1000.0; // minimum distance found so far
+    float distThr = 50.0; // minimum required distance to update ABI
 
     for(int a=1; a<=sizeAff; a++)
     {
@@ -1273,7 +1316,7 @@ bool WorldStateMgrThread::getAffBottleIndexFromTrackROI(const int &u, const int 
         //yDebug() << "currentBlob" << a << currentBlob.toString().c_str();
         //yDebug() << "dist" << dist;
 
-        if (dist < minDist)
+        if (dist < distThr && dist < minDist)
         {
             minBlobIdx = a;
             minDist = dist;
