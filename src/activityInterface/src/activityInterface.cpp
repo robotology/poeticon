@@ -856,7 +856,7 @@ bool ActivityInterface::quit()
 /**********************************************************/
 bool ActivityInterface::handStat(const string &handName)
 {
-    Bottle toolLikeMemory = getToolLikeNames();
+    /*Bottle toolLikeMemory = getToolLikeNames();
     bool isTool = false;
     
     string handStatus;
@@ -868,7 +868,16 @@ bool ActivityInterface::handStat(const string &handName)
         {
             isTool = true;
         }
-    }
+    }*/
+    bool isTool = false;
+    string handRake = inHand("rake");
+    
+    if (strcmp (handRake.c_str(), handName.c_str() ) == 0 )
+        isTool = true;
+    
+    string handStick = inHand("stick");
+    if (strcmp (handStick.c_str(), handName.c_str() ) == 0 )
+        isTool = true;
     
     if (!isTool)
     {
