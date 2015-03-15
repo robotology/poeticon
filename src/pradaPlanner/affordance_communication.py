@@ -352,18 +352,19 @@ def Affordance_comm():
                                                     data[g][j] = float(data[g][j])
                                             print "processed data: \n", data
                                             break
-                                        if affnet_bottle_in.toString() == '[nack]':
-                                            print "no affordance network detected. using default."
-                                            Affor_bottle_out = geo_yarp.prepare()
-                                            Affor_bottle_out.clear()
-                                            Affor_bottle_out.addString(outcome)
-                                            Affor_bottle_out.addString(outcome2)
-                                            Affor_bottle_out.addString(outcome3)
-                                            geo_yarp.write()
-                                            if rule.split('_')[1] != '11' and rule.split('_')[1] != '12' and rule.split('_')[3] != '11' and rule.split('_')[3] != '12':
-                                                for i in range(len(tooldesc)):
-                                                    posit = posit + [rule.split('_')[3].replace('()','')] + [tooldesc[i][1][1][0]] + [tooldesc[i][1][1][1]]
-                                            break
+                                        if affnet_bottle_in:
+                                            if affnet_bottle_in.toString() == '[nack]':
+                                                print "no affordance network detected. using default."
+                                                Affor_bottle_out = geo_yarp.prepare()
+                                                Affor_bottle_out.clear()
+                                                Affor_bottle_out.addString(outcome)
+                                                Affor_bottle_out.addString(outcome2)
+                                                Affor_bottle_out.addString(outcome3)
+                                                geo_yarp.write()
+                                                if rule.split('_')[1] != '11' and rule.split('_')[1] != '12' and rule.split('_')[3] != '11' and rule.split('_')[3] != '12':
+                                                    for i in range(len(tooldesc)):
+                                                        posit = posit + [rule.split('_')[3].replace('()','')] + [tooldesc[i][1][1][0]] + [tooldesc[i][1][1][1]]
+                                                break
 
                                             
                                         yarp.Time.delay(0.1)
@@ -401,18 +402,19 @@ def Affordance_comm():
                                                     data[g][j] = float(data[g][j])
                                             print "processed data: \n", data
                                             break
-                                        if affnet_bottle_in.toString() == '[nack]':
-                                            print "no affordance network detected. using default."
-                                            Affor_bottle_out = geo_yarp.prepare()
-                                            Affor_bottle_out.clear()
-                                            Affor_bottle_out.addString(outcome)
-                                            Affor_bottle_out.addString(outcome2)
-                                            Affor_bottle_out.addString(outcome3)
-                                            geo_yarp.write()
-                                            if rule.split('_')[1] != '11' and rule.split('_')[1] != '12' and rule.split('_')[3] != '11' and rule.split('_')[3] != '12':
-                                                for i in range(len(tooldesc)):
-                                                    posit = posit + [rule.split('_')[3].replace('()','')] + [tooldesc[i][1][1][0]] + [tooldesc[i][1][1][1]]
-                                            break
+                                        if affnet_bottle_in:
+                                            if affnet_bottle_in.toString() == '[nack]':
+                                                print "no affordance network detected. using default."
+                                                Affor_bottle_out = geo_yarp.prepare()
+                                                Affor_bottle_out.clear()
+                                                Affor_bottle_out.addString(outcome)
+                                                Affor_bottle_out.addString(outcome2)
+                                                Affor_bottle_out.addString(outcome3)
+                                                geo_yarp.write()
+                                                if rule.split('_')[1] != '11' and rule.split('_')[1] != '12' and rule.split('_')[3] != '11' and rule.split('_')[3] != '12':
+                                                    for i in range(len(tooldesc)):
+                                                        posit = posit + [rule.split('_')[3].replace('()','')] + [tooldesc[i][1][1][0]] + [tooldesc[i][1][1][1]]
+                                                break
                                         
                                     prob_succ2 = 0
                                     for g in range(len(data)):
@@ -504,18 +506,19 @@ def Affordance_comm():
                                                     data[g][j] = float(data[g][j])
                                             print "processed data: \n", data
                                             break
-                                        if affnet_bottle_in.toString() == '[nack]':
-                                            print "no affordance network detected. using default."
-                                            Affor_bottle_out = geo_yarp.prepare()
-                                            Affor_bottle_out.clear()
-                                            Affor_bottle_out.addString(outcome)
-                                            Affor_bottle_out.addString(outcome2)
-                                            Affor_bottle_out.addString(outcome3)
-                                            geo_yarp.write()
-                                            if rule.split('_')[1] != '11' and rule.split('_')[1] != '12' and rule.split('_')[3] != '11' and rule.split('_')[3] != '12':
-                                                for i in range(len(tooldesc)):
-                                                    posit = posit + [rule.split('_')[3].replace('()','')] + [tooldesc[i][1][1][0]] + [tooldesc[i][1][1][1]]
-                                            break
+                                        if affnet_bottle_in:
+                                            if affnet_bottle_in.toString() == '[nack]':
+                                                print "no affordance network detected. using default."
+                                                Affor_bottle_out = geo_yarp.prepare()
+                                                Affor_bottle_out.clear()
+                                                Affor_bottle_out.addString(outcome)
+                                                Affor_bottle_out.addString(outcome2)
+                                                Affor_bottle_out.addString(outcome3)
+                                                geo_yarp.write()
+                                                if rule.split('_')[1] != '11' and rule.split('_')[1] != '12' and rule.split('_')[3] != '11' and rule.split('_')[3] != '12':
+                                                    for i in range(len(tooldesc)):
+                                                        posit = posit + [rule.split('_')[3].replace('()','')] + [tooldesc[i][1][1][0]] + [tooldesc[i][1][1][1]]
+                                                break
                                         
                                         yarp.Time.delay(0.1)
                                     prob_succ1 = 0
@@ -553,18 +556,19 @@ def Affordance_comm():
                                                     data[g][j] = float(data[g][j])
                                             print "processed data: \n", data
                                             break
-                                        if affnet_bottle_in.toString() == '[nack]':
-                                            print "no affordance network detected. using default."
-                                            Affor_bottle_out = geo_yarp.prepare()
-                                            Affor_bottle_out.clear()
-                                            Affor_bottle_out.addString(outcome)
-                                            Affor_bottle_out.addString(outcome2)
-                                            Affor_bottle_out.addString(outcome3)
-                                            geo_yarp.write()
-                                            if rule.split('_')[1] != '11' and rule.split('_')[1] != '12' and rule.split('_')[3] != '11' and rule.split('_')[3] != '12':
-                                                for i in range(len(tooldesc)):
-                                                    posit = posit + [rule.split('_')[3].replace('()','')] + [tooldesc[i][1][1][0]] + [tooldesc[i][1][1][1]]
-                                            break
+                                        if affnet_bottle_in:
+                                            if affnet_bottle_in.toString() == '[nack]':
+                                                print "no affordance network detected. using default."
+                                                Affor_bottle_out = geo_yarp.prepare()
+                                                Affor_bottle_out.clear()
+                                                Affor_bottle_out.addString(outcome)
+                                                Affor_bottle_out.addString(outcome2)
+                                                Affor_bottle_out.addString(outcome3)
+                                                geo_yarp.write()
+                                                if rule.split('_')[1] != '11' and rule.split('_')[1] != '12' and rule.split('_')[3] != '11' and rule.split('_')[3] != '12':
+                                                    for i in range(len(tooldesc)):
+                                                        posit = posit + [rule.split('_')[3].replace('()','')] + [tooldesc[i][1][1][0]] + [tooldesc[i][1][1][1]]
+                                                break
                                     prob_succ2 = 0
                                     for g in range(len(data)):
                                         if g < 2:
