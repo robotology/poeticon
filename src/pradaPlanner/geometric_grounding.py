@@ -192,6 +192,8 @@ def geometric_grounding():
         print(PathName)
         right_hand = 11
         left_hand= 12
+        prerule_file = open(''.join(PathName + "/pre_rules.dat"))
+        presymbol_file = open(''.join(PathName + "/pre_symbols.dat"))
 
 
 
@@ -205,7 +207,6 @@ def geometric_grounding():
                     command = bottle_in.toString()
                     break
             print command
-            
             if command == 'update':
 
 ## opens files that might have been updated
@@ -213,8 +214,6 @@ def geometric_grounding():
                 symbol_file = open(''.join(PathName + "/symbols.dat"),'w')
                 newrule_file = open(''.join(PathName + "/new_rules.dat"),'w')
                 objects_file = open(''.join(PathName + "/Object_names-IDs.dat"),'r')
-                prerule_file = open(''.join(PathName + "/pre_rules.dat"))
-                presymbol_file = open(''.join(PathName + "/pre_symbols.dat"))
                 
 ## reads objects in world
                 lines = objects_file.read()
@@ -334,14 +333,11 @@ def geometric_grounding():
                 rule_file.close()
                 newrule_file.close()
                 symbol_file.close()
-                prerule_file.close()
-                presymbol_file.close()
                 bout = p.prepare()
                 bout.clear()
                 bout.addString('ready')
                 print 'sending'
                 p.write()
-                
             if command == 'kill':
                 prerule_file.close()
                 presymbol_file.close()
