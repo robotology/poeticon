@@ -375,6 +375,8 @@ def Affordance_comm():
                                                 prob_succ1 = prob_succ1 + data[g][j]
                                     if prob_succ1 >= 0.95:
                                         prob_succ1 = 0.95
+                                    if prob_succ1 < 0.35:
+                                        prob_succ1 = 0.35
                                     prob_succ = prob_succ1
                                     print "probability of success:" , prob_succ
                                     posit = posit + [tool, tooldesc[toolnum][1][0][0], tooldesc[toolnum][1][0][1]]
@@ -423,6 +425,8 @@ def Affordance_comm():
                                                 prob_succ2 = prob_succ2 + data[g][j]
                                     if prob_succ2 >= 0.95:
                                         prob_succ2 = 0.95
+                                    if prob_succ2 < 0.35:
+                                        prob_succ2 = 0.35
                                     prob_succ = prob_succ2
                                     print "probability of success:" , prob_succ
                                     posit = posit + [tool, tooldesc[toolnum][1][1][0], tooldesc[toolnum][1][1][1]]
@@ -528,6 +532,8 @@ def Affordance_comm():
                                                 prob_succ1 = prob_succ1 + data[g][j]
                                     if prob_succ1 >= 0.95:
                                         prob_succ1 = 0.95
+                                    if prob_succ1 < 0.35:
+                                        prob_succ1 = 0.35
                                     prob_succ = prob_succ1
                                     print "probability of success:" , prob_succ
                                     posit = posit + [tool, tooldesc[toolnum][1][0][0], tooldesc[toolnum][1][0][1]]
@@ -576,6 +582,8 @@ def Affordance_comm():
                                                 prob_succ2 = prob_succ2 + data[g][j]
                                     if prob_succ2 >= 0.95:
                                         prob_succ2 = 0.95
+                                    if prob_succ2 < 0.35:
+                                        prob_succ2 = 0.35
                                     prob_succ = prob_succ2
                                     print "probability of success:" , prob_succ
                                     posit = posit + [tool, tooldesc[toolnum][1][1][0], tooldesc[toolnum][1][1][1]]
