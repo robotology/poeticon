@@ -352,6 +352,16 @@ def Affordance_comm():
                                                     data[g][j] = float(data[g][j])
                                             print "processed data: \n", data
                                             break
+                                        if affnet_bottle_in:
+                                            if affnet_bottle_in.toString() == '[nack]':
+                                                print "no message received. using default."
+                                                Affor_bottle_out = geo_yarp.prepare()
+                                                Affor_bottle_out.clear()
+                                                Affor_bottle_out.addString(outcome)
+                                                Affor_bottle_out.addString(outcome2)
+                                                Affor_bottle_out.addString(outcome3)
+                                                geo_yarp.write()
+                                                break
                                         yarp.Time.delay(0.1)
                                     prob_succ1 = 0
                                     for g in range(len(data)):
@@ -360,6 +370,8 @@ def Affordance_comm():
                                                 prob_succ1 = prob_succ1 + data[g][j]
                                     if prob_succ1 >= 0.95:
                                         prob_succ1 = 0.95
+                                    if prob_succ1 < 0.35:
+                                        prob_succ1 = 0.35
                                     prob_succ = prob_succ1
                                     print "probability of success:" , prob_succ
                                     posit = posit + [tool, tooldesc[toolnum][1][0][0], tooldesc[toolnum][1][0][1]]
@@ -387,6 +399,16 @@ def Affordance_comm():
                                                     data[g][j] = float(data[g][j])
                                             print "processed data: \n", data
                                             break
+                                        if affnet_bottle_in:
+                                            if affnet_bottle_in.toString() == '[nack]':
+                                                print "no message received. using default."
+                                                Affor_bottle_out = geo_yarp.prepare()
+                                                Affor_bottle_out.clear()
+                                                Affor_bottle_out.addString(outcome)
+                                                Affor_bottle_out.addString(outcome2)
+                                                Affor_bottle_out.addString(outcome3)
+                                                geo_yarp.write()
+                                                break
                                     prob_succ2 = 0
                                     for g in range(len(data)):
                                         if g < 2:
@@ -394,6 +416,8 @@ def Affordance_comm():
                                                 prob_succ2 = prob_succ2 + data[g][j]
                                     if prob_succ2 >= 0.95:
                                         prob_succ2 = 0.95
+                                    if prob_succ2 < 0.35:
+                                        prob_succ2 = 0.35
                                     prob_succ = prob_succ2
                                     print "probability of success:" , prob_succ
                                     posit = posit + [tool, tooldesc[toolnum][1][1][0], tooldesc[toolnum][1][1][1]]
@@ -477,6 +501,16 @@ def Affordance_comm():
                                                     data[g][j] = float(data[g][j])
                                             print "processed data: \n", data
                                             break
+                                        if affnet_bottle_in:
+                                            if affnet_bottle_in.toString() == '[nack]':
+                                                print "no message received. using default."
+                                                Affor_bottle_out = geo_yarp.prepare()
+                                                Affor_bottle_out.clear()
+                                                Affor_bottle_out.addString(outcome)
+                                                Affor_bottle_out.addString(outcome2)
+                                                Affor_bottle_out.addString(outcome3)
+                                                geo_yarp.write()
+                                                break
                                         yarp.Time.delay(0.1)
                                     prob_succ1 = 0
                                     for g in range(len(data)):
@@ -485,6 +519,8 @@ def Affordance_comm():
                                                 prob_succ1 = prob_succ1 + data[g][j]
                                     if prob_succ1 >= 0.95:
                                         prob_succ1 = 0.95
+                                    if prob_succ1 < 0.35:
+                                        prob_succ1 = 0.35
                                     prob_succ = prob_succ1
                                     print "probability of success:" , prob_succ
                                     posit = posit + [tool, tooldesc[toolnum][1][0][0], tooldesc[toolnum][1][0][1]]
@@ -513,6 +549,16 @@ def Affordance_comm():
                                                     data[g][j] = float(data[g][j])
                                             print "processed data: \n", data
                                             break
+                                        if affnet_bottle_in:
+                                            if affnet_bottle_in.toString() == '[nack]':
+                                                print "no message received. using default."
+                                                Affor_bottle_out = geo_yarp.prepare()
+                                                Affor_bottle_out.clear()
+                                                Affor_bottle_out.addString(outcome)
+                                                Affor_bottle_out.addString(outcome2)
+                                                Affor_bottle_out.addString(outcome3)
+                                                geo_yarp.write()
+                                                break
                                     prob_succ2 = 0
                                     for g in range(len(data)):
                                         if g > 2:
@@ -520,6 +566,8 @@ def Affordance_comm():
                                                 prob_succ2 = prob_succ2 + data[g][j]
                                     if prob_succ2 >= 0.95:
                                         prob_succ2 = 0.95
+                                    if prob_succ2 < 0.35:
+                                        prob_succ2 = 0.35
                                     prob_succ = prob_succ2
                                     print "probability of success:" , prob_succ
                                     posit = posit + [tool, tooldesc[toolnum][1][1][0], tooldesc[toolnum][1][1][1]]
