@@ -958,7 +958,7 @@ string ActivityInterface::getLabel(const int32_t pos_x, const int32_t pos_y)
                 
                 fprintf(stdout,"the dffs are %d %d total %d\n", diffx, diffy, abs (diffx + diffy));
                 
-                if ( abs (diffx + diffy) < 55)
+                if ( abs(diffx + diffy)/2 < 30)
                 {
                     if (propField->check("name"))
                     {
