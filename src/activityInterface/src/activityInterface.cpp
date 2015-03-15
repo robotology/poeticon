@@ -1316,20 +1316,8 @@ bool ActivityInterface::askForTool(const std::string &handName, const int32_t po
     tmp.addInt (pos_x);
     tmp.addInt (pos_y);
     
-    if (pos_x > 0 && pos_x <= 160 )
-    {
-        whichArm = LEFT;
-        cmdAre.addString("left");
-        rpcAREcmd.write(cmdAre,replyAre);
-    }
-    else if (pos_x > 160 && pos_x < 320 )
-    {
-        whichArm = RIGHT;
-        cmdAre.addString("right");
-        rpcAREcmd.write(cmdAre, replyAre);
-    }
-    else
-        executeSpeech ("oh my, I seemed to have gotten confused, sorry");
+    cmdAre.addString(handName.c_str());
+    rpcAREcmd.write(cmdAre,replyAre);
     
     cmdAre.clear();
     replyAre.clear();
