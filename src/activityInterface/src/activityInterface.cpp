@@ -1293,7 +1293,7 @@ bool ActivityInterface::put(const string &objName, const string &targetName)
 bool ActivityInterface::askForTool(const std::string &handName, const int32_t pos_x, const int32_t pos_y)
 {
     // Get the label of the object requested
-    int whichArm = 0;
+    
     string label = getLabel(pos_x, pos_y);
     
     Bottle cmdHome, cmdReply;

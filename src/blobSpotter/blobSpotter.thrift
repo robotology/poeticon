@@ -21,6 +21,12 @@ service blobSpotter_IDLServer
     i32 getMinArea();
     
     /**
+     * Gets the maximum top bound on the Y axis
+     * @return i32 of maximum area
+     */
+    i32 getTopBound();
+    
+    /**
      * sets the maximum allowed area for segmenting
      * @return true/false on success/failure
      */
@@ -31,6 +37,12 @@ service blobSpotter_IDLServer
      * @return true/false on success/failure
      */
     bool setMinArea(1:i32 index);
+    
+    /**
+     * Gets the maximum top bound on the Y axis
+     * @return i32 of maximum area
+     */
+    bool setTopBound();
     
     /**
     * Initializes a histogram.

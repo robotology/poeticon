@@ -29,6 +29,7 @@ bool SPOTTERModule::configure(yarp::os::ResourceFinder &rf)
     
     int minArea = rf.check("minArea", Value(500), "min area (int)").asInt();
     int maxArea = rf.check("minArea", Value(3000), "max area (int)").asInt();
+    int topBound = rf.check("topBound", Value(30), "top bound (int)").asInt();
     
     setName(moduleName.c_str());
 
@@ -53,6 +54,7 @@ bool SPOTTERModule::configure(yarp::os::ResourceFinder &rf)
     
     spotterManager->minArea = minArea;
     spotterManager->maxArea = maxArea;
+    spotterManager->topBound = topBound;
 
     return true ;
 }
@@ -119,6 +121,23 @@ bool SPOTTERModule::setMinArea(const int32_t area)
     if (area < spotterManager->maxArea && area > 1)
     {
         spotterManager->minArea = area;
+        return true;
+    }else
+        return false;
+}
+
+/**********************************************************/
+int SPOTTERModule::getTopBound()
+{
+    return spotterManager->topBound;
+}
+
+/**********************************************************/
+bool SPOTTERModule::setTopBound(const int32_t topBound)
+{
+    if (topBound < 240 && topBound > 1)
+    {
+        spotterManager->topBound = topBound;
         return true;
     }else
         return false;
@@ -399,7 +418,7 @@ void SPOTTERManager::onRead(ImageOf<yarp::sig::PixelRgb> &img)
 
         for( int i = 0; i< cnt.size(); i++ )
         {
-            if (mu[i].m00 > minArea &&  mu[i].m00 < maxArea && mc[i].y > 30)
+            if (mu[i].m00 > minArea &&  mu[i].m00 < maxArea && mc[i].y > topBound)
             {
                 //printf(" * Contour[%d] -X[%lf]  -Y[%lf] -Area  = %.2f -Area OpenCV: %.2f -Length: %.2f \n", i, mc[i].x, mc[i].y, mu[i].m00, contourArea(cnt[i]), arcLength( cnt[i], true ) );
 
