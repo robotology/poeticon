@@ -257,7 +257,7 @@ def planning_cycle():
             geo_bottle_out.addString('update')
             geo_yarp.write()
             while 1:
-                print 'waiting....'
+                print 'grounding...'
                 geo_bottle_in = geo_yarp.read(False)
                 if geo_bottle_in:
                     command = geo_bottle_in.toString()
@@ -274,7 +274,6 @@ def planning_cycle():
             if Aff_bottle_in:
                 data = Aff_bottle_in.toString()
                 data = data.replace('"','').split(' ')
-                print "tool position received:\n", data
                 toolhandle = data
                 break
             yarp.Time.delay(0.1)
@@ -302,7 +301,6 @@ def planning_cycle():
         while 1:
             if goal_yarp.getOutputCount() != 0:
                 break
-        print 'goal connection done'
 ##        if mode != 1 and mode != 4:
 ##            instructions = [['hand','grasp','cheese'],['cheese','reach','bun-bottom'],['hand','put','cheese'],['hand','grasp','bun-top'],['bun-top','reach','cheese'],['hand','put','bun-top']]
 ##            goal_bottle_out = goal_yarp.prepare()
@@ -319,7 +317,7 @@ def planning_cycle():
         goal_yarp.write()
         while 1:
             goal_bottle_in = goal_yarp.read(False)
-            print 'waiting...'
+            print 'waiting for goal...'
             if goal_bottle_in:
                 command = goal_bottle_in.toString()
                 break
@@ -461,24 +459,24 @@ def planning_cycle():
 ##                            print 'ispullable/reachable'
 ##                            print state[j].split('_')[3].replace('()',''), tool
                             if (state[j].split('_')[3].replace('()','') == tool) and (state[j] not in old_state):
-                                print 'pullable/reachable changed'
+                             ##   print 'pullable/reachable changed'
                                 new_sym = copy.deepcopy(state[j])
 ##                                print new_sym.find('-')
 ##                                print new_sym
                                 if new_sym.find('-') == -1:
                                     new_sym = ''.join(['-'] + [new_sym])
-                                    print 'symbol was positive, should be negative'
+                               ##     print 'symbol was positive, should be negative'
 ##                                    print old_state[j]
 ##                                    print state[j]
-                                    print new_sym
+                                  ##  print new_sym
                                     state[j] = new_sym
                                 else:
-                                    print '\n', new_sym
+                                 ##   print '\n', new_sym
                                     new_sym = new_sym.replace('-','')
-                                    print 'symbol was negative, should be positive'
+                                   ## print 'symbol was negative, should be positive'
 ##                                    print old_state[j]
 ##                                    print state[j]
-                                    print new_sym
+                                   ## print new_sym
                                     state[j] = new_sym
 ##                    print state
                     state_file = open(''.join(PathName + "/state.dat"),'w')
@@ -559,7 +557,7 @@ def planning_cycle():
                             horizon = int(temp_var[1])
                             horizon = horizon + 1
                             config_data[w+2] = 'PRADA_horizon %d' %horizon
-                            raw_input('no action found, press enter to continue.')
+                            raw_input('press enter to continue.')
                             break
                     config_file.close()
                     config_file = open(''.join(PathName +"/config"), 'w')
