@@ -109,6 +109,23 @@ def goal_imaginer():
             ## state = verificar maos (query hand clearance), verificar objectos (query world state)
             ## objects = object name list
             ## we can create a state from here (replacing _obj with the name)
+
+## test function to check if the praxicon and the object_names-IDs have the same objects!!!
+##            goal_fail = 0
+##            for g in range(len(instructions)):
+##                for y in range(len(instructions[g])):
+##                    flag_ok = 1
+##                    for t in range(len(translat)):
+##                        if translat[t][1] == instructions[g][y]:
+##                            flag_ok = 0
+##                            break
+##                    if flag_ok == 1:
+##                        goal_fail = 1
+##                        break
+##                if goal_fail == 1:
+##                    print 'unknown objects detected, stopping compiling'
+##                    break
+##            if goal_fail != 1:
             first_inst = instructions[0]
             for i in range(0,len(actions)):
                 if actions[i].find("%s_" %first_inst[1]) != -1:
