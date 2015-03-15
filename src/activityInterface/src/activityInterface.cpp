@@ -131,6 +131,8 @@ bool ActivityInterface::configure(yarp::os::ResourceFinder &rf)
     
     blobsPort.open(("/"+moduleName+"/blobs:i").c_str());
     
+    rpcKarma.open(("/"+moduleName+"/karma:o").c_str());
+    
     yarp::os::Network::connect(("/"+moduleName+"/arecmd:rpc").c_str(), "/actionsRenderingEngine/cmd:io");
     yarp::os::Network::connect(("/"+moduleName+"/are:rpc").c_str(), "/actionsRenderingEngine/get:io");
     yarp::os::Network::connect(("/"+moduleName+"/memory:rpc").c_str(), "/memory/rpc");
@@ -140,6 +142,8 @@ bool ActivityInterface::configure(yarp::os::ResourceFinder &rf)
     yarp::os::Network::connect("/icub/camcalib/left/out", inputImagePortName.c_str());
     yarp::os::Network::connect(("/"+moduleName+"/praxicon:rpc").c_str(), "/praxInterface/speech:i");
     yarp::os::Network::connect(("/blobSpotter/blobs:o"), ("/"+moduleName+"/blobs:i").c_str());
+    
+    yarp::os::Network::connect(("/"+moduleName+"/karma:o"), ("/karmaMotor/rpc"));
     
     if (with_robot)
     {
@@ -259,6 +263,7 @@ bool ActivityInterface::interruptModule()
     praxiconToPradaPort.interrupt();
     imagePortIn.interrupt();
     blobsPort.interrupt();
+    rpcKarma.interrupt();
     semaphore.post();
     return true;
 }
@@ -284,6 +289,7 @@ bool ActivityInterface::close()
     praxiconToPradaPort.close();
     imagePortIn.close();
     blobsPort.close();
+    rpcKarma.close();
     fprintf(stdout, "[closing] finished shutdown procedure\n");
     semaphore.post();
     return true;
@@ -821,8 +827,8 @@ Bottle ActivityInterface::getOffset(const string &objName)
     if (strcmp ("rake", objName.c_str() ) == 0)
     {
         toolOffset.addDouble(0.18);
-        toolOffset.addDouble(-0.18);
-        toolOffset.addDouble(0.04); //left hand should be negative
+        toolOffset.addDouble(-0.18); //right hand should be negative
+        toolOffset.addDouble(0.04);
     }
     else if (strcmp ("stick", objName.c_str() ) == 0)
     {
@@ -1312,62 +1318,57 @@ bool ActivityInterface::askForTool(const std::string &handName, const int32_t po
     cmdHome.addString("head");
     rpcAREcmd.write(cmdHome,cmdReply);
     
-    executeSpeech ("can you give me the " + label + "please?");
+    if (!label.empty())
+    {
+        executeSpeech ("can you give me the " + label + "please?");
+        
+        fprintf(stdout, "[askForTool] tool label is: %s \n",label.c_str());
+        
+        pauseAllTrackers();
+        Bottle cmdAre, replyAre;
+        cmdAre.clear();
+        replyAre.clear();
+        cmdAre.addString("point");
+        Bottle &tmp=cmdAre.addList();
+        tmp.addInt (pos_x);
+        tmp.addInt (pos_y);
+        
+        cmdAre.addString(handName.c_str());
+        rpcAREcmd.write(cmdAre,replyAre);
+        
+        cmdAre.clear();
+        replyAre.clear();
+        cmdAre.addString("tato");
+        cmdAre.addString(handName.c_str());
+        rpcAREcmd.write(cmdAre, replyAre);
+        
+        fprintf(stdout, "[askForTool] done tato\n");
+        
+        cmdAre.clear();
+        replyAre.clear();
+        cmdAre.addString("clto");
+        cmdAre.addString(handName.c_str());
+        rpcAREcmd.write(cmdAre, replyAre);
+        Time::delay(5.0);
+        fprintf(stdout, "[askForTool] done close\n");
+        
+        cmdAre.clear();
+        replyAre.clear();
+        cmdAre.addString("home");
+        cmdAre.addString("arms");
+        cmdAre.addString("head");
+        rpcAREcmd.write(cmdAre, replyAre);
+        
+        //update inHandStatus map
+        inHandStatus.insert(pair<string, string>(label.c_str(), handName.c_str()));
+        
+        resumeAllTrackers();
+    }
+    else
+    {
+        executeSpeech ("I cannot see anything at this position");
+    }
     
-    fprintf(stdout, "[askForTool] tool label is: %s \n",label.c_str());
-    
-    pauseAllTrackers();
-    Bottle cmdAre, replyAre;
-    cmdAre.clear();
-    replyAre.clear();
-    cmdAre.addString("point");
-    Bottle &tmp=cmdAre.addList();
-    tmp.addInt (pos_x);
-    tmp.addInt (pos_y);
-    
-    cmdAre.addString(handName.c_str());
-    rpcAREcmd.write(cmdAre,replyAre);
-    
-    cmdAre.clear();
-    replyAre.clear();
-    cmdAre.addString("tato");
-    cmdAre.addString(handName.c_str());
-    rpcAREcmd.write(cmdAre, replyAre);
-    
-    fprintf(stdout, "[askForTool] done tato\n");
-    
-    cmdAre.clear();
-    replyAre.clear();
-    cmdAre.addString("clto");
-    cmdAre.addString(handName.c_str());
-    rpcAREcmd.write(cmdAre, replyAre);
-    Time::delay(5.0);
-    fprintf(stdout, "[askForTool] done close\n");
-    
-    cmdAre.clear();
-    replyAre.clear();
-    cmdAre.addString("home");
-    cmdAre.addString("arms");
-    cmdAre.addString("head");
-    rpcAREcmd.write(cmdAre, replyAre);
-    
-    //update inHandStatus map
-    inHandStatus.insert(pair<string, string>(label.c_str(), handName.c_str()));
-    
-    resumeAllTrackers();
-    
-    return true;
-}
-
-/**********************************************************/
-bool ActivityInterface::pull(const string &objName, const string &toolName)
-{
-    pauseAllTrackers();
-    fprintf(stdout, "[pull] asked to pull %s with %s\n", objName.c_str(), toolName.c_str());
-    //ask for tool
-    //do the pulling action
-    fprintf(stdout, "[pull] done");
-    resumeAllTrackers();
     return true;
 }
 
@@ -1375,7 +1376,111 @@ bool ActivityInterface::pull(const string &objName, const string &toolName)
 bool ActivityInterface::push(const string &objName, const string &toolName)
 {
     pauseAllTrackers();
-    fprintf(stdout, "[push] asked to push %s with %s\n", objName.c_str(), toolName.c_str());
+    fprintf(stdout, "[push] asked to pull %s with %s\n", objName.c_str(), toolName.c_str());
+    //ask for tool
+    //do the pulling action
+    fprintf(stdout, "[push] done");
+    resumeAllTrackers();
+    return true;
+}
+
+/**********************************************************/
+bool ActivityInterface::pull(const string &objName, const string &toolName)
+{
+    pauseAllTrackers();
+    
+    fprintf(stdout, "[pull] asked to pull %s with %s\n", objName.c_str(), toolName.c_str());
+    Bottle position = get3D(objName);
+    Bottle toolOffest = getOffset(objName);
+    
+    //tool attach
+    string handName = inHand(toolName);
+    
+    fprintf(stdout, "[pull] will use the %s hand on position %s\n", handName.c_str(), position.toString().c_str());
+    
+    if (strcmp (handName.c_str(), "none" ) != 0 && position.size()>0)
+    {
+    
+        fprintf(stdout, "[pull] will remove any tool\n");
+        Bottle cmdkarma, replykarma;
+        cmdkarma.clear();
+        cmdkarma.clear();
+        cmdkarma.addString("tool");
+        cmdkarma.addString("remove");
+        
+        rpcKarma.write(cmdkarma, replykarma);
+        
+        fprintf(stdout, "[pull] will attach the tool using\n");
+        
+        cmdkarma.clear();replykarma.clear();
+        cmdkarma.addString("tool");
+        cmdkarma.addString("attach");
+        cmdkarma.addString(handName.c_str());
+        cmdkarma.addDouble(0.18);
+        cmdkarma.addDouble(-0.18);
+        
+        if (strcmp (handName.c_str(), "left" ) == 0)
+            cmdkarma.addDouble(0.04);
+        else
+            cmdkarma.addDouble(-0.04);
+
+        fprintf(stdout,"%s\n",cmdkarma.toString().c_str());
+        rpcKarma.write(cmdkarma, replykarma);
+        
+        double result = 0.0;
+        double xoffset = 0.05;
+        
+        fprintf(stdout,"Will now send to karmaMotor:\n");
+        Bottle karmaMotor,KarmaReply;
+        karmaMotor.addString("vdraw");
+        karmaMotor.addDouble(position.get(0).asDouble() + 0.05);
+        karmaMotor.addDouble(position.get(1).asDouble());
+        karmaMotor.addDouble(position.get(2).asDouble() + xoffset);
+        karmaMotor.addDouble(90.0);
+        karmaMotor.addDouble(0.04); //10 cm
+        karmaMotor.addDouble(0.1);
+        fprintf(stdout,"will send \n %s to KarmaMotor \n", karmaMotor.toString().c_str());
+        rpcKarma.write(karmaMotor, KarmaReply);
+        
+        fprintf(stdout,"vdraw is %s:\n",KarmaReply.toString().c_str());
+        result = KarmaReply.get(1).asDouble();
+        
+        fprintf(stdout,"vdraw is %lf:\n",result);
+        
+        if (result > 0 && result < 0.2)
+        {
+            
+            Bottle karmaMotor,KarmaReply;
+            karmaMotor.addString("draw");
+            karmaMotor.addDouble(position.get(0).asDouble() + 0.05);
+            karmaMotor.addDouble(position.get(1).asDouble());
+            karmaMotor.addDouble(position.get(2).asDouble() + xoffset);
+            karmaMotor.addDouble(90.0);
+            karmaMotor.addDouble(0.04);
+            karmaMotor.addDouble(0.15);
+            fprintf(stdout,"will send \n %s to KarmaMotor \n", karmaMotor.toString().c_str());
+            rpcKarma.write(karmaMotor, KarmaReply);
+            
+            Bottle are,reply;
+            are.clear(),reply.clear();
+            are.addString("home");
+            are.addString("head");
+            are.addString("arms");
+            rpcAREcmd.write(are,reply);
+            
+        }
+        else
+        {
+            executeSpeech("I cannot safely do this");
+        }
+    }
+    else
+    {
+        executeSpeech("I have nothing in my hand");
+    }
+    
+    
+    
     //ask for tool
     //do the pushing action
     fprintf(stdout, "[push] done");

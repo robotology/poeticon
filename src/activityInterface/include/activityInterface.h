@@ -88,6 +88,8 @@ protected:
     yarp::os::RpcClient                 rpcWorldState;
     yarp::os::RpcClient                 rpcIolState;
     
+    yarp::os::RpcClient                 rpcKarma;
+    
     yarp::os::RpcClient                 rpcPraxiconInterface;
     
     yarp::os::Port                      praxiconToPradaPort;
