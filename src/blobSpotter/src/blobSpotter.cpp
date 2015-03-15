@@ -27,8 +27,8 @@ bool SPOTTERModule::configure(yarp::os::ResourceFinder &rf)
     moduleName = rf.check("name", Value("blobSpotter"), "module name (string)").asString();
 
     
-    int minArea = rf.check("minArea", Value("100"), "min area (int)").asInt();
-    int maxArea = rf.check("minArea", Value("3000"), "max area (int)").asInt();
+    int minArea = rf.check("minArea", Value(500), "min area (int)").asInt();
+    int maxArea = rf.check("minArea", Value(3000), "max area (int)").asInt();
     
     setName(moduleName.c_str());
 
@@ -195,8 +195,8 @@ SPOTTERManager::SPOTTERManager( const string &moduleName )
     this->moduleName = moduleName;
     roiPoints.setManager(this);
     deleted = false;
-    minArea = 100;
-    maxArea = 2000;
+    //minArea = 500;
+    //maxArea = 3000;
 }
 
 /**********************************************************/
