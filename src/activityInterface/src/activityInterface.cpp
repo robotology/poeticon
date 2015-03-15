@@ -457,6 +457,11 @@ bool ActivityInterface::processSpeech(const Bottle &speech)
 bool ActivityInterface::processPradaStatus(const Bottle &status)
 {
     Bottle objectsUsed;
+    Bottle buns;
+    buns.addString("bun-bottom");
+    buns.addString("bun-top");
+    int passed[buns.size()];
+    
     if ( status.size() > 0 )
     {
         fprintf(stdout, "[processPradaStatus] the status is %s \n", status.toString().c_str());
@@ -464,11 +469,22 @@ bool ActivityInterface::processPradaStatus(const Bottle &status)
         {
             for (int i=1; i< status.size(); i++)
             {
-                if (strcmp (status.get(i).asString().c_str(), "bun_bottom" ) != 0 && strcmp (status.get(i).asString().c_str(), "bun_top" ) != 0)
+                for (int x=0; x<buns.size(); x++)
+                    passed[x] = 0;
+                
+                for (int ii=0; ii<buns.size(); ii++)
+                    if (strcmp (status.get(i).asString().c_str(), buns.get(ii).asString().c_str() ) != 0 )
+                        passed[ii] = 1;
+                
+                int total=0;
+                for (int x=0; x<buns.size(); x++)
+                    total+=passed[x];
+                        
+                if (total==buns.size())
                     objectsUsed.addString(status.get(i).asString().c_str());
-
             }
             executeSpeech("I made a " + objectsUsed.toString() + " sandwich");
+            fprintf(stdout, "[processPradaStatus] made a %s \n", objectsUsed.toString().c_str());
         }
         else if (strcmp (status.get(0).asString().c_str(), "FAIL" ) == 0)
         {
