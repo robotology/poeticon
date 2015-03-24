@@ -19,7 +19,6 @@ WorldStateMgrThread::WorldStateMgrThread(
       playbackMode(_playbackMode),
       countFrom(_countFrom)
 {
-    //yDebug("constructed thread");
 }
 
 bool WorldStateMgrThread::openPorts()
@@ -132,6 +131,8 @@ bool WorldStateMgrThread::initCommonVars()
 
 bool WorldStateMgrThread::dumpWorldState()
 {
+    // TODO: remove refresh*() calls
+
     if (opcPort.getOutputCount() < 1)
     {
         yWarning() << __func__ << "not connected to WSOPC";
@@ -139,20 +140,13 @@ bool WorldStateMgrThread::dumpWorldState()
     }
 
     refreshOPC();
-    //yDebug() << "opcIDs =" << opcIDs;
 
     if (!playbackMode)
     {
         // perception mode
         mergeMaps(opcMap, trackMap, wsMap);
         if (trackerInit)
-        {
             refreshTracker();
-
-            //yDebug("opcMap, trackMap:");
-            //dumpMap(opcMap);
-            //dumpMap(trackMap);
-        }
     }
     else
     {
@@ -246,140 +240,18 @@ bool WorldStateMgrThread::initTracker()
         trackerCmd.addDouble(u);
         trackerCmd.addDouble(v);
         //yDebug() << __func__ <<  "sending fixation request to tracker:" << trackerCmd.toString().c_str();
-        double start = Time::now();
         trackerPort.write(trackerCmd,trackerReply);
-        //yDebug("time elapsed: %f seconds", (Time::now() - start) );
         //yDebug() << __func__ <<  "obtained response:" << trackerReply.toString().c_str();
 
         if (trackerReply.size()>0 && trackerReply.get(0).isInt() && trackerReply.get(0).asInt()!=-1)
-            yInfo("id %d: %f %f", trackerReply.get(0).asInt(), u, v);
+            yInfo("%f %f -> id %d", u, v, trackerReply.get(0).asInt());
         else
-            yWarning("problem initializing tracker with fixation %f %f, got invalid response %s, was expecting %d",
+            yWarning("problem initializing tracker with fixation %f %f, got invalid response %s, was expecting an integer such as %d",
                 u, v, trackerReply.toString().c_str(), countFrom+a);
     }
     yInfo("done initializing tracker");
 
     return true;
-}
-
-bool WorldStateMgrThread::pauseTrack(const string &objName)
-{
-    if (trackerPort.getOutputCount() < 1)
-    {
-        yWarning("not connected to /activeParticleTrack/rpc:i");
-        return false;
-    }
-
-    if (!trackerInit)
-    {
-        yWarning("tracker was not initialized by WSM yet: not going to pause %s", objName.c_str());
-        return false;
-    }
-
-    int id;
-    id = label2id(objName);
-    if (id==-1)
-    {
-        yWarning() << __func__ << "did not find tracker ID corresponding to label, not going to pause" << objName.c_str();
-        return false;
-    }
-
-    Bottle trackerCmd, trackerReply;
-    trackerCmd.addString("pause");
-    trackerCmd.addInt(id);
-    trackerPort.write(trackerCmd, trackerReply);
-    //yDebug() << __func__ <<  "sending query to activeParticleTracker:" << trackerCmd.toString().c_str();
-    bool validResponse = false;
-    validResponse = ( (trackerReply.size()>0) &&
-                      (trackerReply.get(0).asVocab()==Vocab::encode("ok")) );
-    if (validResponse)
-        //yDebug() << __func__ <<  "obtained valid response:" << trackerReply.toString().c_str();
-        ;
-    else
-        yWarning() << __func__ <<  "obtained invalid response:" << trackerReply.toString().c_str();
-
-    return true;
-}
-
-bool WorldStateMgrThread::resumeTrack(const string &objName)
-{
-    if (trackerPort.getOutputCount() < 1)
-    {
-        yWarning("not connected to /activeParticleTrack/rpc:i");
-        return false;
-    }
-
-    if (!trackerInit)
-    {
-        yWarning("tracker was not initialized by WSM yet: not going to resume %s", objName.c_str());
-        return false;
-    }
-
-    int id;
-    id = label2id(objName);
-    if (id==-1)
-    {
-        yWarning() << __func__ << "did not find tracker ID corresponding to label, not going to resume" << objName.c_str();
-        return false;
-    }
-
-    Bottle trackerCmd, trackerReply;
-    trackerCmd.addString("resume");
-    trackerCmd.addInt(id);
-    trackerPort.write(trackerCmd, trackerReply);
-    //yDebug() << __func__ <<  "sending query to activeParticleTracker:" << trackerCmd.toString().c_str();
-    bool validResponse = false;
-    validResponse = ( (trackerReply.size()>0) &&
-                      (trackerReply.get(0).asVocab()==Vocab::encode("ok")) );
-    if (validResponse)
-        //yDebug() << __func__ <<  "obtained valid response:" << trackerReply.toString().c_str();
-        ;
-    else
-        yWarning() << __func__ <<  "obtained invalid response:" << trackerReply.toString().c_str();
-
-    return true;
-}
-
-Bottle WorldStateMgrThread::getColorHistogram(const int32_t &u, const int32_t &v)
-{
-    Bottle colors;
-
-    if (inAffPort.getInputCount() < 1)
-    {
-        yWarning("not connected to BlobDescriptor!");
-        return colors;
-    }
-
-    // look for Affordance Bottle Index: between 1 and NumBlobs
-    int abi = 0;
-    if ( !getAffBottleIndexFromTrackROI(u, v, abi) )
-    {
-        yWarning("problem with getAffBottleIndexFromTrackROI");
-        return colors;
-    }
-
-    if (abi > 0)
-    {
-        yDebug() << __func__ << "found affordance blob index" << abi << "from coordinates" << u << v;
-    }
-    else
-    {
-        yDebug() << "getAffBottleIndexFromTrackROI did not find affordance blob index from coordinates" << u << v;
-        return colors;
-    }
-
-    int firstColorIdx = 7;
-    int lastColorIdx = 22;
-    if (inAff != NULL)
-    {
-        for (int col = firstColorIdx; col <= lastColorIdx; ++col)
-        {
-            colors.addDouble(inAff->get(abi).asList()->get(firstColorIdx+col).asDouble());
-        }
-    }
-    yDebug() << "found color histogram:" << colors.toString().c_str();
-
-    return colors;
 }
 
 void WorldStateMgrThread::fsmPerception()
@@ -493,15 +365,9 @@ void WorldStateMgrThread::fsmPerception()
                 validResponse = ( activityReply.size()>0 &&
                                   activityReply.get(0).asVocab()==Vocab::encode("ok") );
 
-                if (validResponse)
-                {
-                    //yDebug() << __func__ <<  "obtained valid response:" << activityReply.toString().c_str();
-                    ;
-                }
-                else
-                {
+                if (!validResponse)
                     yWarning() << __func__ <<  "obtained invalid response:" << activityReply.toString().c_str();
-                }
+
                 toldActivityGoHome = true;
             }
 
@@ -535,7 +401,6 @@ void WorldStateMgrThread::fsmPerception()
                 }
             }
 
-            // initialize multi-object active particle tracker
             if (!trackerInit)
             {
                 initTracker();
@@ -597,10 +462,7 @@ void WorldStateMgrThread::fsmPerception()
         {
             // read new data and ensure validity
             refreshPerceptionAndValidate();
-
-            //yInfo("updating world state map");
             mergeMaps(opcMap, trackMap, wsMap);
-            //dumpMap(wsMap);
 
             // populate database: if success proceed, else stay in same state
             if ( doPopulateDB() )
@@ -630,18 +492,10 @@ void WorldStateMgrThread::fsmPerception()
             {
                 // read new data and ensure validity
                 refreshPerceptionAndValidate();
-
-                //yInfo("current world state map");
-                //dumpMap(wsMap);
-                //yInfo("updating world state map");
                 mergeMaps(opcMap, trackMap, wsMap);
-                //dumpMap(wsMap);
 
                 // populate database
-                if ( doPopulateDB() )
-                    //yDebug() << __func__ << "successfully populated database";
-                    ;
-                else
+                if ( !doPopulateDB() )
                     yWarning() << __func__ << "problem populating database";
 
                 needUpdate = false;
@@ -666,7 +520,6 @@ void WorldStateMgrThread::refreshOPC()
     if (opcPort.getOutputCount()>0)
     {
         refreshOPCIDs();
-
         refreshOPCNames();
     }
 }
@@ -815,8 +668,6 @@ void WorldStateMgrThread::refreshBlobs()
             yWarning("number of whole object descriptors differ from number of object parts descriptors!");
         }
     }
-
-    //yDebug("successfully refreshed blob descriptor input");
 }
 
 void WorldStateMgrThread::refreshTracker()
@@ -839,8 +690,6 @@ void WorldStateMgrThread::refreshTracker()
                 refreshTrackNames();
             }
         }
-        //else
-        //    yDebug() << __func__ << "trackIDs did not change, no need to refresh names";
     }
     else
     {
@@ -888,7 +737,6 @@ bool WorldStateMgrThread::refreshPerceptionAndValidate()
         ;
     }
 
-    //yDebug("successfully refreshed and validated perception");
     return true;
 }
 
@@ -1223,9 +1071,7 @@ bool WorldStateMgrThread::doPopulateDB()
         }
     }
 
-    //yInfo("updating world state map");
     mergeMaps(opcMap, trackMap, wsMap);
-    //dumpMap(wsMap);
 
     // send "dump" instruction to WSOPC
     Bottle opcCmd, opcReply;
@@ -1257,7 +1103,8 @@ bool WorldStateMgrThread::getTrackerBottleIndexFromID(const int &id, int &tbi)
 {
     // assumption: activeParticleTrack is streaming a Bottle with ordered IDs:
     // ((13 ...) (14 ...) (15 ...))
-    
+    // TODO: verify that this is the case, else reorder
+
     // first, check that id key exists in wsMap
     if ( wsMap.find(id)==wsMap.end() )
     {
@@ -1392,8 +1239,7 @@ bool WorldStateMgrThread::getLabel(const int &u, const int &v, string &label)
     activityPort.write(activityCmd, activityReply);
 
     bool validResponse = false;
-    validResponse = ( //activityReply.size()>0 &&
-                      activityReply.get(0).isString() );
+    validResponse = activityReply.get(0).isString();
 
     if (validResponse)
     {
@@ -1423,18 +1269,14 @@ struct compareSecond
 bool WorldStateMgrThread::getLabelMajorityVote(const int &u, const int &v, string &winnerLabel, const int &rounds)
 {
     int majority = ceil( static_cast<double>(rounds/2.0) );
-    yDebug("getLabel (with majority vote) %d %d", u, v);
-    //yDebug("will make %d voting rounds -> needed majority: %d", rounds, majority);
 
     // accumulate vote strings
     vector<string> votes;
     for (int r=0; r<rounds; ++r)
     {
-        //yDebug("round %d", r);
         string thisVote;
         if (getLabel(u, v, thisVote))
         {
-            //yDebug("**** received: %s which has size %d, empty()=%d ******", thisVote.c_str(), thisVote.size(), thisVote.empty());
             if (!thisVote.empty())
                 votes.push_back(thisVote);
         }
@@ -1449,7 +1291,6 @@ bool WorldStateMgrThread::getLabelMajorityVote(const int &u, const int &v, strin
 
     // sort strings
     sort(votes.begin(), votes.end());
-    //yDebug() << "sorted votes:" << votes << "size =" << votes.size();
 
     // histogram with corresponding counts - http://stackoverflow.com/a/9616995
     typedef map<string, int> counts_t;
@@ -1461,20 +1302,8 @@ bool WorldStateMgrThread::getLabelMajorityVote(const int &u, const int &v, strin
         ++histogram[*iter];
     }
 
-    /*
-    // display histogram
-    for(counts_t::const_iterator iter = histogram.begin();
-        iter != histogram.end();
-        ++iter)
-    {
-        //int freq = static_cast<int>(iter->second) / histogram.size();
-        yDebug() << "histogram count for" << iter->first << ": " << static_cast<int>(iter->second);
-    }
-    */
-
     // pick winner - http://stackoverflow.com/a/3798349
     std::pair<string, int> max_el = *std::max_element(histogram.begin(), histogram.end(), compareSecond());
-    //yDebug() << "winner is" << max_el.first << "having count" << max_el.second;
     if (max_el.second < majority)
         yWarning("selected winning label --> %s <-- with %d/%d non-empty entries after %d queries, despite being less than majority %d",
                  max_el.first.c_str(), max_el.second, votes.size(), rounds, majority);
@@ -1757,6 +1586,135 @@ string WorldStateMgrThread::inWhichHand(const string &objName)
     return ret;
 }
 
+// IDL functions
+bool WorldStateMgrThread::pauseTrack(const string &objName)
+{
+    if (playbackMode)
+    {
+        yWarning("not available in playback mode, requires perception mode!");
+        return false;
+    }
+
+    if (trackerPort.getOutputCount() < 1)
+    {
+        yWarning("not connected to /activeParticleTrack/rpc:i");
+        return false;
+    }
+
+    if (!trackerInit)
+    {
+        yWarning("tracker was not initialized by WSM yet: not going to pause %s", objName.c_str());
+        return false;
+    }
+
+    int id;
+    id = label2id(objName);
+    if (id==-1)
+    {
+        yWarning() << __func__ << "did not find tracker ID corresponding to label, not going to pause" << objName.c_str();
+        return false;
+    }
+
+    Bottle trackerCmd, trackerReply;
+    trackerCmd.addString("pause");
+    trackerCmd.addInt(id);
+    trackerPort.write(trackerCmd, trackerReply);
+    //yDebug() << __func__ <<  "sending query to activeParticleTracker:" << trackerCmd.toString().c_str();
+    bool validResponse = false;
+    validResponse = ( (trackerReply.size()>0) &&
+                      (trackerReply.get(0).asVocab()==Vocab::encode("ok")) );
+    if (!validResponse)
+        yWarning() << __func__ <<  "obtained invalid response:" << trackerReply.toString().c_str();
+
+    return true;
+}
+
+bool WorldStateMgrThread::resumeTrack(const string &objName)
+{
+    if (playbackMode)
+    {
+        yWarning("not available in playback mode, requires perception mode!");
+        return false;
+    }
+
+    if (trackerPort.getOutputCount() < 1)
+    {
+        yWarning("not connected to /activeParticleTrack/rpc:i");
+        return false;
+    }
+
+    if (!trackerInit)
+    {
+        yWarning("tracker was not initialized by WSM yet: not going to resume %s", objName.c_str());
+        return false;
+    }
+
+    int id;
+    id = label2id(objName);
+    if (id==-1)
+    {
+        yWarning() << __func__ << "did not find tracker ID corresponding to label, not going to resume" << objName.c_str();
+        return false;
+    }
+
+    Bottle trackerCmd, trackerReply;
+    trackerCmd.addString("resume");
+    trackerCmd.addInt(id);
+    trackerPort.write(trackerCmd, trackerReply);
+    //yDebug() << __func__ <<  "sending query to activeParticleTracker:" << trackerCmd.toString().c_str();
+    bool validResponse = false;
+    validResponse = ( (trackerReply.size()>0) &&
+                      (trackerReply.get(0).asVocab()==Vocab::encode("ok")) );
+    if (!validResponse)
+        yWarning() << __func__ <<  "obtained invalid response:" << trackerReply.toString().c_str();
+
+    return true;
+}
+
+Bottle WorldStateMgrThread::getColorHistogram(const int32_t &u, const int32_t &v)
+{
+    Bottle colors;
+
+    if (playbackMode)
+    {
+        yWarning("not available in playback mode, requires perception mode!");
+        return colors;
+    }
+
+    if (inAffPort.getInputCount() < 1)
+    {
+        yWarning("not connected to BlobDescriptor!");
+        return colors;
+    }
+
+    // look for Affordance Bottle Index: between 1 and NumBlobs
+    int abi = 0;
+    if ( !getAffBottleIndexFromTrackROI(u, v, abi) )
+    {
+        yWarning("problem with getAffBottleIndexFromTrackROI");
+        return colors;
+    }
+
+    if (abi > 0)
+        yDebug() << __func__ << "found affordance blob index" << abi << "from coordinates" << u << v;
+    else
+    {
+        yDebug() << "getAffBottleIndexFromTrackROI did not find affordance blob index from coordinates" << u << v;
+        return colors;
+    }
+
+    int firstColorIdx = 7;
+    int lastColorIdx = 22;
+    if (inAff != NULL)
+    {
+        for (int col = firstColorIdx; col <= lastColorIdx; ++col)
+            colors.addDouble(inAff->get(abi).asList()->get(firstColorIdx+col).asDouble());
+    }
+    yDebug() << "found color histogram:" << colors.toString().c_str();
+
+    return colors;
+}
+
 /* ************************************************************************** */
 /* playback mode                                                              */
 /* ************************************************************************** */
@@ -1769,6 +1727,11 @@ bool WorldStateMgrThread::initPlaybackVars()
     currPlayback = -1;
 
     return true;
+}
+
+void WorldStateMgrThread::setPlaybackFile(const string &file)
+{
+    playbackFile = file;
 }
 
 void WorldStateMgrThread::fsmPlayback()
@@ -1895,10 +1858,10 @@ void WorldStateMgrThread::fsmPlayback()
                             obj_j->get(0).asList()->get(1).asInt())
                         {
                             yWarning() << "ID problem:" <<
-                            opcReply.get(1).asList()->get(1).asInt() <<
-                            "in OPC database, but" <<
-                            obj_j->get(0).asList()->get(1).asInt() <<
-                            "in playback file";
+                                opcReply.get(1).asList()->get(1).asInt() <<
+                                "in WSOPC database, but" <<
+                                obj_j->get(0).asList()->get(1).asInt() <<
+                                "in playback file";
 
                             //break;
                         }
@@ -1951,9 +1914,4 @@ void WorldStateMgrThread::fsmPlayback()
             break;
         }
     }
-}
-
-bool WorldStateMgrThread::setPlaybackFile(const string &file)
-{
-    playbackFile = file;
 }

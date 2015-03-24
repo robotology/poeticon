@@ -89,7 +89,7 @@ class WorldStateMgrThread : public RateThread
         int fsmState;
         bool toldUserConnectOPC;
         bool toldUserOPCConnected;
-        int countFrom; // perception only, but always initialized
+        int countFrom;
 
         // perception mode
         bool needUpdate;
@@ -138,12 +138,6 @@ class WorldStateMgrThread : public RateThread
         // perception mode
         bool initPerceptionVars();
         bool initTracker();
-
-        // IDL functions
-        bool pauseTrack(const string &objName);
-        bool resumeTrack(const string &objName);
-        Bottle getColorHistogram(const int32_t &u, const int32_t &v);
-
         void fsmPerception();
         void refreshOPC();
         void refreshOPCIDs();
@@ -173,9 +167,14 @@ class WorldStateMgrThread : public RateThread
         bool isHandFree(const string &handName);
         string inWhichHand(const string &objName);
 
+        // IDL functions
+        bool pauseTrack(const string &objName);
+        bool resumeTrack(const string &objName);
+        Bottle getColorHistogram(const int32_t &u, const int32_t &v);
+
         // playback mode
         bool initPlaybackVars();
-        bool setPlaybackFile(const string &_file);
+        void setPlaybackFile(const string &_file);
         void fsmPlayback();
 };
 

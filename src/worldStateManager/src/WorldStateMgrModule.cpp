@@ -11,11 +11,16 @@
 
 bool WorldStateMgrModule::configure(ResourceFinder &rf)
 {
+    // module parameters
     moduleName = rf.check("name", Value("wsm")).asString();
     setName(moduleName.c_str());
+    handlerPortName = "/" + moduleName + "/rpc:i";
+    handlerPort.open(handlerPortName.c_str());
+    attach(handlerPort);
+    closing = false;
 
+    // thread stuff
     threadPeriod = 0.033; // [s]
-
     playbackMode = rf.check("playback");
     if (playbackMode)
     {
@@ -29,14 +34,7 @@ bool WorldStateMgrModule::configure(ResourceFinder &rf)
         else
             yInfo() << "playback file loaded successfully:" << playbackFile;
     }
-
-    // initial thread/track index for activeParticleTrack
-    countFrom = rf.check("countFrom", Value(13)).asInt();
-
-    handlerPortName = "/" + moduleName + "/rpc:i";
-    handlerPort.open(handlerPortName.c_str());
-    attach(handlerPort);
-    closing = false;
+    countFrom = rf.check("countFrom", Value(13)).asInt(); // for activeParticleTrack
 
     // create new thread and pass pointers to the module parameters
     thread = new WorldStateMgrThread(moduleName,
@@ -66,7 +64,7 @@ bool WorldStateMgrModule::interruptModule()
 
 bool WorldStateMgrModule::close()
 {
-    yInfo("closing rpc port");
+    yInfo("closing RPC port");
     handlerPort.close();
 
     yInfo("starting shutdown procedure");
@@ -89,6 +87,7 @@ double WorldStateMgrModule::getPeriod()
     return 0.0;
 }
 
+// IDL functions
 bool WorldStateMgrModule::attach(RpcServer &source)
 {
     return this->yarp().attachAsServer(source);
