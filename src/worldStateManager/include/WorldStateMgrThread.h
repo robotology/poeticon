@@ -10,12 +10,9 @@
 #ifndef __WSM_THREAD_H__
 #define __WSM_THREAD_H__
 
-#include <algorithm>
-#include <cmath>
 #include <iomanip>
 #include <iostream> // __func__
 #include <map>
-#include <sstream>
 #include <string>
 #include <vector>
 #include <yarp/os/Bottle.h>
@@ -29,6 +26,8 @@
 #include <yarp/os/Time.h>
 #include <yarp/os/Vocab.h>
 #include <yarp/sig/Vector.h>
+
+#include "Helpers.h"
 
 // perception mode states
 #define STATE_PERCEPTION_WAIT_OPC         0
@@ -143,18 +142,14 @@ class WorldStateMgrThread : public RateThread
         void refreshOPCIDs();
         void refreshOPCNames();
         void refreshTrackNames();
-        void dumpMap(const idLabelMap &m);
         void refreshBlobs();
         void refreshTracker();
         void updateTrackIDsNoDupes();
         void refreshPerception();
         bool refreshPerceptionAndValidate();
         bool doPopulateDB();
-        bool vectorsDiffer(const std::vector<int> &v1, const std::vector<int> &v2);
-        bool mergeMaps(const idLabelMap &map1, const idLabelMap &map2, idLabelMap &result);
         bool getTrackerBottleIndexFromID(const int &id, int &tbi);
         bool getAffBottleIndexFromTrackROI(const int &u, const int &v, int &abi);
-        bool euclideanDistance(yarp::sig::Vector &v1, yarp::sig::Vector &v2, float &dist);
         int label2id(const string &label);
         bool getLabel(const int &u, const int &v, string &label);
         bool getLabelMajorityVote(const int &u, const int &v, string &winnerLabel, const int &rounds=5);

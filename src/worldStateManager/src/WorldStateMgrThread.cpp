@@ -630,23 +630,6 @@ void WorldStateMgrThread::refreshTrackNames()
     }
 }
 
-void WorldStateMgrThread::dumpMap(const idLabelMap &m)
-{
-    ostringstream fullMapContent; // output stream we'll feed to yDebug macro
-    size_t items_remaining = m.size(); // http://stackoverflow.com/a/151112
-    bool last_iteration = false; 
-    for(idLabelMap::const_iterator iter = m.begin();
-        iter != m.end();
-        ++iter)
-    {
-        fullMapContent << iter->first << " " << iter->second;
-        last_iteration = (items_remaining-- == 1);
-        if (!last_iteration)
-            fullMapContent << "; ";
-    }
-    yInfo() << "<id label>: [" << fullMapContent.str().c_str() << "]";
-}
-
 void WorldStateMgrThread::refreshBlobs()
 {
     // update whole object descriptors
@@ -1085,20 +1068,6 @@ bool WorldStateMgrThread::doPopulateDB()
     return true;
 }
 
-bool WorldStateMgrThread::vectorsDiffer(const std::vector<int> &v1, const std::vector<int> &v2)
-{
-    return std::lexicographical_compare(v1.begin(),v1.end(),
-                                        v2.begin(),v2.end());
-}
-
-bool WorldStateMgrThread::mergeMaps(const idLabelMap &map1, const idLabelMap &map2, idLabelMap &result)
-{
-    result = map1;
-    result.insert(map2.begin(), map2.end());
-
-    return true;
-}
-
 bool WorldStateMgrThread::getTrackerBottleIndexFromID(const int &id, int &tbi)
 {
     // assumption: activeParticleTrack is streaming a Bottle with ordered IDs:
@@ -1182,22 +1151,6 @@ bool WorldStateMgrThread::getAffBottleIndexFromTrackROI(const int &u, const int 
     //yDebug("winner %d (dist=%f)", minBlobIdx, minDist);
 
     abi = minBlobIdx;
-    return true;
-}
-
-bool WorldStateMgrThread::euclideanDistance(yarp::sig::Vector &v1, yarp::sig::Vector &v2, float &dist)
-{
-    if (v1.size() != v2.size())
-    {
-        yWarning() << __func__ << "inputs must have the same size";
-        return false;
-    }
-
-    if (v1.size()==2 && v2.size()==2)
-    {
-        dist = sqrt( pow(v1[0]-v2[0],2.0) + pow(v1[1]-v2[1],2.0) );
-    }
-
     return true;
 }
 
