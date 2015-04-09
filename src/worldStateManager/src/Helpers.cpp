@@ -9,6 +9,7 @@
 
 #include "Helpers.h"
 
+/**********************************************************/
 bool euclideanDistance(yarp::sig::Vector &v1, yarp::sig::Vector &v2, float &dist)
 {
     if (v1.size() != v2.size())
@@ -17,14 +18,16 @@ bool euclideanDistance(yarp::sig::Vector &v1, yarp::sig::Vector &v2, float &dist
         return false;
     }
 
-    if (v1.size()==2 && v2.size()==2)
-    {
-        dist = sqrt( pow(v1[0]-v2[0],2.0) + pow(v1[1]-v2[1],2.0) );
-    }
+    double sum = 0.0;
+    for (int dim=0; dim<v1.size(); ++dim)
+        sum += pow(v1[dim]-v2[dim],2.0);
+
+    dist = sqrt(sum);
 
     return true;
 }
 
+/**********************************************************/
 bool vectorsDiffer(const std::vector<int> &v1, const std::vector<int> &v2)
 {
     return std::lexicographical_compare(v1.begin(),v1.end(),
