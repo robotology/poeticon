@@ -154,9 +154,9 @@ class WorldStateMgrThread : public RateThread
         bool getLabel(const int &u, const int &v, string &label);
         bool getLabelMajorityVote(const int &u, const int &v, string &winnerLabel, const int &rounds=5);
         bool mono2stereo(const string &objName, double &x, double &y, double &z);
-        // TODO: return Bottle instead of std::vector
-        vector<double> getTooltipOffset(const string &objName);
+        bool getTooltipOffset(const string &objName, Bottle &offset);
         vector<string> isUnderOf(const string &objName);
+        //bool isOnTopOf(const string &objName, Bottle &objBelow);
         vector<string> isReachableWith(const string &objName);
         vector<string> isPullableWith(const string &objName);
         bool isHandFree(const string &handName);

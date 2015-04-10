@@ -856,15 +856,7 @@ bool WorldStateMgrThread::doPopulateDB()
             // prepare offset property (end-effector transform when grasping tools)
             bOffset.addString("offset");
             Bottle &bOffsetValue = bOffset.addList();
-            vector<double> offset = getTooltipOffset(bNameValue.c_str());
-
-            if (offset.size()>1)
-            {
-                for (int o=0; o<offset.size(); o++)
-                {
-                    bOffsetValue.addDouble(offset[o]);
-                }
-            }
+            getTooltipOffset(bNameValue.c_str(), bOffsetValue);
 
             if (currentlySeen)
             {
@@ -1310,12 +1302,12 @@ bool WorldStateMgrThread::mono2stereo(const string &objName, double &x, double &
     return true;
 }
 
-vector<double> WorldStateMgrThread::getTooltipOffset(const string &objName)
+bool WorldStateMgrThread::getTooltipOffset(const string &objName, Bottle &offset)
 {
     if (activityPort.getOutputCount() < 1)
     {
         yWarning() << __func__ << "not connected to ActivityIF";
-        return vector<double>();
+        return false;
     }
 
     Bottle activityCmd, activityReply;
@@ -1332,22 +1324,18 @@ vector<double> WorldStateMgrThread::getTooltipOffset(const string &objName)
     if (validResponse)
     {
         //yDebug() << __func__ << "obtained valid response:" << activityReply.toString().c_str();
-        Bottle *bOffset = activityReply.get(0).asList();
-        vector<double> offset; // TODO: pre-allocate size
-        for (int t=0; t<bOffset->size(); t++)
-        {
-            offset.push_back( bOffset->get(t).asDouble() );
-        }
-        return offset;
+        offset = *activityReply.get(0).asList();
+        return true;
     }
     else
     {
         yWarning() << __func__ << "obtained invalid response:" << activityReply.toString().c_str();
-        return vector<double>();
+        return false;
     }
 }
 
 vector<string> WorldStateMgrThread::isUnderOf(const string &objName)
+//bool WorldStateMgrThread::isOnTopOf(const string &objName, Bottle &objBelow)
 {
     if (activityPort.getOutputCount() < 1)
     {
