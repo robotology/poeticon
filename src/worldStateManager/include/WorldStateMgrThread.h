@@ -155,10 +155,9 @@ class WorldStateMgrThread : public RateThread
         bool getLabelMajorityVote(const int &u, const int &v, string &winnerLabel, const int &rounds=5);
         bool mono2stereo(const string &objName, double &x, double &y, double &z);
         bool getTooltipOffset(const string &objName, Bottle &offset);
-        vector<string> isUnderOf(const string &objName);
-        //bool isOnTopOf(const string &objName, Bottle &objBelow);
-        vector<string> isReachableWith(const string &objName);
-        vector<string> isPullableWith(const string &objName);
+        bool isOnTopOf(const string &objName, Bottle &objBelow);
+        bool isReachableWith(const string &objName, Bottle &objReachable);
+        bool isPullableWith(const string &objName, Bottle &objPullable);
         bool isHandFree(const string &handName);
         string inWhichHand(const string &objName);
 
