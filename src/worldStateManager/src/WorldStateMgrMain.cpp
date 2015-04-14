@@ -7,19 +7,9 @@
  *
  */
 
-/**
- This module ensures that the robot has a coherent and up-to-date knowledge of
- the world state (objects, their labels and properties).
-
- Specifically:
- 1. initialize a multi-object tracker with fixation coordinates, one per
-    object, previously computed from segmented blob silhouettes
- 2. populate an ObjectsPropertiesCollector database
- 3. maintain the database up-to-date when changes in the world are perceived
- */
-
 #include <yarp/os/Log.h>
 #include <yarp/os/Network.h>
+
 #include "WorldStateMgrModule.h"
 
 int main(int argc, char *argv[])

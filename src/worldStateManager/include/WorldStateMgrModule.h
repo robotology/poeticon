@@ -13,6 +13,7 @@
 #include <yarp/os/Bottle.h>
 #include <yarp/os/LogStream.h>
 #include <yarp/os/RFModule.h>
+
 #include "WorldStateMgr_IDL.h"
 #include "WorldStateMgrThread.h"
 

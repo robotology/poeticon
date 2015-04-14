@@ -15,6 +15,7 @@
 #include <map>
 #include <string>
 #include <vector>
+
 #include <yarp/os/Bottle.h>
 #include <yarp/os/BufferedPort.h>
 #include <yarp/os/Log.h>
@@ -26,6 +27,7 @@
 #include <yarp/os/Time.h>
 #include <yarp/os/Vocab.h>
 #include <yarp/sig/Vector.h>
+#include <iCub/ctrl/filters.h>
 
 #include "Helpers.h"
 
@@ -109,6 +111,7 @@ class WorldStateMgrThread : public RateThread
         idLabelMap opcMap;
         idLabelMap trackMap;
         idLabelMap wsMap;
+        std::vector<iCub::ctrl::MedianFilter> posFilter;
 
         // playback mode
         string playbackFile;

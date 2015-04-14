@@ -851,6 +851,21 @@ bool WorldStateMgrThread::doPopulateDB()
                 bPosValue.addDouble(x);
                 bPosValue.addDouble(y);
                 bPosValue.addDouble(z);
+
+                // median-filtered position
+                yarp::sig::Vector pos(3);
+                pos[0]=x; pos[1]=y; pos[2]=z;
+                if (posFilter.size()<=wsID-countFrom) // TODO: more robust check
+                {
+                //    yDebug("adding median filter %d to vector", wsID-countFrom);
+                    size_t order = 1;
+                    iCub::ctrl::MedianFilter newFilter(order, pos);
+                    posFilter.push_back(newFilter);
+                }
+                //else
+                //    yDebug("I think that filter %d is already present in container", wsID-countFrom);
+                yarp::sig::Vector posFiltered = posFilter[wsID-countFrom].filt(pos);
+                yDebug() << "pos:" << pos.toString().c_str() << "\tposFiltered:" << posFiltered.toString().c_str();
             }
 
             // prepare offset property (end-effector transform when grasping tools)
