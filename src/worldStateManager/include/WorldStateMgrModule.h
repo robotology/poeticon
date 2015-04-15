@@ -37,6 +37,8 @@ class WorldStateMgrModule : public RFModule, public WorldStateMgr_IDL
         bool playbackMode;
         string playbackFile;
         int countFrom;
+        bool withFilter;
+        int filterOrder;
 
     public:
         virtual bool configure(ResourceFinder &rf);

@@ -28,6 +28,12 @@ bool euclideanDistance(yarp::sig::Vector &v1, yarp::sig::Vector &v2, float &dist
 }
 
 /**********************************************************/
+bool is_integer(const float k)
+{
+    return std::floor(k)==k;
+}
+
+/**********************************************************/
 bool vectorsDiffer(const std::vector<int> &v1, const std::vector<int> &v2)
 {
     return std::lexicographical_compare(v1.begin(),v1.end(),

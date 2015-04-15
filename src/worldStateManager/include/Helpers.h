@@ -42,6 +42,9 @@ void dumpMap(const std::map<key,val> &m)
 bool euclideanDistance(yarp::sig::Vector &v1, yarp::sig::Vector &v2, float &dist);
 
 /**********************************************************/
+bool is_integer(const float k);
+
+/**********************************************************/
 template<class key,class val>
 bool mergeMaps(const std::map<key,val> &map1, const std::map<key,val> &map2, std::map<key,val> &result)
 {

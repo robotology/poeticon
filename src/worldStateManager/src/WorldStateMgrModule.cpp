@@ -34,13 +34,23 @@ bool WorldStateMgrModule::configure(ResourceFinder &rf)
         else
             yInfo() << "playback file loaded successfully:" << playbackFile;
     }
-    countFrom = rf.check("countFrom", Value(13)).asInt(); // for activeParticleTrack
+    countFrom   = rf.check("countFrom", Value(13)).asInt();
+    withFilter  = rf.check("filter") && rf.find("filter").asString()!="off";
+    if (withFilter)
+    {
+        filterOrder = rf.check("filterOrder", Value(1)).asInt();
+        yInfo("selected temporal filtering with order %d", filterOrder);
+    }
 
     // create new thread and pass pointers to the module parameters
     thread = new WorldStateMgrThread(moduleName,
                                      threadPeriod,
                                      playbackMode,
-                                     countFrom);
+                                     countFrom,
+                                     withFilter);
+
+    // additional settings for filtering
+    if (withFilter) thread->setFilterOrder(filterOrder);
 
     // additional settings for playback mode
     if (playbackMode) thread->setPlaybackFile(playbackFile);

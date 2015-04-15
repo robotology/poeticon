@@ -91,6 +91,8 @@ class WorldStateMgrThread : public RateThread
         bool toldUserConnectOPC;
         bool toldUserOPCConnected;
         int countFrom;
+        bool withFilter;
+        int filterOrder;
 
         // perception mode
         bool needUpdate;
@@ -124,8 +126,9 @@ class WorldStateMgrThread : public RateThread
     public:
         WorldStateMgrThread(const string &_moduleName,
                             const double _period,
-                            bool _playbackMode,
-                            const int _countFrom);
+                            const bool _playbackMode,
+                            const int _countFrom,
+                            const bool _withFilter);
         bool openPorts();
         void close();
         void interrupt();
@@ -163,6 +166,7 @@ class WorldStateMgrThread : public RateThread
         bool isPullableWith(const string &objName, Bottle &objPullable);
         bool isHandFree(const string &handName);
         string inWhichHand(const string &objName);
+        bool setFilterOrder(const int &n);
 
         // IDL functions
         bool pauseTrack(const string &objName);

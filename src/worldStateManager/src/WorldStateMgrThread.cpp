@@ -12,12 +12,14 @@
 WorldStateMgrThread::WorldStateMgrThread(
     const string &_moduleName,
     const double _period,
-    bool _playbackMode,
-    const int _countFrom)
+    const bool _playbackMode,
+    const int _countFrom,
+    const bool _withFilter)
     : moduleName(_moduleName),
       RateThread(int(_period*1000.0)),
       playbackMode(_playbackMode),
-      countFrom(_countFrom)
+      countFrom(_countFrom),
+      withFilter(_withFilter)
 {
 }
 
@@ -848,24 +850,29 @@ bool WorldStateMgrThread::doPopulateDB()
                 Bottle &bPosValue = bPos.addList();
                 double x=0.0, y=0.0, z=0.0;
                 mono2stereo(bNameValue.c_str(), x, y, z);
-                bPosValue.addDouble(x);
-                bPosValue.addDouble(y);
-                bPosValue.addDouble(z);
-
-                // median-filtered position
-                yarp::sig::Vector pos(3);
-                pos[0]=x; pos[1]=y; pos[2]=z;
-                if (posFilter.size()<=wsID-countFrom) // TODO: more robust check
+                if (withFilter)
                 {
-                //    yDebug("adding median filter %d to vector", wsID-countFrom);
-                    size_t order = 1;
-                    iCub::ctrl::MedianFilter newFilter(order, pos);
-                    posFilter.push_back(newFilter);
+                    yarp::sig::Vector pos(3);
+                    pos[0]=x; pos[1]=y; pos[2]=z;
+                    // add filter to container if necessary
+                    if (posFilter.size()<=wsID-countFrom) // TODO: more robust check
+                    {
+                        iCub::ctrl::MedianFilter newFilter((size_t)filterOrder, pos);
+                        posFilter.push_back(newFilter);
+                    }
+                    yarp::sig::Vector posFiltered = posFilter[wsID-countFrom].filt(pos);
+                    yDebug() << "unfiltered pos:" << pos.toString().c_str() << "\tfiltered:" << posFiltered.toString().c_str();
+                    bPosValue.addDouble(posFiltered[0]);
+                    bPosValue.addDouble(posFiltered[1]);
+                    bPosValue.addDouble(posFiltered[2]);
                 }
-                //else
-                //    yDebug("I think that filter %d is already present in container", wsID-countFrom);
-                yarp::sig::Vector posFiltered = posFilter[wsID-countFrom].filt(pos);
-                yDebug() << "pos:" << pos.toString().c_str() << "\tposFiltered:" << posFiltered.toString().c_str();
+                else
+                {
+                    // unfiltered values
+                    bPosValue.addDouble(x);
+                    bPosValue.addDouble(y);
+                    bPosValue.addDouble(z);
+                }
             }
 
             // prepare offset property (end-effector transform when grasping tools)
@@ -1527,6 +1534,20 @@ string WorldStateMgrThread::inWhichHand(const string &objName)
         yWarning() << __func__ << "obtained invalid response:" << activityReply.toString().c_str();
 
     return ret;
+}
+
+bool WorldStateMgrThread::setFilterOrder(const int &n)
+{
+    if (is_integer(n))
+    {
+        filterOrder = n;
+        return true;
+    }
+    else
+    {
+        yWarning() << __func__ << "argument must be integer";
+        return false;
+    }
 }
 
 // IDL functions
