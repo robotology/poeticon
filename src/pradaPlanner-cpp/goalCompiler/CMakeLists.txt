@@ -10,6 +10,7 @@ set(PROJECTNAME goalCompiler)
 project(${PROJECTNAME})
 
 find_package(YARP)
+find_package(ICUB)
 find_package(ICUBcontrib)
 
 list(APPEND CMAKE_MODULE_PATH ${YARP_MODULE_PATH})
@@ -24,8 +25,10 @@ file(GLOB source *.cpp)
 
 source_group("Source Files" FILES ${source})
 
+include_directories(${YARP_INCLUDE_DIRS})
+
 add_executable(${PROJECTNAME} ${source})
 
 target_link_libraries(${PROJECTNAME} ${YARP_LIBRARIES}) 
 
-install(PROGRAMS ${PROJECTNAME} DESTINATION bin)
+install(TARGETS ${PROJECTNAME} DESTINATION bin)
