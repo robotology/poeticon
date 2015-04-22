@@ -13,6 +13,7 @@
 #include <yarp/os/Bottle.h>
 #include <yarp/os/LogStream.h>
 #include <yarp/os/RFModule.h>
+
 #include "WorldStateMgr_IDL.h"
 #include "WorldStateMgrThread.h"
 
@@ -36,6 +37,8 @@ class WorldStateMgrModule : public RFModule, public WorldStateMgr_IDL
         bool playbackMode;
         string playbackFile;
         int countFrom;
+        bool withFilter;
+        int filterOrder;
 
     public:
         virtual bool configure(ResourceFinder &rf);

@@ -11,10 +11,6 @@
     <node>pwrNode</node>
 </module>
 <module>
-    <name>blobSpotter</name>
-    <node>pwrNode</node>
-</module>
-<module>
     <name>blobDescriptor</name>
     <node>pwrNode</node>
 </module>

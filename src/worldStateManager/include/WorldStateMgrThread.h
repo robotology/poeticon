@@ -15,6 +15,7 @@
 #include <map>
 #include <string>
 #include <vector>
+
 #include <yarp/os/Bottle.h>
 #include <yarp/os/BufferedPort.h>
 #include <yarp/os/Log.h>
@@ -26,6 +27,7 @@
 #include <yarp/os/Time.h>
 #include <yarp/os/Vocab.h>
 #include <yarp/sig/Vector.h>
+#include <iCub/ctrl/filters.h>
 
 #include "Helpers.h"
 
@@ -89,6 +91,8 @@ class WorldStateMgrThread : public RateThread
         bool toldUserConnectOPC;
         bool toldUserOPCConnected;
         int countFrom;
+        bool withFilter;
+        int filterOrder;
 
         // perception mode
         bool needUpdate;
@@ -109,6 +113,7 @@ class WorldStateMgrThread : public RateThread
         idLabelMap opcMap;
         idLabelMap trackMap;
         idLabelMap wsMap;
+        std::vector<iCub::ctrl::MedianFilter> posFilter;
 
         // playback mode
         string playbackFile;
@@ -121,8 +126,9 @@ class WorldStateMgrThread : public RateThread
     public:
         WorldStateMgrThread(const string &_moduleName,
                             const double _period,
-                            bool _playbackMode,
-                            const int _countFrom);
+                            const bool _playbackMode,
+                            const int _countFrom,
+                            const bool _withFilter);
         bool openPorts();
         void close();
         void interrupt();
@@ -154,13 +160,13 @@ class WorldStateMgrThread : public RateThread
         bool getLabel(const int &u, const int &v, string &label);
         bool getLabelMajorityVote(const int &u, const int &v, string &winnerLabel, const int &rounds=5);
         bool mono2stereo(const string &objName, double &x, double &y, double &z);
-        // TODO: return Bottle instead of std::vector
-        vector<double> getTooltipOffset(const string &objName);
-        vector<string> isUnderOf(const string &objName);
-        vector<string> isReachableWith(const string &objName);
-        vector<string> isPullableWith(const string &objName);
+        bool getTooltipOffset(const string &objName, Bottle &offset);
+        bool isOnTopOf(const string &objName, Bottle &objBelow);
+        bool isReachableWith(const string &objName, Bottle &objReachable);
+        bool isPullableWith(const string &objName, Bottle &objPullable);
         bool isHandFree(const string &handName);
         string inWhichHand(const string &objName);
+        bool setFilterOrder(const int &n);
 
         // IDL functions
         bool pauseTrack(const string &objName);

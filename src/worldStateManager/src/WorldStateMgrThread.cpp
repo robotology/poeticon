@@ -12,12 +12,14 @@
 WorldStateMgrThread::WorldStateMgrThread(
     const string &_moduleName,
     const double _period,
-    bool _playbackMode,
-    const int _countFrom)
+    const bool _playbackMode,
+    const int _countFrom,
+    const bool _withFilter)
     : moduleName(_moduleName),
       RateThread(int(_period*1000.0)),
       playbackMode(_playbackMode),
-      countFrom(_countFrom)
+      countFrom(_countFrom),
+      withFilter(_withFilter)
 {
 }
 
@@ -847,24 +849,49 @@ bool WorldStateMgrThread::doPopulateDB()
                 bPos.addString("pos");
                 Bottle &bPosValue = bPos.addList();
                 double x=0.0, y=0.0, z=0.0;
-                mono2stereo(bNameValue.c_str(), x, y, z);
-                bPosValue.addDouble(x);
-                bPosValue.addDouble(y);
-                bPosValue.addDouble(z);
+                if (withFilter)
+                {
+                    yarp::sig::Vector pos(3);
+                    // add filter to container if necessary
+                    if (posFilter.size()<=wsID-countFrom) // TODO: more robust check
+                    {
+                        pos[0]=x; pos[1]=y; pos[2]=z;
+                        iCub::ctrl::MedianFilter newFilter(static_cast<size_t>(filterOrder), pos);
+                        posFilter.push_back(newFilter);
+                    }
+
+                    // acquire input n times, where n=filterOrder, and apply filter
+                    yarp::sig::Vector posFiltered(3);
+                    for (int run=1; run<=filterOrder; ++run)
+                    {
+                        mono2stereo(bNameValue.c_str(), x, y, z);
+                        pos[0]=x; pos[1]=y; pos[2]=z;
+                        posFiltered = posFilter[wsID-countFrom].filt(pos); // FIXME
+                        yDebug("run %d/%d, unfiltered pos:\t%s",
+                              run, filterOrder, pos.toString().c_str());
+                        if (run==filterOrder)
+                        {
+                            yDebug("filtered pos:\t\t%s", posFiltered.toString().c_str());
+                            bPosValue.addDouble(posFiltered[0]);
+                            bPosValue.addDouble(posFiltered[1]);
+                            bPosValue.addDouble(posFiltered[2]);
+                        }
+                    }
+                }
+                else
+                {
+                    // unfiltered values
+                    mono2stereo(bNameValue.c_str(), x, y, z);
+                    bPosValue.addDouble(x);
+                    bPosValue.addDouble(y);
+                    bPosValue.addDouble(z);
+                }
             }
 
             // prepare offset property (end-effector transform when grasping tools)
             bOffset.addString("offset");
             Bottle &bOffsetValue = bOffset.addList();
-            vector<double> offset = getTooltipOffset(bNameValue.c_str());
-
-            if (offset.size()>1)
-            {
-                for (int o=0; o<offset.size(); o++)
-                {
-                    bOffsetValue.addDouble(offset[o]);
-                }
-            }
+            getTooltipOffset(bNameValue.c_str(), bOffsetValue);
 
             if (currentlySeen)
             {
@@ -904,36 +931,39 @@ bool WorldStateMgrThread::doPopulateDB()
 
             // prepare on_top_of property
             bOnTopOf.addString("on_top_of");
-            Bottle &bOnTopOfValue = bOnTopOf.addList();
-            vector<string> labelsBelow = isUnderOf(bNameValue.c_str());
-            for (int o=0; o<labelsBelow.size(); o++)
+            Bottle &bOnTopOfValue = bOnTopOf.addList(); // IDs
+            Bottle bLabelsBelow; // strings
+            isOnTopOf(bNameValue.c_str(), bLabelsBelow);
+            for (int o=0; o<bLabelsBelow.size(); o++)
             {
                 int id;
-                id = label2id(labelsBelow[o]);
+                id = label2id( bLabelsBelow.get(o).asString().c_str() );
                 if (id != -1)
                     bOnTopOfValue.addInt( id );
             }
 
             // prepare reachable_with property
             bReachW.addString("reachable_with");
-            Bottle &bReachWValue = bReachW.addList();
-            vector<string> labelsRW = isReachableWith(bNameValue.c_str());
-            for (int o=0; o<labelsRW.size(); o++)
+            Bottle &bReachWValue = bReachW.addList(); // IDs
+            Bottle bLabelsReaching; // strings
+            isReachableWith(bNameValue.c_str(), bLabelsReaching);
+            for (int o=0; o<bLabelsReaching.size(); o++)
             {
                 int id;
-                id = label2id(labelsRW[o]);
+                id = label2id( bLabelsReaching.get(o).asString().c_str() );
                 if (id != -1)
                     bReachWValue.addInt( id );
             }
 
             // prepare pullable_with property
             bPullW.addString("pullable_with");
-            Bottle &bPullWValue = bPullW.addList();
-            vector<string> labelsPW = isPullableWith(bNameValue.c_str());
-            for (int o=0; o<labelsPW.size(); o++)
+            Bottle &bPullWValue = bPullW.addList(); // IDs
+            Bottle bLabelsPulling; // strings
+            isPullableWith(bNameValue.c_str(), bLabelsPulling);
+            for (int o=0; o<bLabelsPulling.size(); o++)
             {
                 int id;
-                id = label2id(labelsPW[o]);
+                id = label2id( bLabelsPulling.get(o).asString().c_str() );
                 if (id != -1)
                     bPullWValue.addInt( id );
             }
@@ -1310,12 +1340,12 @@ bool WorldStateMgrThread::mono2stereo(const string &objName, double &x, double &
     return true;
 }
 
-vector<double> WorldStateMgrThread::getTooltipOffset(const string &objName)
+bool WorldStateMgrThread::getTooltipOffset(const string &objName, Bottle &offset)
 {
     if (activityPort.getOutputCount() < 1)
     {
         yWarning() << __func__ << "not connected to ActivityIF";
-        return vector<double>();
+        return false;
     }
 
     Bottle activityCmd, activityReply;
@@ -1332,27 +1362,22 @@ vector<double> WorldStateMgrThread::getTooltipOffset(const string &objName)
     if (validResponse)
     {
         //yDebug() << __func__ << "obtained valid response:" << activityReply.toString().c_str();
-        Bottle *bOffset = activityReply.get(0).asList();
-        vector<double> offset; // TODO: pre-allocate size
-        for (int t=0; t<bOffset->size(); t++)
-        {
-            offset.push_back( bOffset->get(t).asDouble() );
-        }
-        return offset;
+        offset = *activityReply.get(0).asList();
+        return true;
     }
     else
     {
         yWarning() << __func__ << "obtained invalid response:" << activityReply.toString().c_str();
-        return vector<double>();
+        return false;
     }
 }
 
-vector<string> WorldStateMgrThread::isUnderOf(const string &objName)
+bool WorldStateMgrThread::isOnTopOf(const string &objName, Bottle &objBelow)
 {
     if (activityPort.getOutputCount() < 1)
     {
         yWarning() << __func__ << "not connected to ActivityIF";
-        return vector<string>();
+        return false;
     }
 
     Bottle activityCmd, activityReply;
@@ -1368,27 +1393,22 @@ vector<string> WorldStateMgrThread::isUnderOf(const string &objName)
     if (validResponse)
     {
         //yDebug() << __func__ << "obtained valid response:" << activityReply.toString().c_str();
-        Bottle *bLabels = activityReply.get(0).asList();
-        vector<string> lab; // TODO: pre-allocate size
-        for (int o=0; o<bLabels->size(); o++)
-        {
-            lab.push_back( bLabels->get(o).asString() );
-        }
-        return lab;
+        objBelow = *activityReply.get(0).asList();
+        return true;
     }
     else
     {
         yWarning() << __func__ << "obtained invalid response:" << activityReply.toString().c_str();
-        return vector<string>();
+        return false;
     }
 }
 
-vector<string> WorldStateMgrThread::isReachableWith(const string &objName)
+bool WorldStateMgrThread::isReachableWith(const string &objName, Bottle &objReachable)
 {
     if (activityPort.getOutputCount() < 1)
     {
         yWarning() << __func__ << "not connected to ActivityIF";
-        return vector<string>();
+        return false;
     }
 
     Bottle activityCmd, activityReply;
@@ -1404,27 +1424,22 @@ vector<string> WorldStateMgrThread::isReachableWith(const string &objName)
     if (validResponse)
     {
         //yDebug() << __func__ << "obtained valid response:" << activityReply.toString().c_str();
-        Bottle *bLabels = activityReply.get(0).asList();
-        vector<string> lab; // TODO: pre-allocate size
-        for (int o=0; o<bLabels->size(); o++)
-        {
-            lab.push_back( bLabels->get(o).asString() );
-        }
-        return lab;
+        objReachable = *activityReply.get(0).asList();
+        return true;
     }
     else
     {
         yWarning() << __func__ << "obtained invalid response:" << activityReply.toString().c_str();
-        return vector<string>();
+        return false;
     }
 }
 
-vector<string> WorldStateMgrThread::isPullableWith(const string &objName)
+bool WorldStateMgrThread::isPullableWith(const string &objName, Bottle &objPullable)
 {
     if (activityPort.getOutputCount() < 1)
     {
         yWarning() << __func__ << "not connected to ActivityIF";
-        return vector<string>();
+        return false;
     }
 
     Bottle activityCmd, activityReply;
@@ -1440,18 +1455,13 @@ vector<string> WorldStateMgrThread::isPullableWith(const string &objName)
     if (validResponse)
     {
         //yDebug() << __func__ << "obtained valid response:" << activityReply.toString().c_str();
-        Bottle *bLabels = activityReply.get(0).asList();
-        vector<string> lab; // TODO: pre-allocate size
-        for (int o=0; o<bLabels->size(); o++)
-        {
-            lab.push_back( bLabels->get(o).asString() );
-        }
-        return lab;
+        objPullable = *activityReply.get(0).asList();
+        return true;
     }
     else
     {
         yWarning() << __func__ << "obtained invalid response:" << activityReply.toString().c_str();
-        return vector<string>();
+        return false;
     }
 }
 
@@ -1537,6 +1547,20 @@ string WorldStateMgrThread::inWhichHand(const string &objName)
         yWarning() << __func__ << "obtained invalid response:" << activityReply.toString().c_str();
 
     return ret;
+}
+
+bool WorldStateMgrThread::setFilterOrder(const int &n)
+{
+    if (is_integer(n))
+    {
+        filterOrder = n;
+        return true;
+    }
+    else
+    {
+        yWarning() << __func__ << "argument must be integer";
+        return false;
+    }
 }
 
 // IDL functions
