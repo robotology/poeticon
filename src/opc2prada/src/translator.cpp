@@ -33,9 +33,227 @@ TranslatorModule::switchCase TranslatorModule::hashtable(string command){
 
     if(command=="is_free")  return free;
 }
+/*IDL Functions*/
+bool TranslatorModule::quit() {
+    cout << "Received Quit command in RPC" << endl;
+    return true;
+}
+
+bool TranslatorModule::update(){
+
+    Bottle *receive,dataBase,ids2,*idsp;
+    cout << "Received update command in RPC" << endl;
+    cout << "Writing the world state to file..." << endl;
+    readingThread->guard.lock();
+    dataBase = readingThread->_data;
+    ids2 = readingThread->_ids;
+    readingThread->guard.unlock();
+    //cout << "dataBase = " << dataBase.toString().c_str() << endl;
+
+    if(dataBase.size()>0 && (dataBase.get(1).asString()!="empty")) {
+        //cout << "f1: " << objIDsFileName << "f2: " << stateFileName << endl;
+        //myfile.open( objIDsFileName);
+        //myfile2.open ( stateFileName);
+
+        myfile.open( objIDsFileName.c_str());
+        myfile2.open ( stateFileName.c_str());
+
+        //myfile.open ("Object names-IDs.dat");
+        //myfile2.open ("state.dat");
+        idsp = ids2.get(1).asList();
+        idsp = idsp->get(1).asList();
+        for(int i=1;i<dataBase.size();i++){ // for each object
+            Bottle *objecto = dataBase.get(i).asList();
+            for(int j=0;j<objecto->size();j++) { // for each properties
+                Bottle *propriedade = objecto->get(j).asList();
+                switchCase r = hashtable(propriedade->get(0).asString());
+                switch(r) {
+                    case name:{
+                        myfile <<"(" << idsp->get((i-1)).asInt() << "," << propriedade->get(1).asString().c_str() << ");";
+                        break;
+                    }
+                    case desc: {
+                        break;
+
+                    }
+                    case tooldesc2d: {
+                        break;
+                    }
+                    case pos: {
+
+                        break;
+                    }
+                    case offset: {
+                        break;
+                    }
+                    case on_t: {
+                        Bottle *ontop = propriedade->get(1).asList();
+                        for(int k=0; k < ontop->size(); k++){
+                            myfile2 << idsp->get((i-1)).asInt() <<"_on_" <<ontop->get(k).asInt() <<"() ";
+                        }
+                        break;
+
+                    }
+                    case re_w: {
+                        Bottle *reachable = propriedade->get(1).asList();
+                        for(int k=0; k < reachable->size(); k++){
+                            myfile2 << idsp->get((i-1)).asInt() <<"_isreachable_with_" <<reachable->get(k).asInt() <<"() ";
+                        }
+                        break;
+                    }
+                    case pu_w: {
+                        Bottle *pullable = propriedade->get(1).asList();
+                        for(int k=0; k < pullable->size(); k++){
+                            myfile2 << idsp->get((i-1)).asInt() <<"_ispullable_with_" <<pullable->get(k).asInt() <<"() ";
+                        }
+                        break;
+                    }
+
+                    case is_h: {
+                        if(propriedade->get(1).asString() == "true") {
+                            myfile2 << idsp->get((i-1)).asInt() <<"_ishand" <<"() ";
+                        }
+                        break;
+                    }
+
+                    case free: {
+                        if(propriedade->get(1).asString() == "true") {
+                            myfile2 << idsp->get((i-1)).asInt() <<"_clearhand" <<"() ";
+                            myfile2 << idsp->get((i-1)).asInt() <<"_istool" <<"() ";
+                        }
+                        break;
+                    }
+                    case in_h: {
+                        if(propriedade->get(1).asString() == "right") {
+                            myfile2 << idsp->get((i-1)).asInt() <<"_inhand_" << "12" << "() "; //according to dbhands.ini - id 12 corresponds to the right hand
+                            myfile2 << idsp->get((i-1)).asInt() <<"_istool" <<"() ";
+                        }
+                        if(propriedade->get(1).asString() == "left") {
+                            myfile2 << idsp->get((i-1)).asInt() <<"_inhand_" << "11" << "() "; //according to dbhands.ini - id 12 corresponds to the right hand
+                            myfile2 << idsp->get((i-1)).asInt() <<"_istool" <<"() ";
+                        }
+                        break;
+                    }
+
+                    default: {
+                        cout << "warning: not known attribute " << propriedade->get(0).asString().c_str() << endl;
+
+                        break;
+                    }
+                } // end switch
+            } // end for property
+        } // end for object
+
+        myfile.close();
+        myfile2.close();
+        return true;
+    } // end if
+    cout << "database is empty!"<< endl;
+    return false; // return fail if the database is empty
+    
+}
+
+Bottle TranslatorModule::query2d(const int32_t ObjectID_r){
+    Bottle *receive,dataBase,ids2,*idsp;
+    Bottle send;
+    int ObjectID = ObjectID_r;
+    cout << "Received query2d command in RPC" << endl;
+
+    cout << "querydesc2d " << ObjectID_r << " received" << endl;
+    readingThread->guard.lock();
+    dataBase = readingThread->_data;
+    ids2 = readingThread->_ids;
+    readingThread->guard.unlock();
+    idsp = ids2.get(1).asList();
+    idsp = idsp->get(1).asList();
+    for(int i=0;i<idsp->size();i++) {
+        if(idsp->get(i).asInt() == ObjectID_r) {
+            ObjectID = i;
+            break;
+        }
+    }
+    Bottle *objecto = dataBase.get(ObjectID+1).asList();
+
+    // Giovanni
+    if (objecto!=NULL)
+    {
+
+        //cout << ObjectID << endl;
+        for(int j=0;j<objecto->size();j++) { // for each properties
+            Bottle *propriedade = objecto->get(j).asList();
+            switchCase r = hashtable(propriedade->get(0).asString());
+            //cout << propriedade->get(0).asString().c_str() << endl;
+            // TODO: replace switch/case with if(propriedade->get(0).asString()=="desc2d")
+            switch(r) {
+                case desc: {
+                    send.clear();
+                    send.addList()=*propriedade->get(1).asList();
+//                        cout << send.toString().c_str() << endl;
+                    //translatorPort.write();
+                    cout << "DONE querydesc2d" << endl;
+                    return send;
+                }
+            }
+        }
+    
+    }
+    send.clear();
+    return send;
+}
+Bottle TranslatorModule::querytool2d(const int32_t ObjectID_r){
+    Bottle *receive,dataBase,ids2,*idsp;
+    Bottle send;
+    int ObjectID = ObjectID_r;
+    cout << "Received querytool2d command in RPC" << endl;
+
+    cout << "querytooldesc2d " << ObjectID_r << " received" << endl;
+    readingThread->guard.lock();
+    dataBase = readingThread->_data;
+    ids2 = readingThread->_ids;
+    readingThread->guard.unlock();
+    idsp = ids2.get(1).asList();
+    idsp = idsp->get(1).asList();
+    for(int i=0;i<idsp->size();i++) {
+        if(idsp->get(i).asInt() == ObjectID_r) {
+            ObjectID = i;
+            break;
+        }
+    }
+    Bottle *objecto = dataBase.get(ObjectID+1).asList();
+
+    // Giovanni
+    if (objecto!=NULL)
+    {
+
+        //cout << ObjectID << endl;
+        for(int j=0;j<objecto->size();j++) { // for each properties
+            Bottle *propriedade = objecto->get(j).asList();
+            switchCase r = hashtable(propriedade->get(0).asString());
+            //cout << propriedade->get(0).asString().c_str() << endl;
+            // TODO: replace switch/case with if(propriedade->get(0).asString()=="tooldesc2d")
+            switch(r) {
+                case tooldesc2d: {
+                    send.clear();
+                    send.addList()=*propriedade->get(1).asList();
+                    //translatorPort.write();
+                    cout << "DONE querytooldesc2d" << endl;
+                    return send;
+                }
+            }
+        }
+
+    }
+    send.clear();
+    return send;
+}
+bool TranslatorModule::attach(RpcServer &source)
+{
+    return this->yarp().attachAsServer(source);
+}
+// End IDL functions
+
 
 bool TranslatorModule::interruptModule() {
-
     cout << "Interrupting your module, for port cleanup" << endl;
     readingThread->_runit=false; 
     readingThread->askToStop();   
@@ -60,217 +278,6 @@ bool   TranslatorModule::close() {
     return true;
 }
 bool   TranslatorModule::updateModule() {
-    int ObjectID;
-    Bottle *receive,dataBase,ids2,*idsp;
-    if(readingThread->_runit) {
-        receive = translatorPort.read(false);  //non-block
-
-        if(receive == NULL)
-            return true;
-
-        if(receive->get(0).asString() == "update") {
-
-            cout << "Writing the world state to file..." << endl;
-            readingThread->guard.lock();
-            dataBase = readingThread->_data;
-            ids2 = readingThread->_ids;
-            readingThread->guard.unlock();
-            //cout << "dataBase = " << dataBase.toString().c_str() << endl;
-
-            if(dataBase.size()>0 && (dataBase.get(1).asString()!="empty")) {
-	            //cout << "f1: " << objIDsFileName << "f2: " << stateFileName << endl;
-                //myfile.open( objIDsFileName);
-                //myfile2.open ( stateFileName);
-
-                myfile.open( objIDsFileName.c_str());
-                myfile2.open ( stateFileName.c_str());
-
-	            //myfile.open ("Object names-IDs.dat");
-                //myfile2.open ("state.dat");
-                idsp = ids2.get(1).asList();
-                idsp = idsp->get(1).asList();
-                for(int i=1;i<dataBase.size();i++){ // for each object
-                    Bottle *objecto = dataBase.get(i).asList();
-                    for(int j=0;j<objecto->size();j++) { // for each properties
-                        Bottle *propriedade = objecto->get(j).asList();
-                        switchCase r = hashtable(propriedade->get(0).asString());
-                        switch(r) {
-                            case name:{
-                                myfile <<"(" << idsp->get((i-1)).asInt() << "," << propriedade->get(1).asString().c_str() << ");";
-                                break;
-                            }
-                            case desc: {
-                                break;
-                            }
-                            case tooldesc2d: {
-                                break;
-                            }
-                            case pos: {
-                                break;
-                            }
-                            case offset: {
-                                break;
-                            }
-                            case on_t: {
-                                Bottle *ontop = propriedade->get(1).asList();
-                                for(int k=0; k < ontop->size(); k++){
-                                    myfile2 << idsp->get((i-1)).asInt() <<"_on_" <<ontop->get(k).asInt() <<"() ";
-                                }
-                                break;
-                            }
-                            case re_w: {
-                                Bottle *reachable = propriedade->get(1).asList();
-                                for(int k=0; k < reachable->size(); k++){
-                                    myfile2 << idsp->get((i-1)).asInt() <<"_isreachable_with_" <<reachable->get(k).asInt() <<"() ";
-                                }
-                                break;
-                            }
-                            case pu_w: {
-                                Bottle *pullable = propriedade->get(1).asList();
-                                for(int k=0; k < pullable->size(); k++){
-                                    myfile2 << idsp->get((i-1)).asInt() <<"_ispullable_with_" <<pullable->get(k).asInt() <<"() ";
-                                }
-                                break;
-                            }
-                            case is_h: {
-                                if(propriedade->get(1).asString() == "true") {
-                                    myfile2 << idsp->get((i-1)).asInt() <<"_ishand" <<"() ";
-                                }
-                                break;
-                            }
-                            case free: {
-                                if(propriedade->get(1).asString() == "true") {
-                                    myfile2 << idsp->get((i-1)).asInt() <<"_clearhand" <<"() ";
-                                    myfile2 << idsp->get((i-1)).asInt() <<"_istool" <<"() ";
-                                }
-                                break;
-                            }
-                            case in_h: {
-                                if(propriedade->get(1).asString() == "right") {
-                                    myfile2 << idsp->get((i-1)).asInt() <<"_inhand_" << "12" << "() "; //according to dbhands.ini - id 12 corresponds to the right hand
-                                    myfile2 << idsp->get((i-1)).asInt() <<"_istool" <<"() ";
-                                }
-                                if(propriedade->get(1).asString() == "left") {
-                                    myfile2 << idsp->get((i-1)).asInt() <<"_inhand_" << "11" << "() "; //according to dbhands.ini - id 12 corresponds to the right hand
-                                    myfile2 << idsp->get((i-1)).asInt() <<"_istool" <<"() ";
-                                }
-                                break;
-                            }
-
-                            default: {
-                                cout << "warning: not known attribute " << propriedade->get(0).asString().c_str() << endl;
-                                break;
-                            }
-                        } // end switch
-                    } // end for property
-                } // end for object
-        
-                myfile.close();
-                myfile2.close();
-
-            } // end if
-            Bottle &send = translatorPort.prepare();
-            send.clear();
-            send.addString("ACK");
-            cout << "DONE update" << endl;
-            translatorPort.write();
-        } // end "update"
-
-        else if(receive->get(0).asString() == "querydesc2d" && receive->get(1).isInt()) {
-
-            cout << "querydesc2d " << receive->get(1).asInt() << " received" << endl;
-            readingThread->guard.lock();
-            dataBase = readingThread->_data;
-            ids2 = readingThread->_ids;
-            readingThread->guard.unlock();
-            idsp = ids2.get(1).asList();
-            idsp = idsp->get(1).asList();
-            ObjectID = receive->get(1).asInt();
-            for(int i=0;i<idsp->size();i++) {
-                if(idsp->get(i).asInt() == ObjectID) {
-                    ObjectID = i;
-                    break;
-                }
-            }
-            Bottle *objecto = dataBase.get(ObjectID+1).asList();
-
-            // Giovanni
-            if (objecto!=NULL)
-            {
-
-                /*cout << ObjectID << endl;*/
-                for(int j=0;j<objecto->size();j++) { // for each properties
-                    Bottle *propriedade = objecto->get(j).asList();
-                    switchCase r = hashtable(propriedade->get(0).asString());
-                    /*cout << propriedade->get(0).asString().c_str() << endl;*/
-                    // TODO: replace switch/case with if(propriedade->get(0).asString()=="desc2d")
-                    switch(r) {
-                        case desc: {
-                            Bottle &send = translatorPort.prepare();
-                            send.clear();
-                            send.addList()=*propriedade->get(1).asList();
-    //                        cout << send.toString().c_str() << endl;
-                            translatorPort.write();
-                            cout << "DONE querydesc2d" << endl;
-                            break;
-                        }
-                    }
-                }
-            
-            }
-        } // end "querydesc2d"
-
-        else if(receive->get(0).asString() == "querytooldesc2d" && receive->get(1).isInt()) {
-
-            cout << "querytooldesc2d " << receive->get(1).asInt() << " received" << endl;
-            readingThread->guard.lock();
-            dataBase = readingThread->_data;
-            ids2 = readingThread->_ids;
-            readingThread->guard.unlock();
-            idsp = ids2.get(1).asList();
-            idsp = idsp->get(1).asList();
-            ObjectID = receive->get(1).asInt();
-            for(int i=0;i<idsp->size();i++) {
-                if(idsp->get(i).asInt() == ObjectID) {
-                    ObjectID = i;
-                    break;
-                }
-            }
-            Bottle *objecto = dataBase.get(ObjectID+1).asList();
-
-            // Giovanni
-            if (objecto!=NULL)
-            {
-
-                /*cout << ObjectID << endl;*/
-                for(int j=0;j<objecto->size();j++) { // for each properties
-                    Bottle *propriedade = objecto->get(j).asList();
-                    switchCase r = hashtable(propriedade->get(0).asString());
-                    /*cout << propriedade->get(0).asString().c_str() << endl;*/
-                    // TODO: replace switch/case with if(propriedade->get(0).asString()=="tooldesc2d")
-                    switch(r) {
-                        case tooldesc2d: {
-                            Bottle &send = translatorPort.prepare();
-                            send.clear();
-                            send.addList()=*propriedade->get(1).asList();
-                            translatorPort.write();
-                            cout << "DONE querytooldesc2d" << endl;
-                            break;
-                        }
-                    }
-                }
-
-            }
-
-        } // end "querytooldesc2d"
-
-        else {
-            Bottle &send = translatorPort.prepare();
-            send.clear();
-            send.addString("NACK");
-            translatorPort.write();
-        }
-    }
     return true;
 }
 
@@ -283,7 +290,7 @@ bool   TranslatorModule::configure(yarp::os::ResourceFinder &rf) {
     setName(moduleName.c_str());
 
     /* port names */
-	translatorPortName  = "/" + moduleName + "/cmd:io";
+    translatorPortName  = "/" + moduleName + "/cmd:io";
 
     /* open ports */
     if (!translatorPort.open(
@@ -293,7 +300,9 @@ bool   TranslatorModule::configure(yarp::os::ResourceFinder &rf) {
         << translatorPortName << endl;
         return false;
     }
-
+    handlerPortName = "/" + moduleName + "/rpc:i";
+    handlerPort.open(handlerPortName.c_str());
+    attach(handlerPort);
     /* OPC comunication*/
 
     string broadname = "/" + moduleName + "/broadcast:i";
