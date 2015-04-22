@@ -29,7 +29,7 @@ public:
   virtual bool compileGoal();
   virtual bool increaseHorizon();
   virtual bool executePlannedAction();
-  virtual bool checkGoalCompleted();
+  virtual std::string checkGoalCompleted();
   virtual bool run1Step();
   virtual std::string showPlannedAction();
   virtual std::string showCurrentState();

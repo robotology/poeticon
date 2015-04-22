@@ -136,7 +136,7 @@ public:
 
 class planningCycle_IDLserver_checkGoalCompleted : public yarp::os::Portable {
 public:
-  bool _return;
+  std::string _return;
   void init();
   virtual bool write(yarp::os::ConnectionWriter& connection);
   virtual bool read(yarp::os::ConnectionReader& connection);
@@ -520,7 +520,7 @@ bool planningCycle_IDLserver_checkGoalCompleted::write(yarp::os::ConnectionWrite
 bool planningCycle_IDLserver_checkGoalCompleted::read(yarp::os::ConnectionReader& connection) {
   yarp::os::idl::WireReader reader(connection);
   if (!reader.readListReturn()) return false;
-  if (!reader.readBool(_return)) {
+  if (!reader.readString(_return)) {
     reader.fail();
     return false;
   }
@@ -528,7 +528,7 @@ bool planningCycle_IDLserver_checkGoalCompleted::read(yarp::os::ConnectionReader
 }
 
 void planningCycle_IDLserver_checkGoalCompleted::init() {
-  _return = false;
+  _return = "";
 }
 
 bool planningCycle_IDLserver_run1Step::write(yarp::os::ConnectionWriter& connection) {
@@ -778,12 +778,12 @@ bool planningCycle_IDLserver::executePlannedAction() {
   bool ok = yarp().write(helper,helper);
   return ok?helper._return:_return;
 }
-bool planningCycle_IDLserver::checkGoalCompleted() {
-  bool _return = false;
+std::string planningCycle_IDLserver::checkGoalCompleted() {
+  std::string _return = "";
   planningCycle_IDLserver_checkGoalCompleted helper;
   helper.init();
   if (!yarp().canWrite()) {
-    fprintf(stderr,"Missing server method '%s'?\n","bool planningCycle_IDLserver::checkGoalCompleted()");
+    fprintf(stderr,"Missing server method '%s'?\n","std::string planningCycle_IDLserver::checkGoalCompleted()");
   }
   bool ok = yarp().write(helper,helper);
   return ok?helper._return:_return;
@@ -1015,12 +1015,12 @@ bool planningCycle_IDLserver::read(yarp::os::ConnectionReader& connection) {
       return true;
     }
     if (tag == "checkGoalCompleted") {
-      bool _return;
+      std::string _return;
       _return = checkGoalCompleted();
       yarp::os::idl::WireWriter writer(reader);
       if (!writer.isNull()) {
         if (!writer.writeListHeader(1)) return false;
-        if (!writer.writeBool(_return)) return false;
+        if (!writer.writeString(_return)) return false;
       }
       reader.accept();
       return true;
@@ -1176,7 +1176,7 @@ std::vector<std::string> planningCycle_IDLserver::help(const std::string& functi
       helpString.push_back("bool executePlannedAction() ");
     }
     if (functionName=="checkGoalCompleted") {
-      helpString.push_back("bool checkGoalCompleted() ");
+      helpString.push_back("std::string checkGoalCompleted() ");
     }
     if (functionName=="run1Step") {
       helpString.push_back("bool run1Step() ");

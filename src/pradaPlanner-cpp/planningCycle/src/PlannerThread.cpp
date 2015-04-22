@@ -168,13 +168,9 @@ bool PlannerThread::updateState()
         cmd.clear();
         cmd.addString("update");
         opc2prada_rpc.write(cmd,reply);
-        Time::delay(0.1);
         if ((reply.size() == 1) && (reply.get(0).asVocab() == yarp::os::Vocab::encode("ok"))){
-            yInfo("planner state updated");
-            if (!completePlannerState())
-            {
-                return false;
-            }
+            Time::delay(0.3);
+            yInfo("planner state updated!");
             return true;
         }
         else {
@@ -192,15 +188,15 @@ bool PlannerThread::completePlannerState()
     vector<string> data, temp_vect, temp_vect2, avail_symb, temp_state;
     vector<vector<string> >  symbols;
     symbolFile.open(symbolFileName.c_str());
-    if (!symbolFile.is_open())
-    {
-        yWarning("unable to open symbols file!");
-        return false;
-    }
     stateFile.open(stateFileName.c_str());
     if (!stateFile.is_open())
     {
         yWarning("unable to open state file!");
+        return false;
+    }
+    if (!symbolFile.is_open())
+    {
+        yWarning("unable to open symbols file!");
         return false;
     }
     /*objFile.open(objFileName.c_str());
@@ -966,11 +962,6 @@ bool PlannerThread::plan_init()
         return false;
     }
     checkPause();
-    if (!completePlannerState())
-    {
-        return false;
-    }
-    checkPause();
     if (!loadState())
     {
         return false;
@@ -982,6 +973,11 @@ bool PlannerThread::plan_init()
     }
     checkPause();
     if (!groundRules())
+    {
+        return false;
+    }
+    checkPause();
+    if (!completePlannerState())
     {
         return false;
     }
@@ -1159,6 +1155,10 @@ string PlannerThread::showCurrentState()
 
 string PlannerThread::showCurrentGoal()
 {
+    if (!loadGoal())
+    {
+        return "failed";
+    }
     string temp_str = "";
     for (int i = 0; i < goal.size(); ++i)
     {

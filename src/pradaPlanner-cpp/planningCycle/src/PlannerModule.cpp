@@ -141,9 +141,20 @@ bool PlannerModule::executePlannedAction()
     return thread->execAction();
 }
 
-bool PlannerModule::checkGoalCompleted()
+string PlannerModule::checkGoalCompleted()
 {
-    return thread->loadGoal() && thread->checkGoalCompletion();
+    if (!thread->loadGoal())
+    {
+        return "fail";
+    }
+    if (thread->checkGoalCompletion())
+    {
+        return "Goal achieved";
+    }
+    else 
+    {
+        return "Goal not achieved";
+    }
 }
 
 bool PlannerModule::run1Step()

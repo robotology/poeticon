@@ -133,7 +133,6 @@ int main (int argc, char *argv[])
                 getline(objectFile,line);
                 objects = split(line, ';');
             }
-            objects.pop_back();
             vector<vector<string> > translat;
             vector<string> temp_trans;
             string temp_str;
@@ -507,6 +506,7 @@ int main (int argc, char *argv[])
                 goalFile << subgoals[subgoals.size()-1][i] << " ";
             }
             goalFile.close();
+            objectFile.close();
             Bottle &plannerBottleOut = plannerPort.prepare();
             plannerBottleOut.clear();
             plannerBottleOut.addString("done");

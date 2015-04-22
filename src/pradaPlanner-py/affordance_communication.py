@@ -70,6 +70,26 @@ class ActionQueryCommunication:
     def _is_success(self, ans):
             return ans.size() == 1 ## and ans.get(0).asVocab() == 27503
 
+class Opc2pradaCommunication:
+    ## for rpc communication with action executor
+
+    def __init__(self):
+        self._rpc_client = yarp.RpcClient()
+        self._port_name = "/AffordanceComm/opc2prada_query:io"
+        self._rpc_client.open(self._port_name)
+##        self._rpc_client.addOutput("/activityInterface/rpc:i") ## need to verify the port!!!!
+
+    def _execute(self, obj, cmd):
+        message = yarp.Bottle()
+        message.clear()
+        map(message.addString, [cmd, obj])
+        ans = yarp.Bottle()
+        self._rpc_client.write(message, ans)
+        return ans
+    def _is_success(self, ans):
+            return ans.size() == 1 ## and ans.get(0).asVocab() == 27503
+
+
 def Affordance_comm():
 
     mode = 1
@@ -78,8 +98,8 @@ def Affordance_comm():
     geo_yarp = yarp.BufferedPortBottle()
     geo_yarp.open("/AffordanceComm/ground_cmd:io")##
 
-    desc_yarp = yarp.BufferedPortBottle()
-    desc_yarp.open("/AffordanceComm/desc_query:io")
+    ## desc_yarp = yarp.BufferedPortBottle()
+    ## desc_yarp.open("/AffordanceComm/desc_query:io")
 
     planner_yarp = yarp.BufferedPortBottle()
     planner_yarp.open("/AffordanceComm/planner_cmd:io")
@@ -87,6 +107,9 @@ def Affordance_comm():
     affnet_yarp = yarp. BufferedPortBottle()
     affnet_yarp.open("/AffordanceComm/aff_query:io")
 
+    DescQuery = Opc2pradaCommunication()
+    DescQuery.__init__()
+    
     ActionQuery = ActionQueryCommunication()
     ActionQuery.__init__()
 
@@ -118,32 +141,41 @@ def Affordance_comm():
     print 'Objects are:\n', Obj_ID
         
     for i in range(len(Obj_ID)):
-            
-        desc_bottle_out = desc_yarp.prepare()
-        desc_bottle_out.clear()
-        desc_bottle_out.addString("querydesc2d")
-        desc_bottle_out.addInt(int(Obj_ID[i]))
-        desc_yarp.write()
+        reply = DescQuery._execute("query2d", str(Obj_ID[i]))
+        if DescQuery._is_sucess(reply):
+            data = reply.toString()
+            if data != "ACK" and data != "()" and data != "":
+                data = reply.get(0).asList()
+                data = data.toString().split(' ')
+                for t in range(len(data)):
+                    data[t] = float(data[t])
+            else:
+                data = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+        ##desc_bottle_out = desc_yarp.prepare()
+        ##desc_bottle_out.clear()
+        ##desc_bottle_out.addString("querydesc2d")
+        ##desc_bottle_out.addInt(int(Obj_ID[i]))
+        ##desc_yarp.write()
 
-        while 1:
-            desc_bottle_in = desc_yarp.read(False)
-            yarp.Time.delay(0.1)
-            print "waiting for reply..."
-            if desc_bottle_in:
-                data = desc_bottle_in.toString()
-                print "descriptors are:\n", data
-                if data != 'ACK' and data != 'NACK' and data != '()' and data != '':
-                    data = desc_bottle_in.get(0).asList()
-                    data = data.toString().split(' ')
-                    for t in range(len(data)):
-                        data[t] = float(data[t])
-                    break
-                if data != 'ACK':
-                    desc_bottle_out = desc_yarp.prepare()
-                    desc_bottle_out.clear()
-                    desc_bottle_out.addString("querydesc2d")
-                    desc_bottle_out.addInt(int(Obj_ID[i]))
-                    desc_yarp.write()
+        ##while 1:
+          ##  desc_bottle_in = desc_yarp.read(False)
+          ##  yarp.Time.delay(0.1)
+          ##  print "waiting for reply..."
+          ##  if desc_bottle_in:
+          ##      data = desc_bottle_in.toString()
+          ##      print "descriptors are:\n", data
+          ##      if data != 'ACK' and data != 'NACK' and data != '()' and data != '':
+          ##          data = desc_bottle_in.get(0).asList()
+          ##          data = data.toString().split(' ')
+          ##          for t in range(len(data)):
+          ##              data[t] = float(data[t])
+          ##          break
+          ##      if data != 'ACK':
+          ##          desc_bottle_out = desc_yarp.prepare()
+          ##          desc_bottle_out.clear()
+          ##          desc_bottle_out.addString("querydesc2d")
+          ##          desc_bottle_out.addInt(int(Obj_ID[i]))
+          ##          desc_yarp.write()
         descriptors = descriptors + [[Obj_ID[i], data]]
     tooldesc = []
     tools = []
@@ -152,35 +184,50 @@ def Affordance_comm():
             tools = tools + [object_IDs[j].split(',')[0]]
     print 'available tools: \n',tools
     for i in range(len(tools)):
-        desc_bottle_out = desc_yarp.prepare()
-        desc_bottle_out.clear()
-        desc_bottle_out.addString("querytooldesc2d")
-        desc_bottle_out.addInt(int(tools[i]))
-        desc_yarp.write()
+        reply = DescQuery._execute("querytool2d", str(tools[i]))
+        if DescQuery._is_sucess(reply):
+            data = reply.toString()
+            if data != "ACK" and data != "()" and data != "":
+                data = reply.toString()
+                data = data.replace("((","").replace("))","").split(") (")
+                data[0] = data[0].split(" ")
+                data[1] = data[1].split(" ")
+                for t in range(len(data)):
+                    data[0][t] = float(data[0][t])
+                    data[1][t] = float(data[1][t])
+                data[0] = data[0][2:-1]
+                data[1] = data[1][2:-1]
+            else:
+                data = [[0.0, 0.0, 0.0, 0.0, 0.0],[0.0, 0.0, 0.0, 0.0, 0.0]]
+    ##    desc_bottle_out = desc_yarp.prepare()
+    ##    desc_bottle_out.clear()
+    ##    desc_bottle_out.addString("querytooldesc2d")
+    ##    desc_bottle_out.addInt(int(tools[i]))
+    ##    desc_yarp.write()
 
-        while 1:
-            desc_bottle_in = desc_yarp.read(False)
-            yarp.Time.delay(0.1)
-            print "waiting for reply..."
-            if desc_bottle_in:
-                data = desc_bottle_in.toString()
-                if data != 'ACK' and data != 'NACK' and data != '()' and data != '':
-                    data = desc_bottle_in.toString()
-                    print data
-                    data = data.replace('((','').replace('))','').split(') (')
-                    data[0] = data[0].split(' ')
-                    data[1] = data[1].split(' ')
-                    for t in range(len(data)):
-                        data[0][t] = float(data[0][t])
-                        data[1][t] = float(data[1][t])
-##                    data[0] = data[0][2:-1]
-##                    data[1] = data[1][2:-1]
-                    break
-                desc_bottle_out = desc_yarp.prepare()
-                desc_bottle_out.clear()
-                desc_bottle_out.addString("querytooldesc2d")
-                desc_bottle_out.addInt(int(tools[i]))
-                desc_yarp.write()
+    ##    while 1:
+      ##      desc_bottle_in = desc_yarp.read(False)
+      ##      yarp.Time.delay(0.1)
+      ##      print "waiting for reply..."
+      ##      if desc_bottle_in:
+      ##          data = desc_bottle_in.toString()
+      ##          if data != 'ACK' and data != 'NACK' and data != '()' and data != '':
+      ##              data = desc_bottle_in.toString()
+        ##            print data
+        ##            data = data.replace('((','').replace('))','').split(') (')
+        ##            data[0] = data[0].split(' ')
+        ##            data[1] = data[1].split(' ')
+        ##            for t in range(len(data)):
+        ##                data[0][t] = float(data[0][t])
+        ##                data[1][t] = float(data[1][t])
+##      ##              data[0] = data[0][2:-1]
+##      ##              data[1] = data[1][2:-1]
+        ##            break
+          ##      desc_bottle_out = desc_yarp.prepare()##
+          ##      desc_bottle_out.clear()
+          ##      desc_bottle_out.addString("querytooldesc2d")
+          ##      desc_bottle_out.addInt(int(tools[i]))
+          ##      desc_yarp.write()
         tooldesc = tooldesc + [[tools[i], data]]
         print "tooldesc are:\n", tooldesc
     translation_file = open(''.join(PathName +"/Action_Affordance_Translation.dat"))

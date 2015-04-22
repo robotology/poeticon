@@ -57,7 +57,7 @@ class PlannerModule : public RFModule, public planningCycle_IDLserver
         bool compileGoal();
         bool increaseHorizon();
         bool executePlannedAction();
-        bool checkGoalCompleted();
+        string checkGoalCompleted();
         bool run1Step();
         bool startPlanning();
         string showPlannedAction();

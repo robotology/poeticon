@@ -18,7 +18,7 @@ service planningCycle_IDLserver
     bool compileGoal();
     bool increaseHorizon();
     bool executePlannedAction();
-    bool checkGoalCompleted();
+    string checkGoalCompleted();
     bool run1Step();
     string showPlannedAction();
     string showCurrentState();
