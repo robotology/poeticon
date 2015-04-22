@@ -72,13 +72,15 @@ bool PlannerModule::attach(RpcServer &source)
 bool PlannerModule::pausePlanner()
 {
     yInfo("Pausing...");
-    return thread->pausePlanner();
+    thread->pausePlanner();
+    return true;
 }
 
 bool PlannerModule::resumePlanner()
 {
     yInfo("Resuming...");
-    return thread->resumePlanner();
+    thread->resumePlanner();
+    return true;
 }
 
 bool PlannerModule::goBack()
@@ -93,7 +95,12 @@ bool PlannerModule::goForward()
 
 bool PlannerModule::updateState()
 {
-    return thread->updateState() && thread->loadState();
+    return thread->updateState();
+}
+
+bool PlannerModule::loadState()
+{
+    return thread->completePlannerState() && thread->loadState();
 }
 
 bool PlannerModule::updateGoals()
@@ -123,7 +130,7 @@ bool PlannerModule::resetLevel()
 
 bool PlannerModule::ground()
 {
-    return thread->groundRules() && thread->loadRules();
+    return thread->groundRules() && thread->loadRules() && thread->preserveRules();
 }
 
 bool PlannerModule::compileGoal()
@@ -159,7 +166,9 @@ string PlannerModule::checkGoalCompleted()
 
 bool PlannerModule::run1Step()
 {
-    return thread->planning_cycle();
+    yInfo("Running one planning loop");
+    thread->planning_cycle();
+    return true;
 }
 
 bool PlannerModule::startPlanning()

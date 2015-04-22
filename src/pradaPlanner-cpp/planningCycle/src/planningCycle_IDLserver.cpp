@@ -62,6 +62,14 @@ public:
   virtual bool read(yarp::os::ConnectionReader& connection);
 };
 
+class planningCycle_IDLserver_loadState : public yarp::os::Portable {
+public:
+  bool _return;
+  void init();
+  virtual bool write(yarp::os::ConnectionWriter& connection);
+  virtual bool read(yarp::os::ConnectionReader& connection);
+};
+
 class planningCycle_IDLserver_updateGoals : public yarp::os::Portable {
 public:
   bool _return;
@@ -318,6 +326,27 @@ bool planningCycle_IDLserver_updateState::read(yarp::os::ConnectionReader& conne
 }
 
 void planningCycle_IDLserver_updateState::init() {
+  _return = false;
+}
+
+bool planningCycle_IDLserver_loadState::write(yarp::os::ConnectionWriter& connection) {
+  yarp::os::idl::WireWriter writer(connection);
+  if (!writer.writeListHeader(1)) return false;
+  if (!writer.writeTag("loadState",1,1)) return false;
+  return true;
+}
+
+bool planningCycle_IDLserver_loadState::read(yarp::os::ConnectionReader& connection) {
+  yarp::os::idl::WireReader reader(connection);
+  if (!reader.readListReturn()) return false;
+  if (!reader.readBool(_return)) {
+    reader.fail();
+    return false;
+  }
+  return true;
+}
+
+void planningCycle_IDLserver_loadState::init() {
   _return = false;
 }
 
@@ -688,6 +717,16 @@ bool planningCycle_IDLserver::updateState() {
   bool ok = yarp().write(helper,helper);
   return ok?helper._return:_return;
 }
+bool planningCycle_IDLserver::loadState() {
+  bool _return = false;
+  planningCycle_IDLserver_loadState helper;
+  helper.init();
+  if (!yarp().canWrite()) {
+    fprintf(stderr,"Missing server method '%s'?\n","bool planningCycle_IDLserver::loadState()");
+  }
+  bool ok = yarp().write(helper,helper);
+  return ok?helper._return:_return;
+}
 bool planningCycle_IDLserver::updateGoals() {
   bool _return = false;
   planningCycle_IDLserver_updateGoals helper;
@@ -915,6 +954,17 @@ bool planningCycle_IDLserver::read(yarp::os::ConnectionReader& connection) {
       reader.accept();
       return true;
     }
+    if (tag == "loadState") {
+      bool _return;
+      _return = loadState();
+      yarp::os::idl::WireWriter writer(reader);
+      if (!writer.isNull()) {
+        if (!writer.writeListHeader(1)) return false;
+        if (!writer.writeBool(_return)) return false;
+      }
+      reader.accept();
+      return true;
+    }
     if (tag == "updateGoals") {
       bool _return;
       _return = updateGoals();
@@ -1110,6 +1160,7 @@ std::vector<std::string> planningCycle_IDLserver::help(const std::string& functi
     helpString.push_back("goBack");
     helpString.push_back("goForward");
     helpString.push_back("updateState");
+    helpString.push_back("loadState");
     helpString.push_back("updateGoals");
     helpString.push_back("plan");
     helpString.push_back("resetRules");
@@ -1147,6 +1198,9 @@ std::vector<std::string> planningCycle_IDLserver::help(const std::string& functi
     }
     if (functionName=="updateState") {
       helpString.push_back("bool updateState() ");
+    }
+    if (functionName=="loadState") {
+      helpString.push_back("bool loadState() ");
     }
     if (functionName=="updateGoals") {
       helpString.push_back("bool updateGoals() ");
