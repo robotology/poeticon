@@ -93,7 +93,7 @@ bool PlannerModule::goForward()
 
 bool PlannerModule::updateState()
 {
-    return thread->updateState();
+    return thread->updateState() && thread->loadState();
 }
 
 bool PlannerModule::updateGoals()
