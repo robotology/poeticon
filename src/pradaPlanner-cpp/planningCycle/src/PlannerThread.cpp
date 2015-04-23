@@ -14,6 +14,7 @@ void PlannerThread::openFiles()
     stateFileName = PathName + "/state.dat";
     objFileName = PathName + "/Object_names-IDs.dat";
     pipeFileName = PathName + "/pipe.txt";
+    symbolFileName = PathName + "/symbols.dat";
 }
 
 bool PlannerThread::openPorts()
