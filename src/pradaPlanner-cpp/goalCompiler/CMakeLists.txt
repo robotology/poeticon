@@ -15,10 +15,6 @@ find_package(ICUBcontrib)
 list(APPEND CMAKE_MODULE_PATH ${YARP_MODULE_PATH})
 list(APPEND CMAKE_MODULE_PATH ${ICUBCONTRIB_MODULE_PATH})
 
-#include(YarpIDL)
-#set(IDL_GENERATED_CODE_DIR "${CMAKE_CURRENT_SOURCE_DIR}") #?
-#yarp_idl_to_dir(${PROJECTNAME}.thrift ${IDL_GENERATED_CODE_DIR})
-
 include(YarpInstallationHelpers)
 include(ICUBcontribHelpers)
 include(ICUBcontribOptions)
@@ -32,4 +28,4 @@ add_executable(${PROJECTNAME} ${source})
 
 target_link_libraries(${PROJECTNAME} ${YARP_LIBRARIES}) 
 
-install(PROGRAMS ${python_scripts} DESTINATION bin)
+install(PROGRAMS ${PROJECTNAME} DESTINATION bin)

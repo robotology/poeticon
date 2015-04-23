@@ -39,4 +39,4 @@ add_executable(${PROJECTNAME} ${source} ${header})
 
 target_link_libraries(${PROJECTNAME} ${YARP_LIBRARIES}) 
 
-install(PROGRAMS ${python_scripts} DESTINATION bin)
+install(PROGRAMS ${PROJECTNAME} DESTINATION bin)
