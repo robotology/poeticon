@@ -18,7 +18,7 @@ using namespace std;
 using namespace yarp::os;
 
 
-class PlannerModule : public RFModule, public Planner_IDLserver
+class PlannerModule : public RFModule, public planningCycle_IDLserver
 {
     private:
         // module parameters

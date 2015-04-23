@@ -10,6 +10,7 @@ set(PROJECTNAME planningCycle)
 project(${PROJECTNAME})
 
 find_package(YARP)
+find_package(ICUB)
 find_package(ICUBcontrib)
 
 list(APPEND CMAKE_MODULE_PATH ${YARP_MODULE_PATH})
@@ -39,4 +40,4 @@ add_executable(${PROJECTNAME} ${source} ${header})
 
 target_link_libraries(${PROJECTNAME} ${YARP_LIBRARIES}) 
 
-install(PROGRAMS ${PROJECTNAME} DESTINATION bin)
+install(TARGETS ${PROJECTNAME} DESTINATION bin)

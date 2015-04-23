@@ -16,8 +16,6 @@
 #include <vector>
 #include <algorithm>
 
-
-
 using namespace yarp::os;
 using namespace std;
 
