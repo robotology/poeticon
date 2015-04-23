@@ -10,7 +10,7 @@
 #include <yarp/os/Bottle.h>
 #include <yarp/os/LogStream.h>
 #include <yarp/os/RFModule.h>
-#include "Planner_IDLserver.h"
+#include "planningCycle_IDLserver.h"
 #include "PlannerThread.h"
 
 

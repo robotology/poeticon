@@ -1,6 +1,6 @@
-#Planner.thrift
+#planningCycle.thrift
 
-service Planner_IDLserver
+service planningCycle_IDLserver
 {
     bool quit();
     bool startPlanning();
@@ -23,5 +23,4 @@ service Planner_IDLserver
     string showPlannedAction();
     string showCurrentState();
     string showCurrentGoal();
-    
 }
