@@ -849,26 +849,39 @@ bool WorldStateMgrThread::doPopulateDB()
                 bPos.addString("pos");
                 Bottle &bPosValue = bPos.addList();
                 double x=0.0, y=0.0, z=0.0;
-                mono2stereo(bNameValue.c_str(), x, y, z);
                 if (withFilter)
                 {
                     yarp::sig::Vector pos(3);
-                    pos[0]=x; pos[1]=y; pos[2]=z;
                     // add filter to container if necessary
                     if (posFilter.size()<=wsID-countFrom) // TODO: more robust check
                     {
-                        iCub::ctrl::MedianFilter newFilter((size_t)filterOrder, pos);
+                        pos[0]=x; pos[1]=y; pos[2]=z;
+                        iCub::ctrl::MedianFilter newFilter(static_cast<size_t>(filterOrder), pos);
                         posFilter.push_back(newFilter);
                     }
-                    yarp::sig::Vector posFiltered = posFilter[wsID-countFrom].filt(pos);
-                    yDebug() << "unfiltered pos:" << pos.toString().c_str() << "\tfiltered:" << posFiltered.toString().c_str();
-                    bPosValue.addDouble(posFiltered[0]);
-                    bPosValue.addDouble(posFiltered[1]);
-                    bPosValue.addDouble(posFiltered[2]);
+
+                    // acquire input n times, where n=filterOrder, and apply filter
+                    yarp::sig::Vector posFiltered(3);
+                    for (int run=1; run<=filterOrder; ++run)
+                    {
+                        mono2stereo(bNameValue.c_str(), x, y, z);
+                        pos[0]=x; pos[1]=y; pos[2]=z;
+                        posFiltered = posFilter[wsID-countFrom].filt(pos); // FIXME
+                        yDebug("run %d/%d, unfiltered pos:\t%s",
+                              run, filterOrder, pos.toString().c_str());
+                        if (run==filterOrder)
+                        {
+                            yDebug("filtered pos:\t\t%s", posFiltered.toString().c_str());
+                            bPosValue.addDouble(posFiltered[0]);
+                            bPosValue.addDouble(posFiltered[1]);
+                            bPosValue.addDouble(posFiltered[2]);
+                        }
+                    }
                 }
                 else
                 {
                     // unfiltered values
+                    mono2stereo(bNameValue.c_str(), x, y, z);
                     bPosValue.addDouble(x);
                     bPosValue.addDouble(y);
                     bPosValue.addDouble(z);

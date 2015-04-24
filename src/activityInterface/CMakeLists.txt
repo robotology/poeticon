@@ -22,6 +22,8 @@ include(ICUBcontribHelpers)
 include(ICUBcontribOptions)
 icubcontrib_set_default_prefix()
 
+find_package(Threads REQUIRED)
+
 include(YarpIDL)
 yarp_idl_to_dir(${PROJECTNAME}.thrift ${CMAKE_CURRENT_SOURCE_DIR})
 
@@ -41,7 +43,7 @@ include_directories(${PROJECT_SOURCE_DIR}/include
 
 add_executable(${PROJECTNAME} ${source} ${header} ${idl} )
 
-target_link_libraries(${PROJECTNAME} ${YARP_LIBRARIES} activeSegmentation ${OpenCV_LIBRARIES} icubmod)
+target_link_libraries(${PROJECTNAME} ${YARP_LIBRARIES} activeSegmentation ${OpenCV_LIBRARIES} icubmod iKin ${CMAKE_THREAD_LIBS_INIT})
 
 install(TARGETS ${PROJECTNAME} DESTINATION bin)
 

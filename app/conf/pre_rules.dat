@@ -48,5 +48,5 @@ OUTCOMES:
   0.7 -_tool_istool() _tool_on__obj() -_tool_inhand__hand() _hand_clearhand() _hand_istool()
   0.15 -_tool_istool() -_tool_inhand__hand() _hand_clearhand() _hand_istool()
   0.15 <noise>
-  
-  
+
+

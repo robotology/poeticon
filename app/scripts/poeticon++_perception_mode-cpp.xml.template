@@ -1,0 +1,214 @@
+<application>
+<name>POETICON++ from Perception, C++</name>
+
+<dependencies>
+    <port>/icub/camcalib/left/out</port>
+    <port>/blobSpotter/image:o</port>
+</dependencies>
+
+<module>
+    <name>activityInterface</name>
+    <node>pwrNode</node>
+</module>
+<module>
+    <name>blobDescriptor</name>
+    <node>pwrNode</node>
+</module>
+<module>
+    <name>sequentialLabeller</name>
+    <node>pwrNode</node>
+</module>
+<module>
+    <name>activeParticleTrack</name>
+    <node>pwrNode</node>
+</module>
+<module>
+    <name>worldStateManager</name>
+    <node>console</node>
+</module>
+<module>
+    <name>objectsPropertiesCollector</name>
+    <parameters>--name wsopc --context poeticon --db dbhands.ini --nosave --async_bc</parameters>
+    <node>console</node>
+</module>
+<module>
+    <name>opc2prada</name>
+    <node>console</node>
+</module>
+<module>
+    <name>planningCycle</name>
+    <node>console</node>
+</module>
+<module>
+    <name>geometricGrounding</name>
+    <node>console</node>
+</module>
+<module>
+    <name>goalCompiler</name>
+    <node>console</node>
+</module>
+<module>
+    <name>affordanceCommunication</name>
+    <node>console</node>
+</module>
+
+<module>
+    <name>yarpview</name>
+    <parameters>--name /view/blobdesc --x 320 --y 0</parameters>
+    <node>console</node>
+</module>
+<module>
+    <name>yarpview</name>
+    <parameters>--name /view/track --x 660 --y 0</parameters>
+    <node>console</node>
+</module>
+
+<connection>
+    <from>/blobSpotter/propagated:o</from>
+    <to>/sequentialLabeller/rawImg:i</to>
+    <protocol>udp</protocol>
+</connection>
+<connection>
+    <from>/blobSpotter/image:o</from>
+    <to>/sequentialLabeller/binImg:i</to>
+    <protocol>udp</protocol>
+</connection>
+<connection>
+    <from>/blobSpotter/image:o</from>
+    <to>/blobDescriptor/binImg:i</to>
+    <protocol>udp</protocol>
+</connection>
+<connection>
+    <from>/icub/camcalib/left/out</from>
+    <to>/blobDescriptor/rawImg:i</to>
+    <protocol>udp</protocol>
+</connection>
+<connection>
+    <from>/sequentialLabeller/labeledImg:o</from>
+    <to>/blobDescriptor/labeledImg:i</to>
+    <protocol>udp</protocol>
+</connection>
+<connection>
+    <from>/blobDescriptor/viewImg:o</from>
+    <to>/view/blobdesc</to>
+    <protocol>udp</protocol>
+</connection>
+<connection>
+    <from>/activeParticleTrack/image:o</from>
+    <to>/view/track</to>
+    <protocol>udp</protocol>
+</connection>
+<connection>
+    <from>/icub/camcalib/left/out</from>
+    <to>/activeParticleTrack/image:i</to>
+</connection>
+<connection>
+    <from>/wsm/activity:rpc</from>
+    <to>/activityInterface/rpc:i</to>
+</connection>
+<connection>
+    <from>/activityInterface/worldState:rpc</from>
+    <to>/wsm/rpc:i</to>
+</connection>
+<connection>
+    <from>/wsm/tracker:rpc</from>
+    <to>/activeParticleTrack/rpc:i</to>
+</connection>
+<connection>
+    <from>/activeParticleTrack/target:o</from>
+    <to>/wsm/target:i</to>
+</connection>
+<connection>
+    <from>/blobDescriptor/affDescriptor:o</from>
+    <to>/wsm/affDescriptor:i</to>
+</connection>
+<connection>
+    <from>/blobDescriptor/toolAffDescriptor:o</from>
+    <to>/wsm/toolAffDescriptor:i</to>
+</connection>
+<connection>
+    <from>/wsm/opc:io</from>
+    <to>/wsopc/rpc</to>
+</connection>
+<connection>
+    <from>/opc2prada/rpcClient</from>
+    <to>/wsopc/rpc</to>
+</connection>
+<connection>
+    <from>/wsopc/broadcast:o</from>
+    <to>/opc2prada/broadcast:i</to>
+</connection>
+<connection>
+    <from>/planner/wsm_rpc:o</from>
+    <to>/wsm/rpc:i</to>
+</connection>
+<connection>
+    <from>/planner/actInt_rpc:o</from>
+    <to>/activityInterface/rpc:i</to>
+</connection>
+<connection>
+    <from>/AffordanceComm/aff_query:io</from>
+    <to>/Eprediction/read:i</to>
+</connection>
+<connection>
+    <from>/Eprediction/write:o</from>
+    <to>/AffordanceComm/aff_query:io</to>
+</connection>
+<connection>
+    <from>/AffordanceComm/actInt_rpc:o</from>
+    <to>/activityInterface/rpc:i</to>
+</connection>
+<connection>
+    <from>/planner/opc2prada_rpc:o</from>
+    <to>/opc2prada/rpc:i</to>
+</connection>
+<connection>
+    <from>/planner/grounding_cmd:io</from>
+    <to>/grounding/planner_cmd:io</to>
+</connection>
+<connection>
+    <from>/planner/goal_cmd:io</from>
+    <to>/goal_imag/planner_cmd:io</to>
+</connection>
+<connection>
+    <from>/grounding/planner_cmd:io</from>
+    <to>/planner/grounding_cmd:io</to>
+</connection>
+<connection>
+    <from>/goal_imag/planner_cmd:io</from>
+    <to>/planner/goal_cmd:io</to>
+</connection>
+<connection>
+    <from>/activityInterface/praxicon:o</from>
+    <to>/goal_imag/prax_inst:i</to>
+</connection>
+<connection>
+    <from>/planner/prax_inst:o</from>
+    <to>/activityInterface/prada:i</to>
+</connection>
+<connection>
+    <from>/AffordanceComm/ground_cmd:io</from>
+    <to>/grounding/Aff_cmd:io</to>
+</connection>
+<connection>
+    <from>/grounding/Aff_cmd:io</from>
+    <to>/AffordanceComm/ground_cmd:io</to>
+</connection>
+<connection>
+    <from>/opc2prada/cmd:io</from>
+    <to>/AffordanceComm/desc_query:io</to>
+</connection>
+<connection>
+    <from>/AffordanceComm/desc_query:io</from>
+    <to>/opc2prada/cmd:io</to>
+</connection>
+<connection>
+    <from>/AffordanceComm/planner_cmd:io</from>
+    <to>/planner/Aff_cmd:io</to>
+</connection>
+<connection>
+    <from>/planner/Aff_cmd:io</from>
+    <to>/AffordanceComm/planner_cmd:io</to>
+</connection>
+
+</application>

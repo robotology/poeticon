@@ -28,7 +28,7 @@ int main(int argc, char *argv[])
         yInfo("--name prefix (default wsm)");
         yInfo("--countFrom trackerStartIndex (default 13)");
         yInfo("--filter <on/off> (default off)");
-        yInfo("--filterOrder n (default 1)");
+        yInfo("--filterOrder n (default 5)");
         yInfo("--playback filename (to read data from a file; if this option is selected, other ones are ignored)");
         return 0; // EXIT_SUCCESS
     }

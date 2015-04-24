@@ -38,7 +38,7 @@ bool WorldStateMgrModule::configure(ResourceFinder &rf)
     withFilter  = rf.check("filter") && rf.find("filter").asString()!="off";
     if (withFilter)
     {
-        filterOrder = rf.check("filterOrder", Value(1)).asInt();
+        filterOrder = rf.check("filterOrder", Value(5)).asInt();
         yInfo("selected temporal filtering with order %d", filterOrder);
     }
 
