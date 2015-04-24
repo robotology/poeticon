@@ -199,7 +199,7 @@ bool WorldStateMgr_IDL::dump() {
   WorldStateMgr_IDL_dump helper;
   helper.init();
   if (!yarp().canWrite()) {
-    fprintf(stderr,"Missing server method '%s'?\n","bool WorldStateMgr_IDL::dump()");
+    yError("Missing server method '%s'?","bool WorldStateMgr_IDL::dump()");
   }
   bool ok = yarp().write(helper,helper);
   return ok?helper._return:_return;
@@ -209,7 +209,7 @@ bool WorldStateMgr_IDL::update() {
   WorldStateMgr_IDL_update helper;
   helper.init();
   if (!yarp().canWrite()) {
-    fprintf(stderr,"Missing server method '%s'?\n","bool WorldStateMgr_IDL::update()");
+    yError("Missing server method '%s'?","bool WorldStateMgr_IDL::update()");
   }
   bool ok = yarp().write(helper,helper);
   return ok?helper._return:_return;
@@ -219,7 +219,7 @@ bool WorldStateMgr_IDL::pause(const std::string& objName) {
   WorldStateMgr_IDL_pause helper;
   helper.init(objName);
   if (!yarp().canWrite()) {
-    fprintf(stderr,"Missing server method '%s'?\n","bool WorldStateMgr_IDL::pause(const std::string& objName)");
+    yError("Missing server method '%s'?","bool WorldStateMgr_IDL::pause(const std::string& objName)");
   }
   bool ok = yarp().write(helper,helper);
   return ok?helper._return:_return;
@@ -229,7 +229,7 @@ bool WorldStateMgr_IDL::resume(const std::string& objName) {
   WorldStateMgr_IDL_resume helper;
   helper.init(objName);
   if (!yarp().canWrite()) {
-    fprintf(stderr,"Missing server method '%s'?\n","bool WorldStateMgr_IDL::resume(const std::string& objName)");
+    yError("Missing server method '%s'?","bool WorldStateMgr_IDL::resume(const std::string& objName)");
   }
   bool ok = yarp().write(helper,helper);
   return ok?helper._return:_return;
@@ -239,7 +239,7 @@ yarp::os::Bottle WorldStateMgr_IDL::getColorHist(const int32_t u, const int32_t 
   WorldStateMgr_IDL_getColorHist helper;
   helper.init(u,v);
   if (!yarp().canWrite()) {
-    fprintf(stderr,"Missing server method '%s'?\n","yarp::os::Bottle WorldStateMgr_IDL::getColorHist(const int32_t u, const int32_t v)");
+    yError("Missing server method '%s'?","yarp::os::Bottle WorldStateMgr_IDL::getColorHist(const int32_t u, const int32_t v)");
   }
   bool ok = yarp().write(helper,helper);
   return ok?helper._return:_return;
@@ -249,7 +249,7 @@ bool WorldStateMgr_IDL::quit() {
   WorldStateMgr_IDL_quit helper;
   helper.init();
   if (!yarp().canWrite()) {
-    fprintf(stderr,"Missing server method '%s'?\n","bool WorldStateMgr_IDL::quit()");
+    yError("Missing server method '%s'?","bool WorldStateMgr_IDL::quit()");
   }
   bool ok = yarp().write(helper,helper);
   return ok?helper._return:_return;
