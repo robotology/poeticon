@@ -25,6 +25,9 @@
 #include <fstream>
 #include <string.h>
 
+
+#include "OPC2PRADA_IDL.h"
+
 using namespace yarp::os;
 using namespace std;
 
@@ -49,21 +52,21 @@ private:
 };
 
 
-class TranslatorModule: public RFModule {
+class TranslatorModule: public RFModule, public OPC2PRADA_IDL {
     string moduleName;
     enum switchCase {name,is_h, pos,offset,desc,tooldesc2d,in_h,on_t,re_w,pu_w, free};
-    string translatorPortName;
+    string translatorPortName, handlerPortName;
     BufferedPort<Bottle> translatorPort;
 
     string opcName;
     BufferedPort<Bottle> port_broad;
     RpcClient rpc_port;
-
+    RpcServer handlerPort;
     double threadPeriod;
 
     Thread_read *readingThread;
     
-	ofstream myfile,myfile2;
+    ofstream myfile,myfile2;
 
 private:
     //const char* objIDsFileName, *stateFileName;
@@ -76,5 +79,18 @@ public:
     bool interruptModule();
     bool close();
     switchCase hashtable(string command);
+
+        // IDL functions
+    bool attach(yarp::os::RpcServer &source);
+    Bottle query2d(const int32_t ObjectID);
+    Bottle querytool2d(const int32_t ObjectID);
+    bool update();
+    bool quit();
+
+
+
+
+
+
 };
 #endif // TRANSLATOR_H
