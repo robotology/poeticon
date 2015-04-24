@@ -851,24 +851,31 @@ bool WorldStateMgrThread::doPopulateDB()
                 double x=0.0, y=0.0, z=0.0;
                 if (withFilter)
                 {
+                    // start acquisition - run 1
                     yarp::sig::Vector pos(3);
-                    // add filter to container if necessary
-                    if (posFilter.size()<=wsID-countFrom) // TODO: more robust check
-                    {
-                        pos[0]=x; pos[1]=y; pos[2]=z;
-                        iCub::ctrl::MedianFilter newFilter(static_cast<size_t>(filterOrder), pos);
-                        posFilter.push_back(newFilter);
-                    }
-
-                    // acquire input n times, where n=filterOrder, and apply filter
                     yarp::sig::Vector posFiltered(3);
-                    for (int run=1; run<=filterOrder; ++run)
+                    mono2stereo(bNameValue.c_str(), x, y, z);
+                    pos[0]=x; pos[1]=y; pos[2]=z;
+                    // add filter to container if necessary, TODO: more robust check
+                    if (posFilter.size()<=wsID-countFrom && wsID>0)
+                    {
+                        iCub::ctrl::MedianFilter newFilter(1, pos);
+                        newFilter.setOrder(filterOrder);
+                        posFilter.push_back(newFilter);
+                        yDebug("%d: added filter for object %d to container", wsID-countFrom, wsID);
+                    }
+                    yDebug("run 1/%d, unfiltered pos:\t%s",
+                          filterOrder, pos.toString().c_str());
+                    posFiltered = posFilter[wsID-countFrom].filt(pos);
+
+                    // runs 2..n
+                    for (int run=2; run<=filterOrder; ++run)
                     {
                         mono2stereo(bNameValue.c_str(), x, y, z);
                         pos[0]=x; pos[1]=y; pos[2]=z;
-                        posFiltered = posFilter[wsID-countFrom].filt(pos); // FIXME
                         yDebug("run %d/%d, unfiltered pos:\t%s",
                               run, filterOrder, pos.toString().c_str());
+                        posFiltered = posFilter[wsID-countFrom].filt(pos);
                         if (run==filterOrder)
                         {
                             yDebug("filtered pos:\t\t%s", posFiltered.toString().c_str());
