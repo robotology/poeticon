@@ -20,6 +20,7 @@ public:
   virtual bool goBack();
   virtual bool goForward();
   virtual bool updateState();
+  virtual bool loadState();
   virtual bool updateGoals();
   virtual bool plan();
   virtual bool resetRules();

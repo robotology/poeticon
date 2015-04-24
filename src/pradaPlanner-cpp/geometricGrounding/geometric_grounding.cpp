@@ -594,7 +594,9 @@ int main (int argc, char *argv[]){
             int num_act = count(rules.begin(), rules.end(), "ACTION:");
             for (int i = 0; i < rules.size(); ++i){
                 if (rules[i].find("Rule") != std::string::npos){
-                    Bottle &AffBottleOut = affordancePort.prepare();
+                    cout << "sending rule:" << endl;
+                    cout << rules[i+2] << endl;
+                    Bottle& AffBottleOut = affordancePort.prepare();
                     AffBottleOut.clear();
                     AffBottleOut.addString("update");
                     affordancePort.write();
@@ -653,6 +655,10 @@ int main (int argc, char *argv[]){
                     l++;
                 }
             }
+            Bottle& AffBottleOut = affordancePort.prepare();
+            AffBottleOut.clear();
+            AffBottleOut.addString("done");
+            affordancePort.write();
             cout << "creating symbols..." << endl;
             vector<string> symbols, temp_symbols, new_symbols;
             while ( getline(presymbolFile, line, '\n')){
@@ -677,13 +683,13 @@ int main (int argc, char *argv[]){
             symbolFile.close();
             preruleFile.close();
             presymbolFile.close();
-            Bottle &plannerBottleOut = plannerPort.prepare();
+            Bottle& plannerBottleOut = plannerPort.prepare();
             plannerBottleOut.clear();
             plannerBottleOut.addString("ready");
             plannerPort.write();
         }
         if (command == "kill"){
-            Bottle &AffBottleOut = affordancePort.prepare();
+            Bottle& AffBottleOut = affordancePort.prepare();
             AffBottleOut.clear();
             AffBottleOut.addString("kill");
             affordancePort.write();

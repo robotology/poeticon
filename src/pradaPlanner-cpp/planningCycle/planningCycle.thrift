@@ -9,6 +9,7 @@ service planningCycle_IDLserver
     bool goBack();
     bool goForward();
     bool updateState();
+    bool loadState();
     bool updateGoals();
     bool plan();
     bool resetRules();

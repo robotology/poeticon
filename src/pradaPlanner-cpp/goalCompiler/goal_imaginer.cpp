@@ -98,6 +98,7 @@ int main (int argc, char *argv[])
                 praxiconBottle = praxiconPort.read(false);
                 if (praxiconBottle != NULL){
                     cout << "bottle received:" << praxiconBottle->toString().c_str() << endl;
+                    instructions.clear();
                     if (praxiconBottle->toString().find("a") != -1){
                         for (int g=0; g < praxiconBottle->size(); ++g){
                             vector<string> temp_instructions;

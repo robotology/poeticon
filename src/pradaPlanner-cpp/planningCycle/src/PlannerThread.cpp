@@ -75,14 +75,16 @@ bool PlannerThread::threadInit()
 {
     closing = false;
     startPlan = false;
+    resumePlan = true;
+    // initialize file names
+    openFiles();
+    process_string = "cd && cd .. && cd .. && cd " + PathName + " && ./planner.exe > " + pipeFileName;
     if ( !openPorts() )
     {
         yError("problem opening ports");
         return false;
     }
-    // initialize file names
-    openFiles();
-
+ 
     return true;
 }
 
@@ -205,21 +207,13 @@ bool PlannerThread::completePlannerState()
         yWarning("unable to open objects file!");
         return false;
     }*/
-    while (getline(symbolFile, line, '\n')){
+    while (getline(symbolFile, line)){
         data.push_back(line);
     }
-    symbolFile.close();/*
-    if (objFile.is_open()){
-        getline(objFile, line);
-        objects = split(line,';');
-    }
-    objFile.close();
-    for (int i = 0; i < objects.size(); ++i){
-        temp_vect = split(objects[i],',');
-        objs.push_back(temp_vect);
-    }*/
+    symbolFile.close();
     for (int i = 0; i < data.size(); ++i){
         temp_vect = split(data[i],' ');
+        temp_vect2.clear();
         temp_vect2.push_back(temp_vect[0]);
         temp_vect2.push_back(temp_vect[2]);
         symbols.push_back(temp_vect2);
@@ -268,7 +262,7 @@ bool PlannerThread::completePlannerState()
         if ((find_element(data, symbols[i][0]) == 0) && (symbols[i][1] == "primitive")){
             state_str = state_str + "-" + symbols[i][0] + "() ";
         }
-    }    
+    }
     newstateFile.open(stateFileName.c_str());
     if (!newstateFile.is_open())
     {
@@ -295,8 +289,20 @@ bool PlannerThread::groundRules()
     }
     Bottle& aff_bottle_out = aff_yarp.prepare();
     aff_bottle_out.clear();
+    aff_bottle_out.addString("start");
+    aff_yarp.write();
+    Time::delay(0.3);
+    aff_bottle_out = aff_yarp.prepare();
+    aff_bottle_out.clear();
     aff_bottle_out.addString("update");
     aff_yarp.write();
+    while (true) {
+        aff_bottle_in = aff_yarp.read(false);
+        if (aff_bottle_in){
+            break;
+        }
+        Time::delay(0.1);
+    }
     Bottle& geo_bottle_out = geo_yarp.prepare();
     geo_bottle_out.clear();
     geo_bottle_out.addString("update");
@@ -632,7 +638,16 @@ int PlannerThread::PRADA()
 {
     string line;
     vector<string> pipe_vect;
-    int not_used = system(process_string.c_str());
+    /*remove(pipeFileName.c_str());*/
+    FILE * pFile;
+    pFile = fopen(pipeFileName.c_str(),"w");
+    fclose(pFile);
+    int sys_flag = system(process_string.c_str());
+    if (sys_flag == 34304)
+    {
+        yWarning("Error with PRADA files, load failed");
+        return 0;
+    }
     pipeFile.open(pipeFileName.c_str());
     if (!pipeFile.is_open())
     {
@@ -646,6 +661,7 @@ int PlannerThread::PRADA()
     for (int t = 0; t < pipe_vect.size(); ++t){
         if (pipe_vect[t] == "The planner would like to kindly recommend the following action to you:" && t+1 < pipe_vect.size()){
             next_action = pipe_vect[t+1];
+            yInfo("action found: %s", next_action.c_str());
             return 1;
         }
     }
@@ -812,6 +828,7 @@ bool PlannerThread::codeAction()
         }
     }
     for (int k = 0; k < object_IDs.size(); ++k){
+        yInfo("%s", object_IDs[k][0].c_str());
         if (act == object_IDs[k][0]){
             act = object_IDs[k][1];
         }
