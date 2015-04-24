@@ -38,7 +38,7 @@ bool TranslatorModule::quit() {
     cout << "Received Quit command in RPC" << endl;
     return true;
 }
-[add] ( (desc2d (2 1 4 5 2 1)) (tooldesc2d (1 3 4 1 1 3)) )
+
 bool TranslatorModule::update(){
 
     Bottle *receive,dataBase,ids2,*idsp;
