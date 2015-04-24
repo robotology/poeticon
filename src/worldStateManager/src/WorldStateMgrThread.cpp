@@ -1228,16 +1228,36 @@ bool WorldStateMgrThread::getLabel(const int &u, const int &v, string &label)
     //yDebug() << __func__ <<  "sending query:" << activityCmd.toString().c_str();
     activityPort.write(activityCmd, activityReply);
 
+    // old response format: label
+    bool deterministicResponse = activityReply.get(0).isString();
+    bool probabilisticResponse = activityReply.get(0).isList();
     bool validResponse = false;
-    validResponse = activityReply.get(0).isString();
+    validResponse = deterministicResponse || probabilisticResponse;
 
     if (validResponse)
     {
-        if (activityReply.get(0).asString().size()==0)
-            yWarning() << __func__ << "obtained valid but empty response:" << activityReply.toString().c_str();
-        //else
-            //yDebug() << __func__ << "obtained valid response:" << activityReply.toString().c_str();
-        label = activityReply.get(0).asString(); 
+        if (deterministicResponse)
+        {
+            if (activityReply.get(0).asString().size()==0)
+                yWarning() << __func__ << "obtained valid but empty response:" << activityReply.toString().c_str();
+            //else
+                //yDebug() << __func__ << "obtained valid response:" << activityReply.toString().c_str();
+            label = activityReply.get(0).asString();
+        }
+        if (probabilisticResponse)
+        {
+            if (activityReply.get(0).asList()->size()==0)
+            {
+                yWarning() << __func__ << "obtained valid but empty response:" << activityReply.toString().c_str();
+            }
+            else
+            {
+                yDebug() << __func__ << "obtained valid response:" << activityReply.toString().c_str()
+                                     << "-> for now selecting first label in the list";
+                label = activityReply.get(0).asList()->get(0).asList()->get(0).asString();
+            }
+        }
+
         return true;
     }
     else
