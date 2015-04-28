@@ -301,6 +301,11 @@ bool PlannerThread::groundRules()
         if (aff_bottle_in){
             break;
         }
+        if (aff_yarp.getOutputCount() == 0)
+        {
+            yWarning("Affordances communication module crashed");
+            return false;
+        }
         Time::delay(0.1);
     }
     Bottle& geo_bottle_out = geo_yarp.prepare();
@@ -316,6 +321,11 @@ bool PlannerThread::groundRules()
         if (command == "ready"){
             yInfo("Grounding Complete!");
             break;
+        }
+        if (geo_yarp.getOutputCount() == 0)
+        {
+            yWarning("Geometric Grounding module crashed");
+            return false;
         }
         Time::delay(0.5);
     }
@@ -338,6 +348,11 @@ bool PlannerThread::groundRules()
             toolhandle = split(data,' ');
             break;
         }
+        if (aff_yarp.getOutputCount() == 0)
+        {
+            yWarning("Affordance communication module crashed");
+            return false;
+        }
         Time::delay(0.1);
     }
     return true;
@@ -357,8 +372,21 @@ bool PlannerThread::compileGoal()
     while (true) {
         goal_bottle_in = goal_yarp.read(false);
         if (goal_bottle_in){
-            yInfo("Praxicon instruction received, compiling...");
-            break;
+            if (goal_bottle_in->toString() == "done")
+            {
+                yInfo("Praxicon instruction received, compiling...");
+                break;
+            }
+            else if (goal_bottle_in->toString() == "failed")
+            {
+                yWarning("Praxicon disconnected or crashed, compiling failed.");
+                return false;
+            }
+        }
+        if (goal_yarp.getOutputCount() == 0)
+        {
+            yWarning("Goal compiler module crashed");
+            return false;
         }
         Time::delay(0.5);
     }
@@ -371,6 +399,11 @@ bool PlannerThread::compileGoal()
         if (goal_bottle_in){
             yInfo("Goal Compiling is complete!");
             break;
+        }
+        if (goal_yarp.getOutputCount() == 0)
+        {
+            yWarning("Goal compiler module crashed");
+            return false;
         }
         Time::delay(0.5);
     }
@@ -613,6 +646,7 @@ bool PlannerThread::goalUpdate()
 
 bool PlannerThread::planCompletion()
 {
+    loadObjs();
     if (plan_level >= subgoals.size()-1){
         yInfo("plan completed!!");
         Bottle& prax_bottle_out = prax_yarp.prepare();
@@ -756,6 +790,7 @@ bool PlannerThread::resetRules()
 
 bool PlannerThread::loadUsedObjs()
 {
+    loadObjs();
     vector<string> aux_used;
     objects_used.clear();
     for (int y = 0; y < object_IDs.size(); ++y){
@@ -773,6 +808,7 @@ bool PlannerThread::loadUsedObjs()
 
 bool PlannerThread::codeAction()
 {
+    loadObjs();
     vector<string> temp_vect;
     float temp_float;
     string tool1, tool2;
@@ -841,6 +877,9 @@ bool PlannerThread::codeAction()
                 if (hand.find("hand") != std::string::npos){
                     hand.replace(hand.find("hand"),4,"");
                 }
+                else {
+                    break;
+                }
             }
         }
     }
@@ -853,23 +892,32 @@ bool PlannerThread:: execAction()
     string temp_str;
     if (act == "grasp" && (obj == "rake" || obj == "stick")){
         act = "askForTool";
-        temp_str = act + " " + hand;
-        message.addString(temp_str);
+        //temp_str = act + " " + hand;
+        //message.addString(temp_str);
+        message.addString(act);
+        message.addString(hand);
         message.addInt(positx);
         message.addInt(posity);
     }
     else if (act == "grasp" && (obj != "rake" && obj != "stick")){
         act = "take";
-        temp_str = act + " " + obj + " " + hand;
-        message.addString(temp_str);
+        //temp_str = act + " " + obj + " " + hand;
+        //message.addString(temp_str);
+        message.addString(act);
+        message.addString(obj);
+        message.addString(hand);
     }
     else {
-        temp_str = act + " " + obj + " " + hand;
-        message.addString(temp_str);
+        //temp_str = act + " " + obj + " " + hand;
+        //message.addString(temp_str);
+        message.addString(act);
+        message.addString(obj);
+        message.addString(hand);
     }
     yInfo("message: %s" , message.toString().c_str());
     while (true){
         actInt_rpc.write(message, reply);
+        yInfo("%s", reply.toString().c_str());
         if (reply.size() == 1 && reply.get(0).asVocab() == 27503){
             prev_action = message.get(1).toString();
             return true;
@@ -899,6 +947,7 @@ bool PlannerThread::checkGoalCompletion()
 
 bool PlannerThread::checkFailure()
 {
+    loadObjs();
     string line;
     int horizon;
     vector<string> config_data;
@@ -984,17 +1033,17 @@ bool PlannerThread::plan_init()
         return false;
     }
     checkPause();
-    if (!preserveState())
-    {
-        return false;
-    }
-    checkPause();
     if (!groundRules())
     {
         return false;
     }
     checkPause();
     if (!completePlannerState())
+    {
+        return false;
+    }
+    checkPause();
+    if (!preserveState())
     {
         return false;
     }

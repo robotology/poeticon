@@ -1,87 +1,55 @@
+#include "geometricGroundingModule.h"
 
-#include <yarp/os/Network.h>
-#include <yarp/os/RFModule.h>
-#include <yarp/os/Bottle.h>
-#include <yarp/os/BufferedPort.h>
-#include <yarp/os/Mutex.h>
-#include <yarp/os/RateThread.h>
-#include <yarp/os/RpcClient.h>
-#include <yarp/os/Time.h>
-#include <yarp/os/Vocab.h>
-//#include <cstdio>
-//#include <iostream>
-#include <fstream>
-#include <sstream>
-#include <string.h>
-#include <vector>
-#include <algorithm>
+/*geoGround::geoGround(const string &_moduleName, const string &_PathName):moduleName(_moduleName),PathName(_PathName)
+{
+}*/
 
-using namespace yarp::os;
-using namespace std;
+bool geoGround::configure(ResourceFinder &rf)
+{
+    // module parameters
+    moduleName = rf.check("name", Value("geometricGrounding")).asString();
+    PathName = rf.findPath("contexts/"+rf.getContext());
+    setName(moduleName.c_str());
 
-std::vector<std::string> &split(const std::string &s, char delim, std::vector<std::string> &elems) {
-    std::stringstream ss(s);
-    std::string item;
-    while (std::getline(ss, item, delim)) {
-        elems.push_back(item);
+    closing = false;
+
+    if (PathName==""){
+        cout << "path to contexts/"+rf.getContext() << " not found" << endl;
+        return false;    
     }
-    return elems;
-}
-
-std::vector<std::string> split(const std::string &s, char delim) {
-    std::vector<std::string> elems;
-    split(s, delim, elems);
-    return elems;
-}
-
-int find_element(vector<string> vect, string elem) {
-    int flag_true = 0;
-    for (int i = 0; i < vect.size(); ++i){
-        if (vect[i] == elem){
-            flag_true = 1;
-            break;
-        }
+    else {
+        cout << "Context FOUND!" << endl;
     }
-    return flag_true;
+    return true;
 }
 
-vector<string> create_rules(vector<string> objects, string pre_rule, vector<string> tools){
-    cout << "creating rule" << endl;
-    //cout << pre_rule << endl;
+bool geoGround::updateModule()
+{
+    return !closing;
+}
+
+vector<string> geoGround::create_rules(string pre_rule)
+{
     vector<string> temp_vect;
     vector<string> new_rule;
     vector<string> hands;
     int k = 0;
     temp_vect = split(pre_rule, '\n');
-    /*for (int t = 0; t < objects.size(); ++t){
-        cout << objects[t] << endl;
-    }*/
     if (find_element(objects,"11") != 0){
         hands.push_back("11");
     }
     if (find_element(objects,"12") != 0){
         hands.push_back("12");
     }
-    /*for (int t = 0; t < hands.size(); ++t ){
-        cout << hands[t] << endl;
-    }*/
     if (temp_vect.size() >= 2){
         k = 0;
-        //cout << "vector has size" << endl;
-        //cout << temp_vect[2] << endl;
         if ((temp_vect[2].find("_tool") != std::string::npos) || (temp_vect[2].find("_obj") != std::string::npos)){
-            //cout << "tool or object found" << endl;
             if (temp_vect[2].find("_hand") != std::string::npos){
-                //cout << "hand found" << endl;
                 if (temp_vect[2].find("_tool") != std::string::npos){
-                    //cout << "tool found" << endl;
                     for (int t = 0; t < hands.size(); ++t){
                         for (int j= 0; j < objects.size(); ++j){
                             for (int c = 0; c < objects.size(); ++c){
-                                /*cout << objects[c] << endl;
-                                cout << objects[j] << endl;*/
                                 if ((c != j) && (find_element(hands, objects[c]) == 0) && (find_element(hands, objects[j]) == 0)){
-                                    //cout << "objects not hands" << endl;
                                     for (int o = 0; o < temp_vect.size(); ++o){
                                         new_rule.push_back(temp_vect[o]);
                                     }
@@ -112,7 +80,6 @@ vector<string> create_rules(vector<string> objects, string pre_rule, vector<stri
                                                 break;
                                             }
                                         }
-                                        //cout << new_rule[k] << endl;
                                         k++;
                                     }
                                     k=k+2;
@@ -122,7 +89,6 @@ vector<string> create_rules(vector<string> objects, string pre_rule, vector<stri
                     }
                 }
                 else {
-                    //cout << "tool not found" << endl;
                     for (int t = 0; t < hands.size(); ++t){
                         for (int c = 0; c < objects.size(); ++c){
                             if (find_element(hands,objects[c]) == 0){
@@ -157,7 +123,6 @@ vector<string> create_rules(vector<string> objects, string pre_rule, vector<stri
                 }
             }
             else if ((temp_vect[2].find("push") != std::string::npos) || (temp_vect[2].find("pull") != std::string::npos)){
-                //cout << "checking for push/pull" << endl;
                 for (int j = 0; j < tools.size(); ++j){
                     for (int c = 0; c < objects.size(); ++c){
                         if ((objects[c] != tools[j]) && (find_element(hands, objects[c]) == 0)){
@@ -237,10 +202,8 @@ vector<string> create_rules(vector<string> objects, string pre_rule, vector<stri
     int flag_not_add;
     for (int j = 0; j < new_rule.size(); ++j){
         if (new_rule[j].find("_ALL") != std::string::npos){
-            //cout << new_rule[j] << endl;
             aux_rule = split(new_rule[j],' ');
             for (int u = 0; u < aux_rule.size(); ++u){
-                //cout << "aux-rule" << aux_rule[u] << endl;
                 if (aux_rule[u].find("_ALL") != std::string::npos){
                     temp_rule.push_back(" ");
                     for (int k = 0; k < aux_rule.size(); ++k){
@@ -260,9 +223,6 @@ vector<string> create_rules(vector<string> objects, string pre_rule, vector<stri
                             temp_rule.push_back(temp_str);
                         }
                     }
-                    /*for (int w = 0 ; w < temp_rule.size(); ++w){
-                         cout << temp_rule[w] << endl;
-                    }*/
                     for (int w = 0; w < temp_rule.size(); ++w){
                         flag_not_add = 0;
                         if (temp_rule[w].find('-') == std::string::npos){
@@ -289,7 +249,6 @@ vector<string> create_rules(vector<string> objects, string pre_rule, vector<stri
                     temp_str = "";
                     for (int w = 0; w < aux_temp_rule.size(); ++w){
                         temp_str = temp_str + aux_temp_rule[w];
-                        //cout << aux_temp_rule[w] << endl;
                     }
                      
                     new_rule[j] = temp_str;
@@ -314,13 +273,12 @@ vector<string> create_rules(vector<string> objects, string pre_rule, vector<stri
     return new_rule;
 }
 
-vector<string> create_symbols(vector<string> objects, string symbols, vector<string> tools){
+vector<string> geoGround::create_symbols(string symbols){
     vector<string> temp_vect;
     vector<string> new_symbol;
     vector<string> hands;
     int k = 0;
     temp_vect = split(symbols, '\n');
-    /*cout << symbols << endl;*/
     if (find_element(objects,"11") != 0){
         hands.push_back("11");
     }
@@ -334,7 +292,7 @@ vector<string> create_symbols(vector<string> objects, string symbols, vector<str
                 for (int g = 0; g < hands.size(); ++g){
                     for (int j = 0; j < objects.size(); ++j){
                         for (int i = 0; i < objects.size(); ++i){
-                            if ((i!=j) && (find_element(hands,objects[i]) == 0) && (find_element(hands,objects[j]) == 0)){
+                            if ((i!=j) && (hands[g] != objects[i]) && (hands[g] != objects[j])/*&& (find_element(hands,objects[i]) == 0) && (find_element(hands,objects[j]) == 0)*/){
                                 for (int o = 0; o < temp_vect.size(); ++o){
                                     new_symbol.push_back(temp_vect[o]);
                                 }
@@ -371,7 +329,7 @@ vector<string> create_symbols(vector<string> objects, string symbols, vector<str
             else {
                 for (int g = 0; g < hands.size(); ++g){
                     for (int i = 0; i < objects.size(); ++i){
-                        if (find_element(hands,objects[i]) == 0){
+                        if (/*find_element(hands,objects[i]) == 0*/hands[g] != objects[i]){
                             for (int o = 0; o < temp_vect.size(); ++o){
                                 new_symbol.push_back(temp_vect[o]);
                             }
@@ -471,230 +429,271 @@ vector<string> create_symbols(vector<string> objects, string symbols, vector<str
             }
         }
     }
-    /*for (int i  = 0; i < new_symbol.size(); ++i){
-        cout << new_symbol[i] << endl;
-    }*/
     return new_symbol;
 }
 
-int main (int argc, char *argv[]){
-    
-    Network yarp;
+void geoGround::openFiles()
+{
+    presymbolFileName = PathName + "/pre_symbols.dat";
+    preruleFileName = PathName + "/pre_rules.dat";
+    ruleFileName = PathName + "/rules.dat";
+    symbolFileName = PathName + "/symbols.dat";
+    objectsFileName = PathName + "/Object_names-IDs.dat";
+}
 
-    if(! yarp.checkNetwork() ) {
-        fprintf(stdout,"Error: yarp server does not seem available\n");
-        return -1;
-    }
-
-    ResourceFinder rf;
-    rf.setVerbose(true);
-    rf.setDefaultContext("poeticon");
-    rf.configure(argc, argv);
-
-    Bottle *plannerBottle, *AffBottle;
-    BufferedPort<Bottle> plannerPort;
-    BufferedPort<Bottle> affordancePort;
+void geoGround::openPorts()
+{
     plannerPort.open("/grounding/planner_cmd:io");
     affordancePort.open("/grounding/Aff_cmd:io");
+}
 
-    ifstream preruleFile, presymbolFile;
-    
-    string presymbolFileName, preruleFileName;
-    string preruleName = "/pre_rules.dat";
-    string presymbolName = "/pre_symbols.dat";
-    string path = rf.findPath("contexts/"+rf.getContext());
-    string line, command;
+bool geoGround::close()
+{
+    cout << "closing..." << endl;
+    closing = true;
+    plannerPort.close();
+    affordancePort.close();
+    return true;
+}
 
+bool geoGround::interrupt()
+{
+    cout << "interrupting ports" << endl;
+    plannerPort.interrupt();
+    affordancePort.interrupt();
+    return true;
+}
 
-    if (path==""){
-        cout << "path to contexts/"+rf.getContext() << " not found" << endl;
-        return false;    
+bool geoGround::loadObjs()
+{
+    string line;
+    vector<string> temp_objects, temp_vect;
+    cout << objectsFileName << endl;
+    objectFile.open(objectsFileName.c_str());
+    if (objectFile.is_open()){
+        getline(objectFile,line);
+        temp_objects = split(line, ';');
     }
     else {
-        cout << "Context FOUND!" << endl;
-        presymbolFileName = path+presymbolName;
-        preruleFileName = path+preruleName;
-        cout << presymbolFileName << ", " << preruleFileName << endl;
+        cout << "failed to open objects-IDs file" << endl;
+        return false;
     }
-    ifstream objectFile;
-    ofstream ruleFile, symbolFile;
-    string ruleFileName = (path + "/rules.dat").c_str();
-    string symbolFileName = (path + "/symbols.dat").c_str();
-    string objectsFileName = (path + "/Object_names-IDs.dat").c_str();
-
-    while (true) {
-        command = "";
-        while (true){
-            plannerBottle = plannerPort.read(false);
-            if (plannerBottle != NULL){
-                command = plannerBottle->toString().c_str();
-                break;
-            }
-        }
-        if (command == "update"){
-            cout << "starting" << endl;
-
-
-
-            ruleFile.open(ruleFileName.c_str());
-            objectFile.open(objectsFileName.c_str());
-            symbolFile.open(symbolFileName.c_str());
-            preruleFile.open(preruleFileName.c_str());
-            presymbolFile.open(presymbolFileName.c_str());
-            vector<string> objects;
-            string line;
-            if (objectFile.is_open()){
-                getline(objectFile,line);
-                objects = split(line, ';');
-            }
-            objectFile.close();
-            vector<string> new_obj, aux_obj, tools;
-            for (int i = 0; i < objects.size(); ++i){
-                aux_obj = split(objects[i],',');
-                aux_obj[0].replace(aux_obj[0].find('('),1,"");
-                aux_obj[1].replace(aux_obj[1].find(')'),1,"");
-                //cout << aux_obj[0] << endl;
-                new_obj.push_back(aux_obj[0]);
-                if ((aux_obj[1] == "stick") || (aux_obj[1] == "rake")){
-                    tools.push_back(aux_obj[0]);
-                }
-            }
-            cout << "files initialised" << endl;
-            
-            vector<string> prerules, rules, aux_rule, new_rule;
-            string temp_str = "";
-            while ( getline(preruleFile, line, '\n')){
-                /*cout << line << endl;*/
-                if (line == ""){
-                    prerules.push_back(temp_str);
-                    temp_str = "";
-                }
-                else {
-                    temp_str += line + '\n';
-                }
-            }
-            /*for (int i = 0; i < prerules.size(); ++i){
-                cout << prerules[i] << endl;
-            }*/
-            for (int i = 0; i < prerules.size(); ++i){
-                cout << prerules[i] << endl;
-                aux_rule = create_rules(new_obj, prerules[i], tools);
-                cout << "rule created" << endl;
-                for (int g = 0; g < aux_rule.size(); ++g){
-                    rules.push_back(aux_rule[g]);
-                    cout << aux_rule[g] << endl;
-                }
-            }
-            /*for (int i = 0; i < rules.size(); ++i){
-                cout << rules[i] << endl;
-            }*/
-            cout << "creating rules" << endl;
-            temp_str = "";
-            int l = 0;
-            int num_act = count(rules.begin(), rules.end(), "ACTION:");
-            for (int i = 0; i < rules.size(); ++i){
-                if (rules[i].find("Rule") != std::string::npos){
-                    cout << "sending rule:" << endl;
-                    cout << rules[i+2] << endl;
-                    Bottle& AffBottleOut = affordancePort.prepare();
-                    AffBottleOut.clear();
-                    AffBottleOut.addString("update");
-                    affordancePort.write();
-                    Time::delay(0.1);
-                    AffBottleOut.clear();
-
-                    temp_str = "Rule #" + static_cast<ostringstream*>( &(ostringstream() << l) )->str() + "  (" + static_cast<ostringstream*>( &(ostringstream() << l+1) )->str() + " out of " + static_cast<ostringstream*>( &(ostringstream() << num_act) )->str() + ")";
-                    /*cout << temp_str << endl;*/
-                    rules[i].replace(rules[i].find("Rule"),21,temp_str);
-                    new_rule.push_back(rules[i]);
-                    new_rule.push_back(rules[i+1]);
-                    new_rule.push_back(rules[i+2]);
-                    new_rule.push_back(rules[i+3]);
-                    new_rule.push_back(rules[i+4]);
-                    new_rule.push_back(rules[i+5]);
-                    AffBottleOut = affordancePort.prepare();
-                    AffBottleOut.clear();
-                    AffBottleOut.addString(rules[i+2]);
-                    AffBottleOut.addString(rules[i+4]);
-                    AffBottleOut.addString(rules[i+6]);
-                    AffBottleOut.addString(rules[i+7]);
-                    AffBottleOut.addString(rules[i+8]);
-                    affordancePort.write();
-                    //cout << AffBottleOut.toString() << endl;
-                    Time::delay(0.1);
-                    AffBottleOut.clear();
-                    //cout << "bottle sent" << endl;
-                    string bottle_decode_aux;
-                    vector<string> decode_vect_aux;
-                    while (true) {
-                        AffBottle = affordancePort.read(false);
-                        if (AffBottle  != NULL){
-                            bottle_decode_aux = AffBottle->toString();
-                            break;
-                        }
-                    }
-                    //cout << bottle_decode_aux << endl;
-                    decode_vect_aux = split(bottle_decode_aux, '"');
-                    for (int y = 0; y < decode_vect_aux.size(); ++y){
-                        while (true){
-                            if (decode_vect_aux[y].find('"') != std::string::npos){
-                                decode_vect_aux[y].erase(decode_vect_aux[y].find('"'));
-                            }
-                            else {
-                                break;
-                            }
-                        }
-                        //cout << decode_vect_aux[y] << endl;
-                    }
-                    for (int b = 0; b < decode_vect_aux.size(); ++b){
-                        if ((decode_vect_aux[b] != " ") && (decode_vect_aux[b] != "")){
-                            new_rule.push_back(decode_vect_aux[b]);
-                        }
-                    }
-                    new_rule.push_back("\n");
-                    l++;
-                }
-            }
-            Bottle& AffBottleOut = affordancePort.prepare();
-            AffBottleOut.clear();
-            AffBottleOut.addString("done");
-            affordancePort.write();
-            cout << "creating symbols..." << endl;
-            vector<string> symbols, temp_symbols, new_symbols;
-            while ( getline(presymbolFile, line, '\n')){
-                symbols.push_back(line);
-            }
-            for (int i = 0; i < symbols.size(); ++i){
-                temp_symbols = create_symbols(new_obj, symbols[i], tools);
-                for (int t = 0; t < temp_symbols.size(); ++t){
-                    if (find_element(new_symbols, temp_symbols[t])==0){
-                        new_symbols.push_back(temp_symbols[t]);
-                    }
-                }
-            }
-            cout << "writing files..." << endl;
-            for (int i = 0; i < new_rule.size(); ++i){
-                ruleFile << new_rule[i] << endl;
-            }
-            for (int i = 0; i < new_symbols.size(); ++i){
-                symbolFile << new_symbols[i] + " " << endl;
-            }
-            ruleFile.close();
-            symbolFile.close();
-            preruleFile.close();
-            presymbolFile.close();
-            Bottle& plannerBottleOut = plannerPort.prepare();
-            plannerBottleOut.clear();
-            plannerBottleOut.addString("ready");
-            plannerPort.write();
-        }
-        if (command == "kill"){
-            Bottle& AffBottleOut = affordancePort.prepare();
-            AffBottleOut.clear();
-            AffBottleOut.addString("kill");
-            affordancePort.write();
-            break;
+    objectFile.close();
+    objects.clear();
+    for (int i = 0; i < temp_objects.size(); ++i){
+        temp_vect = split(temp_objects[i],',');
+        temp_vect[0].replace(temp_vect[0].find('('),1,"");
+        temp_vect[1].replace(temp_vect[1].find(')'),1,"");
+        objects.push_back(temp_vect[0]);
+        if ((temp_vect[1] == "stick") || (temp_vect[1] == "rake")){
+            tools.push_back(temp_vect[0]);
         }
     }
-    return 0;
+    return true;
 }
+
+string geoGround::plannerCommand()
+{
+    string command;
+    if (plannerPort.getInputCount() == 0)
+    {
+        cout << "planner not connected" << endl;
+        return "failed";
+    }
+    while (true){
+        plannerBottle = plannerPort.read(false);
+        if (plannerBottle != NULL){
+            command = plannerBottle->toString().c_str();
+            return command;
+        }
+    }
+}
+
+bool geoGround::plannerReply()
+{
+    if (plannerPort.getInputCount() == 0)
+    {
+        cout << "planner not connected" << endl;
+        return false;
+    }
+    Bottle& plannerBottleOut = plannerPort.prepare();
+    plannerBottleOut.clear();
+    plannerBottleOut.addString("ready");
+    plannerPort.write();
+    return true;
+}
+
+bool geoGround::loadPreRules()
+{
+    string line, temp_str;
+    preruleFile.open(preruleFileName.c_str());
+    if (!preruleFile.is_open())
+    {
+        cout << "failed to open pre-rules file" << endl;
+        return false;
+    }
+    prerules.clear();
+    while ( getline(preruleFile, line, '\n')){
+        if (line == ""){
+            prerules.push_back(temp_str);
+            temp_str = "";
+        }
+        else {
+            temp_str += line + '\n';
+        }
+    }
+    preruleFile.close();
+    return true;
+}
+
+bool geoGround::createRulesList()
+{
+    vector<string> temp_vect;
+    rules.clear();
+    for (int i = 0; i < prerules.size(); ++i){
+        temp_vect = geoGround::create_rules(prerules[i]);
+        for (int g = 0; g < temp_vect.size(); ++g){
+            rules.push_back(temp_vect[g]);
+        }
+    }
+    return true;
+}
+
+bool geoGround::getAffordances()
+{
+    if (affordancePort.getOutputCount() == 0)
+    {
+        cout << "Affordances module not connected" << endl;
+        return false;
+    }
+    string temp_str, bottle_decode_aux;
+    vector<string> decode_vect_aux;
+    int l = 0;
+    int timer_count;
+    int num_act = count(rules.begin(), rules.end(), "ACTION:");
+    new_rule.clear();
+    for (int i = 0; i < rules.size(); ++i){
+        if (rules[i].find("Rule") != std::string::npos){
+            Bottle& AffBottleOut = affordancePort.prepare();
+            AffBottleOut.clear();
+            AffBottleOut.addString("update");
+            affordancePort.write();
+            Time::delay(0.1);
+            AffBottleOut.clear();
+            temp_str = "Rule #" + static_cast<ostringstream*>( &(ostringstream() << l) )->str() + "  (" + static_cast<ostringstream*>( &(ostringstream() << l+1) )->str() + " out of " + static_cast<ostringstream*>( &(ostringstream() << num_act) )->str() + ")";
+            rules[i].replace(rules[i].find("Rule"),21,temp_str);
+            new_rule.push_back(rules[i]);
+            new_rule.push_back(rules[i+1]);
+            new_rule.push_back(rules[i+2]);
+            new_rule.push_back(rules[i+3]);
+            new_rule.push_back(rules[i+4]);
+            new_rule.push_back(rules[i+5]);
+            AffBottleOut = affordancePort.prepare();
+            AffBottleOut.clear();
+            AffBottleOut.addString(rules[i+2]);
+            AffBottleOut.addString(rules[i+4]);
+            AffBottleOut.addString(rules[i+6]);
+            AffBottleOut.addString(rules[i+7]);
+            AffBottleOut.addString(rules[i+8]);
+            affordancePort.write();
+            Time::delay(0.1);
+            AffBottleOut.clear();
+            timer_count = 0;
+            while (true) {
+                timer_count = timer_count + 1;
+                if (timer_count == 600) // 1 minute timeout
+                {
+                    cout << "connection with affordance module closed: timeout" << endl;
+                    return false;
+                }
+                AffBottle = affordancePort.read(false);
+                if (AffBottle  != NULL){
+                    bottle_decode_aux = AffBottle->toString();
+                    break;
+                }
+                if (affordancePort.getOutputCount() == 0)
+                {
+                    cout << "Affordance communication module crashed." << endl;
+                    return false;
+                }
+                Time::delay(0.1);
+            }
+            decode_vect_aux = split(bottle_decode_aux, '"');
+            for (int y = 0; y < decode_vect_aux.size(); ++y){
+                while (true){
+                    if (decode_vect_aux[y].find('"') != std::string::npos){
+                        decode_vect_aux[y].erase(decode_vect_aux[y].find('"'));
+                    }
+                    else {
+                        break;
+                    }
+                }
+            }
+            for (int b = 0; b < decode_vect_aux.size(); ++b){
+                if ((decode_vect_aux[b] != " ") && (decode_vect_aux[b] != "")){
+                    new_rule.push_back(decode_vect_aux[b]);
+                }
+            }
+            new_rule.push_back("\n");
+            l++;
+        }
+    }
+    Bottle& AffBottleOut = affordancePort.prepare();
+    AffBottleOut.clear();
+    AffBottleOut.addString("done");
+    affordancePort.write();
+    return true;
+}
+
+bool geoGround::createSymbolList()
+{
+    string line;
+    vector<string> symbols, temp_symbols;
+    presymbolFile.open(presymbolFileName.c_str());
+    if (!presymbolFile.is_open())
+    {
+        cout << "failed to open pre symbol file" << endl;
+        return false;
+    }
+    while (getline(presymbolFile, line, '\n')){
+        symbols.push_back(line);
+    }
+    for (int i = 0; i < symbols.size(); ++i){
+        temp_symbols = geoGround::create_symbols(symbols[i]);
+        for (int t = 0; t < temp_symbols.size(); ++t){
+            if (find_element(new_symbols, temp_symbols[t])==0){
+                new_symbols.push_back(temp_symbols[t]);
+            }
+        }
+    }
+    presymbolFile.close();
+    return true;
+}
+
+bool geoGround::writeFiles()
+{
+    ruleFile.open(ruleFileName.c_str());
+    if (!ruleFile.is_open())
+    {
+        cout << "failed to open rule file" << endl;
+        return false; 
+    }
+    symbolFile.open(symbolFileName.c_str());
+    if (!symbolFile.is_open())
+    {
+        cout << "failed to open symbol file" << endl;
+        ruleFile.close();
+        return false; 
+    }
+    for (int i = 0; i < new_rule.size(); ++i){
+        ruleFile << new_rule[i] << endl;
+    }
+    for (int i = 0; i < new_symbols.size(); ++i){
+        symbolFile << new_symbols[i] + " " << endl;
+    }
+    ruleFile.close();
+    symbolFile.close();
+    return true;
+}
+
+
