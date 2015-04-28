@@ -1228,43 +1228,46 @@ bool WorldStateMgrThread::getLabel(const int &u, const int &v, string &label)
     //yDebug() << __func__ <<  "sending query:" << activityCmd.toString().c_str();
     activityPort.write(activityCmd, activityReply);
 
-    // old response format: label
-    bool deterministicResponse = activityReply.get(0).isString();
-    bool probabilisticResponse = activityReply.get(0).isList();
-    bool validResponse = false;
-    validResponse = deterministicResponse || probabilisticResponse;
+    // old response format: "winning-label"
+    bool validDeterministicResponse = activityReply.get(0).isString();
+    
+    // new response format: ((label1 prob1) (label2 prob2) ...)
+    bool validProbabilisticResponse = activityReply.get(0).isList();
 
-    if (validResponse)
+    if (validDeterministicResponse)
     {
-        if (deterministicResponse)
+        if (activityReply.get(0).asString().size()==0)
         {
-            if (activityReply.get(0).asString().size()==0)
-                yWarning() << __func__ << "obtained valid but empty response:" << activityReply.toString().c_str();
-            //else
-                //yDebug() << __func__ << "obtained valid response:" << activityReply.toString().c_str();
+            yWarning() << __func__ << "obtained valid but empty deterministic response:" << activityReply.toString().c_str();
+            return false;
+        }
+        else
+        {
+            //yDebug() << __func__ << "obtained valid deterministic response:" << activityReply.toString().c_str();
             label = activityReply.get(0).asString();
         }
-        if (probabilisticResponse)
+    }
+    else if (validProbabilisticResponse)
+    {
+        if (activityReply.get(0).asList()->size()==0)
         {
-            if (activityReply.get(0).asList()->size()==0)
-            {
-                yWarning() << __func__ << "obtained valid but empty response:" << activityReply.toString().c_str();
-            }
-            else
-            {
-                yDebug() << __func__ << "obtained valid response:" << activityReply.toString().c_str()
-                                     << "-> for now selecting first label in the list";
-                label = activityReply.get(0).asList()->get(0).asList()->get(0).asString();
-            }
+            yWarning() << __func__ << "obtained valid but empty probabilistic response:" << activityReply.toString().c_str();
+            return false;
         }
-
-        return true;
+        else
+        {
+            yDebug() << __func__ << "obtained valid probabilistic response:" << activityReply.toString().c_str()
+                                 << "-> for now selecting first label in the list";
+            label = activityReply.get(0).asList()->get(0).asList()->get(0).asString();
+        }
     }
     else
     {
         yWarning() << __func__ << "obtained invalid response:" << activityReply.toString().c_str();
         return false;
     }
+
+    return true;
 }
 
 struct compareSecond
