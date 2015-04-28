@@ -121,6 +121,15 @@ int main (int argc, char *argv[])
                         break;
                     }
                 }
+                if (praxiconPort.getOutputCount() == 0)
+                {
+                    cout << "praxicon crashed or disconnected" << endl;
+                    Bottle &plannerBottleOut = plannerPort.prepare();
+                    plannerBottleOut.clear();
+                    plannerBottleOut.addString("failed");
+                    plannerPort.write();
+                    break;
+                }
             }
         }
         if (command == "update"){

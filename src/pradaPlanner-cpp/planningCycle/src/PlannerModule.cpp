@@ -100,7 +100,7 @@ bool PlannerModule::updateState()
 
 bool PlannerModule::loadState()
 {
-    return thread->completePlannerState() && thread->loadState();
+    return thread->completePlannerState() && thread->loadState() && thread->loadObjs();
 }
 
 bool PlannerModule::updateGoals()
@@ -145,7 +145,7 @@ bool PlannerModule::increaseHorizon()
 
 bool PlannerModule::executePlannedAction()
 {
-    return thread->execAction();
+    return thread->codeAction() && thread->execAction();
 }
 
 string PlannerModule::checkGoalCompleted()
@@ -178,6 +178,7 @@ bool PlannerModule::startPlanning()
 
 string PlannerModule::showPlannedAction()
 {
+    thread->codeAction();
     return thread->showPlannedAction();
 }
 
