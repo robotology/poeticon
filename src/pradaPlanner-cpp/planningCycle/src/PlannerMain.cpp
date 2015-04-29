@@ -20,5 +20,6 @@ int main(int argc, char *argv[])
     }
 
     PlannerModule module;
-    return module.runModule(rf);
+    module.runModule(rf);
+    return 0;
 }

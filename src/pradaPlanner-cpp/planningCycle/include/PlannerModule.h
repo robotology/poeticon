@@ -64,7 +64,7 @@ class PlannerModule : public RFModule, public planningCycle_IDLserver
         string showPlannedAction();
         string showCurrentState();
         string showCurrentGoal();
-        bool quit();
+        virtual bool quit();
 };
 
 #endif
