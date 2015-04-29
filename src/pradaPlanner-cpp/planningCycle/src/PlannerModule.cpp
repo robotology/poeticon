@@ -95,12 +95,12 @@ bool PlannerModule::goForward()
 
 bool PlannerModule::updateState()
 {
-    return thread->updateState();
+    return thread->updateState() && thread->loadObjs();
 }
 
 bool PlannerModule::loadState()
 {
-    return thread->completePlannerState() && thread->loadState() && thread->loadObjs();
+    return thread->completePlannerState() && thread->loadState();
 }
 
 bool PlannerModule::updateGoals()
