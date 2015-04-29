@@ -34,6 +34,29 @@ std::vector<std::string> split(const std::string &s, char delim) {
     return elems;
 }
 
+int find_element(vector<string> vect, string elem) {
+    int flag_true = 0;
+    for (int i = 0; i < vect.size(); ++i){
+        if (vect[i] == elem){
+            flag_true = 1;
+            break;
+        }
+    }
+    return flag_true;
+}
+
+int vect_compare (vector<string> vect1, vector<string> vect2){
+    if (vect1.size() != vect2.size()){
+        return 0;
+    }
+    for (int i = 0; i < vect1.size(); ++i){
+        if (find_element(vect2, vect1[i]) == 0){
+            return 0;
+        }
+    }
+    return 1;
+}
+
 int main (int argc, char *argv[])
 {
     Network yarp;
@@ -71,6 +94,8 @@ int main (int argc, char *argv[])
     string preRuleName = "/pre_rules.dat";
     string path = rf.findPath("contexts/"+rf.getContext());
     string line, command;
+
+    int flag_fail = 0;
     if (path==""){
         cout << "path to contexts/"+rf.getContext() << " not found" << endl;
         return false;    
@@ -94,11 +119,29 @@ int main (int argc, char *argv[])
             }
         }
         if (command == "praxicon"){
+            objectFile.open(objIDsFileName.c_str());
+            vector<string> objects;
+            if (objectFile.is_open()){
+                getline(objectFile,line);
+                objects = split(line, ';');
+            }
+            objectFile.close();
+            vector<string> object_list;
+            vector<string> temp_trans;
+            for (int j = 0; j < objects.size(); ++j){
+                temp_str = objects[j];
+                temp_str.replace(temp_str.find("("), 1,"");
+                temp_str.replace(temp_str.find(")"), 1,"");
+                temp_trans = split(temp_str,',');
+                object_list.push_back(temp_trans[1]);
+            }
+            cout << "translation ready" << endl;
             while (true){
                 praxiconBottle = praxiconPort.read(false);
                 if (praxiconBottle != NULL){
                     cout << "bottle received:" << praxiconBottle->toString().c_str() << endl;
                     instructions.clear();
+                    flag_fail = 0;
                     if (praxiconBottle->toString().find("a") != -1){
                         for (int g=0; g < praxiconBottle->size(); ++g){
                             vector<string> temp_instructions;
@@ -106,12 +149,34 @@ int main (int argc, char *argv[])
                                 string temp1_instructions;
                                 for (int t=0; t < praxiconBottle->get(g).asList()->get(y).asList()->size(); ++t){
                                     temp_str = praxiconBottle->get(g).asList()->get(y).asList()->get(t).toString();
+                                    if ((t == 0 || t == 2) && (temp_str != "hand") && (find_element(object_list, temp_str) == 0))
+                                    {
+                                        Bottle &plannerBottleOut = plannerPort.prepare();
+                                        plannerBottleOut.clear();
+                                        plannerBottleOut.addString("unknown");
+                                        plannerPort.write();
+                                        cout << "failed to compile: unknown object -> " << temp_str << endl;
+                                        flag_fail = 1;
+                                        break;
+                                    }
                                     temp1_instructions = temp1_instructions + temp_str + " " ;
                                     cout << temp1_instructions << endl;
                                 }
+                                if (flag_fail == 1)
+                                {
+                                    break;
+                                }
                                 temp_instructions.push_back(temp1_instructions);
                             }
+                            if (flag_fail == 1)
+                            {
+                                break;
+                            }
                             instructions.push_back(temp_instructions);
+                        }
+                        if (flag_fail == 1)
+                        {
+                            break;
                         }
                         Time::delay(0.1);
                         Bottle &plannerBottleOut = plannerPort.prepare();

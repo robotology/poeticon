@@ -382,6 +382,11 @@ bool PlannerThread::compileGoal()
                 yWarning("Praxicon disconnected or crashed, compiling failed.");
                 return false;
             }
+            else if (goal_bottle_in->toString() == "unknown")
+            {
+                yWarning("Unknown object in Praxicon message, unable to compile.");
+                return false;
+            }
         }
         if (goal_yarp.getOutputCount() == 0)
         {
@@ -487,6 +492,7 @@ bool PlannerThread::loadObjs()
 {
     string line;
     vector<string> aux_objs, temp_vect;
+    vector<string> labels;
     objFile.open(objFileName.c_str());
     object_IDs.clear();
     if (objFile.is_open()){
@@ -497,6 +503,11 @@ bool PlannerThread::loadObjs()
             temp_vect[0].replace(temp_vect[0].find("("),1,"");
             temp_vect[1].replace(temp_vect[1].find(")"),1,"");
             object_IDs.push_back(temp_vect);
+            if (find_element(labels,temp_vect[1]) == 1)
+            {
+                yWarning("There are objects that share labels: %s", temp_vect[1].c_str());
+            }
+            labels.push_back(temp_vect[1]);
         }
         objFile.close();
     }
