@@ -33,6 +33,7 @@ bool PlannerModule::configure(ResourceFinder &rf)
 bool PlannerModule::interruptModule()
 {
     handlerPort.interrupt();
+    thread->askToStop();
 
     return true;
 }

@@ -46,6 +46,11 @@ bool PlannerThread::openPorts()
     return true;
 }
 
+void PlannerThread::threadRelease()
+{
+    cout << "thread terminated" << endl;
+}
+
 void PlannerThread::close()
 {
     yInfo("closing ports");
@@ -322,6 +327,10 @@ bool PlannerThread::groundRules()
             yInfo("Grounding Complete!");
             break;
         }
+        else {
+            yWarning("something went wrong with the geometric grounding module.");
+            return false;
+        }
         if (geo_yarp.getOutputCount() == 0)
         {
             yWarning("Geometric Grounding module crashed");
@@ -337,6 +346,11 @@ bool PlannerThread::groundRules()
         aff_bottle_in = aff_yarp.read(false);
         if (aff_bottle_in){
             data = aff_bottle_in->toString();
+            if (data == "()" || data == "")
+            {
+                yWarning("empty bottle received, something might be wrong with the affordances module.");
+                return false;
+            }
             while (true){
                 if (data.find('"') != std::string::npos){
                     data.replace(data.find('"'),1,"");
@@ -387,6 +401,11 @@ bool PlannerThread::compileGoal()
                 yWarning("Unknown object in Praxicon message, unable to compile.");
                 return false;
             }
+            else
+            {
+                yWarning("non-standard message received, something failed with the Goal Compiler module.");
+                return false;
+            }
         }
         if (goal_yarp.getOutputCount() == 0)
         {
@@ -401,9 +420,18 @@ bool PlannerThread::compileGoal()
     goal_yarp.write();
     while (true) {
         goal_bottle_in = goal_yarp.read(false);
-        if (goal_bottle_in){
-            yInfo("Goal Compiling is complete!");
-            break;
+        if (goal_bottle_in)
+        {
+            if (goal_bottle_in->toString() != "" && goal_bottle_in->toString() != "()")
+            {
+                yInfo("Goal Compiling is complete!");
+                break;
+            }
+            else
+            {
+                yWarning("empty bottle received, something might be wrong with the Goal Compiler module.");
+                return false;
+            }
         }
         if (goal_yarp.getOutputCount() == 0)
         {

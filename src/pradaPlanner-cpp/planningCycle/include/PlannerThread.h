@@ -123,10 +123,11 @@ class PlannerThread : public RateThread
                             const string &_PathName);
         void openFiles();
         bool openPorts();
-        void close();
-        void interrupt();
-        bool threadInit();
-        void run();
+        virtual void close();
+        virtual void interrupt();
+        virtual bool threadInit();
+        virtual void threadRelease();
+        virtual void run();
 
         // Helpers
         // int find_element(vector<string> vect, string elem);
