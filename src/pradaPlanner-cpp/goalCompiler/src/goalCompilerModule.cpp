@@ -152,6 +152,7 @@ bool goalCompiler::loadObjs()
         temp_str.replace(temp_str.find(")"), 1,"");
         temp_trans = split(temp_str,',');
         translat.push_back(temp_trans);
+        object_list.push_back(temp_trans[1]);
     }
     return true;
 }

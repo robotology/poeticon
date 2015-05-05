@@ -45,6 +45,7 @@ class goalCompiler : public RFModule
         vector<vector<string> > translat;
         vector<vector<string> > subgoals;
         vector<string> actions;
+        vector<string> object_list;
 
         string subgoalFileName;
         string preRuleFileName;
