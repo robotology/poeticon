@@ -1,5 +1,5 @@
 <application>
-<name>POETICON++ from Perception, C++</name>
+<name>POETICON++ from Perception</name>
 
 <dependencies>
     <port>/icub/camcalib/left/out</port>
@@ -36,19 +36,19 @@
     <node>console</node>
 </module>
 <module>
-    <name>planningCycle</name>
+    <name>planningCycle</name> <!-- planning_cycle.py -->
     <node>console</node>
 </module>
 <module>
-    <name>geometricGrounding</name>
+    <name>geometricGrounding</name> <!-- geometric_grounding.py -->
     <node>console</node>
 </module>
 <module>
-    <name>goalCompiler</name>
+    <name>goalCompiler</name> <!-- goal_imaginer.py -->
     <node>console</node>
 </module>
 <module>
-    <name>affordanceCommunication</name>
+    <name>affordanceCommunication</name> <!-- affordance_communication.py -->
     <node>console</node>
 </module>
 
