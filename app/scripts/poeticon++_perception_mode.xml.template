@@ -111,6 +111,10 @@
     <to>/wsm/rpc:i</to>
 </connection>
 <connection>
+    <from>/activityInterface/praxicon:rpc</from>
+    <to>/praxInterface/speech:i</to>
+</connection>
+<connection>
     <from>/wsm/tracker:rpc</from>
     <to>/activeParticleTrack/rpc:i</to>
 </connection>
