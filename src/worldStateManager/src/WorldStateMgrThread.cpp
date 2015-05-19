@@ -115,6 +115,8 @@ void WorldStateMgrThread::run()
             // enter playback state machine
             fsmPlayback();
         }
+
+        yarp::os::Time::delay(0.01);
     }
 }
 
