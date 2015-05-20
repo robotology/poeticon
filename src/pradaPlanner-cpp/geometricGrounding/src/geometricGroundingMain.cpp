@@ -19,8 +19,9 @@ int main(int argc, char *argv[])
     }
 
     geoGround module;
+    return module.runModule(rf);
 
-    module.configure(rf);
+/*    module.configure(rf);
     module.openFiles();
     module.openPorts();
     
@@ -63,5 +64,5 @@ int main(int argc, char *argv[])
         Time::delay(5);
     }
     module.close();
-    return 0;
+    return 0;*/
 }

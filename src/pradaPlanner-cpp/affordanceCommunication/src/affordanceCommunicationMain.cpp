@@ -19,9 +19,9 @@ int main(int argc, char *argv[])
     }
 
     affComm module;
-
+    return module.runModule(rf);
     
-    if (!module.configure(rf))
+/*    if (!module.configure(rf))
     {
         cout << "something went wrong with the module configuration" << endl;
         return -1;
@@ -34,6 +34,6 @@ int main(int argc, char *argv[])
         cout << "something went wrong with the module execution" << endl;
         return -1;
     }
-
-    return 0;
+    return 0;*/
 }
+

@@ -14,7 +14,6 @@ bool PlannerModule::configure(ResourceFinder &rf)
     handlerPortName = "/" + moduleName + "/rpc:i";
     handlerPort.open(handlerPortName.c_str());
     attach(handlerPort);
-    closing = false;
 
     // thread stuff
     threadPeriod = 0.033; // [s]
@@ -55,7 +54,7 @@ bool PlannerModule::close()
 
 bool PlannerModule::updateModule()
 {
-    return !closing;
+    return !isStopping();
 }
 
 
@@ -195,6 +194,5 @@ string PlannerModule::showCurrentGoal()
 
 bool PlannerModule::quit()
 {
-    closing = true;
     return true;
 }

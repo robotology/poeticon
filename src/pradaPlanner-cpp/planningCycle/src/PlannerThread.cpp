@@ -54,6 +54,7 @@ void PlannerThread::threadRelease()
 void PlannerThread::close()
 {
     yInfo("closing ports");
+    closing = true;
     goal_yarp.close();
     geo_yarp.close();
     prax_yarp.close();
@@ -99,6 +100,11 @@ void PlannerThread::run()
     {
         while (!startPlan)
         {
+            yarp::os::Time::delay(0.1);
+            if (closing)
+            {
+                return;
+            }
         }
         if (!plan_init())
         {
@@ -107,6 +113,11 @@ void PlannerThread::run()
         restartPlan = false;
         while (!restartPlan)
         {
+            yarp::os::Time::delay(0.1);
+            if (closing)
+            {
+                return;
+            }
             if (!planning_cycle())
             {
                 return;
@@ -225,7 +236,7 @@ bool PlannerThread::completePlannerState()
     }
     if (stateFile.is_open()){
         getline(stateFile, line);
-        while (true){
+        while (!closing){
             if (line.find('-') != std::string::npos){
                 line.replace(line.find('-'),1,"");
             }
@@ -301,7 +312,7 @@ bool PlannerThread::groundRules()
     aff_bottle_out.clear();
     aff_bottle_out.addString("update");
     aff_yarp.write();
-    while (true) {
+    while (!closing) {
         aff_bottle_in = aff_yarp.read(false);
         if (aff_bottle_in){
             break;
@@ -318,7 +329,7 @@ bool PlannerThread::groundRules()
     geo_bottle_out.addString("update");
     geo_yarp.write();
     yInfo("grounding...");
-    while (true) {
+    while (!closing) {
         geo_bottle_in = geo_yarp.read(false);
         if (geo_bottle_in != NULL){
             command = geo_bottle_in->toString();
@@ -342,7 +353,7 @@ bool PlannerThread::groundRules()
     aff_bottle_out.clear();
     aff_bottle_out.addString("query");
     aff_yarp.write();
-    while (true) {
+    while (!closing) {
         aff_bottle_in = aff_yarp.read(false);
         if (aff_bottle_in){
             data = aff_bottle_in->toString();
@@ -351,7 +362,7 @@ bool PlannerThread::groundRules()
                 yWarning("empty bottle received, something might be wrong with the affordances module.");
                 return false;
             }
-            while (true){
+            while (!closing){
                 if (data.find('"') != std::string::npos){
                     data.replace(data.find('"'),1,"");
                 }
@@ -383,7 +394,7 @@ bool PlannerThread::compileGoal()
     goal_bottle_out.addString("praxicon");
     goal_yarp.write();
     yInfo("waiting for praxicon...");
-    while (true) {
+    while (!closing) {
         goal_bottle_in = goal_yarp.read(false);
         if (goal_bottle_in){
             if (goal_bottle_in->toString() == "done")
@@ -418,7 +429,7 @@ bool PlannerThread::compileGoal()
     goal_bottle_out.clear();
     goal_bottle_out.addString("update");
     goal_yarp.write();
-    while (true) {
+    while (!closing) {
         goal_bottle_in = goal_yarp.read(false);
         if (goal_bottle_in)
         {
@@ -621,7 +632,7 @@ bool PlannerThread::adaptRules()
     }
     for (int t = 0; t < rules.size(); ++t){
         temp_str = rules[t];
-        while (true){
+        while (!closing){
             if (temp_str.find(' ') != std::string::npos){
                 temp_str.replace(temp_str.find(' '),1,"");
             }
@@ -637,7 +648,7 @@ bool PlannerThread::adaptRules()
         }
         if (temp_str == next_action && next_action != ""){
             int p = 0;
-            while (true){
+            while (!closing){
                 if (rules[t+p] == ""){
                     adapt_rules = split(rules[t+4], ' ');
                     adapt_rules[2] = static_cast<ostringstream*>( &(ostringstream() << (atof(adapt_rules[2].c_str())/2) ))->str();
@@ -855,7 +866,7 @@ bool PlannerThread::codeAction()
     if (find_element(temp_vect, "on") == 1){
         obj = temp_vect[1];
         hand = temp_vect[3];
-        while (true){
+        while (!closing){
             if (hand.find("(") != std::string::npos){
                 hand.replace(hand.find("("),1,"");
             }
@@ -872,7 +883,7 @@ bool PlannerThread::codeAction()
         act = temp_vect[0];
         obj = temp_vect[1];
         hand = temp_vect[3];
-        while (true){
+        while (!closing){
             if (hand.find("(") != std::string::npos){
                 hand.replace(hand.find("("),1,"");
             }
@@ -912,7 +923,7 @@ bool PlannerThread::codeAction()
         }
         if (hand == object_IDs[k][0]){
             hand = object_IDs[k][1];
-            while (true){
+            while (!closing){
                 if (hand.find("hand") != std::string::npos){
                     hand.replace(hand.find("hand"),4,"");
                 }
@@ -954,7 +965,7 @@ bool PlannerThread:: execAction()
         message.addString(hand);
     }
     yInfo("message: %s" , message.toString().c_str());
-    while (true){
+    while (!closing){
         actInt_rpc.write(message, reply);
         yInfo("%s", reply.toString().c_str());
         if (reply.size() == 1 && reply.get(0).asVocab() == 27503){

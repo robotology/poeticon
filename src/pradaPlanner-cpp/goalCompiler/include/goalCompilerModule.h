@@ -36,7 +36,6 @@ class goalCompiler : public RFModule
 {
     private:
         // module parameters
-        bool closing;
  
         string moduleName;
         string PathName;

@@ -11,7 +11,6 @@ bool geoGround::configure(ResourceFinder &rf)
     PathName = rf.findPath("contexts/"+rf.getContext());
     setName(moduleName.c_str());
 
-    closing = false;
 
     if (PathName==""){
         cout << "path to contexts/"+rf.getContext() << " not found" << endl;
@@ -20,12 +19,55 @@ bool geoGround::configure(ResourceFinder &rf)
     else {
         cout << "Context FOUND!" << endl;
     }
+
+    openFiles();
+    openPorts();
+    
+    while (!isStopping())
+    {
+        if (plannerCommand() == "update")
+        {
+            if (!loadObjs())
+            {
+                cout << "failed to load objects" << endl;
+                return false;
+            }
+            if (!loadPreRules())
+            {
+                cout << "failed to load pre-rules" << endl;
+                return false;
+            }
+            createRulesList();
+            if (!getAffordances())
+            {
+                cout << "failed to get affordances" << endl;
+                return false;
+            }
+            if (!createSymbolList())
+            {
+                cout << "failed to create a symbol list" << endl;
+                return false;
+            }
+            if (!writeFiles())
+            {
+                cout << "failed to write to files" << endl;
+                return false;
+            }
+            if (!plannerReply())
+            {
+                cout << "failed to communicate with planner" << endl;
+                return false;
+            }
+        }
+        Time::delay(5);
+    }
+    close();
     return true;
 }
 
 bool geoGround::updateModule()
 {
-    return !closing;
+    return !isStopping();
 }
 
 vector<string> geoGround::create_rules(string pre_rule)
@@ -56,7 +98,7 @@ vector<string> geoGround::create_rules(string pre_rule)
                                     new_rule.push_back("");
                                     new_rule.push_back("");
                                     for (int o = 0; o < temp_vect.size(); ++o){
-                                        while (true){
+                                        while (!isStopping()){
                                             if (new_rule[k].find("_obj") != std::string::npos){
                                                 new_rule[k].replace(new_rule[k].find("_obj"),4,objects[c]);
                                             }
@@ -64,7 +106,7 @@ vector<string> geoGround::create_rules(string pre_rule)
                                                 break;
                                             }
                                         }
-                                        while (true){
+                                        while (!isStopping()){
                                             if (new_rule[k].find("_tool") != std::string::npos){
                                                 new_rule[k].replace(new_rule[k].find("_tool"),5,objects[j]);
                                             }
@@ -72,7 +114,7 @@ vector<string> geoGround::create_rules(string pre_rule)
                                                 break;
                                             }
                                         }
-                                        while (true){
+                                        while (!isStopping()){
                                             if (new_rule[k].find("_hand") != std::string::npos){
                                                 new_rule[k].replace(new_rule[k].find("_hand"),5,hands[t]);
                                             }
@@ -98,7 +140,7 @@ vector<string> geoGround::create_rules(string pre_rule)
                                 new_rule.push_back("");
                                 new_rule.push_back("");
                                 for (int o = 0; o < temp_vect.size(); ++o){
-                                    while (true){
+                                    while (!isStopping()){
                                         if (new_rule[k].find("_obj") != std::string::npos){
                                             new_rule[k].replace(new_rule[k].find("_obj"),4,objects[c]);
                                         }
@@ -106,7 +148,7 @@ vector<string> geoGround::create_rules(string pre_rule)
                                             break;
                                         }
                                     }
-                                    while (true){
+                                    while (!isStopping()){
                                         if (new_rule[k].find("_hand") != std::string::npos){
                                             new_rule[k].replace(new_rule[k].find("_hand"),5,hands[t]);
                                         }
@@ -132,7 +174,7 @@ vector<string> geoGround::create_rules(string pre_rule)
                             new_rule.push_back("");
                             new_rule.push_back("");
                             for (int o = 0; o < temp_vect.size(); ++o){
-                                while (true){
+                                while (!isStopping()){
                                     if (new_rule[k].find("_obj") != std::string::npos){
                                         new_rule[k].replace(new_rule[k].find("_obj"),4,objects[c]);
                                     }
@@ -140,7 +182,7 @@ vector<string> geoGround::create_rules(string pre_rule)
                                         break;
                                     }
                                 }
-                                while (true){
+                                while (!isStopping()){
                                     if (new_rule[k].find("_tool") != std::string::npos){
                                         new_rule[k].replace(new_rule[k].find("_tool"),5,tools[j]);
                                     }
@@ -165,7 +207,7 @@ vector<string> geoGround::create_rules(string pre_rule)
                             new_rule.push_back("");
                             new_rule.push_back("");
                             for (int o = 0; o < temp_vect.size(); ++o){
-                                while (true){
+                                while (!isStopping()){
                                     if (new_rule[k].find("_obj") != std::string::npos){
                                         new_rule[k].replace(new_rule[k].find("_obj"),4,objects[c]);
                                     }
@@ -173,7 +215,7 @@ vector<string> geoGround::create_rules(string pre_rule)
                                         break;
                                     }
                                 }
-                                while (true){
+                                while (!isStopping()){
                                     if (new_rule[k].find("_tool") != std::string::npos){
                                         new_rule[k].replace(new_rule[k].find("_tool"),5,objects[j]);
                                     }
@@ -212,7 +254,7 @@ vector<string> geoGround::create_rules(string pre_rule)
                     for (int k = 0; k < objects.size(); ++k){
                         if (aux_rule[u].find(objects[k]) == std::string::npos){
                             temp_str = " " + aux_rule[u];
-                            while (true){
+                            while (!isStopping()){
                                 if (temp_str.find("_ALL") != std::string::npos){
                                     temp_str.replace(temp_str.find("_ALL"),4,objects[k]);
                                 }
@@ -296,7 +338,7 @@ vector<string> geoGround::create_symbols(string symbols){
                                 for (int o = 0; o < temp_vect.size(); ++o){
                                     new_symbol.push_back(temp_vect[o]);
                                 }
-                                while (true){
+                                while (!isStopping()){
                                     if (new_symbol[k].find("_obj") != std::string::npos){
                                         new_symbol[k].replace(new_symbol[k].find("_obj"),4,objects[i]);
                                     }
@@ -304,7 +346,7 @@ vector<string> geoGround::create_symbols(string symbols){
                                         break;
                                     }
                                 }
-                                while (true){
+                                while (!isStopping()){
                                     if (new_symbol[k].find("_tool") != std::string::npos){
                                         new_symbol[k].replace(new_symbol[k].find("_tool"),5,objects[j]);
                                     }
@@ -312,7 +354,7 @@ vector<string> geoGround::create_symbols(string symbols){
                                         break;
                                     }
                                 }
-                                while (true){
+                                while (!isStopping()){
                                     if (new_symbol[k].find("_hand") != std::string::npos){
                                         new_symbol[k].replace(new_symbol[k].find("_hand"),5,hands[g]);
                                     }
@@ -333,7 +375,7 @@ vector<string> geoGround::create_symbols(string symbols){
                             for (int o = 0; o < temp_vect.size(); ++o){
                                 new_symbol.push_back(temp_vect[o]);
                             }
-                            while (true){
+                            while (!isStopping()){
                                 if (new_symbol[k].find("_obj") != std::string::npos){
                                     new_symbol[k].replace(new_symbol[k].find("_obj"),4,objects[i]);
                                 }
@@ -341,7 +383,7 @@ vector<string> geoGround::create_symbols(string symbols){
                                     break;
                                 }
                             }
-                            while (true){
+                            while (!isStopping()){
                                 if (new_symbol[k].find("_hand") != std::string::npos){
                                     new_symbol[k].replace(new_symbol[k].find("_hand"),5,hands[g]);
                                 }
@@ -363,7 +405,7 @@ vector<string> geoGround::create_symbols(string symbols){
                         for (int o = 0; o < temp_vect.size(); ++o){
                             new_symbol.push_back(temp_vect[o]);
                         }
-                        while (true){
+                        while (!isStopping()){
                             if (new_symbol[k].find("_tool") != std::string::npos){
                                 new_symbol[k].replace(new_symbol[k].find("_tool"),5,tools[j]);
                             }
@@ -371,7 +413,7 @@ vector<string> geoGround::create_symbols(string symbols){
                                 break;
                             }
                         }
-                        while (true){
+                        while (!isStopping()){
                             if (new_symbol[k].find("_obj") != std::string::npos){
                                 new_symbol[k].replace(new_symbol[k].find("_obj"),4,objects[i]);
                             }
@@ -392,7 +434,7 @@ vector<string> geoGround::create_symbols(string symbols){
                         for (int o = 0; o < temp_vect.size(); ++o){
                             new_symbol.push_back(temp_vect[o]);
                         }
-                        while (true){
+                        while (!isStopping()){
                             if (new_symbol[k].find("_tool") != std::string::npos){
                                 new_symbol[k].replace(new_symbol[k].find("_tool"),5,objects[j]);
                             }
@@ -400,7 +442,7 @@ vector<string> geoGround::create_symbols(string symbols){
                                 break;
                             }
                         }
-                        while (true){
+                        while (!isStopping()){
                             if (new_symbol[k].find("_obj") != std::string::npos){
                                 new_symbol[k].replace(new_symbol[k].find("_obj"),4,objects[i]);
                             }
@@ -419,7 +461,7 @@ vector<string> geoGround::create_symbols(string symbols){
             for (int o = 0; o < temp_vect.size(); ++o){
                 new_symbol.push_back(temp_vect[o]);
             }
-            while (true){
+            while (!isStopping()){
                 if (new_symbol[j].find("_hand") != std::string::npos){
                     new_symbol[j].replace(new_symbol[j].find("_hand"),5,objects[j]);
                 }
@@ -450,7 +492,6 @@ void geoGround::openPorts()
 bool geoGround::close()
 {
     cout << "closing..." << endl;
-    closing = true;
     plannerPort.close();
     affordancePort.close();
     return true;
@@ -472,6 +513,7 @@ bool geoGround::loadObjs()
     objectFile.open(objectsFileName.c_str());
     if (objectFile.is_open()){
         getline(objectFile,line);
+        cout << line << endl;
         temp_objects = split(line, ';');
     }
     else {
@@ -500,7 +542,7 @@ string geoGround::plannerCommand()
         cout << "planner not connected" << endl;
         return "failed";
     }
-    while (true){
+    while (!isStopping()){
         plannerBottle = plannerPort.read(false);
         if (plannerBottle != NULL){
             command = plannerBottle->toString().c_str();
@@ -525,6 +567,7 @@ bool geoGround::plannerReply()
 
 bool geoGround::loadPreRules()
 {
+    cout << "loading prerules" << endl;
     string line, temp_str;
     preruleFile.open(preruleFileName.c_str());
     if (!preruleFile.is_open())
@@ -550,7 +593,9 @@ bool geoGround::createRulesList()
 {
     vector<string> temp_vect;
     rules.clear();
+    cout << "creating rules" << endl;
     for (int i = 0; i < prerules.size(); ++i){
+        cout << prerules[i] << endl;
         temp_vect = geoGround::create_rules(prerules[i]);
         for (int g = 0; g < temp_vect.size(); ++g){
             rules.push_back(temp_vect[g]);
@@ -599,7 +644,7 @@ bool geoGround::getAffordances()
             Time::delay(0.1);
             AffBottleOut.clear();
             timer_count = 0;
-            while (true) {
+            while (!isStopping()) {
                 timer_count = timer_count + 1;
                 if (timer_count == 600) // 1 minute timeout
                 {
@@ -620,7 +665,7 @@ bool geoGround::getAffordances()
             }
             decode_vect_aux = split(bottle_decode_aux, '"');
             for (int y = 0; y < decode_vect_aux.size(); ++y){
-                while (true){
+                while (!isStopping()){
                     if (decode_vect_aux[y].find('"') != std::string::npos){
                         decode_vect_aux[y].erase(decode_vect_aux[y].find('"'));
                     }
