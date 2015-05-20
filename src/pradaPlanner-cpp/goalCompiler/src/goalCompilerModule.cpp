@@ -7,7 +7,6 @@ bool goalCompiler::configure(ResourceFinder &rf)
     PathName = rf.findPath("contexts/"+rf.getContext());
     setName(moduleName.c_str());
 
-    closing = false;
 
     if (PathName==""){
         cout << "path to contexts/"+rf.getContext() << " not found" << endl;
@@ -16,12 +15,74 @@ bool goalCompiler::configure(ResourceFinder &rf)
     else {
         cout << "Context FOUND!" << endl;
     }
+    openFiles();
+    openPorts();
+    string command;    
+
+    while (!isStopping())
+    {
+        command = "";
+        command = plannerCommand();
+        if (command == "praxicon")
+        {
+            if (!receiveInstructions())
+            {
+                cout << "failed to receive instructions" << endl;
+                continue;
+            }
+        }
+        else if (command == "update")
+        {
+            if (!loadObjs())
+            {
+                cout << "failed to load objects" << endl;
+                return false;
+            }
+            if (!loadRules())
+            {
+                cout << "failed to load rules" << endl;
+                return false;
+            }
+            if (!loadInstructions())
+            {
+                cout << "failed to load instructions" << endl;
+                return false;
+            }
+            if (!processFirstInst())
+            {
+                cout << "failed to process the first instruction" << endl;
+                return false;
+            }
+            if (!compile())
+            {
+                cout << "failed to compile goals" << endl;
+                return false;
+            }
+            if (!translate())
+            {
+                cout << "failed to translate goals" << endl;
+                return false;
+            }
+            if (!writeFiles())
+            {
+                cout << "failed to write files" << endl;
+                return false;
+            }
+            if (!plannerReply())
+            {
+                cout << "failed to communicate with planner" << endl;
+                return false;
+            }
+        }
+        Time::delay(5);
+    }
+    close();
     return true;
 }
 
 bool goalCompiler::updateModule()
 {
-    return !closing;
+    return !isStopping();
 }
 
 void goalCompiler::openFiles()
@@ -41,7 +102,6 @@ void goalCompiler::openPorts()
 bool goalCompiler::close()
 {
     cout << "closing..." << endl;
-    closing = true;
     plannerPort.close();
     praxiconPort.close();
     return true;
@@ -63,7 +123,7 @@ string goalCompiler::plannerCommand()
         cout << "planner not connected" << endl;
         return "failed";
     }
-    while (true){
+    while (!isStopping()){
         plannerBottle = plannerPort.read(false);
         if (plannerBottle != NULL){
             command = plannerBottle->toString().c_str();
@@ -76,7 +136,7 @@ bool goalCompiler::receiveInstructions()
 {
     string temp_str;
     int timer_count = 0;
-    while (true){
+    while (!isStopping()){
         if (timer_count == 3000)
         {
             cout << "timeout: no instructions received before 5 minutes time" << endl;
@@ -197,7 +257,7 @@ bool goalCompiler::processFirstInst()
             for (int h = 0; h < actions.size(); ++h){
                 if (actions[h].find(temp_str) != std::string::npos){
                     temp_str = actions[h+2];
-                    while (true){
+                    while (!isStopping()){
                         if (temp_str.find("_obj") != std::string::npos){
                             temp_str.replace(temp_str.find("_obj"),4,temp_vect[2]);
                         }
@@ -205,7 +265,7 @@ bool goalCompiler::processFirstInst()
                             break;
                         }
                     }
-                    while (true){
+                    while (!isStopping()){
                         if (temp_str.find("_tool") != std::string::npos){
                             temp_str.replace(temp_str.find("_tool"),5,temp_vect[0]);
                         }
@@ -213,7 +273,7 @@ bool goalCompiler::processFirstInst()
                             break;
                         }
                     }
-                    while (true){
+                    while (!isStopping()){
                         if (temp_str.find("_hand") != std::string::npos){
                             temp_str.replace(temp_str.find("_hand"),5,"left");
                         }
@@ -259,7 +319,7 @@ bool goalCompiler::compile()
                         for ( int u = 0; u < aux_subgoal.size(); ++u){
                             if (aux_subgoal[u].find("_ALL") != std::string::npos){
                                 temp_str = new_action[j+4];
-                                while (true) {
+                                while (!isStopping()) {
                                     if (temp_str.find("_obj") != std::string::npos){
                                         temp_str.replace(temp_str.find("_obj"),4,obj);
                                     }
@@ -267,7 +327,7 @@ bool goalCompiler::compile()
                                         break;
                                     }
                                 }
-                                while (true) {
+                                while (!isStopping()) {
                                     if (temp_str.find("_tool") != std::string::npos){
                                         temp_str.replace(temp_str.find("_tool"),5,tool);
                                     }
@@ -275,7 +335,7 @@ bool goalCompiler::compile()
                                         break;
                                     }
                                 }
-                                while (true) {
+                                while (!isStopping()) {
                                     if (temp_str.find("_hand") != std::string::npos){
                                         temp_str.replace(temp_str.find("_hand"),5,"left");
                                     }
@@ -288,7 +348,7 @@ bool goalCompiler::compile()
                                 temp_rule.erase(temp_rule.begin(), temp_rule.begin()+1);
                                 for (int k = 0; k< translat.size(); ++k){
                                     temp_str = aux_subgoal[u];
-                                    while (true) {
+                                    while (!isStopping()) {
                                         if (temp_str.find("_obj") != std::string::npos){
                                             temp_str.replace(temp_str.find("_obj"),4,obj);
                                         }
@@ -296,7 +356,7 @@ bool goalCompiler::compile()
                                             break;
                                         }
                                     }
-                                    while (true) {
+                                    while (!isStopping()) {
                                         if (temp_str.find("_tool") != std::string::npos){
                                             temp_str.replace(temp_str.find("_tool"),5,tool);
                                         }
@@ -306,7 +366,7 @@ bool goalCompiler::compile()
                                     }
                                     
                                     if (temp_str.find(translat[k][1]) == std::string::npos){
-                                        while (true) {
+                                        while (!isStopping()) {
                                             if (temp_str.find("_ALL") != std::string::npos){
                                                 temp_str.replace(temp_str.find("_ALL"),4,translat[k][1]);
                                             }
@@ -362,7 +422,7 @@ bool goalCompiler::compile()
                         tool = prax_action[0];
                         obj = prax_action[2];
                         temp_str = actions[j+4];
-	                while (true) {
+	                while (!isStopping()) {
                             if (temp_str.find("_obj") != std::string::npos){
                                 temp_str.replace(temp_str.find("_obj"),4,obj);
                             }
@@ -370,7 +430,7 @@ bool goalCompiler::compile()
                                 break;
                             }
                         }
-                        while (true) {
+                        while (!isStopping()) {
                             if (temp_str.find("_tool") != std::string::npos){
                                 temp_str.replace(temp_str.find("_tool"),5,tool);
                             }
@@ -378,7 +438,7 @@ bool goalCompiler::compile()
                                 break;
                             }
                         }
-                        while (true) {
+                        while (!isStopping()) {
                             if (temp_str.find("_hand") != std::string::npos){
                                 temp_str.replace(temp_str.find("_hand"),5,"left");
                             }
@@ -400,7 +460,7 @@ bool goalCompiler::compile()
                         tool = prax_action[0];
                         obj = prax_action[2];
                         temp_str = actions[j+4];
-                        while (true) {
+                        while (!isStopping()) {
                             if (temp_str.find("_obj") != std::string::npos){
                                 temp_str.replace(temp_str.find("_obj"),4,obj);
                             }
@@ -408,7 +468,7 @@ bool goalCompiler::compile()
                                 break;
                             }
                         }
-                        while (true) {
+                        while (!isStopping()) {
                             if (temp_str.find("_tool") != std::string::npos){
                                 temp_str.replace(temp_str.find("_tool"),5,tool);
                             }
@@ -416,7 +476,7 @@ bool goalCompiler::compile()
                                 break;
                             }
                         }
-                        while (true) {
+                        while (!isStopping()) {
                             if (temp_str.find("_hand") != std::string::npos){
                                 temp_str.replace(temp_str.find("_hand"),5,"left");
                             }
@@ -515,7 +575,7 @@ bool goalCompiler::translate()
     for (int j = 0; j < translat.size(); ++j){
         for (int h = 0; h< subgoals.size(); ++h){
             for (int l = 0; l <subgoals[h].size(); ++l){
-                while (true) {
+                while (!isStopping()) {
                     if (subgoals[h][l].find(translat[j][1]) != std::string::npos){
                         subgoals[h][l].replace(subgoals[h][l].find(translat[j][1]),translat[j][1].size(),translat[j][0]);
                     }

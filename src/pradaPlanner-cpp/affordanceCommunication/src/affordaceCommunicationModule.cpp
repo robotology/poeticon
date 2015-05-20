@@ -8,7 +8,6 @@ bool affComm::configure(ResourceFinder &rf)
     PathName = rf.findPath("contexts/"+rf.getContext());
     setName(moduleName.c_str());
 
-    closing = false;
 
     temp_vect.clear();
     temp_vect.push_back("1");
@@ -43,12 +42,25 @@ bool affComm::configure(ResourceFinder &rf)
     else {
         cout << "Context FOUND!" << endl;
     }
+
+    openPorts();
+
+    if (!affordancesCycle())
+    {
+        cout << "something went wrong with the module execution" << endl;
+        return false;
+    }
     return true;
+}
+
+double affComm::getPeriod()
+{
+    return 0.1;
 }
 
 bool affComm::updateModule()
 {
-    return !closing;
+    return !isStopping();
 }
 
 void affComm::openPorts()
@@ -65,7 +77,6 @@ void affComm::openPorts()
 bool affComm::close()
 {
     cout << "closing..." << endl;
-    closing = true;
     plannerPort.close();
     geoPort.close();
     affnetPort.close();
@@ -94,7 +105,7 @@ bool affComm::plannerCommand()
         cout << "planner not connected" << endl;
         return false;
     }
-    while (true){
+    while (!isStopping()){
         plannerBottle = plannerPort.read(false);
         if (plannerBottle != NULL){
             command = plannerBottle->toString().c_str();
@@ -134,18 +145,19 @@ bool affComm::loadObjs()
 
 bool affComm::affordancesCycle()
 {
-    while (true)
+    while (!isStopping())
     {
         if (plannerPort.getInputCount() == 0)
         {
             cout << "planner not connected" << endl;
-            return false;
+            yarp::os::Time::delay(5);
         }
 
         if (plannerCommand())
         {
             if (command == "update")
             {
+                cout << "command received: update" << endl;
                 Bottle& planner_bottle_out = plannerPort.prepare();
                 planner_bottle_out.clear();
                 planner_bottle_out.addString("ready");
@@ -154,6 +166,7 @@ bool affComm::affordancesCycle()
         }
         if (command == "query")
         {
+            cout << "command received: query" << endl;
             if (!plannerQuery())
             {
                 cout << "failed to perform query" << endl;
@@ -165,6 +178,17 @@ bool affComm::affordancesCycle()
             if (!loadObjs())
             {
                 cout << "failed to initialize objects" << endl;
+                return false;
+            }
+            cout << "objects loaded" << endl;
+            if (!queryDescriptors())
+            {
+                cout << "failed to obtain object descriptors" << endl;
+                return false;
+            }
+            if (!queryToolDescriptors())
+            {
+                cout << "failed to obtain tool descriptors" << endl;
                 return false;
             }
             posits.clear();
@@ -182,7 +206,7 @@ bool affComm::affordancesCycle()
 bool affComm::queryDescriptors()
 {
     vector<double> data;
-    if (descQueryPort.getInputCount() == 0)
+    if (descQueryPort.getOutputCount() == 0)
     {
         cout << "opc2prada not connected" << endl;
         return false;
@@ -194,7 +218,10 @@ bool affComm::queryDescriptors()
             cmd.clear();
             cmd.addString("query2d");
             cmd.addInt(atoi(objects[i][0].c_str()));
-            descQueryPort.write(cmd,reply);
+            reply.clear();
+            cout << cmd.toString() << endl;
+            descQueryPort.write(cmd, reply);
+            cout << "reply: " << reply.toString() << endl;
             if (reply.size() == 1){
                 if (reply.toString() != "ACK" && reply.toString() != "()" && reply.toString() != "" && reply.toString() != "[fail]")
                 {
@@ -231,10 +258,14 @@ bool affComm::queryToolDescriptors()
     vector<vector<double> > tool_data;
     for (int i = 0; i < tools.size(); ++i)
     {
+        cout << "i'm building bottles" << endl;
         cmd.clear();
-        cmd.addString("query2d");
-        cmd.addInt(atoi(objects[i][0].c_str()));
+        cmd.addString("querytool2d");
+        cmd.addInt(atoi(tools[i][0].c_str()));
+        reply.clear();
+        cout << cmd.toString() << endl;
         descQueryPort.write(cmd,reply);
+        cout << reply.toString() << endl;
         if (reply.size() == 1){
             if (reply.toString() != "ACK" && reply.toString() != "()" && reply.toString() != "" && reply.toString() != "[fail]")
             {
@@ -322,103 +353,112 @@ bool affComm::updateAffordances()
 {
     string comm;
     vector<string> data, temp_vect;
-    while (true)
+    while (!isStopping())
     {
-        if (geoPort.getInputCount() == 0)
+        comm = "";
+        while (!isStopping())
         {
-            cout << "geometric grounding module not connected." << endl;
-            return false;
-        }
-        Affor_bottle_in = geoPort.read(false);
-        if (Affor_bottle_in)
-        {
-            comm = Affor_bottle_in->toString();
-            break;
-        }
-    }
-    if (comm == "done")
-    {
-        command = "";
-    }
-    if (comm == "update")
-    {
-        while (true)
-        {
+            if (geoPort.getInputCount() == 0)
+            {
+                cout << "geometric grounding module not connected." << endl;
+                return false;
+            }
             Affor_bottle_in = geoPort.read(false);
             if (Affor_bottle_in)
             {
-                data.clear();
-                for (int i = 0; i < Affor_bottle_in->get(0).asList()->size(); ++i)
-                {
-                    data.push_back(Affor_bottle_in->get(0).asList()->get(i).asString());
-                }
+                comm = Affor_bottle_in->toString();
                 break;
             }
         }
-        rule = data[0];
-        context = data[1];
-        outcome = data[2];
-        outcome2 = data[3];
-        outcome3 = data[4];
-        for (int i = 0; i < translation.size(); ++i)
+        cout << "command received from grounding: " << comm << endl;
+        if (comm == "done")
         {
-            act.clear();
-            act = split(rule, '_');
-            while (true)
+            command = "";
+            break;
+        }
+        if (comm == "update")
+        {
+            while (!isStopping())
             {
-                if (act[0].find(" ") != std::string::npos)
+                Affor_bottle_in = geoPort.read(false);
+                if (Affor_bottle_in)
                 {
-                    act[0].replace(act[0].find(" "),1,"");
-                }
-                else if (act[3].find("(") != std::string::npos)
-                {
-                    act[3].replace(act[3].find("("),2,"");
-                }
-                else
-                {
+                    data.clear();
+                    for (int i = 0; i < Affor_bottle_in->size(); ++i)
+                    {
+                        cout << Affor_bottle_in->get(i).asString() << endl;
+                        data.push_back(Affor_bottle_in->get(i).asString());
+                    }
                     break;
                 }
             }
-            if (translation[i][1] == act[0])
+            cout << "rule command received" << endl;
+            rule = data[0];
+            context = data[1];
+            outcome = data[2];
+            outcome2 = data[3];
+            outcome3 = data[4];
+            cout << "initialized" << endl;
+            for (int i = 0; i < translation.size(); ++i)
             {
-                if (translation[i][1] == "grasp")
+                act.clear();
+                act = split(rule, '_');
+                while (!isStopping())
                 {
-                    if (!getGraspAff())
+                    if (act[0].find(" ") != std::string::npos)
                     {
-                        cout << "failed to obtain grasping affordances" << endl;
-                        return false;
+                        act[0].replace(act[0].find(" "),1,"");
+                    }
+                    else if (act[3].find("(") != std::string::npos)
+                    {
+                        act[3].replace(act[3].find("("),2,"");
+                    }
+                    else
+                    {
+                        break;
                     }
                 }
-                if (translation[i][1] == "push")
+                if (translation[i][1] == act[0])
                 {
-                    if (!getPushAff())
+                    if (translation[i][1] == "grasp")
                     {
-                        cout << "failed to obtain pushing affordances" << endl;
-                        return false;
+                        if (!getGraspAff())
+                        {
+                            cout << "failed to obtain grasping affordances" << endl;
+                            return false;
+                        }
                     }
-                }
-                if (translation[i][1] == "pull")
-                {
-                    if (!getPullAff())
+                    if (translation[i][1] == "push")
                     {
-                        cout << "failed to obtain pulling affordances" << endl;
-                        return false;
+                        if (!getPushAff())
+                        {
+                            cout << "failed to obtain pushing affordances" << endl;
+                            return false;
+                        }
                     }
-                }
-                if (translation[i][1] == "drop")
-                {
-                    if (!getDropAff())
+                    if (translation[i][1] == "pull")
                     {
-                        cout << "failed to obtain dropping affordances" << endl;
-                        return false;
+                        if (!getPullAff())
+                        {
+                            cout << "failed to obtain pulling affordances" << endl;
+                            return false;
+                        }
                     }
-                }
-                if (translation[i][1] == "put")
-                {
-                    if (!getPutAff())
+                    if (translation[i][1] == "drop")
                     {
-                        cout << "failed to obtain putting affordances" << endl;
-                        return false;
+                        if (!getDropAff())
+                        {
+                            cout << "failed to obtain dropping affordances" << endl;
+                            return false;
+                        }
+                    }
+                    if (translation[i][1] == "put")
+                    {
+                        if (!getPutAff())
+                        {
+                            cout << "failed to obtain putting affordances" << endl;
+                            return false;
+                        }
                     }
                 }
             }
@@ -508,6 +548,7 @@ bool affComm::getPushAff()
     {
         if (act[1] != "11" && act[1] != "12" && act[3] != "11" && act[3] != "12")
         {
+            cout << "getting push stuff" << endl;
             Bottle& affnet_bottle_out = affnetPort.prepare();
             affnet_bottle_out.clear();
             obj = act[1];
@@ -520,33 +561,46 @@ bool affComm::getPushAff()
                     obj_desc.erase(obj_desc.begin());
                 }
             }
+            cout << "descriptors done, going for tool desc" << endl;
             for (int o = 0; o < tooldescriptors.size(); ++o)
             {
+                cout << tool << endl;
                 if (tooldescriptors[o][0][0] == strtof(tool.c_str(),NULL))
                 {
+                    cout << tool << endl;
                     tool_desc1 = tooldescriptors[o][1];
+                    for (int u =0; u < tool_desc1.size(); ++u)
+                    {
+                        cout << tool_desc1[u] << endl;
+                    }
                     tool_desc2 = tooldescriptors[o][2];
                     toolnum = o;
                 }
             }
+            cout << "done" << endl;
             if (tooldescriptors[toolnum][1][1] > tooldescriptors[toolnum][2][1])
             {
+                cout << "i'm in" << endl;
                 for (int j = 3; j < tool_desc1.size(); ++j)
                 {
                     affnet_bottle_out.addDouble(tool_desc1[j]);
                 }
+                cout << "maybe objects?" << endl;
                 for (int j = 1; j < obj_desc.size(); ++j)
                 {
                     affnet_bottle_out.addDouble(obj_desc[j]);
                 }
                 affnet_bottle_out.addDouble(2.0);
+                cout << affnet_bottle_out.toString() << endl;
                 affnetPort.write();
-                while (true)
+                cout << "query to aff net sent" << endl;
+                while (!isStopping())
                 {
                     affnet_bottle_in = affnetPort.read(false);
                     if (affnet_bottle_in)
                     {
-                        if (affnet_bottle_in->toString() == "[nack]")
+                        cout << affnet_bottle_in->toString() << endl;
+                        if (affnet_bottle_in->toString() == "nack")
                         {
                             cout << "query failed, using default" << endl;
                             if (!sendOutcomes())
@@ -560,6 +614,7 @@ bool affComm::getPushAff()
                     }
                 }
                 prob_succ1 = 0.0;
+                cout << "waiting for replies" << endl;
                 for (int g = 0; g < affnet_bottle_in->get(0).asList()->size(); ++g)
                 {
                     if (g < 2)
@@ -570,6 +625,7 @@ bool affComm::getPushAff()
                         }
                     }
                 }
+                cout << "probability obtained" << endl;
                 if (prob_succ1 >= 0.95)
                 {
                     prob_succ1 = 0.95;
@@ -587,22 +643,25 @@ bool affComm::getPushAff()
             }
             else
             {
+                cout << "or else..." << endl;
                 for (int j = 3; j < tool_desc1.size(); ++j)
                 {
                     affnet_bottle_out.addDouble(tool_desc1[j]);
                 }
+                cout << "maybe objects?" << endl;
                 for (int j = 1; j < obj_desc.size(); ++j)
                 {
                     affnet_bottle_out.addDouble(obj_desc[j]);
                 }
                 affnet_bottle_out.addDouble(2.0);
                 affnetPort.write();
-                while (true)
+                cout << "done" << endl;
+                while (!isStopping())
                 {
                     affnet_bottle_in = affnetPort.read(false);
                     if (affnet_bottle_in)
                     {
-                        if (affnet_bottle_in->toString() == "[nack]")
+                        if (affnet_bottle_in->toString() == "nack")
                         {
                             cout << "query failed, using default" << endl;
                             if (!sendOutcomes())
@@ -616,6 +675,7 @@ bool affComm::getPushAff()
                     }
                 }
                 prob_succ2 = 0.0;
+                cout << affnet_bottle_in->toString() << endl;
                 for (int g = 0; g < affnet_bottle_in->get(0).asList()->size(); ++g)
                 {
                     if (g < 2)
@@ -744,12 +804,12 @@ bool affComm::getPullAff()
                 }
                 affnet_bottle_out.addDouble(1.0);
                 affnetPort.write();
-                while (true)
+                while (!isStopping())
                 {
                     affnet_bottle_in = affnetPort.read(false);
                     if (affnet_bottle_in)
                     {
-                        if (affnet_bottle_in->toString() == "[nack]")
+                        if (affnet_bottle_in->toString() == "nack")
                         {
                             cout << "query failed, using default" << endl;
                             if (!sendOutcomes())
@@ -800,12 +860,12 @@ bool affComm::getPullAff()
                 }
                 affnet_bottle_out.addDouble(1.0);
                 affnetPort.write();
-                while (true)
+                while (!isStopping())
                 {
                     affnet_bottle_in = affnetPort.read(false);
                     if (affnet_bottle_in)
                     {
-                        if (affnet_bottle_in->toString() == "[nack]")
+                        if (affnet_bottle_in->toString() == "nack")
                         {
                             cout << "query failed, using default" << endl;
                             if (!sendOutcomes())

@@ -36,7 +36,6 @@ class affComm : public RFModule
 {
     private:
         // module parameters
-        bool closing;
  
         string moduleName;
         string PathName;
@@ -73,10 +72,12 @@ class affComm : public RFModule
         Bottle reply;
 
     public:
+
         virtual bool configure(ResourceFinder &rf);
         virtual bool close();
         virtual bool updateModule();
         virtual bool interrupt();
+        virtual double getPeriod();
 
         
         void openPorts();

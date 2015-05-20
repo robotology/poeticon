@@ -85,7 +85,6 @@ class PlannerThread : public RateThread
         RpcClient actInt_rpc;
         RpcClient opc2prada_rpc;
 
-        bool closing;
         bool restartPlan;
         bool resumePlan;
         bool startPlan;
@@ -117,6 +116,10 @@ class PlannerThread : public RateThread
         
 
     public:
+
+
+        bool closing;
+
 
         PlannerThread(const string &_moduleName,
                             const double _period,

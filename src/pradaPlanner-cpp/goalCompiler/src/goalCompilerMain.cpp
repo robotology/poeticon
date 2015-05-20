@@ -19,8 +19,8 @@ int main(int argc, char *argv[])
     }
 
     goalCompiler module;
-
-    module.configure(rf);
+    return module.runModule(rf);
+/*    module.configure(rf);
     module.openFiles();
     module.openPorts();
     string command;    
@@ -83,5 +83,5 @@ int main(int argc, char *argv[])
         Time::delay(5);
     }
     module.close();
-    return 0;
+    return 0;*/
 }
