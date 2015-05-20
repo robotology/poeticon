@@ -333,14 +333,11 @@ bool PlannerThread::groundRules()
         geo_bottle_in = geo_yarp.read(false);
         if (geo_bottle_in != NULL){
             command = geo_bottle_in->toString();
+            cout << command << endl;
         }
         if (command == "ready"){
             yInfo("Grounding Complete!");
             break;
-        }
-        else {
-            yWarning("something went wrong with the geometric grounding module.");
-            return false;
         }
         if (geo_yarp.getOutputCount() == 0)
         {

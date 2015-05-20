@@ -227,9 +227,9 @@ bool affComm::queryDescriptors()
                 {
                     data.clear();
                     data.push_back(atof(objects[i][0].c_str()));
-                    for (int j = 0; j < reply.get(0).asList()->size(); ++j)
+                    for (int j = 0; j < reply.get(0).asList()->get(0).asList()->size(); ++j)
                     {
-                        data.push_back(reply.get(0).asList()->get(j).asDouble());
+                        data.push_back(reply.get(0).asList()->get(0).asList()->get(j).asDouble());
                     }
                     descriptors.push_back(data);
                 }
@@ -271,18 +271,18 @@ bool affComm::queryToolDescriptors()
             {
                 data.clear();
                 tool_data.clear();
-                data.push_back(atof(objects[i][0].c_str()));
+                data.push_back(atof(tools[i][0].c_str()));
                 tool_data.push_back(data);
                 data.clear();
-                for (int j = 2; j < reply.get(0).asList()->get(0).asList()->size(); ++j)
+                for (int j = 2; j < reply.get(0).asList()->get(0).asList()->get(0).asList()->size(); ++j)
                 {
-                    data.push_back(reply.get(0).asList()->get(0).asList()->get(j).asDouble());
+                    data.push_back(reply.get(0).asList()->get(0).asList()->get(0).asList()->get(j).asDouble());
                 }
                 tool_data.push_back(data);
                 data.clear();
-                for (int j = 2; j < reply.get(0).asList()->get(1).asList()->size(); ++j)
+                for (int j = 2; j < reply.get(0).asList()->get(0).asList()->get(1).asList()->size(); ++j)
                 {
-                    data.push_back(reply.get(0).asList()->get(1).asList()->get(j).asDouble());
+                    data.push_back(reply.get(0).asList()->get(0).asList()->get(1).asList()->get(j).asDouble());
                 }
                 tool_data.push_back(data);
                 tooldescriptors.push_back(tool_data);
@@ -386,7 +386,7 @@ bool affComm::updateAffordances()
                     data.clear();
                     for (int i = 0; i < Affor_bottle_in->size(); ++i)
                     {
-                        cout << Affor_bottle_in->get(i).asString() << endl;
+                        //cout << Affor_bottle_in->get(i).asString() << endl;
                         data.push_back(Affor_bottle_in->get(i).asString());
                     }
                     break;
@@ -558,8 +558,12 @@ bool affComm::getPushAff()
                 if (descriptors[o][0] == strtof(obj.c_str(), NULL))
                 {
                     obj_desc = descriptors[o];
-                    obj_desc.erase(obj_desc.begin());
                 }
+            }
+            cout << "descriptors are: " << endl;
+            for (int o = 0; o < obj_desc.size(); ++o)
+            {
+                cout << obj_desc[o] << endl;
             }
             cout << "descriptors done, going for tool desc" << endl;
             for (int o = 0; o < tooldescriptors.size(); ++o)
@@ -581,12 +585,12 @@ bool affComm::getPushAff()
             if (tooldescriptors[toolnum][1][1] > tooldescriptors[toolnum][2][1])
             {
                 cout << "i'm in" << endl;
-                for (int j = 3; j < tool_desc1.size(); ++j)
+                for (int j = 1; j < tool_desc1.size()-1; ++j)
                 {
                     affnet_bottle_out.addDouble(tool_desc1[j]);
                 }
                 cout << "maybe objects?" << endl;
-                for (int j = 1; j < obj_desc.size(); ++j)
+                for (int j = 2; j < obj_desc.size(); ++j)
                 {
                     affnet_bottle_out.addDouble(obj_desc[j]);
                 }
@@ -621,11 +625,12 @@ bool affComm::getPushAff()
                     {
                         for (int j = 0; j < affnet_bottle_in->get(0).asList()->get(g).asList()->size(); ++j)
                         {
-                            prob_succ1 = prob_succ1 + affnet_bottle_in->get(0).asList()->get(g).asList()->get(g).asDouble();
+                            prob_succ1 = prob_succ1 + affnet_bottle_in->get(0).asList()->get(g).asList()->get(j).asDouble();
                         }
                     }
                 }
                 cout << "probability obtained" << endl;
+                cout << prob_succ1 << endl;
                 if (prob_succ1 >= 0.95)
                 {
                     prob_succ1 = 0.95;
@@ -644,16 +649,17 @@ bool affComm::getPushAff()
             else
             {
                 cout << "or else..." << endl;
-                for (int j = 3; j < tool_desc1.size(); ++j)
+                for (int j = 1; j < tool_desc2.size()-1; ++j)
                 {
-                    affnet_bottle_out.addDouble(tool_desc1[j]);
+                    affnet_bottle_out.addDouble(tool_desc2[j]);
                 }
                 cout << "maybe objects?" << endl;
-                for (int j = 1; j < obj_desc.size(); ++j)
+                for (int j = 2; j < obj_desc.size(); ++j)
                 {
                     affnet_bottle_out.addDouble(obj_desc[j]);
                 }
                 affnet_bottle_out.addDouble(2.0);
+                cout << affnet_bottle_out.toString() << endl;
                 affnetPort.write();
                 cout << "done" << endl;
                 while (!isStopping())
@@ -682,10 +688,12 @@ bool affComm::getPushAff()
                     {
                         for (int j = 0; j < affnet_bottle_in->get(0).asList()->get(g).asList()->size(); ++j)
                         {
-                            prob_succ1 = prob_succ1 + affnet_bottle_in->get(0).asList()->get(g).asList()->get(g).asDouble();
+                            prob_succ2 = prob_succ2 + affnet_bottle_in->get(0).asList()->get(g).asList()->get(j).asDouble();
                         }
                     }
                 }
+                cout << "probabilities obtained" << endl;
+                cout << prob_succ2 << endl;
                 if (prob_succ2 >= 0.95)
                 {
                     prob_succ2 = 0.95;
@@ -701,14 +709,14 @@ bool affComm::getPushAff()
                 data.push_back(tooldescriptors[toolnum][2][1]);
                 posits.push_back(data);
             }
-            std::ostringstream sin;;
+            std::ostringstream sin, sfail;
             prob_fail = 1.0 - prob_succ;
             new_outcome = split(outcome, ' ');
             sin << prob_succ;
             new_outcome[2] = sin.str();
             new_outcome2 = split(outcome2, ' ');
-            sin << prob_fail;
-            new_outcome2[2] = sin.str();
+            sfail << prob_fail;
+            new_outcome2[2] = sfail.str();
             new_outcome_string = "";
             for (int i = 0; i < new_outcome.size(); ++i)
             {
@@ -780,7 +788,6 @@ bool affComm::getPullAff()
                 if (descriptors[o][0] == strtof(obj.c_str(), NULL))
                 {
                     obj_desc = descriptors[o];
-                    obj_desc.erase(obj_desc.begin());
                 }
             }
             for (int o = 0; o < tooldescriptors.size(); ++o)
@@ -794,15 +801,16 @@ bool affComm::getPullAff()
             }
             if (tooldescriptors[toolnum][1][1] > tooldescriptors[toolnum][2][1])
             {
-                for (int j = 3; j < tool_desc1.size(); ++j)
+                for (int j = 1; j < tool_desc1.size()-1; ++j)
                 {
                     affnet_bottle_out.addDouble(tool_desc1[j]);
                 }
-                for (int j = 1; j < obj_desc.size(); ++j)
+                for (int j = 2; j < obj_desc.size(); ++j)
                 {
                     affnet_bottle_out.addDouble(obj_desc[j]);
                 }
                 affnet_bottle_out.addDouble(1.0);
+                cout << affnet_bottle_out.toString() << endl;
                 affnetPort.write();
                 while (!isStopping())
                 {
@@ -829,10 +837,12 @@ bool affComm::getPullAff()
                     {
                         for (int j = 0; j < affnet_bottle_in->get(0).asList()->get(g).asList()->size(); ++j)
                         {
-                            prob_succ1 = prob_succ1 + affnet_bottle_in->get(0).asList()->get(g).asList()->get(g).asDouble();
+                            prob_succ1 = prob_succ1 + affnet_bottle_in->get(0).asList()->get(g).asList()->get(j).asDouble();
                         }
                     }
                 }
+                cout << "probabilities obtained" << endl;
+                cout << prob_succ1 << endl;
                 if (prob_succ1 >= 0.95)
                 {
                     prob_succ1 = 0.95;
@@ -850,15 +860,16 @@ bool affComm::getPullAff()
             }
             else
             {
-                for (int j = 3; j < tool_desc1.size(); ++j)
+                for (int j = 1; j < tool_desc2.size()-1; ++j)
                 {
-                    affnet_bottle_out.addDouble(tool_desc1[j]);
+                    affnet_bottle_out.addDouble(tool_desc2[j]);
                 }
-                for (int j = 1; j < obj_desc.size(); ++j)
+                for (int j = 2; j < obj_desc.size(); ++j)
                 {
                     affnet_bottle_out.addDouble(obj_desc[j]);
                 }
                 affnet_bottle_out.addDouble(1.0);
+                cout << affnet_bottle_out.toString() << endl;
                 affnetPort.write();
                 while (!isStopping())
                 {
@@ -885,10 +896,12 @@ bool affComm::getPullAff()
                     {
                         for (int j = 0; j < affnet_bottle_in->get(0).asList()->get(g).asList()->size(); ++j)
                         {
-                            prob_succ1 = prob_succ1 + affnet_bottle_in->get(0).asList()->get(g).asList()->get(g).asDouble();
+                            prob_succ2 = prob_succ2 + affnet_bottle_in->get(0).asList()->get(g).asList()->get(j).asDouble();
                         }
                     }
                 }
+                cout << "probabilities obtained" << endl;
+                cout << prob_succ2 << endl;
                 if (prob_succ2 >= 0.95)
                 {
                     prob_succ2 = 0.95;
@@ -904,14 +917,14 @@ bool affComm::getPullAff()
                 data.push_back(tooldescriptors[toolnum][2][1]);
                 posits.push_back(data);
             }
-            std::ostringstream sin;
+            std::ostringstream sin, sfail;
             prob_fail = 1.0 - prob_succ;
             new_outcome = split(outcome, ' ');
             sin << prob_succ;
             new_outcome[2] = sin.str();
             new_outcome2 = split(outcome2, ' ');
-            sin << prob_fail;
-            new_outcome2[2] = sin.str();
+            sfail << prob_fail;
+            new_outcome2[2] = sfail.str();
             new_outcome_string = "";
             for (int i = 0; i < new_outcome.size(); ++i)
             {

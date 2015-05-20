@@ -310,7 +310,6 @@ vector<string> geoGround::create_rules(string pre_rule)
         }
     }
     for (int k = 0; k < new_rule.size(); ++k){
-         cout << new_rule[k] << endl;
     }
     return new_rule;
 }
@@ -513,7 +512,6 @@ bool geoGround::loadObjs()
     objectFile.open(objectsFileName.c_str());
     if (objectFile.is_open()){
         getline(objectFile,line);
-        cout << line << endl;
         temp_objects = split(line, ';');
     }
     else {
@@ -553,6 +551,7 @@ string geoGround::plannerCommand()
 
 bool geoGround::plannerReply()
 {
+    cout << "replying to planner" << endl;
     if (plannerPort.getInputCount() == 0)
     {
         cout << "planner not connected" << endl;
@@ -595,12 +594,12 @@ bool geoGround::createRulesList()
     rules.clear();
     cout << "creating rules" << endl;
     for (int i = 0; i < prerules.size(); ++i){
-        cout << prerules[i] << endl;
         temp_vect = geoGround::create_rules(prerules[i]);
         for (int g = 0; g < temp_vect.size(); ++g){
             rules.push_back(temp_vect[g]);
         }
     }
+    cout << "rules created" << endl;
     return true;
 }
 
@@ -738,6 +737,7 @@ bool geoGround::writeFiles()
     }
     ruleFile.close();
     symbolFile.close();
+    cout << "files written" << endl;
     return true;
 }
 
