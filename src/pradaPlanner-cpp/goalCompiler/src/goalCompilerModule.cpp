@@ -25,6 +25,11 @@ bool goalCompiler::configure(ResourceFinder &rf)
         command = plannerCommand();
         if (command == "praxicon")
         {
+            if (!loadObjs())
+            {
+                cout << "failed to load objects" << endl;
+                return false;
+            }
             if (!receiveInstructions())
             {
                 cout << "failed to receive instructions" << endl;
@@ -211,6 +216,7 @@ bool goalCompiler::loadObjs()
         temp_str.replace(temp_str.find("("), 1,"");
         temp_str.replace(temp_str.find(")"), 1,"");
         temp_trans = split(temp_str,',');
+        cout << temp_trans[0] << temp_trans[1] << endl;
         translat.push_back(temp_trans);
         object_list.push_back(temp_trans[1]);
     }
@@ -247,6 +253,7 @@ bool goalCompiler::loadInstructions()
 
 bool goalCompiler::processFirstInst()
 {
+    subgoals.clear();
     string temp_str;
     vector<string> temp_vect, aux_subgoal;
     for (int g = 0; g<instructions[0].size(); ++g){
@@ -300,12 +307,12 @@ bool goalCompiler::compile()
         cout << "no instructions to compile." << endl;
         return false;
     }
-    vector<string> prax_action, new_action, temp_rule, new_temp_rule, aux_subgoal;
+    vector<string> prax_action, new_action, temp_rule, new_temp_rule, aux_subgoal, temp_vect;
     string obj, tool, temp_str;
     for (int g = 0; g<instructions[0].size(); ++g){
         prax_action = split(instructions[0][g], ' ');
         prax_action[1].push_back('_');
-        if (prax_action[1] != "reach"){
+        if (prax_action[1] != "reach_"){
             cout << "action detected" << endl;
             for (int j = 0; j < actions.size(); ++j){
                 if (actions[j].find(prax_action[1]) != std::string::npos){
@@ -419,10 +426,11 @@ bool goalCompiler::compile()
                     }
                     else if (actions[j].find("put_") != std::string::npos){
                         cout << "put detected" << endl;
-                        tool = prax_action[0];
-                        obj = prax_action[2];
+                        tool = prax_action[2];
+                        temp_vect = split(instructions[0][g-1], ' ');
+                        obj = temp_vect[2];
                         temp_str = actions[j+4];
-	                while (!isStopping()) {
+	                    while (!isStopping()) {
                             if (temp_str.find("_obj") != std::string::npos){
                                 temp_str.replace(temp_str.find("_obj"),4,obj);
                             }
