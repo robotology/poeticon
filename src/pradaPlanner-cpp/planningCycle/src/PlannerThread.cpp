@@ -937,6 +937,7 @@ bool PlannerThread::codeAction()
 bool PlannerThread:: execAction()
 {
     string temp_str;
+    message.clear();
     if (act == "grasp" && (obj == "rake" || obj == "stick")){
         act = "askForTool";
         //temp_str = act + " " + hand;
