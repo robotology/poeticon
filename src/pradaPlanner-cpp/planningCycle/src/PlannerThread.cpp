@@ -82,6 +82,7 @@ bool PlannerThread::threadInit()
     closing = false;
     startPlan = false;
     resumePlan = true;
+    plan_level = 0;
     // initialize file names
     openFiles();
     process_string = "cd && cd .. && cd .. && cd " + PathName + " && ./planner.exe > " + pipeFileName;
@@ -479,6 +480,7 @@ bool PlannerThread::loadGoal()
         yWarning("unable to open goal file!");
         return false;
     }
+    yInfo("goal loaded");
     goal.clear();
     while (getline(goalFile, line,' ')){
         goal.push_back(line);
@@ -575,6 +577,7 @@ bool PlannerThread::loadState()
         return false;
     }
     stateFile.close();
+    return true;
 }
 
 bool PlannerThread::preserveState()
@@ -593,11 +596,13 @@ bool PlannerThread::compareState()
     {
         return false; // state did change
     }
+    return false;
 }
 
 bool PlannerThread::preserveRules()
 {
     old_rules = rules;
+    yInfo("rules saved");
     return true;
 }
 
@@ -610,6 +615,8 @@ bool PlannerThread::loadRules()
         yWarning("unable to open rules file!");
         return false;
     }
+    yInfo("loading rules");
+    rules.clear();
     while (getline(rulesFile, line,'\n')){
         rules.push_back(line);
     }
@@ -684,6 +691,7 @@ bool PlannerThread::goalUpdate()
         yWarning("unable to open goal file!");
         return false;
     }
+    yInfo("Goal updated");
     for (int y = 0; y < subgoals[plan_level].size(); ++y){
         goalFileOut << subgoals[plan_level][y] << " ";
     }
@@ -694,7 +702,7 @@ bool PlannerThread::goalUpdate()
 bool PlannerThread::planCompletion()
 {
     loadObjs();
-    if (plan_level >= subgoals.size()-1){
+    if (plan_level > subgoals.size()){
         yInfo("plan completed!!");
         Bottle& prax_bottle_out = prax_yarp.prepare();
         prax_bottle_out.clear();
@@ -763,16 +771,21 @@ bool PlannerThread::increaseHorizon()
     while (getline(configFile, line)){
         configData.push_back(line);
     }
+    configFile.close();
     for (int w = 0; w < configData.size(); ++w){ 
         if (configData[w].find("[PRADA]") != std::string::npos){
             temp_vect = split(configData[w+2], ' ');
             horizon = atoi(temp_vect[1].c_str());
             horizon = horizon + 1;
+            if (horizon > 15)
+            {
+                yWarning("horizon too large");
+                return false;
+            }
             configData[w+2] = "PRADA_horizon " + static_cast<ostringstream*>( &(ostringstream() << horizon) )->str();
             break;
         }
     }
-    configFile.close();
     configFileOut.open(configFileName.c_str());
     if (!configFileOut.is_open())
     {
@@ -1100,6 +1113,11 @@ bool PlannerThread::plan_init()
     {
         return false;
     }
+    checkPause();
+    if (!loadSubgoals())
+    {
+        return false;
+    }
     checkPause(); 
     if (!loadRules())
     {
@@ -1152,6 +1170,11 @@ bool PlannerThread::planning_cycle()
         checkPause();
     }
     checkPause();
+    if (!planCompletion())
+    {
+        return true;
+    }
+    checkPause();
     if (!goalUpdate())
     {
         return false;
@@ -1160,11 +1183,6 @@ bool PlannerThread::planning_cycle()
     if (!loadGoal())
     {
         return false;
-    }
-    checkPause();
-    if (!planCompletion())
-    {
-        return true;
     }
     checkPause();
     if (!checkHoldingSymbols())
@@ -1206,47 +1224,50 @@ bool PlannerThread::planning_cycle()
             checkPause();
             return true;
         }
-        checkPause();
-        int flag_prada = PRADA();
-        checkPause();
-        if (flag_prada == 0)
-        {
-            return false;
-        }
-        else if (flag_prada == 2)
-        {
-            if (!increaseHorizon())
+        else {
+            checkPause();
+            yarp::os::Time::delay(10);
+            int flag_prada = PRADA();
+            checkPause();
+            if (flag_prada == 0)
+            {
+                return false;
+            }
+            else if (flag_prada == 2)
+            {
+                if (!increaseHorizon())
+                {
+                    return false;
+                }
+                checkPause();
+                return true;
+            }
+            if (!loadUsedObjs())
             {
                 return false;
             }
             checkPause();
-            return true;
+            if (!codeAction())
+            {
+                return false;
+            }
+            checkPause();
+            if (!execAction())
+            {
+                return false;
+            }
+            checkPause();
+            if (!preserveState())
+            {
+                return false;
+            }
+            checkPause();
+            if (!checkFailure())
+            {
+                return false;
+            }
+            checkPause();
         }
-        if (!loadUsedObjs())
-        {
-            return false;
-        }
-        checkPause();
-        if (!codeAction())
-        {
-            return false;
-        }
-        checkPause();
-        if (!execAction())
-        {
-            return false;
-        }
-        checkPause();
-        if (!preserveState())
-        {
-            return false;
-        }
-        checkPause();
-        if (!checkFailure())
-        {
-            return false;
-        }
-        checkPause();
     }
     checkPause();
     return true;

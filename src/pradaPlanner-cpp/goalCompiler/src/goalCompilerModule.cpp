@@ -135,6 +135,7 @@ string goalCompiler::plannerCommand()
             return command;
         }
     }
+    return "stopped";
 }
 
 bool goalCompiler::receiveInstructions()

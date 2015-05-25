@@ -112,6 +112,7 @@ bool affComm::plannerCommand()
             return true;
         }
     }
+    return "stopped";
 }
 
 bool affComm::loadObjs()
@@ -394,6 +395,7 @@ bool affComm::updateAffordances()
             }
             cout << "rule command received" << endl;
             rule = data[0];
+            cout << rule << endl;
             context = data[1];
             outcome = data[2];
             outcome2 = data[3];

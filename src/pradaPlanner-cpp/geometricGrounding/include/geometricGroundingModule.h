@@ -69,7 +69,7 @@ class geoGround : public RFModule
         virtual bool updateModule();
         virtual bool interrupt();
 
-        
+        bool groundingCycle();
         vector<string> create_rules(string pre_rule);
         vector<string> create_symbols(string symbols);
         void openFiles();
