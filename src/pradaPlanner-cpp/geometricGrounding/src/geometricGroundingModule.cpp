@@ -22,7 +22,18 @@ bool geoGround::configure(ResourceFinder &rf)
 
     openFiles();
     openPorts();
+    if (!groundingCycle())
+    {
+        cout << "something went wrong with the module execution" << endl;
+        return false;
+    }
     
+    //close();
+    return true;
+}
+
+bool geoGround::groundingCycle()
+{
     while (!isStopping())
     {
         if (plannerCommand() == "update")
@@ -59,9 +70,8 @@ bool geoGround::configure(ResourceFinder &rf)
                 return false;
             }
         }
-        Time::delay(5);
+        yarp::os::Time::delay(5);
     }
-    close();
     return true;
 }
 
@@ -493,6 +503,13 @@ bool geoGround::close()
     cout << "closing..." << endl;
     plannerPort.close();
     affordancePort.close();
+    objects.clear();
+    tools.clear();
+    rules.clear();
+    prerules.clear();
+    new_rule.clear();
+    new_symbols.clear();
+    cout << "vectors cleared" << endl;
     return true;
 }
 
@@ -520,6 +537,7 @@ bool geoGround::loadObjs()
     }
     objectFile.close();
     objects.clear();
+    tools.clear();
     for (int i = 0; i < temp_objects.size(); ++i){
         temp_vect = split(temp_objects[i],',');
         temp_vect[0].replace(temp_vect[0].find('('),1,"");
@@ -547,6 +565,7 @@ string geoGround::plannerCommand()
             return command;
         }
     }
+    return "stopped";
 }
 
 bool geoGround::plannerReply()
@@ -740,5 +759,3 @@ bool geoGround::writeFiles()
     cout << "files written" << endl;
     return true;
 }
-
-

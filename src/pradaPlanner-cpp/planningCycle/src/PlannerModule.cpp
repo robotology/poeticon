@@ -162,6 +162,7 @@ string PlannerModule::checkGoalCompleted()
     {
         return "Goal not achieved";
     }
+    return "stopped";
 }
 
 bool PlannerModule::run1Step()
@@ -194,5 +195,6 @@ string PlannerModule::showCurrentGoal()
 
 bool PlannerModule::quit()
 {
+    close();
     return true;
 }
