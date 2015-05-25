@@ -23,7 +23,7 @@ find_package(TBB)
 
 # modules that do not need OpenCV
 add_subdirectory(opc2prada)
-add_subdirectory(pradaPlanner-py)
+#add_subdirectory(pradaPlanner-py)
 add_subdirectory(pradaPlanner-cpp)
 add_subdirectory(worldStateManager)
 
@@ -33,7 +33,7 @@ if(OpenCV_FOUND)
     add_subdirectory(activityInterface)
     add_subdirectory(affExploreManager)
     add_subdirectory(blobDescriptor)
-    #add_subdirectory(objectDescriptor)
+    #add_subdirectory(blobDescriptor2)
     add_subdirectory(perspectiveChanger)
     add_subdirectory(sequentialLabeller)
     if(TBB_FOUND)
