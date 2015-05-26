@@ -721,7 +721,7 @@ bool PlannerThread::goalUpdate()
 bool PlannerThread::planCompletion()
 {
     loadObjs();
-    if (plan_level > subgoals.size()){
+    if (plan_level >= subgoals.size()){
         yInfo("plan completed!!");
         Bottle& prax_bottle_out = prax_yarp.prepare();
         prax_bottle_out.clear();
@@ -1249,14 +1249,6 @@ bool PlannerThread::planning_cycle()
     {
         return false;
     }
-    if (!planCompletion())
-    {
-        return true;
-    }
-    if (!checkPause())
-    {
-        return false;
-    }
     if (!goalUpdate())
     {
         return false;
@@ -1337,6 +1329,14 @@ bool PlannerThread::planning_cycle()
             {
                 return false;
             }
+            if (!planCompletion())
+            {
+                return true;
+            }
+            if (!checkPause())
+            {
+                return false;
+            }
             return true;
         }
         else {
@@ -1344,7 +1344,7 @@ bool PlannerThread::planning_cycle()
             {
                 return false;
             }
-            yarp::os::Time::delay(10);
+            yarp::os::Time::delay(5);
             int flag_prada = PRADA();
             if (!checkPause())
             {
