@@ -138,6 +138,7 @@ class PlannerThread : public RateThread
         // std::vector<std::string> split(const std::string &s, char delim);
 
         // module
+        void stopPlanning();
         bool checkPause();
         bool completePlannerState();
         bool loadSubgoals();

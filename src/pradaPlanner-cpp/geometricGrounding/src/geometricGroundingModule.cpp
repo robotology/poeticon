@@ -36,6 +36,11 @@ bool geoGround::groundingCycle()
 {
     while (!isStopping())
     {
+        if (plannerPort.getInputCount() == 0)
+        {
+            cout << "planner not connected" << endl;
+            yarp::os::Time::delay(5);
+        }
         if (plannerCommand() == "update")
         {
             if (!loadObjs())
@@ -70,7 +75,7 @@ bool geoGround::groundingCycle()
                 return false;
             }
         }
-        yarp::os::Time::delay(5);
+        //yarp::os::Time::delay(5);
     }
     return true;
 }
@@ -553,11 +558,6 @@ bool geoGround::loadObjs()
 string geoGround::plannerCommand()
 {
     string command;
-    if (plannerPort.getInputCount() == 0)
-    {
-        cout << "planner not connected" << endl;
-        return "failed";
-    }
     while (!isStopping()){
         plannerBottle = plannerPort.read(false);
         if (plannerBottle != NULL){
