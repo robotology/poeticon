@@ -39,8 +39,6 @@ bool PlannerModule::interruptModule()
 
 bool PlannerModule::close()
 {
-    yInfo("closing RPC port");
-    handlerPort.close();
 
     yInfo("starting shutdown procedure");
     thread->interrupt();
@@ -49,6 +47,8 @@ bool PlannerModule::close()
     delete thread;
     yInfo("done deleting thread");
 
+    yInfo("closing RPC port");
+    handlerPort.close();
     return true;
 }
 
@@ -121,6 +121,12 @@ bool PlannerModule::resetRules()
 bool PlannerModule::resetConfig()
 {
     return thread->resetConfig();
+}
+
+bool PlannerModule::stopPlanning()
+{
+    thread->stopPlanning();
+    return true;
 }
 
 bool PlannerModule::resetLevel()

@@ -109,7 +109,8 @@ void PlannerThread::run()
         }
         if (!plan_init())
         {
-            return;
+            startPlan = false;
+            break;
         }
         restartPlan = false;
         while (!restartPlan)
@@ -121,7 +122,8 @@ void PlannerThread::run()
             }
             if (!planning_cycle())
             {
-                return;
+                startPlan = false;
+                break;
             }
         }
         startPlan = false;
@@ -137,6 +139,10 @@ bool PlannerThread::startPlanning()
 
 bool PlannerThread::checkPause()
 {
+    if (!startPlan)
+    {
+        return false;
+    }
     int timer = 0;
     while (!resumePlan)
     {
@@ -147,6 +153,10 @@ bool PlannerThread::checkPause()
             yInfo("Planning cycle paused");
             timer = 0;
         }
+    }
+    if (!startPlan)
+    {
+        return false;
     }
     return true;
 }
@@ -556,10 +566,19 @@ bool PlannerThread::loadObjs()
     return true;
 }
 
+void PlannerThread::stopPlanning()
+{
+    startPlan = false;
+    restartPlan = true;
+    plan_level = 0;
+    resetConfig();
+    yInfo("planning stopped");
+    return;
+}
+
 bool PlannerThread::resetPlanVars()
 {
     plan_level = 0;
-    restartPlan = false;
     return resetConfig();
 }
 
@@ -1078,157 +1097,259 @@ bool PlannerThread::checkFailure()
 
 bool PlannerThread::plan_init()
 {
-    checkPause();
+    if (!checkPause())
+    {
+        return false;
+    }
     if (!resetPlanVars())
     {
         return false;
     }
-    checkPause();
+    if (!checkPause())
+    {
+        return false;
+    }
     if (!updateState())
     {
         return false;
     }
-    checkPause();
+    if (!checkPause())
+    {
+        return false;
+    }
     if (!loadState())
     {
         return false;
     }
-    checkPause();
+    if (!checkPause())
+    {
+        return false;
+    }
     if (!groundRules())
     {
         return false;
     }
-    checkPause();
+    if (!checkPause())
+    {
+        return false;
+    }
     if (!completePlannerState())
     {
         return false;
     }
-    checkPause();
+    if (!checkPause())
+    {
+        return false;
+    }
     if (!preserveState())
     {
         return false;
     }
-    checkPause();
+    if (!checkPause())
+    {
+        return false;
+    }
     if (!compileGoal())
     {
         return false;
     }
-    checkPause();
+    if (!checkPause())
+    {
+        return false;
+    }
     if (!loadSubgoals())
     {
         return false;
     }
-    checkPause(); 
+    if (!checkPause())
+    {
+        return false;
+    } 
     if (!loadRules())
     {
         return false;
     }
-    checkPause();
+    if (!checkPause())
+    {
+        return false;
+    }
     if (!preserveRules())
     {
         return false;
     }
-    checkPause();
+    if (!checkPause())
+    {
+        return false;
+    }
     if (!goalUpdate())
     {
         return false;
     }
-    checkPause();
+    if (!checkPause())
+    {
+        return false;
+    }
     if (!loadGoal())
     {
         return false;
     }
-    checkPause();
+    if (!checkPause())
+    {
+        return false;
+    }
     return true;
 }
 
 bool PlannerThread::planning_cycle()
 {
-    checkPause();
+    if (!checkPause())
+    {
+        return false;
+    }
     if (!updateState())
     {
         return false;
     }
-    checkPause();
+    if (!checkPause())
+    {
+        return false;
+    }
     if (!completePlannerState())
     {
         return false;
     }
-    checkPause();
+    if (!checkPause())
+    {
+        return false;
+    }
     if (!loadState())
     {
         return false;
     }
-    checkPause();
+    if (!checkPause())
+    {
+        return false;
+    }
     if (compareState())
     {
-        checkPause();
+        if (!checkPause())
+        {
+            return false;
+        }
         if (!adaptRules())
         {
             return false;
         }
-        checkPause();
+        if (!checkPause())
+        {
+            return false;
+        }
     }
-    checkPause();
+    if (!checkPause())
+    {
+        return false;
+    }
     if (!planCompletion())
     {
         return true;
     }
-    checkPause();
+    if (!checkPause())
+    {
+        return false;
+    }
     if (!goalUpdate())
     {
         return false;
     }
-    checkPause();
+    if (!checkPause())
+    {
+        return false;
+    }
     if (!loadGoal())
     {
         return false;
     }
-    checkPause();
+    if (!checkPause())
+    {
+        return false;
+    }
     if (!checkHoldingSymbols())
     {
-        checkPause();
+        if (!checkPause())
+        {
+            return false;
+        }
         jumpBack();
-        checkPause();
+        if (!checkPause())
+        {
+            return false;
+        }
         if (!resetConfig())
         {
             return false;
         }
-        checkPause();
+        if (!checkPause())
+        {
+            return false;
+        }
     }
     else 
     {
-        checkPause();
+        if (!checkPause())
+        {
+            return false;
+        }
         if (checkGoalCompletion())
         {
-            checkPause();
+            if (!checkPause())
+            {
+                return false;
+            }
             if (!resetRules())
             {
                 return false;
             }
-            checkPause();
+            if (!checkPause())
+            {
+                return false;
+            }
             if (!resetConfig())
             {
                 return false;
             }
-            checkPause();
+            if (!checkPause())
+            {
+                return false;
+            }
             if (!loadRules())
             {
                 return false;
             }
-            checkPause();
+            if (!checkPause())
+            {
+                return false;
+            }
             if (!jumpForward())
             {
                 return false;
             }
-            checkPause();
+            if (!checkPause())
+            {
+                return false;
+            }
             return true;
         }
         else {
-            checkPause();
+            if (!checkPause())
+            {
+                return false;
+            }
             yarp::os::Time::delay(10);
             int flag_prada = PRADA();
-            checkPause();
+            if (!checkPause())
+            {
+                return false;
+            }
             if (flag_prada == 0)
             {
                 return false;
@@ -1239,37 +1360,58 @@ bool PlannerThread::planning_cycle()
                 {
                     return false;
                 }
-                checkPause();
+                if (!checkPause())
+                {
+                    return false;
+                }
                 return true;
             }
             if (!loadUsedObjs())
             {
                 return false;
             }
-            checkPause();
+            if (!checkPause())
+            {
+                return false;
+            }
             if (!codeAction())
             {
                 return false;
             }
-            checkPause();
+            if (!checkPause())
+            {
+                return false;
+            }
             if (!execAction())
             {
                 return false;
             }
-            checkPause();
+            if (!checkPause())
+            {
+                return false;
+            }
             if (!preserveState())
             {
                 return false;
             }
-            checkPause();
+            if (!checkPause())
+            {
+                return false;
+            }
             if (!checkFailure())
             {
                 return false;
             }
-            checkPause();
+            if (!checkPause())
+            {
+                return false;
+            }
         }
     }
-    checkPause();
+    if (!checkPause())
+    {
+        return false;
+    }
     return true;
 }    
 

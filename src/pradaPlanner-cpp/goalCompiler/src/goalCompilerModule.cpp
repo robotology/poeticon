@@ -21,6 +21,11 @@ bool goalCompiler::configure(ResourceFinder &rf)
 
     while (!isStopping())
     {
+        if (plannerPort.getInputCount() == 0)
+        {
+            cout << "planner not connected" << endl;
+            yarp::os::Time::delay(5);
+        }
         command = "";
         command = plannerCommand();
         if (command == "praxicon")
@@ -79,7 +84,7 @@ bool goalCompiler::configure(ResourceFinder &rf)
                 return false;
             }
         }
-        Time::delay(5);
+        //Time::delay(5);
     }
     close();
     return true;
@@ -123,11 +128,6 @@ bool goalCompiler::interrupt()
 string goalCompiler::plannerCommand()
 {
     string command;
-    if (plannerPort.getInputCount() == 0)
-    {
-        cout << "planner not connected" << endl;
-        return "failed";
-    }
     while (!isStopping()){
         plannerBottle = plannerPort.read(false);
         if (plannerBottle != NULL){
@@ -146,6 +146,10 @@ bool goalCompiler::receiveInstructions()
         if (timer_count == 3000)
         {
             cout << "timeout: no instructions received before 5 minutes time" << endl;
+            Bottle &plannerBottleOut = plannerPort.prepare();
+            plannerBottleOut.clear();
+            plannerBottleOut.addString("failed");
+            plannerPort.write();
             return false;
         }
         praxiconBottle = praxiconPort.read(false);

@@ -41,6 +41,7 @@ class PlannerModule : public RFModule, public planningCycle_IDLserver
         virtual double getPeriod();
 
         // IDL functions
+        bool stopPlanning();
         bool attach(yarp::os::RpcServer &source);
         bool pausePlanner();
         bool resumePlanner();

@@ -100,11 +100,6 @@ bool affComm::interrupt()
 
 bool affComm::plannerCommand()
 {
-    if (plannerPort.getInputCount() == 0)
-    {
-        cout << "planner not connected" << endl;
-        return false;
-    }
     while (!isStopping()){
         plannerBottle = plannerPort.read(false);
         if (plannerBottle != NULL){
@@ -112,7 +107,7 @@ bool affComm::plannerCommand()
             return true;
         }
     }
-    return "stopped";
+    return false;
 }
 
 bool affComm::loadObjs()
