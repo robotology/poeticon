@@ -1391,7 +1391,7 @@ bool ActivityInterface::pull(const string &objName, const string &toolName)
     
     fprintf(stdout, "[pull] asked to pull %s with %s\n", objName.c_str(), toolName.c_str());
     Bottle position = get3D(objName);
-    Bottle toolOffest = getOffset(objName);
+    Bottle toolOffset = getOffset(objName);
     
     //tool attach
     string handName = inHand(toolName);
