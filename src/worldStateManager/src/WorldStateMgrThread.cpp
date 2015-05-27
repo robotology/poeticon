@@ -1101,23 +1101,22 @@ bool WorldStateMgrThread::getAffBottleIndexFromTrackROI(const int &u, const int 
     // the TrackerBottleIndex inTargets->get(tbi).
     //
     // Current implementation: from tracker ROI centre, detect the most likely
-    // blob index within blobDescriptor Bottle, using Euclidean distance.
-    //
-    // Future, more robust implementation: cv::pointPolygonTest.
-
-    // iterates over pairs
+    // blob index within blobDescriptor Bottle, using Euclidean distance. 
+    // It iterates over pairs
     //bPosValue.addDouble(inAff->get(*+1).asList()->get(0).asDouble());
     //bPosValue.addDouble(inAff->get(*+1).asList()->get(1).asDouble());
     // and return closest one (in Euclidean distance sense) to u,v
+    //
+    // Possible, more robust alternative: cv::pointPolygonTest.
 
     yarp::sig::Vector trackerROI(2, 0.0);
     trackerROI[0] = static_cast<double>( u );
     trackerROI[1] = static_cast<double>( v );
     //yDebug() << "trackerROI" << trackerROI.toString().c_str();
 
-    int minBlobIdx = -1;
-    float minDist = 1000.0; // minimum distance found so far
-    float distThr = 50.0; // minimum required distance to update ABI
+    float minDist    = 1000.0; // minimum distance found so far
+    int minBlobIdx   =   -1;   // index of minimum distance (argmin)
+    float maxDistThr =   50.0; // threshold of maximum distance for ABI update
 
     for(int a=1; a<=sizeAff; a++)
     {
@@ -1130,8 +1129,9 @@ bool WorldStateMgrThread::getAffBottleIndexFromTrackROI(const int &u, const int 
         //yDebug() << "currentBlob" << a << currentBlob.toString().c_str();
         //yDebug() << "dist" << dist;
 
-        if (dist < distThr && dist < minDist)
+        if (dist<maxDistThr && dist<minDist)
         {
+            //yDebug() << __func__ << "updating";
             minBlobIdx = a;
             minDist = dist;
         }
