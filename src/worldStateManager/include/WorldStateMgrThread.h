@@ -159,8 +159,6 @@ class WorldStateMgrThread : public RateThread
         int label2id(const string &label);
         bool getLabel(const int &u, const int &v, string &label);
         bool getLabelMajorityVote(const int &u, const int &v, string &winnerLabel, const int &rounds=5);
-        bool mono2stereo(const string &objName, double &x, double &y, double &z);
-        bool getTooltipOffset(const string &objName, Bottle &offset);
         bool isOnTopOf(const string &objName, Bottle &objBelow);
         bool isReachableWith(const string &objName, Bottle &objReachable);
         bool isPullableWith(const string &objName, Bottle &objPullable);

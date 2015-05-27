@@ -22,8 +22,7 @@ TranslatorModule::switchCase TranslatorModule::hashtable(string command){
     if(command=="name")  return name;
     if(command=="is_hand")  return is_h;
 
-    if(command=="pos") return pos;
-    if(command=="offset") return offset;
+    if(command=="pos2d") return pos2d;
     if(command=="desc2d")  return desc;
     if(command=="tooldesc2d")  return tooldesc2d;
     if(command=="in_hand")  return in_h;
@@ -79,11 +78,7 @@ bool TranslatorModule::update(){
                     case tooldesc2d: {
                         break;
                     }
-                    case pos: {
-
-                        break;
-                    }
-                    case offset: {
+                    case pos2d: {
                         break;
                     }
                     case on_t: {

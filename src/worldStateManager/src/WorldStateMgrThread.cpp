@@ -746,7 +746,6 @@ bool WorldStateMgrThread::doPopulateDB()
 
         // object properties
         Bottle bPos;
-        Bottle bOffset;
         Bottle bDesc;
         Bottle bToolDesc;
         Bottle bInHand;
@@ -843,21 +842,16 @@ bool WorldStateMgrThread::doPopulateDB()
             {
                 u = inTargets->get(tbi).asList()->get(1).asDouble();
                 v = inTargets->get(tbi).asList()->get(2).asDouble();
-            }
 
-            if (currentlySeen)
-            {
                 // prepare position property
-                bPos.addString("pos");
+                bPos.addString("pos2d");
                 Bottle &bPosValue = bPos.addList();
-                double x=0.0, y=0.0, z=0.0;
                 if (withFilter)
                 {
                     // start acquisition - run 1
-                    yarp::sig::Vector pos(3);
-                    yarp::sig::Vector posFiltered(3);
-                    mono2stereo(bNameValue.c_str(), x, y, z);
-                    pos[0]=x; pos[1]=y; pos[2]=z;
+                    yarp::sig::Vector pos(2);
+                    yarp::sig::Vector posFiltered(2);
+                    pos[0]=u; pos[1]=v;
                     // add filter to container if necessary, TODO: more robust check
                     if (posFilter.size()<=wsID-countFrom && wsID>0)
                     {
@@ -873,8 +867,7 @@ bool WorldStateMgrThread::doPopulateDB()
                     // runs 2..n
                     for (int run=2; run<=filterOrder; ++run)
                     {
-                        mono2stereo(bNameValue.c_str(), x, y, z);
-                        pos[0]=x; pos[1]=y; pos[2]=z;
+                        pos[0]=u; pos[1]=v;
                         yDebug("run %d/%d, unfiltered pos:\t%s",
                               run, filterOrder, pos.toString().c_str());
                         posFiltered = posFilter[wsID-countFrom].filt(pos);
@@ -883,24 +876,16 @@ bool WorldStateMgrThread::doPopulateDB()
                             yDebug("filtered pos:\t\t%s", posFiltered.toString().c_str());
                             bPosValue.addDouble(posFiltered[0]);
                             bPosValue.addDouble(posFiltered[1]);
-                            bPosValue.addDouble(posFiltered[2]);
                         }
                     }
                 }
                 else
                 {
                     // unfiltered values
-                    mono2stereo(bNameValue.c_str(), x, y, z);
-                    bPosValue.addDouble(x);
-                    bPosValue.addDouble(y);
-                    bPosValue.addDouble(z);
+                    bPosValue.addDouble(u);
+                    bPosValue.addDouble(v);
                 }
             }
-
-            // prepare offset property (end-effector transform when grasping tools)
-            bOffset.addString("offset");
-            Bottle &bOffsetValue = bOffset.addList();
-            getTooltipOffset(bNameValue.c_str(), bOffsetValue);
 
             if (currentlySeen)
             {
@@ -1025,10 +1010,6 @@ bool WorldStateMgrThread::doPopulateDB()
                 if (currentlySeen)
                 {
                     opcCmdContent.addList() = bPos;
-                }
-                opcCmdContent.addList() = bOffset;
-                if (currentlySeen)
-                {
                     opcCmdContent.addList() = bDesc;
                     opcCmdContent.addList() = bToolDesc;
                 }
@@ -1061,10 +1042,6 @@ bool WorldStateMgrThread::doPopulateDB()
                 if (currentlySeen)
                 {
                     opcCmdContent.addList() = bPos;
-                }
-                opcCmdContent.addList() = bOffset;
-                if (currentlySeen)
-                {
                     opcCmdContent.addList() = bDesc;
                     opcCmdContent.addList() = bToolDesc;
                 }
@@ -1328,80 +1305,6 @@ bool WorldStateMgrThread::getLabelMajorityVote(const int &u, const int &v, strin
     winnerLabel = max_el.first;
 
     return true;
-}
-
-bool WorldStateMgrThread::mono2stereo(const string &objName, double &x, double &y, double &z)
-{
-    if (activityPort.getOutputCount() < 1)
-    {
-        yWarning() << __func__ << "not connected to ActivityIF";
-        return false;
-    }
-
-    Bottle activityCmd, activityReply;
-    activityCmd.addString("get3D");
-    activityCmd.addString(objName);
-    //yDebug() << __func__ <<  "sending query:" << activityCmd.toString().c_str();
-    activityPort.write(activityCmd, activityReply);
-
-    bool validResponse = false;
-    validResponse = ( activityReply.size()>0 &&
-                      activityReply.get(0).isList() );
-
-    if (validResponse && activityReply.get(0).asList()->size()==3)
-    {
-        if (activityReply.get(0).asList()->size()==3)
-            //yDebug() << __func__ << "obtained valid response:" << activityReply.toString().c_str();
-            ;
-        else
-        {
-            yWarning() << __func__ << "obtained valid response (but unexpected length):" << activityReply.toString().c_str();
-            return false;
-        }
-
-        x = activityReply.get(0).asList()->get(0).asDouble();
-        y = activityReply.get(0).asList()->get(1).asDouble();
-        z = activityReply.get(0).asList()->get(2).asDouble();
-    }
-    else
-    {
-        yWarning() << __func__ << "obtained invalid response:" << activityReply.toString().c_str();
-        return false;
-    }
-
-    return true;
-}
-
-bool WorldStateMgrThread::getTooltipOffset(const string &objName, Bottle &offset)
-{
-    if (activityPort.getOutputCount() < 1)
-    {
-        yWarning() << __func__ << "not connected to ActivityIF";
-        return false;
-    }
-
-    Bottle activityCmd, activityReply;
-    activityCmd.addString("getOffset");
-    activityCmd.addString(objName.c_str());
-    //yDebug() << __func__ << "sending query:" << activityCmd.toString().c_str();
-    activityPort.write(activityCmd, activityReply);
-
-    bool validResponse = false;
-    validResponse = ( activityReply.size()>0 &&
-                      activityReply.get(0).isList() &&
-                      activityReply.get(0).asList()->size()==3 );
-
-    if (validResponse)
-    {
-        //yDebug() << __func__ << "obtained valid response:" << activityReply.toString().c_str();
-        offset = *activityReply.get(0).asList();
-        return true;
-    }
-    else
-    {
-        yWarning() << __func__ << "obtained invalid response:" << activityReply.toString().c_str();
-        return false;
-    }
 }
 
 bool WorldStateMgrThread::isOnTopOf(const string &objName, Bottle &objBelow)
