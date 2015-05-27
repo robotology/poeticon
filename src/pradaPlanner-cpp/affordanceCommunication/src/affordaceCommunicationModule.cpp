@@ -124,6 +124,8 @@ bool affComm::loadObjs()
     }
     getline(objFile,line);
     aux_objects = split(line, ';');
+    objects.clear();
+    tools.clear();
     for (int i=0; i < aux_objects.size(); ++i)
     {
         temp_str = aux_objects[i];
@@ -270,13 +272,13 @@ bool affComm::queryToolDescriptors()
                 data.push_back(atof(tools[i][0].c_str()));
                 tool_data.push_back(data);
                 data.clear();
-                for (int j = 2; j < reply.get(0).asList()->get(0).asList()->get(0).asList()->size(); ++j)
+                for (int j = 0; j < reply.get(0).asList()->get(0).asList()->get(0).asList()->size(); ++j)
                 {
                     data.push_back(reply.get(0).asList()->get(0).asList()->get(0).asList()->get(j).asDouble());
                 }
                 tool_data.push_back(data);
                 data.clear();
-                for (int j = 2; j < reply.get(0).asList()->get(0).asList()->get(1).asList()->size(); ++j)
+                for (int j = 0; j < reply.get(0).asList()->get(0).asList()->get(1).asList()->size(); ++j)
                 {
                     data.push_back(reply.get(0).asList()->get(0).asList()->get(1).asList()->get(j).asDouble());
                 }
@@ -294,8 +296,12 @@ bool affComm::queryToolDescriptors()
                 temp_vect.push_back(0.0);
                 temp_vect.push_back(0.0);
                 temp_vect.push_back(0.0);
+                temp_vect.push_back(0.0);
+                temp_vect.push_back(0.0);
                 tool_data.push_back(temp_vect);
                 temp_vect.clear();
+                temp_vect.push_back(0.0);
+                temp_vect.push_back(0.0);
                 temp_vect.push_back(0.0);
                 temp_vect.push_back(0.0);
                 temp_vect.push_back(0.0);
@@ -582,7 +588,7 @@ bool affComm::getPushAff()
             if (tooldescriptors[toolnum][1][1] > tooldescriptors[toolnum][2][1])
             {
                 cout << "i'm in" << endl;
-                for (int j = 1; j < tool_desc1.size()-1; ++j)
+                for (int j = 3; j < tool_desc1.size()-1; ++j)
                 {
                     affnet_bottle_out.addDouble(tool_desc1[j]);
                 }
@@ -646,7 +652,7 @@ bool affComm::getPushAff()
             else
             {
                 cout << "or else..." << endl;
-                for (int j = 1; j < tool_desc2.size()-1; ++j)
+                for (int j = 3; j < tool_desc2.size()-1; ++j)
                 {
                     affnet_bottle_out.addDouble(tool_desc2[j]);
                 }
@@ -798,7 +804,7 @@ bool affComm::getPullAff()
             }
             if (tooldescriptors[toolnum][1][1] > tooldescriptors[toolnum][2][1])
             {
-                for (int j = 1; j < tool_desc1.size()-1; ++j)
+                for (int j = 3; j < tool_desc1.size()-1; ++j)
                 {
                     affnet_bottle_out.addDouble(tool_desc1[j]);
                 }
@@ -857,7 +863,7 @@ bool affComm::getPullAff()
             }
             else
             {
-                for (int j = 1; j < tool_desc2.size()-1; ++j)
+                for (int j = 3; j < tool_desc2.size()-1; ++j)
                 {
                     affnet_bottle_out.addDouble(tool_desc2[j]);
                 }
