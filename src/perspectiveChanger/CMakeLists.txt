@@ -36,11 +36,9 @@ include_directories(${PROJECT_SOURCE_DIR}/include
 
 add_executable(${PROJECTNAME} ${folder_source} ${folder_header})
 
-#link_libraries(opencv_highgui opencv_video opencv_core opencv_imgproc opencv_calib3d)
 target_link_libraries(${PROJECTNAME}
                       ${OpenCV_LIBRARIES}
                       ${YARP_LIBRARIES}
-                      ctrlLib
-                      icubmod)
+                      ctrlLib)
 
 install(TARGETS ${PROJECTNAME} DESTINATION bin)

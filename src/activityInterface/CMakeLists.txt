@@ -43,7 +43,7 @@ include_directories(${PROJECT_SOURCE_DIR}/include
 
 add_executable(${PROJECTNAME} ${source} ${header} ${idl} )
 
-target_link_libraries(${PROJECTNAME} ${YARP_LIBRARIES} activeSegmentation ${OpenCV_LIBRARIES} icubmod iKin ${CMAKE_THREAD_LIBS_INIT})
+target_link_libraries(${PROJECTNAME} ${YARP_LIBRARIES} activeSegmentation ${OpenCV_LIBRARIES} iKin ${CMAKE_THREAD_LIBS_INIT})
 
 install(TARGETS ${PROJECTNAME} DESTINATION bin)
 

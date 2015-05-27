@@ -10,13 +10,10 @@
 #include <yarp/os/Network.h>
 #include <yarp/os/RFModule.h>
 #include <yarp/dev/all.h>
-YARP_DECLARE_DEVICES(icubmod)
 
 #include "perspectiveChanger.h"
 
 int main(int argc, char *argv[]) {
-
-    YARP_REGISTER_DEVICES(icubmod)
 
     Network yarp;
     if(! yarp.checkNetwork() ) {
