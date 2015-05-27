@@ -986,15 +986,14 @@ bool WorldStateMgrThread::doPopulateDB()
         opcPort.write(opcCmd, opcReply);
         //yDebug() << __func__ << "obtained response:" << opcReply.toString().c_str();
 
-        // TODO: factorize common parts inside the next two cases
+        opcCmd.clear();
+        opcCmdContent.clear();
+        opcReply.clear();
         if (opcReply.get(0).asVocab() == Vocab::encode("ack"))
         {
             // yes -> just update entry's properties
             // [set] (("id" <num>) ("prop0" <val0>) ...) 
             //yDebug("modifying existing entry %d in database", wsID);
-            opcCmd.clear();
-            opcCmdContent.clear();
-            opcReply.clear();
             opcCmd.addVocab(Vocab::encode("set"));
 
             Bottle bID;
@@ -1002,61 +1001,34 @@ bool WorldStateMgrThread::doPopulateDB()
             bID.addString("id");
             bID.addInt(wsID);
             opcCmdContent.addList() = bID;
-
-            opcCmdContent.addList() = bName;
-            opcCmdContent.addList() = bIsHand;
-            if (!bIsHandValue)
-            {
-                if (currentlySeen)
-                {
-                    opcCmdContent.addList() = bPos;
-                    opcCmdContent.addList() = bDesc;
-                    opcCmdContent.addList() = bToolDesc;
-                }
-                opcCmdContent.addList() = bInHand;
-                opcCmdContent.addList() = bOnTopOf;
-                opcCmdContent.addList() = bReachW;
-                opcCmdContent.addList() = bPullW;
-            }
-            else
-            {
-                opcCmdContent.addList() = bIsFree;
-            }
-
-            opcCmd.addList() = opcCmdContent;
         }
         else
         {
             // no -> add entry
             // [add] (("prop0" <val0>) ("prop1" <val1>) ...)
             //yDebug("adding new entry %d to database", wsID);
-            opcCmd.clear();
-            opcCmdContent.clear();
-            opcReply.clear();
             opcCmd.addVocab(Vocab::encode("add"));
-
-            opcCmdContent.addList() = bName;
-            opcCmdContent.addList() = bIsHand;
-            if (!bIsHandValue)
-            {
-                if (currentlySeen)
-                {
-                    opcCmdContent.addList() = bPos;
-                    opcCmdContent.addList() = bDesc;
-                    opcCmdContent.addList() = bToolDesc;
-                }
-                opcCmdContent.addList() = bInHand;
-                opcCmdContent.addList() = bOnTopOf;
-                opcCmdContent.addList() = bReachW;
-                opcCmdContent.addList() = bPullW;
-            }
-            else
-            {
-                opcCmdContent.addList() = bIsFree;
-            }
-
-            opcCmd.addList() = opcCmdContent;
         }
+        opcCmdContent.addList() = bName;
+        opcCmdContent.addList() = bIsHand;
+        if (!bIsHandValue)
+        {
+            if (currentlySeen)
+            {
+                opcCmdContent.addList() = bPos;
+                opcCmdContent.addList() = bDesc;
+                opcCmdContent.addList() = bToolDesc;
+            }
+            opcCmdContent.addList() = bInHand;
+            opcCmdContent.addList() = bOnTopOf;
+            opcCmdContent.addList() = bReachW;
+            opcCmdContent.addList() = bPullW;
+        }
+        else
+        {
+            opcCmdContent.addList() = bIsFree;
+        }
+        opcCmd.addList() = opcCmdContent;
 
         //yDebug() << __func__ << "sending command to WSOPC:" << opcCmd.toString().c_str();
         opcPort.write(opcCmd, opcReply);
