@@ -1,5 +1,5 @@
 <application>
-<name>POETICON++ from Perception, C++</name>
+<name>POETICON++ from Perception</name>
 
 <dependencies>
     <port>/icub/camcalib/left/out</port>
@@ -36,19 +36,19 @@
     <node>console</node>
 </module>
 <module>
-    <name>planningCycle</name>
+    <name>planningCycle</name> <!-- planning_cycle.py -->
     <node>console</node>
 </module>
 <module>
-    <name>geometricGrounding</name>
+    <name>geometricGrounding</name> <!-- geometric_grounding.py -->
     <node>console</node>
 </module>
 <module>
-    <name>goalCompiler</name>
+    <name>goalCompiler</name> <!-- goal_imaginer.py -->
     <node>console</node>
 </module>
 <module>
-    <name>affordanceCommunication</name>
+    <name>affordanceCommunication</name> <!-- affordance_communication.py -->
     <node>console</node>
 </module>
 
@@ -151,15 +151,15 @@
     <to>/activityInterface/rpc:i</to>
 </connection>
 <connection>
-    <from>/affordanceCommunication/aff_query:io</from>
+    <from>/affordanceCommunication/aff_query:io</from> <!-- /AffordanceComm/aff_query:io -->
     <to>/Eprediction/read:i</to>
 </connection>
 <connection>
     <from>/Eprediction/write:o</from>
-    <to>/affordanceCommunication/aff_query:io</to>
+    <to>/affordanceCommunication/aff_query:io</to> <!-- /AffordanceComm/aff_query:io -->
 </connection>
 <connection>
-    <from>/affordanceCommunication/actInt_rpc:o</from>
+    <from>/affordanceCommunication/actInt_rpc:o</from> <!-- /AffordanceComm/actInt_rpc:io -->
     <to>/activityInterface/rpc:i</to>
 </connection>
 <connection>
@@ -191,24 +191,24 @@
     <to>/activityInterface/prada:i</to>
 </connection>
 <connection>
-    <from>/affordanceCommunication/ground_cmd:io</from>
+    <from>/affordanceCommunication/ground_cmd:io</from> <!-- /AffordanceComm/ground_cmd:io -->
     <to>/grounding/Aff_cmd:io</to>
 </connection>
 <connection>
     <from>/grounding/Aff_cmd:io</from>
-    <to>/affordanceCommunication/ground_cmd:io</to>
+    <to>/affordanceCommunication/ground_cmd:io</to> <!-- /AffordanceComm/ground_cmd:io -->
 </connection>
 <connection>
-    <from>/affordanceCommunication/opc2prada_query:io</from>
+    <from>/affordanceCommunication/opc2prada_query:io</from> <!-- /AffordanceComm/desc_query:io, is now connected to an rpc port instead of two ports -->
     <to>/opc2prada/rpc:i</to>
 </connection>
 <connection>
-    <from>/affordanceCommunication/planner_cmd:io</from>
+    <from>/affordanceCommunication/planner_cmd:io</from> <!-- /AffordanceComm/planner_cmd:io -->
     <to>/planner/Aff_cmd:io</to>
 </connection>
 <connection>
     <from>/planner/Aff_cmd:io</from>
-    <to>/affordanceCommunication/planner_cmd:io</to>
+    <to>/affordanceCommunication/planner_cmd:io</to> <!-- /AffordanceComm/planner_cmd:io -->
 </connection>
 
 </application>
