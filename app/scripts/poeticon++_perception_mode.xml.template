@@ -1,5 +1,5 @@
 <application>
-<name>POETICON++ from Perception</name>
+<name>POETICON++ from Perception, C++</name>
 
 <dependencies>
     <port>/icub/camcalib/left/out</port>
@@ -36,19 +36,19 @@
     <node>console</node>
 </module>
 <module>
-    <name>planningCycle</name> <!-- planning_cycle.py -->
+    <name>planningCycle</name>
     <node>console</node>
 </module>
 <module>
-    <name>geometricGrounding</name> <!-- geometric_grounding.py -->
+    <name>geometricGrounding</name>
     <node>console</node>
 </module>
 <module>
-    <name>goalCompiler</name> <!-- goal_imaginer.py -->
+    <name>goalCompiler</name>
     <node>console</node>
 </module>
 <module>
-    <name>affordanceCommunication</name> <!-- affordance_communication.py -->
+    <name>affordanceCommunication</name>
     <node>console</node>
 </module>
 
@@ -151,15 +151,15 @@
     <to>/activityInterface/rpc:i</to>
 </connection>
 <connection>
-    <from>/AffordanceComm/aff_query:io</from>
+    <from>/affordanceCommunication/aff_query:io</from>
     <to>/Eprediction/read:i</to>
 </connection>
 <connection>
     <from>/Eprediction/write:o</from>
-    <to>/AffordanceComm/aff_query:io</to>
+    <to>/affordanceCommunication/aff_query:io</to>
 </connection>
 <connection>
-    <from>/AffordanceComm/actInt_rpc:o</from>
+    <from>/affordanceCommunication/actInt_rpc:o</from>
     <to>/activityInterface/rpc:i</to>
 </connection>
 <connection>
@@ -191,28 +191,24 @@
     <to>/activityInterface/prada:i</to>
 </connection>
 <connection>
-    <from>/AffordanceComm/ground_cmd:io</from>
+    <from>/affordanceCommunication/ground_cmd:io</from>
     <to>/grounding/Aff_cmd:io</to>
 </connection>
 <connection>
     <from>/grounding/Aff_cmd:io</from>
-    <to>/AffordanceComm/ground_cmd:io</to>
+    <to>/affordanceCommunication/ground_cmd:io</to>
 </connection>
 <connection>
-    <from>/opc2prada/cmd:io</from>
-    <to>/AffordanceComm/desc_query:io</to>
+    <from>/affordanceCommunication/opc2prada_query:io</from>
+    <to>/opc2prada/rpc:i</to>
 </connection>
 <connection>
-    <from>/AffordanceComm/desc_query:io</from>
-    <to>/opc2prada/cmd:io</to>
-</connection>
-<connection>
-    <from>/AffordanceComm/planner_cmd:io</from>
+    <from>/affordanceCommunication/planner_cmd:io</from>
     <to>/planner/Aff_cmd:io</to>
 </connection>
 <connection>
     <from>/planner/Aff_cmd:io</from>
-    <to>/AffordanceComm/planner_cmd:io</to>
+    <to>/affordanceCommunication/planner_cmd:io</to>
 </connection>
 
 </application>
