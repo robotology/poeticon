@@ -26,28 +26,29 @@ WorldStateMgrThread::WorldStateMgrThread(
 bool WorldStateMgrThread::openPorts()
 {
     // perception and playback modes
+    bool ret = true;
     opcPortName = "/" + moduleName + "/opc:io";
-    opcPort.open(opcPortName.c_str());
+    ret = ret && opcPort.open(opcPortName.c_str());
     
-    if (playbackMode) return true;
+    if (playbackMode) return ret;
 
     // perception mode only
     inTargetsPortName = "/" + moduleName + "/target:i";
-    inTargetsPort.open(inTargetsPortName.c_str());
+    ret = ret && inTargetsPort.open(inTargetsPortName.c_str());
 
     inAffPortName = "/" + moduleName + "/affDescriptor:i";
-    inAffPort.open(inAffPortName.c_str());
+    ret = ret && inAffPort.open(inAffPortName.c_str());
 
     inToolAffPortName = "/" + moduleName + "/toolAffDescriptor:i";
-    inToolAffPort.open(inToolAffPortName.c_str());
+    ret = ret && inToolAffPort.open(inToolAffPortName.c_str());
 
     activityPortName = "/" + moduleName + "/activity:rpc";
-    activityPort.open(activityPortName.c_str());
+    ret = ret && activityPort.open(activityPortName.c_str());
 
     trackerPortName = "/" + moduleName + "/tracker:rpc";
-    trackerPort.open(trackerPortName.c_str());
+    ret = ret && trackerPort.open(trackerPortName.c_str());
 
-    return true;
+    return ret;
 }
 
 void WorldStateMgrThread::close()
@@ -267,7 +268,7 @@ void WorldStateMgrThread::fsmPerception()
         {
             if (!toldUserConnectOPC && opcPort.getInputCount()<1)
             {
-                yInfo("waiting for %s to be connected to /wsopc/rpc", opcPortName.c_str());
+                yInfo("waiting for connection: %s /wsopc/rpc", opcPortName.c_str());
                 toldUserConnectOPC = true;
             }
 
@@ -294,7 +295,7 @@ void WorldStateMgrThread::fsmPerception()
 
             if (!toldUserWaitBlobs || inAffPort.getInputCount()<1 || inToolAffPort.getInputCount()<1)
             {
-                yInfo("waiting for connections to BlobDescriptor:");
+                yInfo("waiting for connections:");
                 yInfo("/blobDescriptor/affDescriptor:o %s", inAffPortName.c_str());
                 yInfo("/blobDescriptor/toolAffDescriptor:o %s", inToolAffPortName.c_str());
                 toldUserWaitBlobs = true;
@@ -330,7 +331,7 @@ void WorldStateMgrThread::fsmPerception()
         {
             if (!toldUserWaitTracker && inTargetsPort.getOutputCount()<1)
             {
-                yInfo("waiting for %s to be connected to /activeParticleTrack/target:o",
+                yInfo("waiting for connection: %s /activeParticleTrack/target:o",
                       inTargetsPortName.c_str());
                 toldUserWaitTracker = true;
             }
@@ -362,7 +363,7 @@ void WorldStateMgrThread::fsmPerception()
                 activityCmd.clear();
                 activityReply.clear();
                 activityCmd.addString("goHome");
-                //yDebug() << __func__ <<  "sending query to activityInterface:" << activityCmd.toString().c_str();
+                yInfo() << "connected to activityInterface, sending it instruction:" << activityCmd.toString().c_str();
                 activityPort.write(activityCmd, activityReply);
                 //yDebug() << __func__ <<  "obtained response:" << activityReply.toString().c_str();
                 bool validResponse = false;
@@ -436,14 +437,14 @@ void WorldStateMgrThread::fsmPerception()
         {
             if (!toldUserWaitActivityIF && activityPort.getOutputCount()<1)
             {
-                yInfo("waiting for %s to be connected to /activityInterface/rpc:i",
+                yInfo("waiting for connection: %s /activityInterface/rpc:i",
                       activityPortName.c_str());
                 toldUserWaitActivityIF = true;
             }
 
             if (!toldUserActivityIFConnected && activityPort.getOutputCount()>=1)
             {
-                yInfo("connected to ActivityInterface");
+                yInfo("connected to activityInterface");
                 toldUserActivityIFConnected = true;
             }
 
@@ -789,6 +790,7 @@ bool WorldStateMgrThread::doPopulateDB()
             if (!bIsHandValue)
             {
                 double u=0.0, v=0.0;
+                refreshTracker();
                 u = inTargets->get(tbi).asList()->get(1).asDouble();
                 v = inTargets->get(tbi).asList()->get(2).asDouble();
 
@@ -840,6 +842,7 @@ bool WorldStateMgrThread::doPopulateDB()
             double u=0.0, v=0.0;
             if (currentlySeen)
             {
+                refreshTracker();
                 u = inTargets->get(tbi).asList()->get(1).asDouble();
                 v = inTargets->get(tbi).asList()->get(2).asDouble();
 
@@ -852,6 +855,9 @@ bool WorldStateMgrThread::doPopulateDB()
                     yarp::sig::Vector pos(2);
                     yarp::sig::Vector posFiltered(2);
                     pos[0]=u; pos[1]=v;
+                    yDebug("current pos:\t%s",
+                          pos.toString().c_str());
+
                     // add filter to container if necessary, TODO: more robust check
                     if (posFilter.size()<=wsID-countFrom && wsID>0)
                     {
@@ -860,17 +866,24 @@ bool WorldStateMgrThread::doPopulateDB()
                         posFilter.push_back(newFilter);
                         yDebug("%d: added filter for object %d to container", wsID-countFrom, wsID);
                     }
-                    yDebug("run 1/%d, unfiltered pos:\t%s",
-                          filterOrder, pos.toString().c_str());
                     posFiltered = posFilter[wsID-countFrom].filt(pos);
+                    yDebug("run 1/%d, unfiltered pos:\t%s->\tfiltered pos: %s",
+                          filterOrder, pos.toString().c_str(),
+                          posFiltered.toString().c_str());
+                    yarp::os::Time::delay(0.1);
 
                     // runs 2..n
                     for (int run=2; run<=filterOrder; ++run)
                     {
+                        refreshTracker();
+                        u = inTargets->get(tbi).asList()->get(1).asDouble();
+                        v = inTargets->get(tbi).asList()->get(2).asDouble();
                         pos[0]=u; pos[1]=v;
-                        yDebug("run %d/%d, unfiltered pos:\t%s",
-                              run, filterOrder, pos.toString().c_str());
+                        yDebug("run %d/%d, unfiltered pos:\t%s->\tfiltered pos: %s",
+                              run, filterOrder, pos.toString().c_str(),
+                              posFiltered.toString().c_str());
                         posFiltered = posFilter[wsID-countFrom].filt(pos);
+                        yarp::os::Time::delay(0.1);
                         if (run==filterOrder)
                         {
                             yDebug("filtered pos:\t\t%s", posFiltered.toString().c_str());
@@ -975,9 +988,6 @@ bool WorldStateMgrThread::doPopulateDB()
         // going to ask WSOPC whether entry already exists
         // [get] ("id" <num>)
         Bottle opcCmd, opcCmdContent, opcReply;
-        opcCmd.clear();
-        opcCmdContent.clear();
-        opcReply.clear();
         opcCmd.addVocab(Vocab::encode("get"));
         opcCmdContent.addString("id");
         opcCmdContent.addInt(wsID);
@@ -985,15 +995,14 @@ bool WorldStateMgrThread::doPopulateDB()
         //yDebug() << __func__ << "sending query:" << opcCmd.toString().c_str();
         opcPort.write(opcCmd, opcReply);
         //yDebug() << __func__ << "obtained response:" << opcReply.toString().c_str();
-
-        opcCmd.clear();
-        opcCmdContent.clear();
-        opcReply.clear();
         if (opcReply.get(0).asVocab() == Vocab::encode("ack"))
         {
             // yes -> just update entry's properties
             // [set] (("id" <num>) ("prop0" <val0>) ...) 
             //yDebug("modifying existing entry %d in database", wsID);
+            opcCmd.clear();
+            opcCmdContent.clear();
+            opcReply.clear();
             opcCmd.addVocab(Vocab::encode("set"));
 
             Bottle bID;
@@ -1007,8 +1016,12 @@ bool WorldStateMgrThread::doPopulateDB()
             // no -> add entry
             // [add] (("prop0" <val0>) ("prop1" <val1>) ...)
             //yDebug("adding new entry %d to database", wsID);
+            opcCmd.clear();
+            opcCmdContent.clear();
+            opcReply.clear();
             opcCmd.addVocab(Vocab::encode("add"));
         }
+
         opcCmdContent.addList() = bName;
         opcCmdContent.addList() = bIsHand;
         if (!bIsHandValue)
@@ -1647,14 +1660,14 @@ void WorldStateMgrThread::fsmPlayback()
         {
             if (!toldUserConnectOPC && opcPort.getOutputCount()<1)
             {
-                yInfo("waiting for /%s/opc:io to be connected to /wsopc/rpc", moduleName.c_str());
+                yInfo("waiting for connection: %s /wsopc/rpc", opcPortName.c_str());
                 toldUserConnectOPC = true;
             }
 
             if (!toldUserOPCConnected && opcPort.getOutputCount()>=1)
             {
                 dumpWorldState();
-                yInfo("connected to WSOPC, you can now send commands over RPC");
+                yInfo("connected to WSOPC, you can now send RPC commands to /%s/rpc:i", moduleName.c_str());
                 toldUserOPCConnected = true;
                 fsmState = STATE_DUMMY_WAIT_CMD;
             }
