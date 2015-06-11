@@ -266,20 +266,20 @@ void WorldStateMgrThread::fsmPerception()
     {
         case STATE_PERCEPTION_WAIT_OPC:
         {
-            if (!toldUserConnectOPC && opcPort.getInputCount()<1)
+            if (!toldUserConnectOPC)
             {
                 yInfo("waiting for connection: %s /wsopc/rpc", opcPortName.c_str());
                 toldUserConnectOPC = true;
             }
 
-            if (!toldUserOPCConnected && opcPort.getInputCount()>=1)
-            {
-                yInfo("connected to WSOPC, you can now send RPC commands to /%s/rpc:i", moduleName.c_str());
-                toldUserOPCConnected = true;
-            }
-
             if (opcPort.getOutputCount()>=1)
             {
+                if (!toldUserOPCConnected)
+                {
+                    yInfo("connected to WSOPC, you can now send RPC commands to /%s/rpc:i", moduleName.c_str());
+                    toldUserOPCConnected = true;
+                }
+
                 dumpWorldState();
                 // proceed
                 fsmState = STATE_PERCEPTION_WAIT_BLOBS;
@@ -342,8 +342,6 @@ void WorldStateMgrThread::fsmPerception()
                 yInfo("connected to tracker, sending it instruction: countFrom %d", countFrom);
                 toldUserTrackerConnected = true;
                 Bottle trackerCmd, trackerReply;
-                trackerCmd.clear();
-                trackerReply.clear();
                 trackerCmd.addString("countFrom");
                 trackerCmd.addInt(countFrom);
                 //yDebug() << __func__ <<  "sending query to tracker:" << trackerCmd.toString().c_str();
@@ -354,26 +352,6 @@ void WorldStateMgrThread::fsmPerception()
                                   (trackerReply.get(0).asVocab()==Vocab::encode("ok")) );
                 if (!validResponse)
                     yWarning() << __func__ << "obtained invalid response from tracker:" << trackerReply.toString().c_str();
-            }
-
-            // TODO: this should be sent once as soon as activityPort is connected
-            if (!toldActivityGoHome && activityPort.getOutputCount()>=1)
-            {
-                Bottle activityCmd, activityReply;
-                activityCmd.clear();
-                activityReply.clear();
-                activityCmd.addString("goHome");
-                yInfo() << "connected to activityInterface, sending it instruction:" << activityCmd.toString().c_str();
-                activityPort.write(activityCmd, activityReply);
-                //yDebug() << __func__ <<  "obtained response:" << activityReply.toString().c_str();
-                bool validResponse = false;
-                validResponse = ( activityReply.size()>0 &&
-                                  activityReply.get(0).asVocab()==Vocab::encode("ok") );
-
-                if (!validResponse)
-                    yWarning() << __func__ <<  "obtained invalid response:" << activityReply.toString().c_str();
-
-                toldActivityGoHome = true;
             }
 
             // proceed
@@ -435,30 +413,44 @@ void WorldStateMgrThread::fsmPerception()
 
         case STATE_PERCEPTION_WAIT_ACTIVITYIF:
         {
-            if (!toldUserWaitActivityIF && activityPort.getOutputCount()<1)
+            if (!toldUserWaitActivityIF)
             {
                 yInfo("waiting for connection: %s /activityInterface/rpc:i",
                       activityPortName.c_str());
                 toldUserWaitActivityIF = true;
             }
+            else
+            {
+                if (activityPort.getOutputCount()>=1)
+                {
+                    tellActivityGoHome();
+                    refreshTrackNames();
+                    toldUserActivityIFConnected = true;
 
+                    // proceed
+                    fsmState = STATE_PERCEPTION_POPULATE_DB;
+                }
+            }
+
+            /*
             if (!toldUserActivityIFConnected && activityPort.getOutputCount()>=1)
             {
-                yInfo("connected to activityInterface");
+                tellActivityGoHome();
                 toldUserActivityIFConnected = true;
-            }
 
-            if (opcPort.getOutputCount()<1 || inAffPort.getOutputCount()<1 ||
-                inTargetsPort.getOutputCount()<1 || activityPort.getOutputCount()<1)
+                // proceed
+                fsmState = STATE_PERCEPTION_POPULATE_DB;
+            }
+            else
             {
-                // one of the inputs is missing, go back to beginning
-                fsmState = STATE_PERCEPTION_WAIT_OPC;
+                if (!toldUserWaitActivityIF)
+                {
+                    yInfo("waiting for connection: %s /activityInterface/rpc:i",
+                          activityPortName.c_str());
+                    toldUserWaitActivityIF = true;
+                }
             }
-
-            // TODO: make sure "connected to ActivityInterface" is printed
-
-            // proceed
-            fsmState = STATE_PERCEPTION_POPULATE_DB;
+            */
 
             break;
         }
@@ -674,6 +666,12 @@ void WorldStateMgrThread::refreshTracker()
         {
             if (activityPort.getOutputCount()>=1)
             {
+                // make sure to send "goHome" to activityInterface before
+                // everything else (as of June 2015, that means before the first
+                // "getLabel" query)
+                if (!toldActivityGoHome)
+                    tellActivityGoHome();
+
                 // get labels, update trackMap
                 refreshTrackNames();
             }
@@ -1108,6 +1106,34 @@ bool WorldStateMgrThread::getTrackerBottleIndexFromID(const int &id, int &tbi)
     return false;
 }
 
+bool WorldStateMgrThread::tellActivityGoHome()
+{
+    if (activityPort.getOutputCount() < 1)
+    {
+        yWarning() << __func__ << "not connected to ActivityIF";
+        return false;
+    }
+
+    if (!toldActivityGoHome)
+    {
+        Bottle activityCmd, activityReply;
+        activityCmd.addString("goHome");
+        yInfo() << "connected to activityInterface, sending it instruction:" << activityCmd.toString().c_str();
+        activityPort.write(activityCmd, activityReply);
+        //yDebug() << __func__ <<  "obtained response:" << activityReply.toString().c_str();
+        bool validResponse = false;
+        validResponse = ( activityReply.size()>0 &&
+                          activityReply.get(0).asVocab()==Vocab::encode("ok") );
+
+        if (!validResponse)
+            yWarning() << __func__ <<  "obtained invalid response:" << activityReply.toString().c_str();
+
+        toldActivityGoHome = true;
+    }
+
+    return true;
+}
+
 bool WorldStateMgrThread::getAffBottleIndexFromTrackROI(const int &u, const int &v, int &abi)
 {
     // Finds the AffBottleIndex of inAff->get(abi) corresponding to
@@ -1171,8 +1197,8 @@ int WorldStateMgrThread::label2id(const string &label)
         }
     }
 
-    //if (key == -1)
-    //    yWarning() << __func__ << "did not find id corresponding to label" << label.c_str();
+    if (key == -1)
+        yWarning("did not find id corresponding to label %s", label.c_str());
 
     return key;
 }
