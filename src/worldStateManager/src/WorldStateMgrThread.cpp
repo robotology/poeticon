@@ -432,26 +432,6 @@ void WorldStateMgrThread::fsmPerception()
                 }
             }
 
-            /*
-            if (!toldUserActivityIFConnected && activityPort.getOutputCount()>=1)
-            {
-                tellActivityGoHome();
-                toldUserActivityIFConnected = true;
-
-                // proceed
-                fsmState = STATE_PERCEPTION_POPULATE_DB;
-            }
-            else
-            {
-                if (!toldUserWaitActivityIF)
-                {
-                    yInfo("waiting for connection: %s /activityInterface/rpc:i",
-                          activityPortName.c_str());
-                    toldUserWaitActivityIF = true;
-                }
-            }
-            */
-
             break;
         }
 
@@ -1684,17 +1664,22 @@ void WorldStateMgrThread::fsmPlayback()
 
         case STATE_DUMMY_WAIT_OPC:
         {
-            if (!toldUserConnectOPC && opcPort.getOutputCount()<1)
+            if (!toldUserConnectOPC)
             {
                 yInfo("waiting for connection: %s /wsopc/rpc", opcPortName.c_str());
                 toldUserConnectOPC = true;
             }
 
-            if (!toldUserOPCConnected && opcPort.getOutputCount()>=1)
+            if (opcPort.getOutputCount()>=1)
             {
+                if (!toldUserOPCConnected)
+                {
+                    yInfo("connected to WSOPC, you can now send RPC commands to /%s/rpc:i", moduleName.c_str());
+                    toldUserOPCConnected = true;
+                }
+
                 dumpWorldState();
-                yInfo("connected to WSOPC, you can now send RPC commands to /%s/rpc:i", moduleName.c_str());
-                toldUserOPCConnected = true;
+                // proceed
                 fsmState = STATE_DUMMY_WAIT_CMD;
             }
 
