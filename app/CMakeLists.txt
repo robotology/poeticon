@@ -8,11 +8,11 @@ set(APPNAME poeticon)
 file(GLOB conf ${CMAKE_CURRENT_SOURCE_DIR}/conf/*.ini)
 file(GLOB scripts ${CMAKE_CURRENT_SOURCE_DIR}/scripts/*.template)
 
-file(prada ${CMAKE_CURRENT_SOURCE_DIR}/conf/planner.exe)
+file(GLOB prada ${CMAKE_CURRENT_SOURCE_DIR}/conf/planner.exe)
 file(GLOB pradaFiles ${CMAKE_CURRENT_SOURCE_DIR}/conf/config ${CMAKE_CURRENT_SOURCE_DIR}/conf/*.dat)
 
-file(lua_fsm ${CMAKE_CURRENT_SOURCE_DIR}/lua/poeticon_root_fsm.lua)
-file(lua_bin ${CMAKE_CURRENT_SOURCE_DIR}/lua/poeticon_main.lua)
+set(lua_fsm ${CMAKE_CURRENT_SOURCE_DIR}/lua/poeticon_root_fsm.lua)
+set(lua_bin ${CMAKE_CURRENT_SOURCE_DIR}/lua/poeticon_main.lua)
 
 find_package(YARP)
 find_package(ICUB)

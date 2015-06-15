@@ -11,6 +11,8 @@ This is the repository of the [POETICON++ EU project](http://www.poeticon.eu).
 - [icub-contrib-common](https://github.com/robotology/icub-contrib-common)
 - [OpenCV](http://opencv.org/downloads.html)
 
+### Additional dependencies for specific modules
+
 PRADA probabilistic planner dependencies:
 - [libPRADA](http://www.informatik.uni-hamburg.de/ML/contents/people/lang/private/prada/)
 
@@ -18,6 +20,10 @@ Affordance network dependencies:
 - MATLAB
 - [pmtk3](https://github.com/probml/pmtk3)
 - [YARP Java bindings](http://wiki.icub.org/yarpdoc/yarp_swig.html)
+
+Speech recognition dependencies:
+- [YARP Lua bindings](http://wiki.icub.org/yarpdoc/yarp_swig.html)
+- [rFSM](https://github.com/kmarkus/rFSM) (just clone it, no need to compile)
 
 SLIC Superpixels dependencies:
 - [TBB](https://www.threadingbuildingblocks.org/)
@@ -40,6 +46,8 @@ Instructions to install libPRADA, required by the probabilistic planner:
     cp test/relational_plan/x.exe ../app/conf/planner.exe
 
 ## Documentation
+
+Please refer to the documentation inside each module, and to the help commands available via RPC interfaces.
 
 ## Articles
 
