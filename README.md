@@ -13,8 +13,6 @@ This is the repository of the [POETICON++ EU project](http://www.poeticon.eu).
 
 PRADA probabilistic planner dependencies:
 - [libPRADA](http://www.informatik.uni-hamburg.de/ML/contents/people/lang/private/prada/)
-- Python 2.7
-- [YARP Python bindings](http://wiki.icub.org/yarpdoc/yarp_swig.html)
 
 Affordance network dependencies:
 - MATLAB
