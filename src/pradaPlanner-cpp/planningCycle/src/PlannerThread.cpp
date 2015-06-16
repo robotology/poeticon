@@ -1368,7 +1368,7 @@ bool PlannerThread::planning_cycle()
             {
                 return false;
             }
-            yarp::os::Time::delay(5);
+            yarp::os::Time::delay(1);
             int flag_prada = PRADA();
             if (!checkPause())
             {
