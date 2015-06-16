@@ -156,6 +156,7 @@ class WorldStateMgrThread : public RateThread
         bool doPopulateDB();
         bool getTrackerBottleIndexFromID(const int &id, int &tbi);
         bool getAffBottleIndexFromTrackROI(const int &u, const int &v, int &abi);
+        bool tellActivityGoHome();
         int label2id(const string &label);
         bool getLabel(const int &u, const int &v, string &label);
         bool getLabelMajorityVote(const int &u, const int &v, string &winnerLabel, const int &rounds=5);

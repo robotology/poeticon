@@ -11,6 +11,9 @@ file(GLOB scripts ${CMAKE_CURRENT_SOURCE_DIR}/scripts/*.template)
 file(GLOB prada ${CMAKE_CURRENT_SOURCE_DIR}/conf/planner.exe)
 file(GLOB pradaFiles ${CMAKE_CURRENT_SOURCE_DIR}/conf/config ${CMAKE_CURRENT_SOURCE_DIR}/conf/*.dat)
 
+set(lua_fsm ${CMAKE_CURRENT_SOURCE_DIR}/lua/poeticon_root_fsm.lua)
+set(lua_bin ${CMAKE_CURRENT_SOURCE_DIR}/lua/poeticon_main.lua)
+
 find_package(YARP)
 find_package(ICUB)
 find_package(ICUBcontrib)
@@ -24,3 +27,14 @@ yarp_install(FILES ${scripts} DESTINATION ${ICUBCONTRIB_APPLICATIONS_TEMPLATES_I
 
 yarp_install(PROGRAMS ${prada} DESTINATION ${ICUBCONTRIB_CONTEXTS_INSTALL_DIR}/${APPNAME})
 yarp_install(FILES ${pradaFiles} DESTINATION ${ICUBCONTRIB_CONTEXTS_INSTALL_DIR}/${APPNAME})
+
+yarp_install(PROGRAMS ${lua_fsm} DESTINATION ${ICUBCONTRIB_CONTEXTS_INSTALL_DIR}/${APPNAME}/lua)
+# We cannot go for "yarp_install(PROGRAMS ${lua_bin} DESTINATION bin)", since on Windows, only
+# at build time (i.e. not during installation), we have to handle the Debug|Release subfolders.
+# Requirements: the cmake "-E copy" command does not change file permissions, hence the file needs
+# to be stored in the versioning database with *executable* rights.
+add_custom_target(copy_lua_in_build ALL)
+add_custom_command(TARGET copy_lua_in_build POST_BUILD
+                   COMMAND ${CMAKE_COMMAND} -E copy ${lua_bin} ${CMAKE_BINARY_DIR}/bin/${CMAKE_CFG_INTDIR}
+                   COMMENT "Copying ${lua_bin} to ${CMAKE_BINARY_DIR}/bin/${CMAKE_CFG_INTDIR}/")
+install(PROGRAMS ${lua_bin} DESTINATION bin)
