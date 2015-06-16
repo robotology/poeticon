@@ -53,7 +53,7 @@ void PlannerThread::threadRelease()
 
 void PlannerThread::close()
 {
-    yInfo("closing ports");
+    yInfo("Closing ports");
     closing = true;
     goal_yarp.close();
     geo_yarp.close();
@@ -62,11 +62,25 @@ void PlannerThread::close()
     world_rpc.close();
     actInt_rpc.close();
     opc2prada_rpc.close();
+	yInfo("Freeing memory");
+	cmd.clear();
+    message.clear();
+    reply.clear();
+    toolhandle.clear();
+    state.clear();
+    old_state.clear();
+    rules.clear();
+    old_rules.clear();
+    objects_used.clear();
+    goal.clear();
+	subgoals.clear();
+    object_IDs.clear();
+	yarp::os::Time::delay(0.1);
 }
 
 void PlannerThread::interrupt()
 {
-    yInfo("interrupting ports");
+    yInfo("Interrupting ports");
     closing = true;
     goal_yarp.interrupt();
     geo_yarp.interrupt();
@@ -101,7 +115,7 @@ void PlannerThread::run()
     {
         while (!startPlan)
         {
-            yarp::os::Time::delay(0.1);
+            yarp::os::Time::delay(0.05);
             if (closing)
             {
                 return;
@@ -110,7 +124,6 @@ void PlannerThread::run()
         if (!plan_init())
         {
             startPlan = false;
-            break;
         }
         restartPlan = false;
         while (!restartPlan)
@@ -193,17 +206,16 @@ bool PlannerThread::updateState()
     cmd.addString("update");
     world_rpc.write(cmd, reply);
     if ((reply.size() == 1) && (reply.get(0).asVocab() == yarp::os::Vocab::encode("ok"))){
-        yarp::os::Time::delay(0.1);
+        yarp::os::Time::delay(0.5);
         cmd.clear();
         cmd.addString("update");
         opc2prada_rpc.write(cmd,reply);
         if ((reply.size() == 1) && (reply.get(0).asVocab() == yarp::os::Vocab::encode("ok"))){
-            Time::delay(0.3);
-            yInfo("planner state updated!");
+            yInfo("Planner state updated!");
             return true;
         }
         else {
-            yWarning("planner state update failed!");
+            yWarning("Planner state update failed!");
             return false;
         }
     }
@@ -339,7 +351,7 @@ bool PlannerThread::groundRules()
     geo_bottle_out.clear();
     geo_bottle_out.addString("update");
     geo_yarp.write();
-    yInfo("grounding...");
+    yInfo("Grounding...");
     while (!closing) {
         geo_bottle_in = geo_yarp.read(false);
         if (geo_bottle_in != NULL){
@@ -365,6 +377,7 @@ bool PlannerThread::groundRules()
         aff_bottle_in = aff_yarp.read(false);
         if (aff_bottle_in){
             data = aff_bottle_in->toString();
+			//yInfo("%s",data.c_str());
             if (data == "()" || data == "")
             {
                 yWarning("empty bottle received, something might be wrong with the affordances module.");
@@ -401,7 +414,7 @@ bool PlannerThread::compileGoal()
     goal_bottle_out.clear();
     goal_bottle_out.addString("praxicon");
     goal_yarp.write();
-    yInfo("waiting for praxicon...");
+    yInfo("Waiting for praxicon...");
     while (!closing) {
         goal_bottle_in = goal_yarp.read(false);
         if (goal_bottle_in){
@@ -490,7 +503,7 @@ bool PlannerThread::loadGoal()
         yWarning("unable to open goal file!");
         return false;
     }
-    yInfo("goal loaded");
+    yInfo("Goal loaded");
     goal.clear();
     while (getline(goalFile, line,' ')){
         goal.push_back(line);
@@ -532,7 +545,7 @@ bool PlannerThread::resetConfig()
         configFileOut << '\n';
     }
     configFileOut.close();
-    yInfo("config file reset");
+    yInfo("Config file reset");
     return true;
 }
 
@@ -572,7 +585,7 @@ void PlannerThread::stopPlanning()
     restartPlan = true;
     plan_level = 0;
     resetConfig();
-    yInfo("planning stopped");
+    yInfo("Planning stopped");
     return;
 }
 
@@ -621,7 +634,7 @@ bool PlannerThread::compareState()
 bool PlannerThread::preserveRules()
 {
     old_rules = rules;
-    yInfo("rules saved");
+    yInfo("Rules saved");
     return true;
 }
 
@@ -634,7 +647,7 @@ bool PlannerThread::loadRules()
         yWarning("unable to open rules file!");
         return false;
     }
-    yInfo("loading rules");
+    yInfo("Loading rules");
     rules.clear();
     while (getline(rulesFile, line,'\n')){
         rules.push_back(line);
@@ -677,14 +690,21 @@ bool PlannerThread::adaptRules()
                     adapt_rules[2] = static_cast<ostringstream*>( &(ostringstream() << (atof(adapt_rules[2].c_str())/2) ))->str();
                     temp_str = "";
                     for (int h = 0; h < adapt_rules.size(); ++h){
-                         temp_str = temp_str + " " + adapt_rules[h];
+						// yInfo("%s" ,adapt_rules[h].c_str());
+						if (adapt_rules[h] != "0")
+						{
+                        	temp_str = temp_str + " " + adapt_rules[h];
+						}
                     }
                     rules[t+4] = temp_str;
                     adapt_noise = split(rules[t+p-1], ' ');
                     adapt_noise[2] = static_cast<ostringstream*>( &(ostringstream() << (atof(adapt_noise[2].c_str()) +atof(adapt_rules[2].c_str())) ))->str();
                     temp_str = "";
                     for (int h = 0; h < adapt_noise.size(); ++h){
-                        temp_str = temp_str + " " + adapt_noise[h];
+                        if (adapt_rules[h] != "0")
+						{
+                        	temp_str = temp_str + " " + adapt_rules[h];
+						}
                     }
                     rules[t+p-1] = temp_str;
                     break;
@@ -694,7 +714,7 @@ bool PlannerThread::adaptRules()
             for (int y = 0; y < rules.size(); ++y){
                 rulesFileOut << rules[y] << endl;
             }
-            yInfo("rules adapted");
+            yInfo("Rules adapted");
             break;
         }
     }
@@ -711,6 +731,10 @@ bool PlannerThread::goalUpdate()
         return false;
     }
     yInfo("Goal updated");
+	if (plan_level >= subgoals.size())
+	{
+		plan_level = subgoals.size()-1;
+	}
     for (int y = 0; y < subgoals[plan_level].size(); ++y){
         goalFileOut << subgoals[plan_level][y] << " ";
     }
@@ -722,7 +746,7 @@ bool PlannerThread::planCompletion()
 {
     loadObjs();
     if (plan_level >= subgoals.size()){
-        yInfo("plan completed!!");
+        yInfo("Plan completed!!");
         Bottle& prax_bottle_out = prax_yarp.prepare();
         prax_bottle_out.clear();
         prax_bottle_out.addString("OK");
@@ -769,7 +793,7 @@ int PlannerThread::PRADA()
     for (int t = 0; t < pipe_vect.size(); ++t){
         if (pipe_vect[t] == "The planner would like to kindly recommend the following action to you:" && t+1 < pipe_vect.size()){
             next_action = pipe_vect[t+1];
-            yInfo("action found: %s", next_action.c_str());
+            yInfo("Action found: %s", next_action.c_str());
             return 1;
         }
     }
@@ -832,7 +856,7 @@ bool PlannerThread::checkHoldingSymbols()
         }
         for (int t = 0; t < holding_symbols.size(); ++t){
             if (find_element(state, holding_symbols[t])== 0){
-                yInfo("situation changed, receding in plan");
+                yInfo("Situation changed, receding in plan");
                 return false;
             }
         }
@@ -943,7 +967,7 @@ bool PlannerThread::codeAction()
         }
     }
     for (int k = 0; k < object_IDs.size(); ++k){
-        yInfo("%s", object_IDs[k][0].c_str());
+        //yInfo("%s", object_IDs[k][0].c_str());
         if (act == object_IDs[k][0]){
             act = object_IDs[k][1];
         }
@@ -994,7 +1018,7 @@ bool PlannerThread:: execAction()
         message.addString(obj);
         message.addString(hand);
     }
-    yInfo("message: %s" , message.toString().c_str());
+    yInfo("Message: %s" , message.toString().c_str());
     while (!closing){
         actInt_rpc.write(message, reply);
         yInfo("%s", reply.toString().c_str());
@@ -1344,7 +1368,7 @@ bool PlannerThread::planning_cycle()
             {
                 return false;
             }
-            yarp::os::Time::delay(5);
+            yarp::os::Time::delay(1);
             int flag_prada = PRADA();
             if (!checkPause())
             {
