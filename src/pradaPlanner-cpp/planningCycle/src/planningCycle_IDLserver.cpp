@@ -681,7 +681,7 @@ bool planningCycle_IDLserver::quit() {
   planningCycle_IDLserver_quit helper;
   helper.init();
   if (!yarp().canWrite()) {
-    fprintf(stderr,"Missing server method '%s'?\n","bool planningCycle_IDLserver::quit()");
+    yError("Missing server method '%s'?","bool planningCycle_IDLserver::quit()");
   }
   bool ok = yarp().write(helper,helper);
   return ok?helper._return:_return;
@@ -691,7 +691,7 @@ bool planningCycle_IDLserver::startPlanning() {
   planningCycle_IDLserver_startPlanning helper;
   helper.init();
   if (!yarp().canWrite()) {
-    fprintf(stderr,"Missing server method '%s'?\n","bool planningCycle_IDLserver::startPlanning()");
+    yError("Missing server method '%s'?","bool planningCycle_IDLserver::startPlanning()");
   }
   bool ok = yarp().write(helper,helper);
   return ok?helper._return:_return;
@@ -701,7 +701,7 @@ bool planningCycle_IDLserver::stopPlanning() {
   planningCycle_IDLserver_stopPlanning helper;
   helper.init();
   if (!yarp().canWrite()) {
-    fprintf(stderr,"Missing server method '%s'?\n","bool planningCycle_IDLserver::stopPlanning()");
+    yError("Missing server method '%s'?","bool planningCycle_IDLserver::stopPlanning()");
   }
   bool ok = yarp().write(helper,helper);
   return ok?helper._return:_return;
@@ -711,7 +711,7 @@ bool planningCycle_IDLserver::pausePlanner() {
   planningCycle_IDLserver_pausePlanner helper;
   helper.init();
   if (!yarp().canWrite()) {
-    fprintf(stderr,"Missing server method '%s'?\n","bool planningCycle_IDLserver::pausePlanner()");
+    yError("Missing server method '%s'?","bool planningCycle_IDLserver::pausePlanner()");
   }
   bool ok = yarp().write(helper,helper);
   return ok?helper._return:_return;
@@ -721,7 +721,7 @@ bool planningCycle_IDLserver::resumePlanner() {
   planningCycle_IDLserver_resumePlanner helper;
   helper.init();
   if (!yarp().canWrite()) {
-    fprintf(stderr,"Missing server method '%s'?\n","bool planningCycle_IDLserver::resumePlanner()");
+    yError("Missing server method '%s'?","bool planningCycle_IDLserver::resumePlanner()");
   }
   bool ok = yarp().write(helper,helper);
   return ok?helper._return:_return;
@@ -731,7 +731,7 @@ bool planningCycle_IDLserver::goBack() {
   planningCycle_IDLserver_goBack helper;
   helper.init();
   if (!yarp().canWrite()) {
-    fprintf(stderr,"Missing server method '%s'?\n","bool planningCycle_IDLserver::goBack()");
+    yError("Missing server method '%s'?","bool planningCycle_IDLserver::goBack()");
   }
   bool ok = yarp().write(helper,helper);
   return ok?helper._return:_return;
@@ -741,7 +741,7 @@ bool planningCycle_IDLserver::goForward() {
   planningCycle_IDLserver_goForward helper;
   helper.init();
   if (!yarp().canWrite()) {
-    fprintf(stderr,"Missing server method '%s'?\n","bool planningCycle_IDLserver::goForward()");
+    yError("Missing server method '%s'?","bool planningCycle_IDLserver::goForward()");
   }
   bool ok = yarp().write(helper,helper);
   return ok?helper._return:_return;
@@ -751,7 +751,7 @@ bool planningCycle_IDLserver::updateState() {
   planningCycle_IDLserver_updateState helper;
   helper.init();
   if (!yarp().canWrite()) {
-    fprintf(stderr,"Missing server method '%s'?\n","bool planningCycle_IDLserver::updateState()");
+    yError("Missing server method '%s'?","bool planningCycle_IDLserver::updateState()");
   }
   bool ok = yarp().write(helper,helper);
   return ok?helper._return:_return;
@@ -761,7 +761,7 @@ bool planningCycle_IDLserver::loadState() {
   planningCycle_IDLserver_loadState helper;
   helper.init();
   if (!yarp().canWrite()) {
-    fprintf(stderr,"Missing server method '%s'?\n","bool planningCycle_IDLserver::loadState()");
+    yError("Missing server method '%s'?","bool planningCycle_IDLserver::loadState()");
   }
   bool ok = yarp().write(helper,helper);
   return ok?helper._return:_return;
@@ -771,7 +771,7 @@ std::string planningCycle_IDLserver::showCurrentState() {
   planningCycle_IDLserver_showCurrentState helper;
   helper.init();
   if (!yarp().canWrite()) {
-    fprintf(stderr,"Missing server method '%s'?\n","std::string planningCycle_IDLserver::showCurrentState()");
+    yError("Missing server method '%s'?","std::string planningCycle_IDLserver::showCurrentState()");
   }
   bool ok = yarp().write(helper,helper);
   return ok?helper._return:_return;
@@ -781,7 +781,7 @@ bool planningCycle_IDLserver::compileGoal() {
   planningCycle_IDLserver_compileGoal helper;
   helper.init();
   if (!yarp().canWrite()) {
-    fprintf(stderr,"Missing server method '%s'?\n","bool planningCycle_IDLserver::compileGoal()");
+    yError("Missing server method '%s'?","bool planningCycle_IDLserver::compileGoal()");
   }
   bool ok = yarp().write(helper,helper);
   return ok?helper._return:_return;
@@ -791,7 +791,7 @@ bool planningCycle_IDLserver::updateGoals() {
   planningCycle_IDLserver_updateGoals helper;
   helper.init();
   if (!yarp().canWrite()) {
-    fprintf(stderr,"Missing server method '%s'?\n","bool planningCycle_IDLserver::updateGoals()");
+    yError("Missing server method '%s'?","bool planningCycle_IDLserver::updateGoals()");
   }
   bool ok = yarp().write(helper,helper);
   return ok?helper._return:_return;
@@ -801,7 +801,7 @@ std::string planningCycle_IDLserver::showCurrentGoal() {
   planningCycle_IDLserver_showCurrentGoal helper;
   helper.init();
   if (!yarp().canWrite()) {
-    fprintf(stderr,"Missing server method '%s'?\n","std::string planningCycle_IDLserver::showCurrentGoal()");
+    yError("Missing server method '%s'?","std::string planningCycle_IDLserver::showCurrentGoal()");
   }
   bool ok = yarp().write(helper,helper);
   return ok?helper._return:_return;
@@ -811,7 +811,7 @@ bool planningCycle_IDLserver::ground() {
   planningCycle_IDLserver_ground helper;
   helper.init();
   if (!yarp().canWrite()) {
-    fprintf(stderr,"Missing server method '%s'?\n","bool planningCycle_IDLserver::ground()");
+    yError("Missing server method '%s'?","bool planningCycle_IDLserver::ground()");
   }
   bool ok = yarp().write(helper,helper);
   return ok?helper._return:_return;
@@ -821,7 +821,7 @@ bool planningCycle_IDLserver::plan() {
   planningCycle_IDLserver_plan helper;
   helper.init();
   if (!yarp().canWrite()) {
-    fprintf(stderr,"Missing server method '%s'?\n","bool planningCycle_IDLserver::plan()");
+    yError("Missing server method '%s'?","bool planningCycle_IDLserver::plan()");
   }
   bool ok = yarp().write(helper,helper);
   return ok?helper._return:_return;
@@ -831,7 +831,7 @@ bool planningCycle_IDLserver::run1Step() {
   planningCycle_IDLserver_run1Step helper;
   helper.init();
   if (!yarp().canWrite()) {
-    fprintf(stderr,"Missing server method '%s'?\n","bool planningCycle_IDLserver::run1Step()");
+    yError("Missing server method '%s'?","bool planningCycle_IDLserver::run1Step()");
   }
   bool ok = yarp().write(helper,helper);
   return ok?helper._return:_return;
@@ -841,7 +841,7 @@ std::string planningCycle_IDLserver::showPlannedAction() {
   planningCycle_IDLserver_showPlannedAction helper;
   helper.init();
   if (!yarp().canWrite()) {
-    fprintf(stderr,"Missing server method '%s'?\n","std::string planningCycle_IDLserver::showPlannedAction()");
+    yError("Missing server method '%s'?","std::string planningCycle_IDLserver::showPlannedAction()");
   }
   bool ok = yarp().write(helper,helper);
   return ok?helper._return:_return;
@@ -851,7 +851,7 @@ bool planningCycle_IDLserver::executePlannedAction() {
   planningCycle_IDLserver_executePlannedAction helper;
   helper.init();
   if (!yarp().canWrite()) {
-    fprintf(stderr,"Missing server method '%s'?\n","bool planningCycle_IDLserver::executePlannedAction()");
+    yError("Missing server method '%s'?","bool planningCycle_IDLserver::executePlannedAction()");
   }
   bool ok = yarp().write(helper,helper);
   return ok?helper._return:_return;
@@ -861,7 +861,7 @@ std::string planningCycle_IDLserver::checkGoalCompleted() {
   planningCycle_IDLserver_checkGoalCompleted helper;
   helper.init();
   if (!yarp().canWrite()) {
-    fprintf(stderr,"Missing server method '%s'?\n","std::string planningCycle_IDLserver::checkGoalCompleted()");
+    yError("Missing server method '%s'?","std::string planningCycle_IDLserver::checkGoalCompleted()");
   }
   bool ok = yarp().write(helper,helper);
   return ok?helper._return:_return;
@@ -871,7 +871,7 @@ bool planningCycle_IDLserver::resetRules() {
   planningCycle_IDLserver_resetRules helper;
   helper.init();
   if (!yarp().canWrite()) {
-    fprintf(stderr,"Missing server method '%s'?\n","bool planningCycle_IDLserver::resetRules()");
+    yError("Missing server method '%s'?","bool planningCycle_IDLserver::resetRules()");
   }
   bool ok = yarp().write(helper,helper);
   return ok?helper._return:_return;
@@ -881,7 +881,7 @@ bool planningCycle_IDLserver::resetConfig() {
   planningCycle_IDLserver_resetConfig helper;
   helper.init();
   if (!yarp().canWrite()) {
-    fprintf(stderr,"Missing server method '%s'?\n","bool planningCycle_IDLserver::resetConfig()");
+    yError("Missing server method '%s'?","bool planningCycle_IDLserver::resetConfig()");
   }
   bool ok = yarp().write(helper,helper);
   return ok?helper._return:_return;
@@ -891,7 +891,7 @@ bool planningCycle_IDLserver::resetLevel() {
   planningCycle_IDLserver_resetLevel helper;
   helper.init();
   if (!yarp().canWrite()) {
-    fprintf(stderr,"Missing server method '%s'?\n","bool planningCycle_IDLserver::resetLevel()");
+    yError("Missing server method '%s'?","bool planningCycle_IDLserver::resetLevel()");
   }
   bool ok = yarp().write(helper,helper);
   return ok?helper._return:_return;
@@ -901,7 +901,7 @@ bool planningCycle_IDLserver::increaseHorizon() {
   planningCycle_IDLserver_increaseHorizon helper;
   helper.init();
   if (!yarp().canWrite()) {
-    fprintf(stderr,"Missing server method '%s'?\n","bool planningCycle_IDLserver::increaseHorizon()");
+    yError("Missing server method '%s'?","bool planningCycle_IDLserver::increaseHorizon()");
   }
   bool ok = yarp().write(helper,helper);
   return ok?helper._return:_return;

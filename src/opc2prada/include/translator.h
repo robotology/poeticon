@@ -54,7 +54,7 @@ private:
 
 class TranslatorModule: public RFModule, public OPC2PRADA_IDL {
     string moduleName;
-    enum switchCase {name,is_h, pos2d,desc,tooldesc2d,in_h,on_t,re_w,pu_w, free};
+    enum switchCase {name,is_h, pos2d,desc,tooldesc2d,in_h,on_t,re_w,pu_w, free, notfound};
     string translatorPortName, handlerPortName;
     BufferedPort<Bottle> translatorPort;
 

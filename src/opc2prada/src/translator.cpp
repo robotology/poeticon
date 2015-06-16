@@ -31,6 +31,7 @@ TranslatorModule::switchCase TranslatorModule::hashtable(string command){
     if(command=="pullable_with")  return pu_w;
 
     if(command=="is_free")  return free;
+    return notfound;
 }
 /*IDL Functions*/
 bool TranslatorModule::quit() {
@@ -83,6 +84,8 @@ bool TranslatorModule::update(){
                     }
                     case on_t: {
                         Bottle *ontop = propriedade->get(1).asList();
+                        cout << "Obj_"<< idsp->get((i-1)).asInt()  << ": On_top Bottle: " << ontop->toString().c_str() << endl << "size" << ontop->size() << endl;
+
                         for(int k=0; k < ontop->size(); k++){
                             myfile2 << idsp->get((i-1)).asInt() <<"_on_" <<ontop->get(k).asInt() <<"() ";
                         }

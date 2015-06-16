@@ -209,6 +209,7 @@ bool affComm::queryDescriptors()
         cout << "opc2prada not connected" << endl;
         return false;
     }
+	descriptors.clear();
     for (int i = 0; i < objects.size(); ++i)
     {
         if (objects[i][0] != "11" && objects[i][0] != "12")
@@ -254,6 +255,7 @@ bool affComm::queryToolDescriptors()
 {
     vector<double> data, temp_vect;
     vector<vector<double> > tool_data;
+	tooldescriptors.clear();
     for (int i = 0; i < tools.size(); ++i)
     {
         cout << "i'm building bottles" << endl;
