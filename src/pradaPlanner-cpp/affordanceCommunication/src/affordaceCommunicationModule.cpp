@@ -341,9 +341,13 @@ bool affComm::plannerQuery()
             
             std::ostringstream sin1, sin2, sin3;
             sin1 << int(posits[i][0]);
+			cout << sin1.str() << endl;
             sin2 << int(posits[i][1]);
+			cout << sin2.str() << endl;
             sin3 << int(posits[i][2]);
+			cout << sin3.str() << endl;
             message = message + sin1.str() + " " + sin2.str() + " " + sin3.str() + " ";
+			cout << "coordinates:" << message << endl;
         }
     }
     Bottle& planner_bottle_out = plannerPort.prepare();
