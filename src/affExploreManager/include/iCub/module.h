@@ -228,8 +228,6 @@ protected:
 
     std::string                 descdataFileName;   //name of visual descriptors data file
     std::string                 descdataMinFileName;   //name of (minimal) visual descriptors data file
-    std::string                 descdataPCFileName;   //name of visual descriptors data file
-    std::string                 descdataMinPCFileName;   //name of (minimal) visual descriptors data file
     std::string                 effdataFileName;    //name of effects data file
     std::string                 simMode;            //flags if the module is running exclusively with the simulator
     yarp::os::Port              rpcHuman;           //human rpc port (receive commands via rpc)
@@ -243,6 +241,9 @@ protected:
 
     yarp::os::BufferedPort<yarp::os::Bottle>        blobExtractor;
     yarp::os::BufferedPort<yarp::sig::Vector>       targetPF;
+
+    yarp::os::Port                                  affPredictionsOutPort;
+    yarp::os::Port                                  affPredictionsInPort;
 
     int                         n_tools;
     yarp::os::Semaphore         mutexResources;     //mutex for ressources
@@ -274,6 +275,7 @@ protected:
     int                         toolSimNum;
     std::string                 targetName;
     int                         targetSimNum;
+    std::string                 testAction; // action to be tested            
 
     double                      x_start;
     double                      y_start;
@@ -291,16 +293,23 @@ protected:
 
     std::ofstream               descData;
     std::ofstream               descDataMin;
-    std::ofstream               descDataPC;
-    std::ofstream               descDataMinPC;
     std::ofstream               effData;
 
     BlobInfo                    objDesc;
     BlobPartInfo                objTopDesc;
     BlobPartInfo                objBottomDesc;
-    BlobInfo                    objDescPC;
-    BlobPartInfo                objTopDescPC;
-    BlobPartInfo                objBottomDescPC;
+
+    BlobInfo*                   testBlob;
+
+    BlobPartInfo                testToolA;
+    BlobPartInfo                testToolB;
+    BlobInfo                    testTargetObject;
+    
+    imgPoint                    testToolPos_onTable;
+    imgPoint                    targetPos_onTable;
+
+    double                      testPredA[25];
+    double                      testPredB[25];
 
     imgPoint                    objImgPos;
     imgPoint                    objImgPos_onTable;
@@ -309,19 +318,22 @@ protected:
 
     yarp::os::BufferedPort<yarp::os::Bottle>        fullBlobDescriptorInputPort;
     yarp::os::BufferedPort<yarp::os::Bottle>        partsBlobDescriptorInputPort;
-    yarp::os::BufferedPort<yarp::os::Bottle>        fullBlobDescriptorPCInputPort;
-    yarp::os::BufferedPort<yarp::os::Bottle>        partsBlobDescriptorPCInputPort;
 
     void                        performAction();
     int                         lookAtTool();   //might be used if tools are on a rack...
     void                        lookAtObject();
     void                        computeObjectDesc();
+    void                        computeAllDesc_TEST();
     int                         askForTool();
     void                        graspTool();
     void                        updateObjVisPos();
     yarp::os::Bottle            executeToolLearning();
 
-    bool                        updateObjectDesc(const yarp::os::Bottle *msgO, const yarp::os::Bottle *msgOP, const yarp::os::Bottle *msgO_PC, const yarp::os::Bottle *msgOP_PC);
+    bool                        updateObjectDesc(const yarp::os::Bottle *msgO, const yarp::os::Bottle *msgOP);
+    bool                        updateAllDesc_TEST(const yarp::os::Bottle *msgO, const yarp::os::Bottle *msgOP);
+    bool                        makePrediction_TEST(BlobPartInfo tool, BlobInfo object, int action, double* effects);
+    int                         compareEffects_TEST(double* A, double* B);
+    bool                        makeAction_TEST(BlobPartInfo tool, BlobInfo object, int action);
 
     yarp::os::Port              simObjLoaderModuleOutputPort;
     yarp::os::Port              automatorReadyPort;
