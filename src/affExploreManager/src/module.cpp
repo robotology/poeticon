@@ -73,13 +73,6 @@ bool Manager::configure(ResourceFinder &rf)
     descdataMinFileName = icubContribEnvPath + localPath + descdataMinFileName;
     descDataMin.open(descdataMinFileName.c_str(), ofstream::out | ofstream::app);
 
-    descdataPCFileName = rf.check("descdataPCFileName",Value("descDataPC.txt")).asString();
-    descdataPCFileName = icubContribEnvPath + localPath + descdataPCFileName;
-    descDataPC.open(descdataPCFileName.c_str(), ofstream::out | ofstream::app);
-    descdataMinPCFileName = rf.check("descdataMinPCFileName",Value("descDataMinPC.txt")).asString();
-    descdataMinPCFileName = icubContribEnvPath + localPath + descdataMinPCFileName;
-    descDataMinPC.open(descdataMinPCFileName.c_str(), ofstream::out | ofstream::app);
-
     effdataFileName = rf.check("effdataFileName",Value("effData.txt")).asString();
     effdataFileName = icubContribEnvPath + localPath + effdataFileName;
     effData.open(effdataFileName.c_str(), ofstream::out | ofstream::app);
@@ -90,17 +83,19 @@ bool Manager::configure(ResourceFinder &rf)
     //incoming
     fullBlobDescriptorInputPort.open(("/"+name+"/fullObjDesc:i").c_str());
     partsBlobDescriptorInputPort.open(("/"+name+"/partsObjDesc:i").c_str());
-    fullBlobDescriptorPCInputPort.open(("/"+name+"/fullObjDescPC:i").c_str());
-    partsBlobDescriptorPCInputPort.open(("/"+name+"/partsObjDescPC:i").c_str());
+    
     targetPF.open(("/"+name+"/particle:i").c_str());
     blobExtractor.open(("/"+name+"/blobs:i").c_str());
     //bayesianNetInputPort.open(("/"+name+"/bayesnet:i").c_str());
+    if (!affPredictionsInPort.open(("/"+name+"/affPred:i").c_str()))
+    fprintf(stderr,"\n\nMERDA!\n\n");
 
     //outgoing
     simObjLoaderModuleOutputPort.open(("/"+name+"/simObjLoader:o").c_str());
     segmentPoint.open(("/"+name+"/segmentTarget:o").c_str());       //port to send off target Points to segmentator
     automatorReadyPort.open(("/"+name+"/automator:o").c_str());
     //bayesianNetOutputPort.open(("/"+name+"/bayesnet:o").c_str());
+    affPredictionsOutPort.open(("/"+name+"/affPred:o").c_str());
 
 
     //rpc
@@ -111,6 +106,9 @@ bool Manager::configure(ResourceFinder &rf)
     rpcToolFinder.open(("/"+name+"/toolFinder:rpc").c_str());       //rpc server to query karma toolFinder
 
     srand(time(NULL));
+
+
+    testBlob = new BlobInfo[3];
 
     n_tools = rf.check("tools",Value("1")).asInt();
 
@@ -159,8 +157,6 @@ bool Manager::interruptModule()
     targetPF.interrupt();
     fullBlobDescriptorInputPort.interrupt();
     partsBlobDescriptorInputPort.interrupt();
-    fullBlobDescriptorPCInputPort.interrupt();
-    partsBlobDescriptorPCInputPort.interrupt();
     simObjLoaderModuleOutputPort.interrupt();
     automatorReadyPort.interrupt();
 //    bayesianNetInputPort.interrupt();
@@ -182,13 +178,9 @@ bool Manager::close()
     targetPF.close();   
     descData.close();
     descDataMin.close();
-    descDataPC.close();
-    descDataMinPC.close();
     effData.close();
     fullBlobDescriptorInputPort.close();
     partsBlobDescriptorInputPort.close();
-    fullBlobDescriptorPCInputPort.close();
-    partsBlobDescriptorPCInputPort.close();
     simObjLoaderModuleOutputPort.close();
     automatorReadyPort.close();
 //    bayesianNetInputPort.close();
@@ -251,6 +243,70 @@ bool Manager::updateModule()
         tTransform[2] = lastTool.get(2).asDouble();
         executeToolAttach(tTransform);
     }
+
+    if (rxCmd==Vocab::encode("test")) 
+    {
+        testAction = cmd.get(1).asString();
+    
+        if (testAction.compare("draw")==0)
+        {
+            fprintf(stderr,"\n\n Will test a draw action\n\n");
+
+            int draw_id = 1;
+
+            goHomeArmsHead();    //look at the table (simplified version)
+            computeAllDesc_TEST();
+
+            makePrediction_TEST(testToolA, testTargetObject, draw_id, testPredA);
+            makePrediction_TEST(testToolB, testTargetObject, draw_id, testPredB);
+
+            fprintf(stderr,"\n\n Should I do the action? (y/n)\n\n");
+
+            Bottle cmdAck,valAck;
+            int ackCmd;
+
+            rpcHuman.read(cmdAck, true);
+
+            ackCmd=processHumanCmd(cmdAck,valAck);
+            fprintf(stderr,"read...\n");
+
+            while ( !(ackCmd==Vocab::encode("y") || ackCmd==Vocab::encode("n")) && !isStopping()) 
+            {
+                fprintf(stderr,"\n\n Should I do the action? (y/n)\n\n");
+                rpcHuman.read(cmdAck, true);
+                ackCmd=processHumanCmd(cmdAck,valAck);
+                Time::delay(0.1);
+            }
+
+            if (ackCmd==Vocab::encode("y"))
+            {
+                fprintf(stderr,"\n\n Ok, will do the action\n\n");
+
+                if (compareEffects_TEST(testPredA,testPredB)==1)
+                {
+                    makeAction_TEST(testToolA, testTargetObject, draw_id);
+                }
+                else if (compareEffects_TEST(testPredA,testPredB)==2)
+                {
+                    makeAction_TEST(testToolB, testTargetObject, draw_id);
+                }
+                else
+                {
+                    fprintf(stderr,"\n\n ERROR - Problem when comparing predictions \n\n");
+                    fprintf(stderr,"\n\n ERROR - No actions will be executed \n\n");
+                }   
+
+            }
+            else
+            {
+                fprintf(stderr,"\n\n Ok, will not do the action\n\n");
+            }
+            
+        }
+
+        goHomeArmsHead();
+    }
+
 
     if (rxCmd==Vocab::encode("tip")) 
     {
@@ -335,29 +391,6 @@ bool Manager::updateModule()
         descDataMin << '\n';
         descDataMin.close();
         descDataMin.open(descdataMinFileName.c_str(), ofstream::out | ofstream::app);
-
-        descDataPC << "descPC" << " ";
-        if (simMode.compare("on")==0)
-            descDataPC << objectId << " ";
-        else
-            descDataPC << objectName.data() << " ";
-        descDataPC << objDescPC.toString() << " ";
-        descDataPC << objTopDescPC.toString() << " ";
-        descDataPC << objBottomDescPC.toString() << " ";
-        descDataPC << '\n';
-        descDataPC.close();
-        descDataPC.open(descdataPCFileName.c_str(), ofstream::out | ofstream::app);
-
-        descDataMinPC << "descMinPC" << " ";
-        if (simMode.compare("on")==0)
-            descDataMinPC << objectId << " ";
-        else
-            descDataMinPC << objectName.data() << " ";
-        descDataMinPC << objDescPC.geomToString() << " ";
-        descDataMinPC << objTopDescPC.geomToString() << " ";
-        descDataMinPC << '\n';
-        descDataMinPC.close();
-        descDataMinPC.open(descdataMinPCFileName.c_str(), ofstream::out | ofstream::app);
 
         if (simMode.compare("on")==0) 
         {
@@ -612,22 +645,18 @@ int Manager::processHumanCmd(const Bottle &cmd, Bottle &b)
 }
 
 /**********************************************************/
-bool Manager::updateObjectDesc(const Bottle *msgO, const Bottle *msgOP, const Bottle *msgO_PC, const Bottle *msgOP_PC)
+bool Manager::updateObjectDesc(const Bottle *msgO, const Bottle *msgOP)
 {
     fprintf(stderr,"check descriptors...\n");
-    int N_blobs, N_blobs_parts, N_blobs_PC, N_blobs_parts_PC;
+    int N_blobs, N_blobs_parts;
     N_blobs = msgO->get(0).asInt();
     printf("%d blobs have been detected\n", N_blobs);
     N_blobs_parts = msgOP->get(0).asInt();
     printf("%d blobs have been divided in parts (two parts each, top and bottom)\n", N_blobs_parts);
-    N_blobs_PC = msgO_PC->get(0).asInt();
-    printf("%d blobs from bird's eye perspective have been detected\n", N_blobs_PC);
-    N_blobs_parts_PC = msgOP_PC->get(0).asInt();
-    printf("%d blobs  from bird's eye perspective have been divided in parts (two parts each, top and bottom)\n", N_blobs_parts_PC);
+    
     printf("\n\nOnly the descriptors of one blob (the first from top left in the image) will be considered. \n");
 
     Bottle *objbot;
-    Bottle *objbot_PC;
 
     if (msgO->size()>1)
     {
@@ -701,78 +730,392 @@ bool Manager::updateObjectDesc(const Bottle *msgO, const Bottle *msgOP, const Bo
         objBottomDesc.clear();
     }
 
-    if (msgO_PC->size()>1)
-    {
+    return true;
+}
 
-        // -- descriptors coming from perspectiveChanger //
-        yarp::os::Value& element_PC = msgO_PC->get(1);
-        objbot_PC = element_PC.asList();
-        
-        //printf("list of %d elements\n", objbot_PC->size());
+/**********************************************************/
+bool Manager::updateAllDesc_TEST(const Bottle *msgO, const Bottle *msgOP)
+{
+    fprintf(stderr,"check descriptors...\n");
+    int N_blobs, N_blobs_parts;
+    N_blobs = msgO->get(0).asInt();
+    printf("%d blobs have been detected\n", N_blobs);
+    N_blobs_parts = msgOP->get(0).asInt();
+    printf("%d blobs have been divided in parts (two parts each, top and bottom)\n", N_blobs_parts);
+
+    if (N_blobs != N_blobs_parts)
+    {
+        fprintf(stderr, "\n\nERROR! Conflict in blobs detection\n");
+        return false;
+    }
+
+    if (N_blobs < 3)
+    {
+        fprintf(stderr, "\n\nERROR! Less than 3 blobs detected\n");
+        return false;
+    }
+    
+    printf("\n\nOnly the descriptors of three blobs will be considered: \n");
+    printf("- The leftmost one (TOOL A) \n");
+    printf("- The rightmost one (TOOL B) \n");
+    printf("- One in the middle (the target object) \n\n");
+
+    int toolA_index = 0;
+    int toolB_index = 0;
+    int target_index = 0;
+
+    double minX = 500;
+    double maxX = 0;
+
+    Bottle *objbot;
+
+    for (int i=0; i<3; i++)
+    {
+        yarp::os::Value& element = msgO->get(i+1);
+        objbot = element.asList();
+
+        //printf("list of %d elements\n", objbot->size());
+        fprintf(stderr, "\nstart reading data \n");
 
         // width and height
-        objDescPC.roi_x           = objbot_PC->get(0).asDouble();
-        objDescPC.roi_y           = objbot_PC->get(1).asDouble();
-        objDescPC.roi_width       = objbot_PC->get(2).asDouble();
-        objDescPC.roi_height      = objbot_PC->get(3).asDouble();
-        objDescPC.angle           = objbot_PC->get(4).asDouble();
-        objDescPC.special_point_x = objbot_PC->get(5).asDouble();
-        objDescPC.special_point_y = objbot_PC->get(6).asDouble();
+        testBlob[i].roi_x           = objbot->get(0).asDouble();
+        testBlob[i].roi_y           = objbot->get(1).asDouble();
+        testBlob[i].roi_width       = objbot->get(2).asDouble();
+        testBlob[i].roi_height      = objbot->get(3).asDouble();
+        testBlob[i].angle           = objbot->get(4).asDouble();
+        testBlob[i].special_point_x = objbot->get(5).asDouble();
+        testBlob[i].special_point_y = objbot->get(6).asDouble();
 
         for (int j=0; j<16; j++) 
         {
-            objDescPC.hist[j]     = objbot_PC->get(7+j).asDouble();
+             testBlob[i].hist[j]     = objbot->get(7+j).asDouble();
         }
 
-        objDescPC.area            = objbot_PC->get(23).asDouble();
-        objDescPC.convexity       = objbot_PC->get(24).asDouble();
-        objDescPC.eccentricity    = objbot_PC->get(25).asDouble();
-        objDescPC.compactness     = objbot_PC->get(26).asDouble();
-        objDescPC.circleness      = objbot_PC->get(27).asDouble();
-        objDescPC.squareness      = objbot_PC->get(28).asDouble();
-        objDescPC.elongatedness   = objbot_PC->get(29).asDouble();
+        testBlob[i].area            = objbot->get(23).asDouble();
+        testBlob[i].convexity       = objbot->get(24).asDouble();
+        testBlob[i].eccentricity    = objbot->get(25).asDouble();
+        testBlob[i].compactness     = objbot->get(26).asDouble();
+        testBlob[i].circleness      = objbot->get(27).asDouble();
+        testBlob[i].squareness      = objbot->get(28).asDouble();
+        testBlob[i].elongatedness   = objbot->get(29).asDouble();
+
+        fprintf(stderr, "\ncheck min x \n");
+
+        if (testBlob[i].roi_x < minX)
+        {
+            toolA_index = i;
+            minX = testBlob[i].roi_x;
+        }
+
+        fprintf(stderr, "\ncheck max x \n");
+
+        if (testBlob[i].roi_x > maxX)
+        {
+            toolB_index = i;
+            maxX = testBlob[i].roi_x;
+        }
+
+        fprintf(stderr, "\nend of loop 1 \n");
+        
     }
-    else
+
+    printf("\n\nTools indexes: \n");
+    printf("- TOOL A: %d\n", toolA_index);
+    printf("- TOOL B: %d \n", toolB_index);
+
+    for (int i=0; i<3; i++)
     {
-        objDescPC.clear();
+    
+        fprintf(stderr, "\nstart of loop 2 \n");
+
+        if (i==toolA_index)
+        {
+            fprintf(stderr, "\ntool A - debug 1 \n");
+            yarp::os::Value& elementOPA = msgOP->get(i+1);
+            fprintf(stderr, "\ntool A - debug 2 \n");
+            objbot = elementOPA.asList()->get(0).asList();
+
+            fprintf(stderr, "\nread TOOL A data \n");
+
+            testToolA.roi_x           = objbot->get(0).asDouble();
+            testToolA.roi_y           = objbot->get(1).asDouble();
+            testToolA.area            = objbot->get(2).asDouble();
+            testToolA.convexity       = objbot->get(3).asDouble();
+            testToolA.eccentricity    = objbot->get(4).asDouble();
+            testToolA.compactness     = objbot->get(5).asDouble();
+            testToolA.circleness      = objbot->get(6).asDouble();
+            testToolA.squareness      = objbot->get(7).asDouble();
+            testToolA.elongatedness   = objbot->get(8).asDouble();
+        }
+        else if (i==toolB_index)
+        {
+            fprintf(stderr, "\ntool B - debug 1 \n");
+
+            yarp::os::Value& elementOPB = msgOP->get(i+1);
+            objbot = elementOPB.asList()->get(0).asList();
+
+            fprintf(stderr, "\nread TOOL B data \n");
+
+            testToolB.roi_x           = objbot->get(0).asDouble();
+            testToolB.roi_y           = objbot->get(1).asDouble();
+            testToolB.area            = objbot->get(2).asDouble();
+            testToolB.convexity       = objbot->get(3).asDouble();
+            testToolB.eccentricity    = objbot->get(4).asDouble();
+            testToolB.compactness     = objbot->get(5).asDouble();
+            testToolB.circleness      = objbot->get(6).asDouble();
+            testToolB.squareness      = objbot->get(7).asDouble();
+            testToolB.elongatedness   = objbot->get(8).asDouble();
+        }
+        else
+        {
+            fprintf(stderr, "\nread OBJECT data \n");
+
+            testTargetObject.roi_x           = testBlob[i].roi_x;
+            testTargetObject.roi_y           = testBlob[i].roi_y;
+            testTargetObject.special_point_x           = testBlob[i].special_point_x;
+            testTargetObject.special_point_y           = testBlob[i].special_point_y;
+            testTargetObject.area            = testBlob[i].area;
+            testTargetObject.convexity       = testBlob[i].convexity;
+            testTargetObject.eccentricity    = testBlob[i].eccentricity;
+            testTargetObject.compactness     = testBlob[i].compactness;
+            testTargetObject.circleness      = testBlob[i].circleness;
+            testTargetObject.squareness      = testBlob[i].squareness;
+            testTargetObject.elongatedness   = testBlob[i].elongatedness;
+        }
+
+        fprintf(stderr, "\nend of loop 2 \n");
+
     }
 
-    if (msgOP_PC->size()>1)
+    printf("\n\nTest objects: \n");
+    printf("- TOOL A: %d %d \n", (int)testBlob[toolA_index].roi_x, (int)testBlob[toolA_index].roi_y);
+    printf("- %s ", testBlob[toolA_index].geomToString().c_str());
+    printf("\n");
+    printf("- %s ", testToolA.geomToString().c_str());
+    
+    printf("\n\n- TOOL B: %d %d \n", (int)testBlob[toolB_index].roi_x, (int)testBlob[toolB_index].roi_y);
+    printf("- %s ", testBlob[toolB_index].geomToString().c_str());
+    printf("\n");
+    printf("- %s ", testToolB.geomToString().c_str());
+
+    printf("\n\n- TARGET OBJECT: %d %d \n\n", (int)testTargetObject.roi_x, (int)testTargetObject.roi_y);  
+    
+    return true;
+}
+
+/***********************************************************/
+bool Manager::makePrediction_TEST(BlobPartInfo tool, BlobInfo object, int action, double* effects)
+{
+   
+    Bottle query;
+    Bottle queryResponse;
+
+    query.clear();
+
+    query.addDouble(tool.convexity);
+    query.addDouble(tool.eccentricity);
+    query.addDouble(tool.compactness);
+    query.addDouble(tool.circleness);
+    query.addDouble(tool.elongatedness);
+
+    query.addDouble(object.convexity);
+    query.addDouble(object.eccentricity);
+    query.addDouble(object.compactness);
+    query.addDouble(object.circleness);
+    query.addDouble(object.elongatedness);
+
+    query.addDouble(action);
+
+    printf("\n\nSending query to affordance network: \n");
+    printf("%s\n", query.toString().c_str());
+
+    affPredictionsOutPort.write(query);
+
+    bool got=false;
+    while (!got)
     {
-        // -- OBJECT PARTS (in the image) --
-        yarp::os::Value& elementOP_PC = msgOP_PC->get(1);
-
-        // -- OBJECT TOP PART (in the image) --
-        objbot_PC = elementOP_PC.asList()->get(0).asList();
-
-        objTopDescPC.roi_x           = objbot_PC->get(0).asDouble();
-        objTopDescPC.roi_y           = objbot_PC->get(1).asDouble();
-        objTopDescPC.area            = objbot_PC->get(2).asDouble();
-        objTopDescPC.convexity       = objbot_PC->get(3).asDouble();
-        objTopDescPC.eccentricity    = objbot_PC->get(4).asDouble();
-        objTopDescPC.compactness     = objbot_PC->get(5).asDouble();
-        objTopDescPC.circleness      = objbot_PC->get(6).asDouble();
-        objTopDescPC.squareness      = objbot_PC->get(7).asDouble();
-        objTopDescPC.elongatedness   = objbot_PC->get(8).asDouble();
-
-        // -- OBJECT BOTTOM PART (in the image) --
-        objbot_PC = elementOP_PC.asList()->get(1).asList();
-
-        objBottomDescPC.roi_x           = objbot_PC->get(0).asDouble();
-        objBottomDescPC.roi_y           = objbot_PC->get(1).asDouble();
-        objBottomDescPC.area            = objbot_PC->get(2).asDouble();
-        objBottomDescPC.convexity       = objbot_PC->get(3).asDouble();
-        objBottomDescPC.eccentricity    = objbot_PC->get(4).asDouble();
-        objBottomDescPC.compactness     = objbot_PC->get(5).asDouble();
-        objBottomDescPC.circleness      = objbot_PC->get(6).asDouble();
-        objBottomDescPC.squareness      = objbot_PC->get(7).asDouble();
-        objBottomDescPC.elongatedness   = objbot_PC->get(8).asDouble();
+        got=affPredictionsInPort.read(queryResponse);
     }
-    else
+        
+    if (queryResponse.size() < 1)
     {
-        objTopDescPC.clear();
-        objBottomDescPC.clear();
+        fprintf(stderr,"\n\nERROR - No response to query \n");
+        return false;
     }
+
+    for (int i=0; i<5; i++)
+    {
+        for (int j=0; j<5; j++)
+        {
+            effects[i*5+j]=queryResponse.get(0).asList()->get(i).asList()->get(j).asDouble();
+        }
+    }
+
+    printf("\n\nPrediction received: \n");
+    for (int i=0; i<5; i++)
+    {
+        for (int j=0; j<5; j++)
+        {
+            printf("%.2lf ", effects[i*5+j]);
+        }
+        printf("\n");
+    }
+    printf("\n\n");
+
+}
+
+/*************************************************************/
+int Manager::compareEffects_TEST(double* A, double* B)
+{
+    double scoreA=0;
+    double scoreB=0;
+
+    int ret=0;
+
+    //sum the probabilities of the 4' and 5' line
+    for (int i=3; i<5; i++)
+    {
+        for (int j=0; j<5; j++)
+        {
+            scoreA=scoreA+A[i*5+j];
+        }
+    }
+
+    //sum the probabilities of the 4' and 5' line
+    for (int i=3; i<5; i++)
+    {
+        for (int j=0; j<5; j++)
+        {
+            scoreB=scoreB+B[i*5+j];
+        }
+    }
+
+    fprintf(stderr, "\n\nSCORE A= %.2lf \n", scoreA);
+    fprintf(stderr, "\nSCORE B= %.2lf \n\n", scoreB);
+
+    if (scoreA >= scoreB)
+    {
+        ret=1;
+    }
+    else if (scoreA < scoreB)
+    {
+        ret=2;
+    }
+
+    return ret;
+
+}
+
+/***************************************************************/
+bool Manager::makeAction_TEST(BlobPartInfo tool, BlobInfo object, int action)
+{
+    yarp::sig::Vector actingPos;
+    actingPos.resize(3);
+
+    yarp::sig::Vector pointingPos;
+    pointingPos.resize(3);
+
+    testToolPos_onTable.x = tool.roi_x;
+    testToolPos_onTable.y = tool.roi_y;
+    targetPos_onTable.x = object.special_point_x;
+    targetPos_onTable.y = object.special_point_y;
+
+    get3DPosition(testToolPos_onTable, pointingPos);
+    get3DPosition(targetPos_onTable, actingPos);
+
+    fprintf(stderr, "\n\nTool position = %.2lf %.2lf %.2lf \n", pointingPos[0], pointingPos[1], pointingPos[2]);
+    fprintf(stderr, "\n Object position = %.2lf %.2lf %.2lf \n", actingPos[0], actingPos[1], actingPos[2]);
+
+    //add offsets if needed
+    pointingPos[0]=pointingPos[0];
+    pointingPos[1]=pointingPos[1];
+    pointingPos[2]=pointingPos[2] + tableHeightOffset*2.0;
+
+    //add offsets if needed
+    actingPos[0]=actingPos[0];
+    actingPos[1]=actingPos[1];
+    actingPos[2]=actingPos[2] + tableHeightOffset;
+
+    fprintf(stdout,"\n\nI want to use this tool!\n");
+    //point to tool
+    Bottle cmdAre, replyAre;
+    cmdAre.clear();
+    replyAre.clear();
+    cmdAre.addString("point");
+    Bottle &tmpList=cmdAre.addList();
+    tmpList.addDouble(pointingPos[0]);
+    tmpList.addDouble(pointingPos[1]);
+    tmpList.addDouble(pointingPos[2]);
+    cmdAre.addString("left");
+    rpcMotorAre.write(cmdAre,replyAre);
+    fprintf(stdout,"cmd sent: %s\n",cmdAre.toString().c_str());
+    fprintf(stdout,"reply: %s\n",replyAre.toString().c_str());
+
+    if (askForTool()) 
+    {
+        graspTool();       
+
+        // IF ALL TOOLS HAVE THE SAME, DEFAULT, TRANSFORM
+        if (executeToolAttach(toolTransformDefault))
+        {
+            fprintf(stderr,"\nTool attached (default transform)\n");
+        }
+	else
+        {
+            fprintf(stderr,"\nERROR -- Problem in attaching the tool...\n");  
+        }
+                
+    }
+
+    cmdAre.clear();
+    replyAre.clear();
+    cmdAre.addString("look");
+    cmdAre.addString("hand");
+    cmdAre.addString("left");
+    rpcMotorAre.write(cmdAre,replyAre);
+    fprintf(stdout,"cmd sent: %s\n",cmdAre.toString().c_str());
+    fprintf(stdout,"reply: %s\n",replyAre.toString().c_str());
+
+    fprintf(stderr,"\n Draw simulation: \n");
+
+    Bottle karmaMotor, karmaReply;
+    karmaMotor.clear();
+    karmaReply.clear();        
+    karmaMotor.addString("vdra");
+    karmaMotor.addDouble(actingPos[0]);
+    karmaMotor.addDouble(actingPos[1]);
+    karmaMotor.addDouble(actingPos[2]);
+    karmaMotor.addDouble(90.0); // direction (before it was 180.0)
+    karmaMotor.addDouble(objectSizeOffset); // initial tool-object distance
+    karmaMotor.addDouble(MOVEMENT_LENGTH); // movement lenght
+    fprintf(stdout,"Will now send to karmaMotor:\n");
+    rpcMotorKarma.write(karmaMotor, karmaReply);
+    fprintf(stdout,"cmd sent: %s\n",karmaMotor.toString().c_str());
+    fprintf(stdout,"reply: %s\n",karmaReply.toString().c_str());
+
+    if (karmaReply.get(1).asDouble()<VDRAW_THR)
+    {
+        fprintf(stderr,"\n...success!\n\n");
+        fprintf(stderr,"\n Draw action: \n");
+
+        karmaMotor.clear();
+        karmaMotor.addString("draw");
+        karmaMotor.addDouble(actingPos[0]);
+        karmaMotor.addDouble(actingPos[1]);
+        karmaMotor.addDouble(actingPos[2]);
+        karmaMotor.addDouble(90.0); // direction (before it was 180.0)
+        karmaMotor.addDouble(objectSizeOffset); // initial tool-object distance
+        karmaMotor.addDouble(MOVEMENT_LENGTH); // movement lenght
+        fprintf(stdout,"Will now send to karmaMotor:\n");
+        karmaReply.clear();
+        rpcMotorKarma.write(karmaMotor, karmaReply);
+        fprintf(stdout,"cmd sent: %s\n",karmaMotor.toString().c_str());
+        fprintf(stdout,"reply: %s\n",karmaReply.toString().c_str());
+    }
+    else 
+    {
+        fprintf(stderr,"iCub: Sorry man, cannot do that :( \n");
+    }   
 
     return true;
 }
@@ -979,7 +1322,7 @@ void Manager::performAction()
 /**********************************************************/
 void Manager::lookAtRack()
 {
-    // TODO (Afonso#3#): implement lookAtRack()
+    // TODO: implement lookAtRack()
 }
 
 
@@ -1108,21 +1451,44 @@ void Manager::computeObjectDesc()
     //Reads data from the tools-port connected to the blobDescriptor:
     Bottle *objPartsBottle = partsBlobDescriptorInputPort.read(true);
 
-    fprintf(stderr,"get entire-blob descriptors with top-down (bird's eye) perspective...\n");
-    //Reads data from the port connected to the blobDescriptor:
-    Bottle *objBottlePC = fullBlobDescriptorPCInputPort.read(true);
+    fprintf(stderr,"check blobs...\n");
 
-    fprintf(stderr,"get blob-parts descriptors with top-down (bird's eye) perspective...\n");
+    if (objBottle->size()>1) 
+    {
+        updateObjectDesc(objBottle, objPartsBottle);
+        fprintf(stderr,"msg received...\n");
+        fprintf(stderr,"Position of the object center in image field is: \n U = %d - V = %d \n", (int) objDesc.roi_x, (int) objDesc.roi_y);
+    }
+    else
+    {
+        fprintf(stderr,"\n\n[WARNING] - No blobs detected! \n\n");
+    }
+    fprintf(stderr,"...done!\n");
+
+    //Writes data to the port connected to the knowledge database:
+    //knowledgeOutputPort.write(toolBottle, response);
+}
+
+/*************************************************************/
+void Manager::computeAllDesc_TEST()
+{
+    fprintf(stderr,"update objects and tools descriptions...\n");
+
+    fprintf(stderr,"get entire-blob descriptors...\n");
+    //Reads data from the port connected to the blobDescriptor:
+    Bottle *objBottle = fullBlobDescriptorInputPort.read(true);
+
+    fprintf(stderr,"get blob-parts descriptors...\n");
     //Reads data from the tools-port connected to the blobDescriptor:
-    Bottle *objPartsBottlePC = partsBlobDescriptorPCInputPort.read(true);
+    Bottle *objPartsBottle = partsBlobDescriptorInputPort.read(true);
 
     fprintf(stderr,"check blobs...\n");
 
     if (objBottle->size()>1) 
     {
-        updateObjectDesc(objBottle, objPartsBottle, objBottlePC, objPartsBottlePC);
+        updateAllDesc_TEST(objBottle, objPartsBottle);
         fprintf(stderr,"msg received...\n");
-        fprintf(stderr,"Position of the object center in image field is: \n U = %d - V = %d \n", (int) objDesc.roi_x, (int) objDesc.roi_y);
+        //fprintf(stderr,"Position of the object center in image field is: \n U = %d - V = %d \n", (int) objDesc.roi_x, (int) objDesc.roi_y);
     }
     else
     {
@@ -1146,9 +1512,9 @@ int Manager::askForTool()
     replyAre.clear();
     cmdAre.addString("tato");
     cmdAre.addString(hand.c_str());
-    fprintf(stdout,"%s\n",cmdAre.toString().c_str());
+    fprintf(stdout,"cmd sent: %s\n", cmdAre.toString().c_str());
     rpcMotorAre.write(cmdAre, replyAre);
-    fprintf(stdout,"'tato' '%s' action is %s:\n",hand.c_str(),replyAre.toString().c_str());
+    fprintf(stdout,"reply: %s\n", replyAre.toString().c_str());
 
     return 1;
 }
@@ -1156,16 +1522,16 @@ int Manager::askForTool()
 /**********************************************************/
 void Manager::graspTool()
 {
-    Time::delay(4.0);
+    Time::delay(1.0);
     fprintf(stdout,"Start 'clto' '%s' (close tool %s) proceedure:\n",hand.c_str(),hand.c_str());
     Bottle cmdAre,replyAre;
     cmdAre.clear();
     replyAre.clear();
     cmdAre.addString("clto");
     cmdAre.addString(hand.c_str());
-    fprintf(stdout,"%s\n",cmdAre.toString().c_str());
+    fprintf(stdout,"cmd sent: %s\n",cmdAre.toString().c_str());
     rpcMotorAre.write(cmdAre, replyAre);
-    fprintf(stdout,"'clto' '%s' action is %s:\n",hand.c_str(),replyAre.toString().c_str());
+    fprintf(stdout,"reply: %s\n",replyAre.toString().c_str());
 }
 
 /**********************************************************/
@@ -1261,7 +1627,8 @@ int Manager::executeToolAttach(const Vector &tool)
     karmaMotor.addString("tool");
     karmaMotor.addString("remove");
     rpcMotorKarma.write(karmaMotor, KarmaReply);
-    fprintf(stderr,"reply is %s:\n",KarmaReply.toString().c_str());
+    fprintf(stderr,"cmd sent: %s\n",karmaMotor.toString().c_str());
+    fprintf(stderr,"reply: %s\n",KarmaReply.toString().c_str());
 
     karmaMotor.clear();
     KarmaReply.clear();
@@ -1272,17 +1639,17 @@ int Manager::executeToolAttach(const Vector &tool)
     karmaMotor.addDouble(tool[1]);
     karmaMotor.addDouble(tool[2]);
     fprintf(stderr,"Will now send to karmaMotor:\n");
-    fprintf(stderr,"%s\n",karmaMotor.toString().c_str());
     rpcMotorKarma.write(karmaMotor, KarmaReply);
-    fprintf(stderr,"reply is %s:\n",KarmaReply.toString().c_str());
+    fprintf(stderr,"cmd sent: %s\n",karmaMotor.toString().c_str());
+    fprintf(stderr,"reply: %s\n",KarmaReply.toString().c_str());
 
     karmaMotor.clear();
     KarmaReply.clear();
     karmaMotor.addString("tool");
     karmaMotor.addString("get");
-    fprintf(stdout,"%s\n",karmaMotor.toString().c_str());
     rpcMotorKarma.write(karmaMotor, KarmaReply);
-    fprintf(stdout,"reply is %s:\n",KarmaReply.toString().c_str());
+    fprintf(stderr,"cmd sent: %s\n",karmaMotor.toString().c_str());
+    fprintf(stderr,"reply: %s\n",KarmaReply.toString().c_str());
 
     toolFinderCmd.clear();
     toolFinderRpl.clear();
