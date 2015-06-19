@@ -109,6 +109,7 @@ class PlannerThread : public RateThread
         vector<string> old_rules;
         vector<string> objects_used;
         vector<string> goal;
+        vector<string> failed_goal;
 
         vector<vector<string> > subgoals;
         vector<vector<string> > object_IDs;

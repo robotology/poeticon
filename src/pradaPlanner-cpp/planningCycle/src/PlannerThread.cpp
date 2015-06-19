@@ -804,7 +804,7 @@ bool PlannerThread::increaseHorizon()
 {
     int horizon;
     string line;
-    vector<string> configData, temp_vect;
+    vector<string> configData, temp_vect, objects_failed;
     configFile.open(configFileName.c_str());
     if (!configFile.is_open())
     {
@@ -820,10 +820,46 @@ bool PlannerThread::increaseHorizon()
             temp_vect = split(configData[w+2], ' ');
             horizon = atoi(temp_vect[1].c_str());
             horizon = horizon + 1;
-            if (horizon > 15)
+            if (horizon > 10)
             {
                 yWarning("horizon too large");
-                return false;
+                jumpForward();
+				horizon = 5;
+				if (failed_goal.size() == 0)
+				{
+					for (int t = 0; t < goal.size(); ++t)
+					{
+						if (find_element(state,goal[t]) == 0)
+						{
+							failed_goal.push_back(goal[t]);
+						}
+					}
+				}
+				if (plan_level >= subgoals.size() && !checkGoalCompletion())
+				{
+					for (int t = 0; t < failed_goal.size(); ++t)
+					{
+						temp_vect = split(failed_goal[t], '_');
+						objects_failed.push_back(temp_vect[0]);
+					}
+					yInfo("Plan failed");
+        			/*Bottle& prax_bottle_out = prax_yarp.prepare();
+        			prax_bottle_out.clear();
+        			prax_bottle_out.addString("FAIL");*/
+        			for (int u = 0; u < objects_failed.size(); ++u){
+            			for (int inde = 0; inde < object_IDs.size(); ++inde){
+                			if (object_IDs[inde][0] == objects_failed[u]){
+                    			if (object_IDs[inde][1] != "rake" && object_IDs[inde][1] != "stick" && object_IDs[inde][1] != "left" && object_IDs[inde][1] != "right"){
+                        			//prax_bottle_out.addString(object_IDs[inde][1]);
+									yInfo("%s", object_IDs[inde][1].c_str());
+			                    }
+            			    }
+            			}
+        			}/*
+        			prax_yarp.write(); */
+        			restartPlan = true;
+					return false;
+				}
             }
             configData[w+2] = "PRADA_horizon " + static_cast<ostringstream*>( &(ostringstream() << horizon) )->str();
             break;
