@@ -179,7 +179,7 @@ vector<string> geoGround::create_rules(string pre_rule)
                     }
                 }
             }
-            else if ((temp_vect[2].find("push") != std::string::npos) || (temp_vect[2].find("pull") != std::string::npos)){
+            /*else if ((temp_vect[2].find("push") != std::string::npos) || (temp_vect[2].find("pull") != std::string::npos)){
                 for (int j = 0; j < tools.size(); ++j){
                     for (int c = 0; c < objects.size(); ++c){
                         if ((objects[c] != tools[j]) && (find_element(hands, objects[c]) == 0)){
@@ -211,7 +211,7 @@ vector<string> geoGround::create_rules(string pre_rule)
                         }
                     }
                 }
-            }
+            }*/
             else {
                 for (int j = 0; j < objects.size(); ++j){
                     for (int c = 0; c < objects.size(); ++c){
@@ -411,7 +411,7 @@ vector<string> geoGround::create_symbols(string symbols){
                 }
             }
         }
-        else if ((temp_vect[0].find("push_") != std::string::npos) || (temp_vect[0].find("pull_") != std::string::npos)){
+        /*else if ((temp_vect[0].find("push_") != std::string::npos) || (temp_vect[0].find("pull_") != std::string::npos)){
             k = 0;
             for (int j = 0; j < tools.size(); ++j){
                 for (int i = 0; i < objects.size(); ++i){
@@ -439,7 +439,7 @@ vector<string> geoGround::create_symbols(string symbols){
                     }
                 }
             }
-        }
+        }*/
         else {
             k = 0;
             for (int j = 0; j < objects.size(); ++j){

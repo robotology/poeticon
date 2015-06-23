@@ -117,18 +117,15 @@ bool TranslatorModule::update(){
                     case free: {
                         if(propriedade->get(1).asString() == "true") {
                             myfile2 << idsp->get((i-1)).asInt() <<"_clearhand" <<"() ";
-                            myfile2 << idsp->get((i-1)).asInt() <<"_istool" <<"() ";
                         }
                         break;
                     }
                     case in_h: {
                         if(propriedade->get(1).asString() == "right") {
                             myfile2 << idsp->get((i-1)).asInt() <<"_inhand_" << "12" << "() "; //according to dbhands.ini - id 12 corresponds to the right hand
-                            myfile2 << idsp->get((i-1)).asInt() <<"_istool" <<"() ";
                         }
                         if(propriedade->get(1).asString() == "left") {
                             myfile2 << idsp->get((i-1)).asInt() <<"_inhand_" << "11" << "() "; //according to dbhands.ini - id 12 corresponds to the right hand
-                            myfile2 << idsp->get((i-1)).asInt() <<"_istool" <<"() ";
                         }
                         break;
                     }
