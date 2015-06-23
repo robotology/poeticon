@@ -620,8 +620,37 @@ bool PlannerThread::preserveState()
 
 bool PlannerThread::compareState()
 {
+	vector<string> temp_vect;
+	/*for (int i = 0; i < state.size(); ++i)
+	{
+		yInfo("%s", state[i].c_str());
+	}*/
+	if (next_action != "")
+	{
+		for (int i = 0; i < rules.size(); ++i)
+		{
+			if (rules[i].find(next_action) != std::string::npos)
+			{
+				temp_vect = split(rules[i+4], ' ');
+				temp_vect.erase(temp_vect.begin());
+				temp_vect.erase(temp_vect.begin());
+				temp_vect.erase(temp_vect.begin());
+				yInfo("%s", temp_vect[0].c_str());
+				break;
+			}
+		}
+	}
+	for (int i = 0; i < temp_vect.size(); ++i)
+	{
+		if (find_element(state, temp_vect[i]) == 0)
+		{
+			yInfo("state didn't change");
+			return true;
+		}
+	}
     if (vect_compare(state, old_state) == 1)
     {
+		yInfo("state didn't change");
         return true; // state did not change
     }
     else
@@ -687,23 +716,23 @@ bool PlannerThread::adaptRules()
             while (!closing){
                 if (rules[t+p] == ""){
                     adapt_rules = split(rules[t+4], ' ');
-                    adapt_rules[2] = static_cast<ostringstream*>( &(ostringstream() << (atof(adapt_rules[2].c_str())/2) ))->str();
+                    adapt_rules[2] = static_cast<ostringstream*>( &(ostringstream() << (atof(adapt_rules[2].c_str())/5) ))->str();
                     temp_str = "";
                     for (int h = 0; h < adapt_rules.size(); ++h){
 						// yInfo("%s" ,adapt_rules[h].c_str());
 						if (adapt_rules[h] != "0")
 						{
-                        	temp_str = temp_str + " " + adapt_rules[h];
+                        	temp_str = temp_str + adapt_rules[h] + " ";
 						}
                     }
                     rules[t+4] = temp_str;
                     adapt_noise = split(rules[t+p-1], ' ');
-                    adapt_noise[2] = static_cast<ostringstream*>( &(ostringstream() << (atof(adapt_noise[2].c_str()) +atof(adapt_rules[2].c_str())) ))->str();
+                    adapt_noise[2] = static_cast<ostringstream*>( &(ostringstream() << (atof(adapt_noise[2].c_str()) + 4*atof(adapt_rules[2].c_str())) ))->str();
                     temp_str = "";
                     for (int h = 0; h < adapt_noise.size(); ++h){
-                        if (adapt_rules[h] != "0")
+                        if (adapt_noise[h] != "0")
 						{
-                        	temp_str = temp_str + " " + adapt_rules[h];
+                        	temp_str = temp_str + adapt_noise[h] + " ";
 						}
                     }
                     rules[t+p-1] = temp_str;
@@ -823,6 +852,7 @@ bool PlannerThread::increaseHorizon()
             if (horizon > 10)
             {
                 yWarning("horizon too large");
+				yInfo("Jumping to next goal");
                 jumpForward();
 				horizon = 5;
 				if (failed_goal.size() == 0)
@@ -835,7 +865,7 @@ bool PlannerThread::increaseHorizon()
 						}
 					}
 				}
-				if (plan_level >= subgoals.size() && !checkGoalCompletion())
+				if ((plan_level >= subgoals.size() && !checkGoalCompletion()) || !checkHoldingSymbols())
 				{
 					for (int t = 0; t < failed_goal.size(); ++t)
 					{
@@ -843,20 +873,33 @@ bool PlannerThread::increaseHorizon()
 						objects_failed.push_back(temp_vect[0]);
 					}
 					yInfo("Plan failed");
-        			/*Bottle& prax_bottle_out = prax_yarp.prepare();
+        			Bottle& prax_bottle_out = prax_yarp.prepare();
         			prax_bottle_out.clear();
-        			prax_bottle_out.addString("FAIL");*/
+        			prax_bottle_out.addString("FAIL");
         			for (int u = 0; u < objects_failed.size(); ++u){
             			for (int inde = 0; inde < object_IDs.size(); ++inde){
                 			if (object_IDs[inde][0] == objects_failed[u]){
                     			if (object_IDs[inde][1] != "rake" && object_IDs[inde][1] != "stick" && object_IDs[inde][1] != "left" && object_IDs[inde][1] != "right"){
-                        			//prax_bottle_out.addString(object_IDs[inde][1]);
-									yInfo("%s", object_IDs[inde][1].c_str());
+                        			prax_bottle_out.addString(object_IDs[inde][1]);
+									//yInfo("%s", object_IDs[inde][1].c_str());
 			                    }
             			    }
             			}
         			}/*
-        			prax_yarp.write(); */
+					Bottle& prax_bottle_out = prax_yarp.prepare();
+        			prax_bottle_out.clear();
+        			prax_bottle_out.addString("FAIL");
+        			for (int u = 0; u < objects_failed.size(); ++u){
+            			for (int inde = 0; inde < object_IDs.size(); ++inde){
+                			if (object_IDs[inde][0] == objects_failed[u]){
+                    			if (object_IDs[inde][1] != "rake" && object_IDs[inde][1] != "stick" && object_IDs[inde][1] != "left" && object_IDs[inde][1] != "right"){
+                        			prax_bottle_out.addString(object_IDs[inde][1]);
+                    			}
+                			}
+            			}
+        			}*/
+        			yInfo(" %s", prax_bottle_out.toString().c_str());
+        			prax_yarp.write(); 
         			restartPlan = true;
 					return false;
 				}
@@ -1071,6 +1114,9 @@ bool PlannerThread:: execAction()
             yWarning("activity interface is not connected, verify if the module is running, and all connections are established.");
             return false;
         }
+		// for debugging purposes only!!!
+		/*prev_action = message.get(1).toString();
+		return true;*/
     }
     return false;
 }
@@ -1109,7 +1155,7 @@ bool PlannerThread::checkFailure()
     configFile.close();
     vector<string> not_comp_goals, fail_obj, aux_fail_obj;
     string temp_str;
-    if (horizon > 15){
+    if (horizon > 10){
         not_comp_goals.clear();
         for (int t = 0; t < goal.size(); ++t){
             if (find_element(state, goal[t]) == 0){
@@ -1404,6 +1450,8 @@ bool PlannerThread::planning_cycle()
             {
                 return false;
             }
+			string tmp_str = showCurrentGoal(); 
+			yInfo("%s", tmp_str.c_str());
             yarp::os::Time::delay(1);
             int flag_prada = PRADA();
             if (!checkPause())

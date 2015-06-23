@@ -1,9 +1,9 @@
 
 # Rule #1  (1 out of 5)
 ACTION:
-  push__obj_with__tool()
+  push__obj_with__tool_in__hand()
 CONTEXT:
-  -_obj_ishand() _tool_istool() _obj_isreachable_with__tool()
+  -_obj_ishand() _tool_inhand__hand() _obj_isreachable_with__tool()
 OUTCOMES:
   0.85 -_obj_isreachable_with__ALL()
   0.15 <noise>
@@ -11,9 +11,9 @@ OUTCOMES:
 
 # Rule #2  (2 out of 5)
 ACTION:
-  pull__obj_with__tool()
+  pull__obj_with__tool_in__hand()
 CONTEXT:
-  -_obj_ishand() _tool_istool() _obj_isreachable_with__tool() _obj_ispullable_with__tool()
+  -_obj_ishand() _tool_inhand__hand() _obj_isreachable_with__tool() _obj_ispullable_with__tool()
 OUTCOMES:
   0.85 _obj_isreachable_with__ALL()
   0.15 <noise>
@@ -23,9 +23,9 @@ OUTCOMES:
 ACTION:
   grasp__obj_with__hand()
 CONTEXT:
-  -_obj_ishand() _hand_clearhand() _hand_istool() _hand_ishand() _obj_isreachable_with__hand()
+  -_obj_ishand() _hand_clearhand() _hand_ishand() _obj_isreachable_with__hand()
 OUTCOMES:
-  0.95 _obj_inhand__hand() _obj_istool() -_hand_clearhand() -_hand_istool()
+  0.95 _obj_inhand__hand() -_hand_clearhand()
   0.05 <noise>
 
 
@@ -33,9 +33,9 @@ OUTCOMES:
 ACTION:
   drop__obj_with__hand()
 CONTEXT:
-  -_obj_ishand() _obj_inhand__hand() _hand_ishand() _obj_istool()
+  -_obj_ishand() _obj_inhand__hand() _hand_ishand()
 OUTCOMES:
-  0.95 -_obj_inhand__hand() _hand_clearhand() -_obj_istool() _hand_istool()
+  0.95 -_obj_inhand__hand() _hand_clearhand()
   0.05 <noise>
 
 
@@ -43,10 +43,10 @@ OUTCOMES:
 ACTION:
   put__tool_on__obj_with__hand()
 CONTEXT:
-  -_tool_ishand() _obj_isreachable_with__hand() -_obj_ishand() _tool_istool() -_obj_istool() _tool_inhand__hand()
+  -_tool_ishand() _obj_isreachable_with__hand() -_obj_ishand() _tool_inhand__hand()
 OUTCOMES:
-  0.7 -_tool_istool() _tool_on__obj() -_tool_inhand__hand() _hand_clearhand() _hand_istool()
-  0.15 -_tool_istool() -_tool_inhand__hand() _hand_clearhand() _hand_istool()
+  0.7 _tool_on__obj() -_tool_inhand__hand() _hand_clearhand()
+  0.15 -_tool_inhand__hand() _hand_clearhand()
   0.15 <noise>
 
 
