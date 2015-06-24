@@ -323,7 +323,7 @@ bool activeParticleTrack_IDLServer::display(const std::string& value) {
   activeParticleTrack_IDLServer_display helper;
   helper.init(value);
   if (!yarp().canWrite()) {
-    fprintf(stderr,"Missing server method '%s'?\n","bool activeParticleTrack_IDLServer::display(const std::string& value)");
+    yError("Missing server method '%s'?","bool activeParticleTrack_IDLServer::display(const std::string& value)");
   }
   bool ok = yarp().write(helper,helper);
   return ok?helper._return:_return;
@@ -333,7 +333,7 @@ yarp::os::Bottle activeParticleTrack_IDLServer::getIDs() {
   activeParticleTrack_IDLServer_getIDs helper;
   helper.init();
   if (!yarp().canWrite()) {
-    fprintf(stderr,"Missing server method '%s'?\n","yarp::os::Bottle activeParticleTrack_IDLServer::getIDs()");
+    yError("Missing server method '%s'?","yarp::os::Bottle activeParticleTrack_IDLServer::getIDs()");
   }
   bool ok = yarp().write(helper,helper);
   return ok?helper._return:_return;
@@ -343,7 +343,7 @@ yarp::os::Bottle activeParticleTrack_IDLServer::getPausedIDs() {
   activeParticleTrack_IDLServer_getPausedIDs helper;
   helper.init();
   if (!yarp().canWrite()) {
-    fprintf(stderr,"Missing server method '%s'?\n","yarp::os::Bottle activeParticleTrack_IDLServer::getPausedIDs()");
+    yError("Missing server method '%s'?","yarp::os::Bottle activeParticleTrack_IDLServer::getPausedIDs()");
   }
   bool ok = yarp().write(helper,helper);
   return ok?helper._return:_return;
@@ -353,7 +353,7 @@ int32_t activeParticleTrack_IDLServer::track(const double fix_x, const double fi
   activeParticleTrack_IDLServer_track helper;
   helper.init(fix_x,fix_y);
   if (!yarp().canWrite()) {
-    fprintf(stderr,"Missing server method '%s'?\n","int32_t activeParticleTrack_IDLServer::track(const double fix_x, const double fix_y)");
+    yError("Missing server method '%s'?","int32_t activeParticleTrack_IDLServer::track(const double fix_x, const double fix_y)");
   }
   bool ok = yarp().write(helper,helper);
   return ok?helper._return:_return;
@@ -363,7 +363,7 @@ bool activeParticleTrack_IDLServer::untrack(const int32_t id) {
   activeParticleTrack_IDLServer_untrack helper;
   helper.init(id);
   if (!yarp().canWrite()) {
-    fprintf(stderr,"Missing server method '%s'?\n","bool activeParticleTrack_IDLServer::untrack(const int32_t id)");
+    yError("Missing server method '%s'?","bool activeParticleTrack_IDLServer::untrack(const int32_t id)");
   }
   bool ok = yarp().write(helper,helper);
   return ok?helper._return:_return;
@@ -373,7 +373,7 @@ bool activeParticleTrack_IDLServer::pause(const int32_t id) {
   activeParticleTrack_IDLServer_pause helper;
   helper.init(id);
   if (!yarp().canWrite()) {
-    fprintf(stderr,"Missing server method '%s'?\n","bool activeParticleTrack_IDLServer::pause(const int32_t id)");
+    yError("Missing server method '%s'?","bool activeParticleTrack_IDLServer::pause(const int32_t id)");
   }
   bool ok = yarp().write(helper,helper);
   return ok?helper._return:_return;
@@ -383,7 +383,7 @@ bool activeParticleTrack_IDLServer::resume(const int32_t id) {
   activeParticleTrack_IDLServer_resume helper;
   helper.init(id);
   if (!yarp().canWrite()) {
-    fprintf(stderr,"Missing server method '%s'?\n","bool activeParticleTrack_IDLServer::resume(const int32_t id)");
+    yError("Missing server method '%s'?","bool activeParticleTrack_IDLServer::resume(const int32_t id)");
   }
   bool ok = yarp().write(helper,helper);
   return ok?helper._return:_return;
@@ -393,7 +393,7 @@ bool activeParticleTrack_IDLServer::countFrom(const int32_t id) {
   activeParticleTrack_IDLServer_countFrom helper;
   helper.init(id);
   if (!yarp().canWrite()) {
-    fprintf(stderr,"Missing server method '%s'?\n","bool activeParticleTrack_IDLServer::countFrom(const int32_t id)");
+    yError("Missing server method '%s'?","bool activeParticleTrack_IDLServer::countFrom(const int32_t id)");
   }
   bool ok = yarp().write(helper,helper);
   return ok?helper._return:_return;
@@ -403,7 +403,7 @@ bool activeParticleTrack_IDLServer::reset() {
   activeParticleTrack_IDLServer_reset helper;
   helper.init();
   if (!yarp().canWrite()) {
-    fprintf(stderr,"Missing server method '%s'?\n","bool activeParticleTrack_IDLServer::reset()");
+    yError("Missing server method '%s'?","bool activeParticleTrack_IDLServer::reset()");
   }
   bool ok = yarp().write(helper,helper);
   return ok?helper._return:_return;
@@ -413,7 +413,7 @@ bool activeParticleTrack_IDLServer::quit() {
   activeParticleTrack_IDLServer_quit helper;
   helper.init();
   if (!yarp().canWrite()) {
-    fprintf(stderr,"Missing server method '%s'?\n","bool activeParticleTrack_IDLServer::quit()");
+    yError("Missing server method '%s'?","bool activeParticleTrack_IDLServer::quit()");
   }
   bool ok = yarp().write(helper,helper);
   return ok?helper._return:_return;

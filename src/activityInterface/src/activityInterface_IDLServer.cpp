@@ -810,7 +810,7 @@ double activityInterface_IDLServer::getManip(const std::string& objName, const s
   activityInterface_IDLServer_getManip helper;
   helper.init(objName,handName);
   if (!yarp().canWrite()) {
-    fprintf(stderr,"Missing server method '%s'?\n","double activityInterface_IDLServer::getManip(const std::string& objName, const std::string& handName)");
+    yError("Missing server method '%s'?","double activityInterface_IDLServer::getManip(const std::string& objName, const std::string& handName)");
   }
   bool ok = yarp().write(helper,helper);
   return ok?helper._return:_return;
@@ -820,7 +820,7 @@ bool activityInterface_IDLServer::handStat(const std::string& handName) {
   activityInterface_IDLServer_handStat helper;
   helper.init(handName);
   if (!yarp().canWrite()) {
-    fprintf(stderr,"Missing server method '%s'?\n","bool activityInterface_IDLServer::handStat(const std::string& handName)");
+    yError("Missing server method '%s'?","bool activityInterface_IDLServer::handStat(const std::string& handName)");
   }
   bool ok = yarp().write(helper,helper);
   return ok?helper._return:_return;
@@ -830,7 +830,7 @@ std::string activityInterface_IDLServer::getLabel(const int32_t xpos, const int3
   activityInterface_IDLServer_getLabel helper;
   helper.init(xpos,ypos);
   if (!yarp().canWrite()) {
-    fprintf(stderr,"Missing server method '%s'?\n","std::string activityInterface_IDLServer::getLabel(const int32_t xpos, const int32_t ypos)");
+    yError("Missing server method '%s'?","std::string activityInterface_IDLServer::getLabel(const int32_t xpos, const int32_t ypos)");
   }
   bool ok = yarp().write(helper,helper);
   return ok?helper._return:_return;
@@ -840,7 +840,7 @@ std::string activityInterface_IDLServer::inHand(const std::string& objName) {
   activityInterface_IDLServer_inHand helper;
   helper.init(objName);
   if (!yarp().canWrite()) {
-    fprintf(stderr,"Missing server method '%s'?\n","std::string activityInterface_IDLServer::inHand(const std::string& objName)");
+    yError("Missing server method '%s'?","std::string activityInterface_IDLServer::inHand(const std::string& objName)");
   }
   bool ok = yarp().write(helper,helper);
   return ok?helper._return:_return;
@@ -850,7 +850,7 @@ yarp::os::Bottle activityInterface_IDLServer::get3D(const std::string& objName) 
   activityInterface_IDLServer_get3D helper;
   helper.init(objName);
   if (!yarp().canWrite()) {
-    fprintf(stderr,"Missing server method '%s'?\n","yarp::os::Bottle activityInterface_IDLServer::get3D(const std::string& objName)");
+    yError("Missing server method '%s'?","yarp::os::Bottle activityInterface_IDLServer::get3D(const std::string& objName)");
   }
   bool ok = yarp().write(helper,helper);
   return ok?helper._return:_return;
@@ -860,7 +860,7 @@ yarp::os::Bottle activityInterface_IDLServer::get2D(const std::string& objName) 
   activityInterface_IDLServer_get2D helper;
   helper.init(objName);
   if (!yarp().canWrite()) {
-    fprintf(stderr,"Missing server method '%s'?\n","yarp::os::Bottle activityInterface_IDLServer::get2D(const std::string& objName)");
+    yError("Missing server method '%s'?","yarp::os::Bottle activityInterface_IDLServer::get2D(const std::string& objName)");
   }
   bool ok = yarp().write(helper,helper);
   return ok?helper._return:_return;
@@ -870,7 +870,7 @@ yarp::os::Bottle activityInterface_IDLServer::getOffset(const std::string& objNa
   activityInterface_IDLServer_getOffset helper;
   helper.init(objName);
   if (!yarp().canWrite()) {
-    fprintf(stderr,"Missing server method '%s'?\n","yarp::os::Bottle activityInterface_IDLServer::getOffset(const std::string& objName)");
+    yError("Missing server method '%s'?","yarp::os::Bottle activityInterface_IDLServer::getOffset(const std::string& objName)");
   }
   bool ok = yarp().write(helper,helper);
   return ok?helper._return:_return;
@@ -880,7 +880,7 @@ bool activityInterface_IDLServer::take(const std::string& objName, const std::st
   activityInterface_IDLServer_take helper;
   helper.init(objName,handName);
   if (!yarp().canWrite()) {
-    fprintf(stderr,"Missing server method '%s'?\n","bool activityInterface_IDLServer::take(const std::string& objName, const std::string& handName)");
+    yError("Missing server method '%s'?","bool activityInterface_IDLServer::take(const std::string& objName, const std::string& handName)");
   }
   bool ok = yarp().write(helper,helper);
   return ok?helper._return:_return;
@@ -890,7 +890,7 @@ bool activityInterface_IDLServer::drop(const std::string& objName) {
   activityInterface_IDLServer_drop helper;
   helper.init(objName);
   if (!yarp().canWrite()) {
-    fprintf(stderr,"Missing server method '%s'?\n","bool activityInterface_IDLServer::drop(const std::string& objName)");
+    yError("Missing server method '%s'?","bool activityInterface_IDLServer::drop(const std::string& objName)");
   }
   bool ok = yarp().write(helper,helper);
   return ok?helper._return:_return;
@@ -900,7 +900,7 @@ bool activityInterface_IDLServer::put(const std::string& objName, const std::str
   activityInterface_IDLServer_put helper;
   helper.init(objName,targetName);
   if (!yarp().canWrite()) {
-    fprintf(stderr,"Missing server method '%s'?\n","bool activityInterface_IDLServer::put(const std::string& objName, const std::string& targetName)");
+    yError("Missing server method '%s'?","bool activityInterface_IDLServer::put(const std::string& objName, const std::string& targetName)");
   }
   bool ok = yarp().write(helper,helper);
   return ok?helper._return:_return;
@@ -910,7 +910,7 @@ bool activityInterface_IDLServer::push(const std::string& objName, const std::st
   activityInterface_IDLServer_push helper;
   helper.init(objName,toolName);
   if (!yarp().canWrite()) {
-    fprintf(stderr,"Missing server method '%s'?\n","bool activityInterface_IDLServer::push(const std::string& objName, const std::string& toolName)");
+    yError("Missing server method '%s'?","bool activityInterface_IDLServer::push(const std::string& objName, const std::string& toolName)");
   }
   bool ok = yarp().write(helper,helper);
   return ok?helper._return:_return;
@@ -920,7 +920,7 @@ bool activityInterface_IDLServer::pull(const std::string& objName, const std::st
   activityInterface_IDLServer_pull helper;
   helper.init(objName,toolName);
   if (!yarp().canWrite()) {
-    fprintf(stderr,"Missing server method '%s'?\n","bool activityInterface_IDLServer::pull(const std::string& objName, const std::string& toolName)");
+    yError("Missing server method '%s'?","bool activityInterface_IDLServer::pull(const std::string& objName, const std::string& toolName)");
   }
   bool ok = yarp().write(helper,helper);
   return ok?helper._return:_return;
@@ -930,7 +930,7 @@ bool activityInterface_IDLServer::askForTool(const std::string& handName, const 
   activityInterface_IDLServer_askForTool helper;
   helper.init(handName,xpos,ypos);
   if (!yarp().canWrite()) {
-    fprintf(stderr,"Missing server method '%s'?\n","bool activityInterface_IDLServer::askForTool(const std::string& handName, const int32_t xpos, const int32_t ypos)");
+    yError("Missing server method '%s'?","bool activityInterface_IDLServer::askForTool(const std::string& handName, const int32_t xpos, const int32_t ypos)");
   }
   bool ok = yarp().write(helper,helper);
   return ok?helper._return:_return;
@@ -940,7 +940,7 @@ yarp::os::Bottle activityInterface_IDLServer::underOf(const std::string& objName
   activityInterface_IDLServer_underOf helper;
   helper.init(objName);
   if (!yarp().canWrite()) {
-    fprintf(stderr,"Missing server method '%s'?\n","yarp::os::Bottle activityInterface_IDLServer::underOf(const std::string& objName)");
+    yError("Missing server method '%s'?","yarp::os::Bottle activityInterface_IDLServer::underOf(const std::string& objName)");
   }
   bool ok = yarp().write(helper,helper);
   return ok?helper._return:_return;
@@ -950,7 +950,7 @@ yarp::os::Bottle activityInterface_IDLServer::reachableWith(const std::string& o
   activityInterface_IDLServer_reachableWith helper;
   helper.init(objName);
   if (!yarp().canWrite()) {
-    fprintf(stderr,"Missing server method '%s'?\n","yarp::os::Bottle activityInterface_IDLServer::reachableWith(const std::string& objName)");
+    yError("Missing server method '%s'?","yarp::os::Bottle activityInterface_IDLServer::reachableWith(const std::string& objName)");
   }
   bool ok = yarp().write(helper,helper);
   return ok?helper._return:_return;
@@ -960,7 +960,7 @@ yarp::os::Bottle activityInterface_IDLServer::pullableWith(const std::string& ob
   activityInterface_IDLServer_pullableWith helper;
   helper.init(objName);
   if (!yarp().canWrite()) {
-    fprintf(stderr,"Missing server method '%s'?\n","yarp::os::Bottle activityInterface_IDLServer::pullableWith(const std::string& objName)");
+    yError("Missing server method '%s'?","yarp::os::Bottle activityInterface_IDLServer::pullableWith(const std::string& objName)");
   }
   bool ok = yarp().write(helper,helper);
   return ok?helper._return:_return;
@@ -970,7 +970,7 @@ yarp::os::Bottle activityInterface_IDLServer::getNames() {
   activityInterface_IDLServer_getNames helper;
   helper.init();
   if (!yarp().canWrite()) {
-    fprintf(stderr,"Missing server method '%s'?\n","yarp::os::Bottle activityInterface_IDLServer::getNames()");
+    yError("Missing server method '%s'?","yarp::os::Bottle activityInterface_IDLServer::getNames()");
   }
   bool ok = yarp().write(helper,helper);
   return ok?helper._return:_return;
@@ -980,7 +980,7 @@ yarp::os::Bottle activityInterface_IDLServer::getOPCNames() {
   activityInterface_IDLServer_getOPCNames helper;
   helper.init();
   if (!yarp().canWrite()) {
-    fprintf(stderr,"Missing server method '%s'?\n","yarp::os::Bottle activityInterface_IDLServer::getOPCNames()");
+    yError("Missing server method '%s'?","yarp::os::Bottle activityInterface_IDLServer::getOPCNames()");
   }
   bool ok = yarp().write(helper,helper);
   return ok?helper._return:_return;
@@ -990,7 +990,7 @@ yarp::os::Bottle activityInterface_IDLServer::askPraxicon(const std::string& req
   activityInterface_IDLServer_askPraxicon helper;
   helper.init(request);
   if (!yarp().canWrite()) {
-    fprintf(stderr,"Missing server method '%s'?\n","yarp::os::Bottle activityInterface_IDLServer::askPraxicon(const std::string& request)");
+    yError("Missing server method '%s'?","yarp::os::Bottle activityInterface_IDLServer::askPraxicon(const std::string& request)");
   }
   bool ok = yarp().write(helper,helper);
   return ok?helper._return:_return;
@@ -1000,7 +1000,7 @@ bool activityInterface_IDLServer::goHome() {
   activityInterface_IDLServer_goHome helper;
   helper.init();
   if (!yarp().canWrite()) {
-    fprintf(stderr,"Missing server method '%s'?\n","bool activityInterface_IDLServer::goHome()");
+    yError("Missing server method '%s'?","bool activityInterface_IDLServer::goHome()");
   }
   bool ok = yarp().write(helper,helper);
   return ok?helper._return:_return;
@@ -1010,7 +1010,7 @@ bool activityInterface_IDLServer::pauseAllTrackers() {
   activityInterface_IDLServer_pauseAllTrackers helper;
   helper.init();
   if (!yarp().canWrite()) {
-    fprintf(stderr,"Missing server method '%s'?\n","bool activityInterface_IDLServer::pauseAllTrackers()");
+    yError("Missing server method '%s'?","bool activityInterface_IDLServer::pauseAllTrackers()");
   }
   bool ok = yarp().write(helper,helper);
   return ok?helper._return:_return;
@@ -1020,7 +1020,7 @@ bool activityInterface_IDLServer::resumeAllTrackers() {
   activityInterface_IDLServer_resumeAllTrackers helper;
   helper.init();
   if (!yarp().canWrite()) {
-    fprintf(stderr,"Missing server method '%s'?\n","bool activityInterface_IDLServer::resumeAllTrackers()");
+    yError("Missing server method '%s'?","bool activityInterface_IDLServer::resumeAllTrackers()");
   }
   bool ok = yarp().write(helper,helper);
   return ok?helper._return:_return;
@@ -1030,7 +1030,7 @@ bool activityInterface_IDLServer::initObjectTracker(const std::string& objName) 
   activityInterface_IDLServer_initObjectTracker helper;
   helper.init(objName);
   if (!yarp().canWrite()) {
-    fprintf(stderr,"Missing server method '%s'?\n","bool activityInterface_IDLServer::initObjectTracker(const std::string& objName)");
+    yError("Missing server method '%s'?","bool activityInterface_IDLServer::initObjectTracker(const std::string& objName)");
   }
   bool ok = yarp().write(helper,helper);
   return ok?helper._return:_return;
@@ -1040,7 +1040,7 @@ yarp::os::Bottle activityInterface_IDLServer::trackStackedObject(const std::stri
   activityInterface_IDLServer_trackStackedObject helper;
   helper.init(objName);
   if (!yarp().canWrite()) {
-    fprintf(stderr,"Missing server method '%s'?\n","yarp::os::Bottle activityInterface_IDLServer::trackStackedObject(const std::string& objName)");
+    yError("Missing server method '%s'?","yarp::os::Bottle activityInterface_IDLServer::trackStackedObject(const std::string& objName)");
   }
   bool ok = yarp().write(helper,helper);
   return ok?helper._return:_return;
@@ -1050,7 +1050,7 @@ bool activityInterface_IDLServer::quit() {
   activityInterface_IDLServer_quit helper;
   helper.init();
   if (!yarp().canWrite()) {
-    fprintf(stderr,"Missing server method '%s'?\n","bool activityInterface_IDLServer::quit()");
+    yError("Missing server method '%s'?","bool activityInterface_IDLServer::quit()");
   }
   bool ok = yarp().write(helper,helper);
   return ok?helper._return:_return;
