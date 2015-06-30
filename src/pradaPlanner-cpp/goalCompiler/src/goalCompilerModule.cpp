@@ -28,12 +28,27 @@ bool goalCompiler::configure(ResourceFinder &rf)
         }
         command = "";
         command = plannerCommand();
+        if (!loadObjs())
+        {
+            cout << "failed to load objects" << endl;
+            if (!plannerReply("fail"))
+            {
+                cout << "failed to communicate with planner" << endl;
+                return false;
+            }
+            continue;
+        }
         if (command == "praxicon")
         {
             if (!loadObjs())
             {
                 cout << "failed to load objects" << endl;
-                return false;
+            	if (!plannerReply("fail"))
+            	{
+                	cout << "failed to communicate with planner" << endl;
+                	return false;
+            	}
+                continue;
             }
             if (!receiveInstructions())
             {
@@ -46,7 +61,12 @@ bool goalCompiler::configure(ResourceFinder &rf)
             if (!loadObjs())
             {
                 cout << "failed to load objects" << endl;
-                return false;
+            	if (!plannerReply("fail"))
+            	{
+                	cout << "failed to communicate with planner" << endl;
+                	return false;
+            	}
+                continue;
             }
             if (!loadRules())
             {
@@ -78,7 +98,7 @@ bool goalCompiler::configure(ResourceFinder &rf)
                 cout << "failed to write files" << endl;
                 return false;
             }
-            if (!plannerReply())
+            if (!plannerReply("done"))
             {
                 cout << "failed to communicate with planner" << endl;
                 return false;
@@ -212,21 +232,31 @@ bool goalCompiler::loadObjs()
     }
     else {
         cout << "unable to open objects file" << endl;
+		objectFile.close();
         return false;
     }
+	objectFile.close();
     vector<string> temp_trans;
     string temp_str;
+	translat.clear();
+	object_list.clear();
     for (int j = 0; j < objects.size(); ++j){
         temp_str = objects[j];
         temp_str.replace(temp_str.find("("), 1,"");
         temp_str.replace(temp_str.find(")"), 1,"");
         temp_trans = split(temp_str,',');
-        cout << temp_trans[0] << temp_trans[1] << endl;
+        cout << temp_trans[0] << " " << temp_trans[1] << endl;
+		if (find_element(object_list, temp_trans[1]) == 1)
+		{
+			cout << "There are objects that share labels, unable to compile" << endl;
+			return false;
+		}
         translat.push_back(temp_trans);
         object_list.push_back(temp_trans[1]);
     }
     return true;
 }
+
 
 bool goalCompiler::loadRules()
 {
@@ -633,7 +663,7 @@ bool goalCompiler::writeFiles()
     return true;
 }
 
-bool goalCompiler::plannerReply()
+bool goalCompiler::plannerReply(string reply)
 {
     if (plannerPort.getInputCount() == 0)
     {
@@ -642,7 +672,7 @@ bool goalCompiler::plannerReply()
     }    
     Bottle &plannerBottleOut = plannerPort.prepare();
     plannerBottleOut.clear();
-    plannerBottleOut.addString("done");
+    plannerBottleOut.addString(reply);
     plannerPort.write();
     return true;
 }

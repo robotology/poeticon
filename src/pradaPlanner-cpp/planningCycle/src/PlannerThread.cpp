@@ -454,14 +454,19 @@ bool PlannerThread::compileGoal()
         goal_bottle_in = goal_yarp.read(false);
         if (goal_bottle_in)
         {
-            if (goal_bottle_in->toString() != "" && goal_bottle_in->toString() != "()")
+            if (goal_bottle_in->toString() == "done")
             {
                 yInfo("Goal Compiling is complete!");
                 break;
             }
+			else if (goal_bottle_in->toString() == "fail")
+			{
+				yWarning("Something failed while loading the objects on the Goal Compiler module");
+				return false;
+			}
             else
             {
-                yWarning("empty bottle received, something might be wrong with the Goal Compiler module.");
+                yWarning("non-standard message received, something might be wrong with the Goal Compiler module.");
                 return false;
             }
         }

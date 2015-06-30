@@ -73,7 +73,7 @@ class goalCompiler : public RFModule
         void openPorts();
         bool loadObjs();
         string plannerCommand();
-        bool plannerReply();
+        bool plannerReply(string reply);
         bool loadRules();
         bool receiveInstructions();
         bool loadInstructions();
