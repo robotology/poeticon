@@ -241,7 +241,6 @@ bool goalCompiler::loadObjs()
 	translat.clear();
 	object_list.clear();
     for (int j = 0; j < objects.size(); ++j){
-		cout << "object" << objects[j] << endl;
         temp_str = objects[j];
         temp_str.replace(temp_str.find("("), 1,"");
         temp_str.replace(temp_str.find(")"), 1,"");
@@ -258,20 +257,6 @@ bool goalCompiler::loadObjs()
     return true;
 }
 
-/*
-        for (int j = 0; j < aux_objs.size(); ++j){
-            temp_vect = split(aux_objs[j], ',');
-            temp_vect[0].replace(temp_vect[0].find("("),1,"");
-            temp_vect[1].replace(temp_vect[1].find(")"),1,"");
-            object_IDs.push_back(temp_vect);
-            if (find_element(labels,temp_vect[1]) == 1)
-            {
-                yWarning("There are objects that share labels: %s", temp_vect[1].c_str());
-            }
-            labels.push_back(temp_vect[1]);
-        }
-        objFile.close();
-*/
 
 bool goalCompiler::loadRules()
 {

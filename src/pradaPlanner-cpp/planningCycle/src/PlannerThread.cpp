@@ -454,7 +454,7 @@ bool PlannerThread::compileGoal()
         goal_bottle_in = goal_yarp.read(false);
         if (goal_bottle_in)
         {
-            if (goal_bottle_in->toString() == "done" /*goal_bottle_in->toString() != "" && goal_bottle_in->toString() != "()"*/)
+            if (goal_bottle_in->toString() == "done")
             {
                 yInfo("Goal Compiling is complete!");
                 break;
