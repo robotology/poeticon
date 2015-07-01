@@ -598,15 +598,15 @@ bool PlannerThread::loadObjs()
     cmd.clear();
     cmd.addString("loadObjects");
     opc2prada_rpc.write(cmd,reply);
-    if (reply.size() > 2){
+    if (reply.size() > 0 && reply.get(0).isList() && reply.get(0).asList()->size() > 2){
 		object_bottle.clear();
 		object_bottle = reply;
         yInfo("Objects updated!");
-		for (int i = 0; i < reply.size(); ++i)
+		for (int i = 0; i < reply.get(0).asList()->size(); ++i)
 		{
 			temp_vect.clear();
-			temp_vect.push_back(reply.get(i).asList()->get(0).asString());
-			temp_vect.push_back(reply.get(i).asList()->get(1).asString());
+			temp_vect.push_back(reply.get(0).asList()->get(i).asList()->get(0).asString());
+			temp_vect.push_back(reply.get(0).asList()->get(i).asList()->get(1).asString());
 			object_IDs.push_back(temp_vect);
            	if (find_element(labels,temp_vect[1]) == 1)
            	{
