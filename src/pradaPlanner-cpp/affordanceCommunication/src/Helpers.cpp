@@ -39,3 +39,10 @@ int vect_compare (vector<string> vect1, vector<string> vect2){
     }
     return 1;
 }
+
+string NumbertoString (int number)
+{
+	stringstream ss;
+	ss << number;
+	return ss.str();
+}
