@@ -26,7 +26,7 @@ bool PlannerThread::openPorts()
     geo_yarp.open("/planner/grounding_cmd:io");
 
     //BufferedPort<Bottle> objects_yarp;
-    objects_yarp.open("/planner/objects:io");
+    //objects_yarp.open("/planner/objects:io");
 
     //BufferedPort<Bottle> prax_yarp;
     prax_yarp.open("/planner/prax_inst:o");

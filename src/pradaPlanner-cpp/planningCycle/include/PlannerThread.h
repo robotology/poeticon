@@ -81,7 +81,6 @@ class PlannerThread : public RateThread
         BufferedPort<Bottle> geo_yarp;
         BufferedPort<Bottle> prax_yarp;
         BufferedPort<Bottle> aff_yarp;
-		BufferedPort<Bottle> objects_yarp;
         RpcClient world_rpc;
         RpcClient actInt_rpc;
         RpcClient opc2prada_rpc;
