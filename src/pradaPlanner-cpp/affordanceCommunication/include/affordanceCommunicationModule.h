@@ -63,6 +63,7 @@ class affComm : public RFModule
 
         RpcClient descQueryPort;
         RpcClient actionQueryPort;
+		RpcClient objectQueryPort;
 
         Bottle *plannerBottle;
         Bottle *Affor_bottle_in;

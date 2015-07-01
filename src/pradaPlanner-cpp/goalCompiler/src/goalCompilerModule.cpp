@@ -127,6 +127,7 @@ void goalCompiler::openPorts()
 {
     plannerPort.open("/goal_imag/planner_cmd:io");
     praxiconPort.open("/goal_imag/prax_inst:i");
+	objectQueryPort.open("/goal_imag/planner_rpc:o");
 }
 
 bool goalCompiler::close()
@@ -223,7 +224,7 @@ bool goalCompiler::receiveInstructions()
 
 bool goalCompiler::loadObjs()
 {
-    string line;
+    /*string line;
     objectFile.open(objIDsFileName.c_str());
     vector<string> objects;
     if (objectFile.is_open()){
@@ -254,7 +255,39 @@ bool goalCompiler::loadObjs()
         translat.push_back(temp_trans);
         object_list.push_back(temp_trans[1]);
     }
-    return true;
+    return true;*/
+	vector<string> temp_vect;
+	if (objectQueryPort.getOutputCount() == 0){
+        cout << "planner not connected!" << endl;
+        return false;
+    }
+	object_list.clear();
+	translat.clear();
+    cmd.clear();
+    cmd.addString("printObjects");
+    objectQueryPort.write(cmd,reply);
+    if (reply.size() > 0 && reply.get(0).isList() && reply.get(0).asList()->size() > 2){
+        cout << "Objects updated!" << endl;
+		for (int i = 0; i < reply.get(0).asList()->size(); ++i)
+		{
+			temp_vect.clear();
+			temp_vect.push_back(reply.get(0).asList()->get(i).asList()->get(0).asString());
+			temp_vect.push_back(reply.get(0).asList()->get(i).asList()->get(1).asString());
+        	if (find_element(object_list, temp_vect[1]) == 1)
+        	{
+            	cout << "There are objects that share labels, unable to compile" << endl;
+				return false;
+        	}
+			translat.push_back(temp_vect);
+			object_list.push_back(temp_vect[1]);
+		}
+		return true;
+    }
+    else {
+        cout << "Objects update failed!" << endl;
+		return false;
+    }
+	return false;
 }
 
 

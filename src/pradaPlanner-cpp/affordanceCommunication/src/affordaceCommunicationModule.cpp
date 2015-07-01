@@ -72,6 +72,7 @@ void affComm::openPorts()
     // RPC ports
     descQueryPort.open("/affordanceCommunication/opc2prada_query:io");
     actionQueryPort.open("/affordanceCommunication/actInt_rpc:o");
+	objectQueryPort.open("/affordanceCommunication/planner_rpc:o");
 }
 
 bool affComm::close()
@@ -112,7 +113,7 @@ bool affComm::plannerCommand()
 
 bool affComm::loadObjs()
 {
-    string objFileName, line, temp_str;
+    /*string objFileName, line, temp_str;
     ifstream objFile;
     vector<string> aux_objects, temp_vect;
     objFileName = PathName + "/Object_names-IDs.dat";
@@ -138,7 +139,38 @@ bool affComm::loadObjs()
             tools.push_back(temp_vect);
         }
     }
-    return true;    
+    return true; */ 
+
+	vector<string> temp_vect;
+	if (objectQueryPort.getOutputCount() == 0){
+        cout << "planner not connected!" << endl;
+        return false;
+    }
+	objects.clear();
+	tools.clear();
+    cmd.clear();
+    cmd.addString("printObjects");
+    objectQueryPort.write(cmd,reply);
+    if (reply.size() > 0 && reply.get(0).isList() && reply.get(0).asList()->size() > 2){
+        cout << "Objects updated!" << endl;
+		for (int i = 0; i < reply.get(0).asList()->size(); ++i)
+		{
+			temp_vect.clear();
+			temp_vect.push_back(reply.get(0).asList()->get(i).asList()->get(0).asString());
+			temp_vect.push_back(reply.get(0).asList()->get(i).asList()->get(1).asString());
+			objects.push_back(temp_vect);
+        	if (temp_vect[1] == "stick" || temp_vect[1] == "rake")
+        	{
+            	tools.push_back(temp_vect);
+        	}
+		}
+		return true;
+    }
+    else {
+        cout << "Objects update failed!" << endl;
+		return false;
+    }
+	return false;
 }
 
 bool affComm::affordancesCycle()

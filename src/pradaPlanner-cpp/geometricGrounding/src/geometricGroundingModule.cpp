@@ -501,6 +501,7 @@ void geoGround::openPorts()
 {
     plannerPort.open("/grounding/planner_cmd:io");
     affordancePort.open("/grounding/Aff_cmd:io");
+	objectQueryPort.open("/grounding/planner_rpc:o");
 }
 
 bool geoGround::close()
@@ -528,7 +529,7 @@ bool geoGround::interrupt()
 
 bool geoGround::loadObjs()
 {
-    string line;
+    /*string line;
     vector<string> temp_objects, temp_vect;
     cout << objectsFileName << endl;
     objectFile.open(objectsFileName.c_str());
@@ -552,7 +553,38 @@ bool geoGround::loadObjs()
             tools.push_back(temp_vect[0]);
         }
     }
-    return true;
+    return true;*/
+
+	vector<string> temp_vect;
+	if (objectQueryPort.getOutputCount() == 0){
+        cout << "planner not connected!" << endl;
+        return false;
+    }
+	objects.clear();
+	tools.clear();
+    cmd.clear();
+    cmd.addString("printObjects");
+    objectQueryPort.write(cmd,reply);
+    if (reply.size() > 0 && reply.get(0).isList() && reply.get(0).asList()->size() > 2){
+        cout << "Objects updated!" << endl;
+		for (int i = 0; i < reply.get(0).asList()->size(); ++i)
+		{
+			temp_vect.clear();
+			temp_vect.push_back(reply.get(0).asList()->get(i).asList()->get(0).asString());
+			temp_vect.push_back(reply.get(0).asList()->get(i).asList()->get(1).asString());
+			objects.push_back(temp_vect[0]);
+        	if (temp_vect[1] == "stick" || temp_vect[1] == "rake")
+        	{
+            	tools.push_back(temp_vect[0]);
+        	}
+		}
+		return true;
+    }
+    else {
+        cout << "Objects update failed!" << endl;
+		return false;
+    }
+	return false;
 }
 
 string geoGround::plannerCommand()

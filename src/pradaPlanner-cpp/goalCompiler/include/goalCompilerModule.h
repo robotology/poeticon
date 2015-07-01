@@ -54,6 +54,11 @@ class goalCompiler : public RFModule
         BufferedPort<Bottle> plannerPort;
         BufferedPort<Bottle> praxiconPort;
 
+		RpcClient objectQueryPort;
+
+		Bottle cmd;
+		Bottle reply;
+
         Bottle *plannerBottle;
         Bottle *praxiconBottle;
 
