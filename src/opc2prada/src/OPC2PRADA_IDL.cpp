@@ -14,6 +14,14 @@ public:
   virtual bool read(yarp::os::ConnectionReader& connection);
 };
 
+class OPC2PRADA_IDL_loadObjects : public yarp::os::Portable {
+public:
+  yarp::os::Bottle _return;
+  void init();
+  virtual bool write(yarp::os::ConnectionWriter& connection);
+  virtual bool read(yarp::os::ConnectionReader& connection);
+};
+
 class OPC2PRADA_IDL_query2d : public yarp::os::Portable {
 public:
   int32_t id;
@@ -61,6 +69,27 @@ void OPC2PRADA_IDL_update::init() {
   _return = false;
 }
 
+bool OPC2PRADA_IDL_loadObjects::write(yarp::os::ConnectionWriter& connection) {
+  yarp::os::idl::WireWriter writer(connection);
+  if (!writer.writeListHeader(1)) return false;
+  if (!writer.writeTag("loadObjects",1,1)) return false;
+  return true;
+}
+
+bool OPC2PRADA_IDL_loadObjects::read(yarp::os::ConnectionReader& connection) {
+  yarp::os::idl::WireReader reader(connection);
+  if (!reader.readListReturn()) return false;
+  if (!reader.read(_return)) {
+    reader.fail();
+    return false;
+  }
+  return true;
+}
+
+void OPC2PRADA_IDL_loadObjects::init() {
+  _return;
+}
+
 bool OPC2PRADA_IDL_query2d::write(yarp::os::ConnectionWriter& connection) {
   yarp::os::idl::WireWriter writer(connection);
   if (!writer.writeListHeader(2)) return false;
@@ -80,6 +109,7 @@ bool OPC2PRADA_IDL_query2d::read(yarp::os::ConnectionReader& connection) {
 }
 
 void OPC2PRADA_IDL_query2d::init(const int32_t id) {
+  _return;
   this->id = id;
 }
 
@@ -102,6 +132,7 @@ bool OPC2PRADA_IDL_querytool2d::read(yarp::os::ConnectionReader& connection) {
 }
 
 void OPC2PRADA_IDL_querytool2d::init(const int32_t id) {
+  _return;
   this->id = id;
 }
 
@@ -134,7 +165,17 @@ bool OPC2PRADA_IDL::update() {
   OPC2PRADA_IDL_update helper;
   helper.init();
   if (!yarp().canWrite()) {
-    yError("Missing server method '%s'?","bool OPC2PRADA_IDL::update()");
+    fprintf(stderr,"Missing server method '%s'?\n","bool OPC2PRADA_IDL::update()");
+  }
+  bool ok = yarp().write(helper,helper);
+  return ok?helper._return:_return;
+}
+yarp::os::Bottle OPC2PRADA_IDL::loadObjects() {
+  yarp::os::Bottle _return;
+  OPC2PRADA_IDL_loadObjects helper;
+  helper.init();
+  if (!yarp().canWrite()) {
+    fprintf(stderr,"Missing server method '%s'?\n","yarp::os::Bottle OPC2PRADA_IDL::loadObjects()");
   }
   bool ok = yarp().write(helper,helper);
   return ok?helper._return:_return;
@@ -144,7 +185,7 @@ yarp::os::Bottle OPC2PRADA_IDL::query2d(const int32_t id) {
   OPC2PRADA_IDL_query2d helper;
   helper.init(id);
   if (!yarp().canWrite()) {
-    yError("Missing server method '%s'?","yarp::os::Bottle OPC2PRADA_IDL::query2d(const int32_t id)");
+    fprintf(stderr,"Missing server method '%s'?\n","yarp::os::Bottle OPC2PRADA_IDL::query2d(const int32_t id)");
   }
   bool ok = yarp().write(helper,helper);
   return ok?helper._return:_return;
@@ -154,7 +195,7 @@ yarp::os::Bottle OPC2PRADA_IDL::querytool2d(const int32_t id) {
   OPC2PRADA_IDL_querytool2d helper;
   helper.init(id);
   if (!yarp().canWrite()) {
-    yError("Missing server method '%s'?","yarp::os::Bottle OPC2PRADA_IDL::querytool2d(const int32_t id)");
+    fprintf(stderr,"Missing server method '%s'?\n","yarp::os::Bottle OPC2PRADA_IDL::querytool2d(const int32_t id)");
   }
   bool ok = yarp().write(helper,helper);
   return ok?helper._return:_return;
@@ -164,7 +205,7 @@ bool OPC2PRADA_IDL::quit() {
   OPC2PRADA_IDL_quit helper;
   helper.init();
   if (!yarp().canWrite()) {
-    yError("Missing server method '%s'?","bool OPC2PRADA_IDL::quit()");
+    fprintf(stderr,"Missing server method '%s'?\n","bool OPC2PRADA_IDL::quit()");
   }
   bool ok = yarp().write(helper,helper);
   return ok?helper._return:_return;
@@ -186,6 +227,17 @@ bool OPC2PRADA_IDL::read(yarp::os::ConnectionReader& connection) {
       if (!writer.isNull()) {
         if (!writer.writeListHeader(1)) return false;
         if (!writer.writeBool(_return)) return false;
+      }
+      reader.accept();
+      return true;
+    }
+    if (tag == "loadObjects") {
+      yarp::os::Bottle _return;
+      _return = loadObjects();
+      yarp::os::idl::WireWriter writer(reader);
+      if (!writer.isNull()) {
+        if (!writer.writeListHeader(1)) return false;
+        if (!writer.write(_return)) return false;
       }
       reader.accept();
       return true;
@@ -268,6 +320,7 @@ std::vector<std::string> OPC2PRADA_IDL::help(const std::string& functionName) {
   if(showAll) {
     helpString.push_back("*** Available commands:");
     helpString.push_back("update");
+    helpString.push_back("loadObjects");
     helpString.push_back("query2d");
     helpString.push_back("querytool2d");
     helpString.push_back("quit");
@@ -278,6 +331,11 @@ std::vector<std::string> OPC2PRADA_IDL::help(const std::string& functionName) {
       helpString.push_back("bool update() ");
       helpString.push_back("Update the state text file. ");
       helpString.push_back("@return true/false on success/failure ");
+    }
+    if (functionName=="loadObjects") {
+      helpString.push_back("yarp::os::Bottle loadObjects() ");
+      helpString.push_back("Load correspondence between ID and Labels in the DataBase ");
+      helpString.push_back("@return Bottle with ID and Objects names ");
     }
     if (functionName=="query2d") {
       helpString.push_back("yarp::os::Bottle query2d(const int32_t id) ");
