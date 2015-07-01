@@ -48,6 +48,7 @@ class PlannerModule : public RFModule, public planningCycle_IDLserver
         bool goForward();
         bool goBack();
         bool updateState();
+		bool loadObjects();
         bool loadState();
         bool updateGoals();
         bool plan();

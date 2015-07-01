@@ -81,6 +81,7 @@ class PlannerThread : public RateThread
         BufferedPort<Bottle> geo_yarp;
         BufferedPort<Bottle> prax_yarp;
         BufferedPort<Bottle> aff_yarp;
+		BufferedPort<Bottle> objects_yarp;
         RpcClient world_rpc;
         RpcClient actInt_rpc;
         RpcClient opc2prada_rpc;
@@ -94,6 +95,7 @@ class PlannerThread : public RateThread
         int positx;
         int posity;
         
+		Bottle object_bottle;
         Bottle cmd;
         Bottle message;
         Bottle reply;
@@ -144,6 +146,7 @@ class PlannerThread : public RateThread
         bool completePlannerState();
         bool loadSubgoals();
         bool loadObjs();
+		Bottle printObjs();
         bool loadState();
         bool loadGoal();
         bool preserveState();

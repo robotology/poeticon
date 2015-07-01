@@ -1,5 +1,13 @@
 #planningCycle.thrift
 
+
+struct Bottle { }
+(
+yarp.name = "yarp::os::Bottle"
+yarp.includefile="yarp/os/Bottle.h"
+)
+
+
 service planningCycle_IDLserver
 {
     /**
@@ -56,6 +64,20 @@ service planningCycle_IDLserver
     * @returns ok/fail if successful/not.
     **/
     bool updateState();
+
+    /**
+    * Updates and loads the object IDs and labels into the planner.
+    * Sends an update command to the opc2prada
+    * @returns ok/fail if successful/not.
+    **/
+    bool loadObjects();
+
+    /**
+    * Prints the last loaded objects on the planner.
+    * Does NOT send an update command to the opc2prada
+    * @returns bottle of bottles with (IDs, labels), or fail.
+    **/
+    Bottle printObjects();
 
     /**
     * Loads the world state to the planner.

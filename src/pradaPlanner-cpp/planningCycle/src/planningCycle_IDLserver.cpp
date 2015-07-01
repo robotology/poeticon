@@ -70,6 +70,22 @@ public:
   virtual bool read(yarp::os::ConnectionReader& connection);
 };
 
+class planningCycle_IDLserver_loadObjects : public yarp::os::Portable {
+public:
+  bool _return;
+  void init();
+  virtual bool write(yarp::os::ConnectionWriter& connection);
+  virtual bool read(yarp::os::ConnectionReader& connection);
+};
+
+class planningCycle_IDLserver_printObjects : public yarp::os::Portable {
+public:
+  yarp::os::Bottle _return;
+  void init();
+  virtual bool write(yarp::os::ConnectionWriter& connection);
+  virtual bool read(yarp::os::ConnectionReader& connection);
+};
+
 class planningCycle_IDLserver_loadState : public yarp::os::Portable {
 public:
   bool _return;
@@ -356,6 +372,47 @@ bool planningCycle_IDLserver_updateState::read(yarp::os::ConnectionReader& conne
 
 void planningCycle_IDLserver_updateState::init() {
   _return = false;
+}
+
+bool planningCycle_IDLserver_loadObjects::write(yarp::os::ConnectionWriter& connection) {
+  yarp::os::idl::WireWriter writer(connection);
+  if (!writer.writeListHeader(1)) return false;
+  if (!writer.writeTag("loadObjects",1,1)) return false;
+  return true;
+}
+
+bool planningCycle_IDLserver_loadObjects::read(yarp::os::ConnectionReader& connection) {
+  yarp::os::idl::WireReader reader(connection);
+  if (!reader.readListReturn()) return false;
+  if (!reader.readBool(_return)) {
+    reader.fail();
+    return false;
+  }
+  return true;
+}
+
+void planningCycle_IDLserver_loadObjects::init() {
+  _return = false;
+}
+
+bool planningCycle_IDLserver_printObjects::write(yarp::os::ConnectionWriter& connection) {
+  yarp::os::idl::WireWriter writer(connection);
+  if (!writer.writeListHeader(1)) return false;
+  if (!writer.writeTag("printObjects",1,1)) return false;
+  return true;
+}
+
+bool planningCycle_IDLserver_printObjects::read(yarp::os::ConnectionReader& connection) {
+  yarp::os::idl::WireReader reader(connection);
+  if (!reader.readListReturn()) return false;
+  if (!reader.read(_return)) {
+    reader.fail();
+    return false;
+  }
+  return true;
+}
+
+void planningCycle_IDLserver_printObjects::init() {
 }
 
 bool planningCycle_IDLserver_loadState::write(yarp::os::ConnectionWriter& connection) {
@@ -756,6 +813,26 @@ bool planningCycle_IDLserver::updateState() {
   bool ok = yarp().write(helper,helper);
   return ok?helper._return:_return;
 }
+bool planningCycle_IDLserver::loadObjects() {
+  bool _return = false;
+  planningCycle_IDLserver_loadObjects helper;
+  helper.init();
+  if (!yarp().canWrite()) {
+    yError("Missing server method '%s'?","bool planningCycle_IDLserver::loadObjects()");
+  }
+  bool ok = yarp().write(helper,helper);
+  return ok?helper._return:_return;
+}
+yarp::os::Bottle planningCycle_IDLserver::printObjects() {
+  yarp::os::Bottle _return;
+  planningCycle_IDLserver_printObjects helper;
+  helper.init();
+  if (!yarp().canWrite()) {
+    yError("Missing server method '%s'?","yarp::os::Bottle planningCycle_IDLserver::printObjects()");
+  }
+  bool ok = yarp().write(helper,helper);
+  return ok?helper._return:_return;
+}
 bool planningCycle_IDLserver::loadState() {
   bool _return = false;
   planningCycle_IDLserver_loadState helper;
@@ -1004,6 +1081,28 @@ bool planningCycle_IDLserver::read(yarp::os::ConnectionReader& connection) {
       reader.accept();
       return true;
     }
+    if (tag == "loadObjects") {
+      bool _return;
+      _return = loadObjects();
+      yarp::os::idl::WireWriter writer(reader);
+      if (!writer.isNull()) {
+        if (!writer.writeListHeader(1)) return false;
+        if (!writer.writeBool(_return)) return false;
+      }
+      reader.accept();
+      return true;
+    }
+    if (tag == "printObjects") {
+      yarp::os::Bottle _return;
+      _return = printObjects();
+      yarp::os::idl::WireWriter writer(reader);
+      if (!writer.isNull()) {
+        if (!writer.writeListHeader(1)) return false;
+        if (!writer.write(_return)) return false;
+      }
+      reader.accept();
+      return true;
+    }
     if (tag == "loadState") {
       bool _return;
       _return = loadState();
@@ -1211,6 +1310,8 @@ std::vector<std::string> planningCycle_IDLserver::help(const std::string& functi
     helpString.push_back("goBack");
     helpString.push_back("goForward");
     helpString.push_back("updateState");
+    helpString.push_back("loadObjects");
+    helpString.push_back("printObjects");
     helpString.push_back("loadState");
     helpString.push_back("showCurrentState");
     helpString.push_back("compileGoal");
@@ -1275,6 +1376,18 @@ std::vector<std::string> planningCycle_IDLserver::help(const std::string& functi
       helpString.push_back("Updates the planner world state. ");
       helpString.push_back("Sends an update command to both the world state manager and opc2prada ");
       helpString.push_back("@returns ok/fail if successful/not. ");
+    }
+    if (functionName=="loadObjects") {
+      helpString.push_back("bool loadObjects() ");
+      helpString.push_back("Updates and loads the object IDs and labels into the planner. ");
+      helpString.push_back("Sends an update command to the opc2prada ");
+      helpString.push_back("@returns ok/fail if successful/not. ");
+    }
+    if (functionName=="printObjects") {
+      helpString.push_back("yarp::os::Bottle printObjects() ");
+      helpString.push_back("Prints the last loaded objects on the planner. ");
+      helpString.push_back("Does NOT send an update command to the opc2prada ");
+      helpString.push_back("@returns bottle of bottles with (IDs, labels), or fail. ");
     }
     if (functionName=="loadState") {
       helpString.push_back("bool loadState() ");
