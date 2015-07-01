@@ -570,7 +570,7 @@ bool geoGround::loadObjs()
 		for (int i = 0; i < reply.get(0).asList()->size(); ++i)
 		{
 			temp_vect.clear();
-			temp_vect.push_back(reply.get(0).asList()->get(i).asList()->get(0).asString());
+			temp_vect.push_back( NumbertoString(reply.get(0).asList()->get(i).asList()->get(0).asInt() ) );
 			temp_vect.push_back(reply.get(0).asList()->get(i).asList()->get(1).asString());
 			objects.push_back(temp_vect[0]);
         	if (temp_vect[1] == "stick" || temp_vect[1] == "rake")

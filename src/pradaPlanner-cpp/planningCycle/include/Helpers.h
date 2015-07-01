@@ -16,4 +16,6 @@ std::vector<std::string> split(const std::string &s, char delim);
 
 int vect_compare (vector<string> vect1, vector<string> vect2);
 
+string NumbertoString(int number);
+
 #endif
