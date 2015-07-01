@@ -103,6 +103,11 @@ bool PlannerModule::loadObjects()
 	return thread->loadObjs();
 }
 
+Bottle PlannerModule::printObjects()
+{
+	return thread->printObjs();
+}
+
 bool PlannerModule::loadState()
 {
     return thread->completePlannerState() && thread->loadState();
