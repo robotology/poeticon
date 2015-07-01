@@ -25,8 +25,8 @@ bool PlannerThread::openPorts()
     //BufferedPort<Bottle> geo_yarp;
     geo_yarp.open("/planner/grounding_cmd:io");
 
-    //BufferedPort<Bottle> state_yarp;
-    //state_yarp.open("/planner/opc_cmd:io");
+    //BufferedPort<Bottle> objects_yarp;
+    //objects_yarp.open("/planner/objects:io");
 
     //BufferedPort<Bottle> prax_yarp;
     prax_yarp.open("/planner/prax_inst:o");
@@ -554,12 +554,18 @@ bool PlannerThread::resetConfig()
     return true;
 }
 
+Bottle PlannerThread::printObjs()
+{
+	return object_bottle;
+}
+
 bool PlannerThread::loadObjs()
 {
-    string line;
-    vector<string> aux_objs, temp_vect;
+    //string line;
+    //vector<string> aux_objs;
+	vector<string> temp_vect;
     vector<string> labels;
-    objFile.open(objFileName.c_str());
+    /*objFile.open(objFileName.c_str());
     object_IDs.clear();
     if (objFile.is_open()){
         getline(objFile, line);
@@ -582,6 +588,39 @@ bool PlannerThread::loadObjs()
         return false;
     }
     return true;
+	*/
+	
+	if (opc2prada_rpc.getOutputCount() == 0){
+        yWarning("opc2prada not connected!");
+        return false;
+    }
+	object_IDs.clear();
+    cmd.clear();
+    cmd.addString("loadObjects");
+    opc2prada_rpc.write(cmd,reply);
+    if (reply.size() > 2){
+		object_bottle.clear();
+		object_bottle = reply;
+        yInfo("Objects updated!");
+		for (int i = 0; i < reply.size(); ++i)
+		{
+			temp_vect.clear();
+			temp_vect.push_back(reply.get(i).asList()->get(0).asString());
+			temp_vect.push_back(reply.get(i).asList()->get(1).asString());
+			object_IDs.push_back(temp_vect);
+           	if (find_element(labels,temp_vect[1]) == 1)
+           	{
+               	yWarning("There are objects that share labels: %s", temp_vect[1].c_str());
+           	}
+           	labels.push_back(temp_vect[1]);
+		}
+		return true;
+    }
+    else {
+        yWarning("Objects update failed!");
+		return false;
+    }
+	return false;
 }
 
 void PlannerThread::stopPlanning()
@@ -778,7 +817,7 @@ bool PlannerThread::goalUpdate()
 
 bool PlannerThread::planCompletion()
 {
-    loadObjs();
+    /*loadObjs();*/
     if (plan_level >= subgoals.size()){
         yInfo("Plan completed!!");
         Bottle& prax_bottle_out = prax_yarp.prepare();
@@ -977,7 +1016,7 @@ bool PlannerThread::resetRules()
 
 bool PlannerThread::loadUsedObjs()
 {
-    loadObjs();
+    //loadObjs();
     vector<string> aux_used;
     objects_used.clear();
     for (int y = 0; y < object_IDs.size(); ++y){
@@ -995,7 +1034,7 @@ bool PlannerThread::loadUsedObjs()
 
 bool PlannerThread::codeAction()
 {
-    loadObjs();
+    //loadObjs();
     vector<string> temp_vect;
     float temp_float;
     string tool1, tool2;
@@ -1138,7 +1177,7 @@ bool PlannerThread::checkGoalCompletion()
 
 bool PlannerThread::checkFailure()
 {
-    loadObjs();
+    //loadObjs();
     string line;
     int horizon;
     vector<string> config_data;
@@ -1228,6 +1267,10 @@ bool PlannerThread::plan_init()
     {
         return false;
     }
+	if (!loadObjs())
+	{
+		return false;
+	}
     if (!loadState())
     {
         return false;

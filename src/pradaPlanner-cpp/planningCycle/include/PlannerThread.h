@@ -94,6 +94,7 @@ class PlannerThread : public RateThread
         int positx;
         int posity;
         
+		Bottle object_bottle;
         Bottle cmd;
         Bottle message;
         Bottle reply;
@@ -144,6 +145,7 @@ class PlannerThread : public RateThread
         bool completePlannerState();
         bool loadSubgoals();
         bool loadObjs();
+		Bottle printObjs();
         bool loadState();
         bool loadGoal();
         bool preserveState();

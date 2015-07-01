@@ -6,6 +6,7 @@
 
 #include <yarp/os/Wire.h>
 #include <yarp/os/idl/WireTypes.h>
+#include <yarp/os/Bottle.h>
 
 class planningCycle_IDLserver;
 
@@ -60,6 +61,18 @@ public:
    * @returns ok/fail if successful/not.
    */
   virtual bool updateState();
+  /**
+   * Updates and loads the object IDs and labels into the planner.
+   * Sends an update command to the opc2prada
+   * @returns ok/fail if successful/not.
+   */
+  virtual bool loadObjects();
+  /**
+   * Prints the last loaded objects on the planner.
+   * Does NOT send an update command to the opc2prada
+   * @returns bottle of bottles with (IDs, labels), or fail.
+   */
+  virtual yarp::os::Bottle printObjects();
   /**
    * Loads the world state to the planner.
    * Completes the state file with missing symbols (negated), and loads it into the planner.

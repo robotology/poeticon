@@ -95,7 +95,17 @@ bool PlannerModule::goForward()
 
 bool PlannerModule::updateState()
 {
-    return thread->updateState() && thread->loadObjs();
+    return thread->updateState(); 
+}
+
+bool PlannerModule::loadObjects()
+{
+	return thread->loadObjs();
+}
+
+Bottle PlannerModule::printObjects()
+{
+	return thread->printObjs();
 }
 
 bool PlannerModule::loadState()
