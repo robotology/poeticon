@@ -84,6 +84,7 @@ public:
     bool attach(yarp::os::RpcServer &source);
     Bottle query2d(const int32_t ObjectID);
     Bottle querytool2d(const int32_t ObjectID);
+    Bottle loadObjects();
     bool update();
     bool quit();
 

@@ -21,7 +21,13 @@ service OPC2PRADA_IDL
   * @return true/false on success/failure
   */
   bool update();
-
+  
+  /**
+  * Load correspondence between ID and Labels in the DataBase
+  * 
+  * @return Bottle with ID and Objects names
+  */
+  Bottle loadObjects();
 
   /**
   * Bottle
