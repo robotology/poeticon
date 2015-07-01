@@ -39,32 +39,30 @@ bool TranslatorModule::quit() {
     return true;
 }
 Bottle TranslatorModule::loadObjects(){
-	Bottle *receive,dataBase,ids2,*idsp;
-	Bottle response;
+    Bottle *receive,dataBase,ids2,*idsp;
+    Bottle response;
     cout << "Received loadObjects command in RPC" << endl;
     readingThread->guard.lock();
     dataBase = readingThread->_data;
     ids2 = readingThread->_ids;
     readingThread->guard.unlock();
-	if(dataBase.size()>0 && (dataBase.get(1).asString()!="empty")) {
-		idsp = ids2.get(1).asList();
+    if(dataBase.size()>0 && (dataBase.get(1).asString()!="empty")) {
+        idsp = ids2.get(1).asList();
         idsp = idsp->get(1).asList();
         for(int i=1;i<dataBase.size();i++){ // for each object
             Bottle *objecto = dataBase.get(i).asList();
             for(int j=0;j<objecto->size();j++) { // for each properties
                 Bottle *propriedade = objecto->get(j).asList();
-				if(hashtable(propriedade->get(0).asString() == name){
-					Bottle aux;
-					aux.addInt(idsp->get((i-1)).asInt());
-					aux.addString(propriedade->get(1).asString());
-					response.addList() = aux;
-				}
-				
-			
-			}
-		}
-	}
-	return response;
+                if(propriedade->get(0).asString() == "name"){
+                    Bottle aux;
+                    aux.addInt(idsp->get((i-1)).asInt());
+                    aux.addString(propriedade->get(1).asString());
+                    response.addList() = aux;
+                }
+            }
+        }
+    }
+    return response;
 }
 bool TranslatorModule::update(){
 

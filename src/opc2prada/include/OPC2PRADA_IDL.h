@@ -20,6 +20,11 @@ public:
    */
   virtual bool update();
   /**
+   * Load correspondence between ID and Labels in the DataBase
+   * @return Bottle with ID and Objects names
+   */
+  virtual yarp::os::Bottle loadObjects();
+  /**
    * Bottle
    * @return Bottle with 2d features
    */
