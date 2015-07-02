@@ -25,13 +25,14 @@ include(ICUBcontribHelpers)
 include(ICUBcontribOptions)
 icubcontrib_set_default_prefix()
 
-file(GLOB source src/*.cpp)
-file(GLOB header include/*.h)
+file(GLOB source src/*.cpp ../common/src/*.cpp)
+file(GLOB header include/*.h ../common/include/*.h)
 
 source_group("Source Files" FILES ${source})
 source_group("Header Files" FILES ${header})
 
 include_directories(${PROJECT_SOURCE_DIR}/include
+                    ${PROJECT_SOURCE_DIR}/../common/include
                     ${YARP_INCLUDE_DIRS}
                     ${IDL_GENERATED_CODE_DIR}/include
                    )
