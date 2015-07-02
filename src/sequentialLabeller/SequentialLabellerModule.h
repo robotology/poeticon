@@ -114,15 +114,10 @@ using namespace yarp::os;
 using namespace yarp::sig;
 
 /* OpenCV */
-// OpenCV 2
 #include <opencv2/opencv.hpp>
 #include <opencv2/core/core.hpp>
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/legacy/compat.hpp> // cvCopyImage
-// OpenCV 1
-//#include <opencv/cv.h>
-//#include <opencv/cxcore.h>
-//#include <opencv/highgui.h>
 
 #include "cvSeqLabel.h"
 
@@ -134,8 +129,6 @@ class SequentialLabellerModule : public RFModule
 {
     /* private class variables and module parameters */
     string                            _moduleName;
-    string                            _handlerPortName;
-    Port                              _handlerPort; /* a port to handle messages */
 
     string                            rawImgInputPortName;
     string                            rawImgOutputPortName;
@@ -161,7 +154,6 @@ public:
     virtual bool configure(ResourceFinder &rf); /* configure module parameters, return true if successful */
     virtual bool interruptModule();             /* interrupt, e.g., ports */
     virtual bool close();                       /* close and shut down module */
-    virtual bool respond(const Bottle &command, Bottle &reply);
     virtual bool updateModule();
     virtual double getPeriod();
 };

@@ -1,6 +1,6 @@
 /*
  * Copyright (C) 2012-2015 POETICON++, European Commission FP7 project ICT-288382
- * Author: Giovanni Saponaro <gsaponaro@isr.ist.utl.pt>
+ * Author: Giovanni Saponaro <gsaponaro@isr.ist.utl.pt>, Alexandre Bernardino
  * CopyPolicy: Released under the terms of the GNU GPL v2.0
  *
  */
@@ -18,7 +18,7 @@ int getLeaf(int label, int *equiv_array)
 
     if(label>=MAX_LABELS || label<1)
         printf("getleaf%d\n",label-1);
-             
+
     if(equiv_array[label-1])
     {
         minlabel = label;
@@ -32,7 +32,6 @@ int getLeaf(int label, int *equiv_array)
     return minlabel;
 }
 
-
 /*
 Function: cvSeqLabel 
 Description: Implements the sequential labeling algorithm on binary images 
@@ -44,7 +43,7 @@ Arguments: in - binary image containing background (0) and foreground (!0) pixel
 Limitations: Allows only 255 labels. Assumes output image is clear.
 Author: Alex 03/01/2006
 */
-int cvSeqLabel( IplImage *in, IplImage *out, IplImage *tmp)
+int cvSeqLabel(IplImage *in, IplImage *out, IplImage *tmp)
 {
     int i, j, label = 0, minlabel, originalb, originalc, equiv_array[MAX_LABELS];
     int width, height, stride;
@@ -90,7 +89,6 @@ int cvSeqLabel( IplImage *in, IplImage *out, IplImage *tmp)
 
     pai = input + stride;    pci = input;
     pao = temp + stride;    pco = temp;
-    
 
     //remaining lines
     for(i = 1; i < height; i++)
@@ -120,7 +118,7 @@ int cvSeqLabel( IplImage *in, IplImage *out, IplImage *tmp)
                 if(*pbi)
                 {
                     *pao = *pbo;
-                    if(*pci)                // resolving equivalences
+                    if(*pci) // resolving equivalences
                         if( *pco != *pbo )
                         {
                             //if (originalb==-1)
@@ -181,7 +179,7 @@ int cvSeqLabel( IplImage *in, IplImage *out, IplImage *tmp)
             pai++; pbi++; pci++; pdi++; pao++; pbo++; pco++; pdo++;
         }
     }
-    
+
     // fusing labels
     for( i = 1; i <= label; i++ )
     {
@@ -193,7 +191,7 @@ int cvSeqLabel( IplImage *in, IplImage *out, IplImage *tmp)
             equiv_array[i-1] = minlabel;
         }
     }
-    
+
     // processing image
     for( i = 0; i < height; i++ )
     {
@@ -209,12 +207,11 @@ int cvSeqLabel( IplImage *in, IplImage *out, IplImage *tmp)
             }
         }
     }
-    
+
     //convert from label image (integer) to output image (unsigned char)
     for( i = 0; i < height; i++ )
         for( j = 0; j < width; j++ )
             output[i*stride+j]  = (unsigned char)temp[i*stride+j];
-            
 
-    return label;                        
+    return label;
 }

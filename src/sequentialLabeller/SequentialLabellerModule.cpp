@@ -49,11 +49,6 @@ bool SequentialLabellerModule::configure(ResourceFinder &rf)
     //Network::init();
     
     /* open ports */
-    if(! _handlerPort.open(_handlerPortName.c_str()) )
-    {
-        cout << getName() << ": unable to open port" << _handlerPortName << endl;
-        return false;
-    }
     if(! rawImgInputPort.open(rawImgInputPortName.c_str()) )
     {
         cout << getName() << ": unable to open port" << rawImgInputPortName << endl;
@@ -109,7 +104,6 @@ bool SequentialLabellerModule::configure(ResourceFinder &rf)
 bool SequentialLabellerModule::interruptModule()
 {
     cout << getName() << ": interrupting module, for port cleanup." << endl;
-    _handlerPort.interrupt();
     rawImgInputPort.interrupt();
     rawImgOutputPort.interrupt();
     binaryImgInputPort.interrupt();
@@ -124,7 +118,6 @@ bool SequentialLabellerModule::interruptModule()
 bool SequentialLabellerModule::close()
 {
     cout << getName() << ": closing module." << endl;
-    _handlerPort.close();
     rawImgInputPort.close();
     rawImgOutputPort.close();
     binaryImgInputPort.close();
@@ -133,20 +126,7 @@ bool SequentialLabellerModule::close()
     // Network::fini();
     return true;
 }
-   
-/**
- * Message handler function. Echo all received messages, quit if required.
- */
-bool SequentialLabellerModule::respond(const Bottle &command, Bottle &reply)
-{
-      cout << getName() << ": echoing received command." << endl;
-      reply = command;
-      if(command.get(0).asString() == "quit")
-        return false;
-      else
-          return true;
-}
-   
+
 /**
  * Main cycle, called iteratively every getPeriod() seconds.
  */
