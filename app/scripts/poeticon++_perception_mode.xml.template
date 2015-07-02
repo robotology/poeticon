@@ -162,24 +162,24 @@
     <to>/opc2prada/rpc:i</to>
 </connection>
 <connection>
-    <from>/planner/grounding_cmd:io</from>
-    <to>/grounding/planner_cmd:io</to>
+    <from>/planner/ground_cmd:io</from>
+    <to>/geometricGrounding/planner_cmd:io</to>
 </connection>
 <connection>
     <from>/planner/goal_cmd:io</from>
-    <to>/goal_imag/planner_cmd:io</to>
+    <to>/goalCompiler/planner_cmd:io</to>
 </connection>
 <connection>
-    <from>/grounding/planner_cmd:io</from>
-    <to>/planner/grounding_cmd:io</to>
+    <from>/geometricGrounding/planner_cmd:io</from>
+    <to>/planner/ground_cmd:io</to>
 </connection>
 <connection>
-    <from>/goal_imag/planner_cmd:io</from>
+    <from>/goalCompiler/planner_cmd:io</from>
     <to>/planner/goal_cmd:io</to>
 </connection>
 <connection>
     <from>/activityInterface/praxicon:o</from>
-    <to>/goal_imag/prax_inst:i</to>
+    <to>/goalCompiler/prax_inst:i</to>
 </connection>
 <connection>
     <from>/planner/prax_inst:o</from>
@@ -187,10 +187,10 @@
 </connection>
 <connection>
     <from>/affordanceCommunication/ground_cmd:io</from> <!-- /AffordanceComm/ground_cmd:io -->
-    <to>/grounding/Aff_cmd:io</to>
+    <to>/geometricGrounding/affordances_cmd:io</to>
 </connection>
 <connection>
-    <from>/grounding/Aff_cmd:io</from>
+    <from>/geometricGrounding/affordances_cmd:io</from>
     <to>/affordanceCommunication/ground_cmd:io</to> <!-- /AffordanceComm/ground_cmd:io -->
 </connection>
 <connection>
@@ -199,11 +199,24 @@
 </connection>
 <connection>
     <from>/affordanceCommunication/planner_cmd:io</from> <!-- /AffordanceComm/planner_cmd:io -->
-    <to>/planner/Aff_cmd:io</to>
+    <to>/planner/affordances_cmd:io</to>
 </connection>
 <connection>
-    <from>/planner/Aff_cmd:io</from>
+    <from>/planner/affordances_cmd:io</from>
     <to>/affordanceCommunication/planner_cmd:io</to> <!-- /AffordanceComm/planner_cmd:io -->
+</connection>
+<!-- connection between three auxiliary planner modules, and the rpc port -->
+<connection>
+    <from>/affordanceCommunication/planner_rpc:o</from>
+    <to>/planner/rpc:i</to> 
+</connection>
+<connection>
+    <from>/geometricGrounding/planner_rpc:o</from>
+    <to>/planner/rpc:i</to> 
+</connection>
+<connection>
+    <from>/goalCompiler/planner_rpc:o</from>
+    <to>/planner/rpc:i</to> 
 </connection>
 
 </application>

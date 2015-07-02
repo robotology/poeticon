@@ -25,13 +25,13 @@ public:
    * It will update the state, ground the rules, compile the goals, and plan the necessary steps to achieve the goals.
    * @returns ok upon receiving/understanding the command
    */
-  virtual bool startPlanning();
+  virtual bool startPlanner();
   /**
    * Stop fully-automated planner.
    * Rules and symbols will have to be grounded again, goals will have to be recompiled.
    * @returns ok upon receiving/understanding the command
    */
-  virtual bool stopPlanning();
+  virtual bool stopPlanner();
   /**
    * Pauses the fully-automated planner.
    * It will execute the last instruction started before the pause command.

@@ -19,29 +19,37 @@ void PlannerThread::openFiles()
 
 bool PlannerThread::openPorts()
 {
+	string portName;
     //BufferedPort<Bottle> goal_yarp;
-    goal_yarp.open("/planner/goal_cmd:io");
+	portName = "/" + moduleName + "/goal_cmd:io";
+    goal_yarp.open(portName);
 
     //BufferedPort<Bottle> geo_yarp;
-    geo_yarp.open("/planner/grounding_cmd:io");
+	portName = "/" + moduleName + "/ground_cmd:io";
+    geo_yarp.open(portName);
 
     //BufferedPort<Bottle> objects_yarp;
     //objects_yarp.open("/planner/objects:io");
 
     //BufferedPort<Bottle> prax_yarp;
-    prax_yarp.open("/planner/prax_inst:o");
+	portName = "/" + moduleName + "/prax_inst:o";
+    prax_yarp.open(portName);
 
     //BufferedPort<Bottle> aff_yarp;
-    aff_yarp.open("/planner/Aff_cmd:io");
+	portName = "/" + moduleName + "/affordances_cmd:io";
+    aff_yarp.open(portName);
 
     //RpcClient world_rpc;
-    world_rpc.open("/planner/wsm_rpc:o");
+	portName = "/" + moduleName + "/wsm_rpc:o";
+    world_rpc.open(portName);
 
     //RpcClient actInt_rpc;
-    actInt_rpc.open("/planner/actInt_rpc:o");
+	portName = "/" + moduleName + "/actInt_rpc:o";
+    actInt_rpc.open(portName);
 
     //RpcClient opc2prada_rpc;
-    opc2prada_rpc.open("/planner/opc2prada_rpc:o");
+	portName = "/" + moduleName + "/opc2prada_rpc:o";
+    opc2prada_rpc.open(portName);
 
     return true;
 }
