@@ -10,11 +10,9 @@ set(PROJECTNAME blobDescriptor)
 project(${PROJECTNAME})
 
 find_package(YARP REQUIRED)
-find_package(ICUB)
 find_package(ICUBcontrib)
 
 list(APPEND CMAKE_MODULE_PATH ${YARP_MODULE_PATH})
-list(APPEND CMAKE_MODULE_PATH ${ICUB_MODULE_PATH})
 list(APPEND CMAKE_MODULE_PATH ${ICUBCONTRIB_MODULE_PATH})
 
 include(YarpInstallationHelpers)
@@ -41,4 +39,3 @@ install(TARGETS ${PROJECTNAME} DESTINATION bin)
 
 #icubcontrib_finalize_export (${PROJECT_NAME})
 #icubcontrib_add_uninstall_target()
-

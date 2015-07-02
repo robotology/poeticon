@@ -36,12 +36,10 @@ bool BlobDescriptorModule::configure(ResourceFinder &rf)
     _rawImgInputPortName = getName( rf.check("raw_image_input_port",Value("/rawImg:i"),"Raw image input port (string)" ).asString() );
     binaryImgInputPortName = getName( rf.check("binary_image_input_port",Value("/binImg:i"),"Binary image input port (string)" ).asString() );
     _labeledImgInputPortName = getName( rf.check( "labeled_image_input_port",Value("/labeledImg:i"),"Labeled image input port (string)" ).asString() );
-    _rawImgOutputPortName = getName( rf.check( "raw_image_output_port",Value("/rawImg:o"),"Raw image output port (string)" ).asString() );
     _viewImgOutputPortName = getName( rf.check( "view_image_output_port",Value("/viewImg:o"),"View image output port (string)" ).asString() );
     _affDescriptorOutputPortName = getName( rf.check( "aff_descriptor_output_port",Value("/affDescriptor:o"),"Affordance descriptor output port (string)" ).asString() );
     toolAffDescriptorOutputPortName = getName( rf.check( "tool_aff_descriptor_output_port",Value("/toolAffDescriptor:o"),"Tool-Affordance descriptor output port (string)" ).asString() );
     bothPartsImgOutputPortName = getName( rf.check( "tool_parts_image_output_port",Value("/toolParts:o"),"Both tool parts image output port (string)" ).asString() );
-    _handlerPortName = getName( rf.check( "conf_port",Value("/conf"),"Configuration and message handling port (string)" ).asString() );
     _minAreaThreshold = rf.check( "min_area_threshold",Value(200),"Minimum number of pixels allowed for foreground objects" ).asInt();
     _maxAreaThreshold = rf.check( "max_area_threshold",Value(20000),"Maximum number of pixels allowed for foreground objects" ).asInt();
 
@@ -72,11 +70,6 @@ bool BlobDescriptorModule::configure(ResourceFinder &rf)
     //Network::init();
 
     /* open ports */
-    if(! _handlerPort.open(_handlerPortName.c_str()) )
-    {
-        cout << getName() << ": unable to open port" << _handlerPortName << endl;
-        return false;
-    }
     if(! _rawImgInputPort.open(_rawImgInputPortName.c_str()) )
     {
         cout << getName() << ": unable to open port" << _rawImgInputPortName << endl;
@@ -90,11 +83,6 @@ bool BlobDescriptorModule::configure(ResourceFinder &rf)
     if(! _labeledImgInputPort.open(_labeledImgInputPortName.c_str()) )
     {
         cout << getName() << ": unable to open port" << _labeledImgInputPortName << endl;
-        return false;
-    }
-    if(! _rawImgOutputPort.open(_rawImgOutputPortName.c_str()) )
-    {
-        cout << getName() << ": unable to open port" << _rawImgOutputPortName << endl;
         return false;
     }
     if(! _viewImgOutputPort.open(_viewImgOutputPortName.c_str()) )
@@ -172,7 +160,6 @@ bool BlobDescriptorModule::interruptModule()
     _rawImgInputPort.interrupt();
     binaryImgInputPort.interrupt();
     _labeledImgInputPort.interrupt();
-    _rawImgOutputPort.interrupt();
     _viewImgOutputPort.interrupt();
     _affDescriptorOutputPort.interrupt();
     toolAffDescriptorOutputPort.interrupt();
@@ -191,7 +178,6 @@ bool BlobDescriptorModule::close()
     _rawImgInputPort.close();
     binaryImgInputPort.close();
     _labeledImgInputPort.close();
-    _rawImgOutputPort.close();
     _viewImgOutputPort.close();
     _affDescriptorOutputPort.close();
     toolAffDescriptorOutputPort.close();
@@ -1130,12 +1116,6 @@ bool BlobDescriptorModule::updateModule()
             );
         }
     }
-
-    // output the original image
-    ImageOf<PixelBgr> &yarpRawOutputImage = _rawImgOutputPort.prepare();
-    yarpRawOutputImage = _yarpRawImg;
-    _rawImgOutputPort.setEnvelope(writestamp);
-    _rawImgOutputPort.write();
 
     // output image to view results
     if (opencvViewImg != NULL)

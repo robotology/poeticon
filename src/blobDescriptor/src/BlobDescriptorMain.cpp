@@ -12,7 +12,7 @@
  * \defgroup icub_blobDescriptor blobDescriptor
  *   @ingroup icub_contrib_modules
  *
- * Compute a list of shape descriptors from a segmentation module.
+ * Compute a list of shape descriptors from a segmented image.
  *
  * The resulting descriptors can then be used in a number of applications:
  * - reasoning about object affordances (action possibilities available in the
@@ -20,8 +20,8 @@
  * - object recognition;
  * - computation of optimal grasping points for robots.
  *
- * NOTE: this module was heavily changed for the POETICON++ 
- *       project in 2014. Main changes: \n
+ * NOTE: this module was heavily changed for the POETICON++ project during
+ *       2012-2015. Main changes: \n
  *       1. new required input port: binary image. \n
  *       2. new output port: descriptors of object top part and object bottom
  *       part, to be used for tool affordance learning. \n
@@ -30,7 +30,7 @@
  *
  * \section lib_sec Libraries
  *
- * OpenCV, YARP, iCub.
+ * OpenCV, YARP.
  *
  * \section parameters_sec Parameters
  *
@@ -55,10 +55,6 @@
  * configuration file (they can also be specified as command-line parameters if
  * you so wish).
  *
- * - <tt>conf_port /blobDescriptor/conf</tt> \n
- *   Complete configuration and message handling port name (currently only
- *   recognizes "quit")
- *
  * - <tt>raw_image_input_port /blobDescriptor/rawImg:i</tt> \n
  *   Complete raw image input port name
  *
@@ -67,9 +63,6 @@
  *
  * - <tt>labeled_image_input_port /blobDescriptor/labeledImg:i</tt> \n
  *   Complete labeled image input port name
- *
- * - <tt>raw_image_output_port /blobDescriptor/rawImg:o</tt> \n
- *   Complete raw image output port name (propagated image)
  *
  * - <tt>view_image_output_port /blobDescriptor/viewImg:o</tt> \n
  *   Complete port name of output image (displaying overlay edges, bounding
@@ -133,9 +126,6 @@
  *
  * <b>Output ports</b>
  *
- * - <tt>/blobDescriptor/rawImg:o</tt> \n
- *   Raw image output port
- *
  * - <tt>/blobDescriptor/viewImg:o</tt> \n
  *   Port to display output image, including overlay edges.
  *   Valid vs invalid objects (see ini parameters) are outlined with contours
@@ -181,8 +171,7 @@
  *
  * <b>Input/Output ports</b>
  *
- * - <tt>/blobDescriptor/conf</tt> \n
- *   Complete configuration and message handling port name (currently only recognizes "quit")
+ * - none
  *
  * \section in_data_sec Input Data Files
  *
@@ -194,8 +183,7 @@
  *
  * \section conf_file_sec Configuration Files
  *
- * - \c blobDescriptor.ini in \c icub-contrib/src/poeticon/poeticonpp/app/conf
- * - \c blobDescriptor.ini in \c backup/oldBuild/app/demoAffv2/conf (old version)
+ * - \c blobDescriptor.ini (optional)
  *
  * \section tested_os_sec Tested OS
  *

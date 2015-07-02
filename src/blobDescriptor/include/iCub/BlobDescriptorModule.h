@@ -24,15 +24,10 @@ using namespace yarp::sig;
 #include <iCub/BlobDescriptorSupport.h>
 
 /* OpenCV */
-// OpenCV 2
 #include <opencv2/opencv.hpp>
 #include <opencv2/core/core.hpp>
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
-// OpenCV 1
-//#include <opencv/cv.h>
-//#include <opencv/cxcore.h>
-//#include <opencv/highgui.h>
 
 /* system */
 #include <cmath>
@@ -47,18 +42,14 @@ class BlobDescriptorModule : public RFModule
     string                            _rawImgInputPortName;
     string                            binaryImgInputPortName;
     string                            _labeledImgInputPortName;
-    string                            _rawImgOutputPortName;
     string                            _viewImgOutputPortName;
     string                            _affDescriptorOutputPortName;
     string                            _trackerInitOutputPortName;
     string                            toolAffDescriptorOutputPortName;
     string                            bothPartsImgOutputPortName;
-    string                            _handlerPortName;
-    Port                              _handlerPort; /* rpc port to handle messages */
     BufferedPort<ImageOf<PixelBgr> >  _rawImgInputPort;
     BufferedPort<ImageOf<PixelBgr> >  binaryImgInputPort;
     BufferedPort<ImageOf<PixelInt> >  _labeledImgInputPort;
-    BufferedPort<ImageOf<PixelBgr> >  _rawImgOutputPort;
     BufferedPort<ImageOf<PixelBgr> >  _viewImgOutputPort;
     BufferedPort<Bottle>              _affDescriptorOutputPort;
     BufferedPort<Bottle>              toolAffDescriptorOutputPort;
