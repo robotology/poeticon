@@ -4,8 +4,8 @@
  *
  * \defgroup icub_sequentialLabeller sequentialLabeller
  *
- * Receive a raw image and a binary image from an object segmentation
- * application, compute a labelled image.
+ * Compute a labelled image from a binary segmented image (see below for
+ * definitions).
  *
  * \section intro_sec Description
  *
@@ -13,6 +13,8 @@
  * (usually blobSpotter or lumaChroma+blobExtractor or EDISON), obtain a
  * labelled image suitable for computing shape features (with blobDescriptor)
  * and carry on from there (object affordances).
+ *
+ * Definitions:
  *
  * Binary image: an image containing 0=background, 1=blobs
  * Labelled image: an image containing 0=background, 1=object, 2=another object,
@@ -30,34 +32,22 @@
  * <b>Configuration File Parameters</b>
  *
  * - name: prefix of ports created by this module (default /sequentialLabeler)
- * - raw_image_input_port (default <name>/rawImg:i)
- * - raw_image_output_port (default <name>/rawImg:o)
  * - binary_image_input_port (default <name>binImg:i)
  * - labeled_image_output_port (default <name>/labeledImg:o)
  *
  * \section portsa_sec Ports Accessed
  *
- * - <tt>propImg:o</tt> or <tt>rawImg:o</tt> \n
- *   Raw image port, propagated by a segmentation application
- *
  * - <tt>binary:o</tt> \n
  *   Binary image port, previously created by a segmentation application
- *   (usually /blobExtractor/binary:o in the case of lumaChroma)
  *
  * \section portsc_sec Ports Created
  *
  * <b>Input ports</b>
  *
- * - <tt>/sequentialLabeller/rawImg:i</tt> \n
- *   Raw image input port (propagated image)
- *
  * - <tt>/sequentialLabeller/binImg:i</tt> \n
  *   Binary image input port
  *
  * <b>Output ports</b>
- *
- * - <tt>/sequentialLabeller/rawImg:o</tt> \n
- *   Raw image output port (propagated image)
  *
  * - <tt>/sequentialLabeller/labeledImg:o</tt> \n
  *   Labelled image output port
@@ -68,10 +58,8 @@
  *
  * <b>Port Types</b>
  *
- * - <tt>BufferedPort<ImageOf<PixelRgb> >  rawImgInputPort</tt>
  * - <tt>BufferedPort<ImageOf<PixelMono> > binaryImgInputPort</tt>  
- * - <tt>BufferedPort<ImageOf<PixelRgb> >  rawImgOutputPort</tt>
- * - <tt>BufferedPort<ImageOf<PixelMono> >  labeledImgOutputPort</tt>
+ * - <tt>BufferedPort<ImageOf<PixelMono> > labeledImgOutputPort</tt>
  *
  * \section in_data_sec Input Data Files
  *
