@@ -118,11 +118,6 @@
     <to>/blobSpotter/fixRoi:i</to>
 </connection>
 <connection>
-    <from>/blobSpotter/propagated:o</from>
-    <to>/sequentialLabeller/rawImg:i</to>
-    <protocol>udp</protocol>
-</connection>
-<connection>
     <from>/blobSpotter/image:o</from>
     <to>/sequentialLabeller/binImg:i</to>
     <protocol>udp</protocol>
