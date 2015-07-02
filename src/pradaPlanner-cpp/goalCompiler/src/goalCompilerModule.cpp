@@ -125,9 +125,16 @@ void goalCompiler::openFiles()
 
 void goalCompiler::openPorts()
 {
-    plannerPort.open("/goal_imag/planner_cmd:io");
-    praxiconPort.open("/goal_imag/prax_inst:i");
-	objectQueryPort.open("/goal_imag/planner_rpc:o");
+	string portName;
+
+	portName = "/" + moduleName + "/planner_cmd:io";
+    plannerPort.open(portName);
+	
+	portName = "/" + moduleName + "/prax_inst:i";
+    praxiconPort.open(portName);
+
+	portName = "/" + moduleName + "/planner_rpc:o";
+	objectQueryPort.open(portName);
 }
 
 bool goalCompiler::close()

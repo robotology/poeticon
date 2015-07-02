@@ -499,9 +499,16 @@ void geoGround::openFiles()
 
 void geoGround::openPorts()
 {
-    plannerPort.open("/grounding/planner_cmd:io");
-    affordancePort.open("/grounding/Aff_cmd:io");
-	objectQueryPort.open("/grounding/planner_rpc:o");
+	string portName;
+
+	portName = "/" + moduleName + "/planner_cmd:io";
+    plannerPort.open(portName);
+
+	portName = "/" + moduleName + "/affordances_cmd:io";
+    affordancePort.open(portName);
+
+	portName = "/" + moduleName + "/planner_rpc:o";
+	objectQueryPort.open(portName);
 }
 
 bool geoGround::close()

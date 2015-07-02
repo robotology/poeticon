@@ -65,14 +65,26 @@ bool affComm::updateModule()
 
 void affComm::openPorts()
 {
-    geoPort.open("/affordanceCommunication/ground_cmd:io");
-    plannerPort.open("/affordanceCommunication/planner_cmd:io");
-    affnetPort.open("/affordanceCommunication/aff_query:io");
+	string portName;
+
+	portName = "/" + moduleName + "/ground_cmd:io";
+    geoPort.open(portName);
+
+	portName = "/" + moduleName + "/planner_cmd:io";
+    plannerPort.open(portName);
+
+	portName = "/" + moduleName + "/aff_query:io";
+    affnetPort.open(portName);
 
     // RPC ports
-    descQueryPort.open("/affordanceCommunication/opc2prada_query:io");
-    actionQueryPort.open("/affordanceCommunication/actInt_rpc:o");
-	objectQueryPort.open("/affordanceCommunication/planner_rpc:o");
+	portName = "/" + moduleName + "/opc2prada_query:io";
+    descQueryPort.open(portName);
+
+	portName = "/" + moduleName + "/actInt_rpc:o";
+    actionQueryPort.open(portName);
+
+	portName = "/" + moduleName + "/planner_rpc:o";
+	objectQueryPort.open(portName);
 }
 
 bool affComm::close()

@@ -22,14 +22,14 @@ service planningCycle_IDLserver
     * It will update the state, ground the rules, compile the goals, and plan the necessary steps to achieve the goals.
     * @returns ok upon receiving/understanding the command
     **/
-    bool startPlanning();
+    bool startPlanner();
 
     /**
     * Stop fully-automated planner.
     * Rules and symbols will have to be grounded again, goals will have to be recompiled.
     * @returns ok upon receiving/understanding the command
     **/
-    bool stopPlanning();
+    bool stopPlanner();
 
     /**
     * Pauses the fully-automated planner.

@@ -133,7 +133,7 @@ bool PlannerModule::resetConfig()
     return thread->resetConfig();
 }
 
-bool PlannerModule::stopPlanning()
+bool PlannerModule::stopPlanner()
 {
     thread->stopPlanning();
     return true;
@@ -188,7 +188,7 @@ bool PlannerModule::run1Step()
     return true;
 }
 
-bool PlannerModule::startPlanning()
+bool PlannerModule::startPlanner()
 {
     return thread->startPlanning();
 }

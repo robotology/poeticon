@@ -14,7 +14,7 @@ public:
   virtual bool read(yarp::os::ConnectionReader& connection);
 };
 
-class planningCycle_IDLserver_startPlanning : public yarp::os::Portable {
+class planningCycle_IDLserver_startPlanner : public yarp::os::Portable {
 public:
   bool _return;
   void init();
@@ -22,7 +22,7 @@ public:
   virtual bool read(yarp::os::ConnectionReader& connection);
 };
 
-class planningCycle_IDLserver_stopPlanning : public yarp::os::Portable {
+class planningCycle_IDLserver_stopPlanner : public yarp::os::Portable {
 public:
   bool _return;
   void init();
@@ -227,14 +227,14 @@ void planningCycle_IDLserver_quit::init() {
   _return = false;
 }
 
-bool planningCycle_IDLserver_startPlanning::write(yarp::os::ConnectionWriter& connection) {
+bool planningCycle_IDLserver_startPlanner::write(yarp::os::ConnectionWriter& connection) {
   yarp::os::idl::WireWriter writer(connection);
   if (!writer.writeListHeader(1)) return false;
-  if (!writer.writeTag("startPlanning",1,1)) return false;
+  if (!writer.writeTag("startPlanner",1,1)) return false;
   return true;
 }
 
-bool planningCycle_IDLserver_startPlanning::read(yarp::os::ConnectionReader& connection) {
+bool planningCycle_IDLserver_startPlanner::read(yarp::os::ConnectionReader& connection) {
   yarp::os::idl::WireReader reader(connection);
   if (!reader.readListReturn()) return false;
   if (!reader.readBool(_return)) {
@@ -244,18 +244,18 @@ bool planningCycle_IDLserver_startPlanning::read(yarp::os::ConnectionReader& con
   return true;
 }
 
-void planningCycle_IDLserver_startPlanning::init() {
+void planningCycle_IDLserver_startPlanner::init() {
   _return = false;
 }
 
-bool planningCycle_IDLserver_stopPlanning::write(yarp::os::ConnectionWriter& connection) {
+bool planningCycle_IDLserver_stopPlanner::write(yarp::os::ConnectionWriter& connection) {
   yarp::os::idl::WireWriter writer(connection);
   if (!writer.writeListHeader(1)) return false;
-  if (!writer.writeTag("stopPlanning",1,1)) return false;
+  if (!writer.writeTag("stopPlanner",1,1)) return false;
   return true;
 }
 
-bool planningCycle_IDLserver_stopPlanning::read(yarp::os::ConnectionReader& connection) {
+bool planningCycle_IDLserver_stopPlanner::read(yarp::os::ConnectionReader& connection) {
   yarp::os::idl::WireReader reader(connection);
   if (!reader.readListReturn()) return false;
   if (!reader.readBool(_return)) {
@@ -265,7 +265,7 @@ bool planningCycle_IDLserver_stopPlanning::read(yarp::os::ConnectionReader& conn
   return true;
 }
 
-void planningCycle_IDLserver_stopPlanning::init() {
+void planningCycle_IDLserver_stopPlanner::init() {
   _return = false;
 }
 
@@ -743,22 +743,22 @@ bool planningCycle_IDLserver::quit() {
   bool ok = yarp().write(helper,helper);
   return ok?helper._return:_return;
 }
-bool planningCycle_IDLserver::startPlanning() {
+bool planningCycle_IDLserver::startPlanner() {
   bool _return = false;
-  planningCycle_IDLserver_startPlanning helper;
+  planningCycle_IDLserver_startPlanner helper;
   helper.init();
   if (!yarp().canWrite()) {
-    yError("Missing server method '%s'?","bool planningCycle_IDLserver::startPlanning()");
+    yError("Missing server method '%s'?","bool planningCycle_IDLserver::startPlanner()");
   }
   bool ok = yarp().write(helper,helper);
   return ok?helper._return:_return;
 }
-bool planningCycle_IDLserver::stopPlanning() {
+bool planningCycle_IDLserver::stopPlanner() {
   bool _return = false;
-  planningCycle_IDLserver_stopPlanning helper;
+  planningCycle_IDLserver_stopPlanner helper;
   helper.init();
   if (!yarp().canWrite()) {
-    yError("Missing server method '%s'?","bool planningCycle_IDLserver::stopPlanning()");
+    yError("Missing server method '%s'?","bool planningCycle_IDLserver::stopPlanner()");
   }
   bool ok = yarp().write(helper,helper);
   return ok?helper._return:_return;
@@ -1004,9 +1004,9 @@ bool planningCycle_IDLserver::read(yarp::os::ConnectionReader& connection) {
       reader.accept();
       return true;
     }
-    if (tag == "startPlanning") {
+    if (tag == "startPlanner") {
       bool _return;
-      _return = startPlanning();
+      _return = startPlanner();
       yarp::os::idl::WireWriter writer(reader);
       if (!writer.isNull()) {
         if (!writer.writeListHeader(1)) return false;
@@ -1015,9 +1015,9 @@ bool planningCycle_IDLserver::read(yarp::os::ConnectionReader& connection) {
       reader.accept();
       return true;
     }
-    if (tag == "stopPlanning") {
+    if (tag == "stopPlanner") {
       bool _return;
-      _return = stopPlanning();
+      _return = stopPlanner();
       yarp::os::idl::WireWriter writer(reader);
       if (!writer.isNull()) {
         if (!writer.writeListHeader(1)) return false;
@@ -1303,8 +1303,8 @@ std::vector<std::string> planningCycle_IDLserver::help(const std::string& functi
   if(showAll) {
     helpString.push_back("*** Available commands:");
     helpString.push_back("quit");
-    helpString.push_back("startPlanning");
-    helpString.push_back("stopPlanning");
+    helpString.push_back("startPlanner");
+    helpString.push_back("stopPlanner");
     helpString.push_back("pausePlanner");
     helpString.push_back("resumePlanner");
     helpString.push_back("goBack");
@@ -1335,15 +1335,15 @@ std::vector<std::string> planningCycle_IDLserver::help(const std::string& functi
       helpString.push_back("Quit the module. ");
       helpString.push_back("Abruptly terminates the module and the rpc port ");
     }
-    if (functionName=="startPlanning") {
-      helpString.push_back("bool startPlanning() ");
+    if (functionName=="startPlanner") {
+      helpString.push_back("bool startPlanner() ");
       helpString.push_back("Start fully-automated planner. ");
       helpString.push_back("The planner may be paused, unpaused or stopped. ");
       helpString.push_back("It will update the state, ground the rules, compile the goals, and plan the necessary steps to achieve the goals. ");
       helpString.push_back("@returns ok upon receiving/understanding the command ");
     }
-    if (functionName=="stopPlanning") {
-      helpString.push_back("bool stopPlanning() ");
+    if (functionName=="stopPlanner") {
+      helpString.push_back("bool stopPlanner() ");
       helpString.push_back("Stop fully-automated planner. ");
       helpString.push_back("Rules and symbols will have to be grounded again, goals will have to be recompiled. ");
       helpString.push_back("@returns ok upon receiving/understanding the command ");
