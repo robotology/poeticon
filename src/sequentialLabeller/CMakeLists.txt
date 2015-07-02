@@ -7,19 +7,14 @@
 cmake_minimum_required(VERSION 2.6)
 
 set(PROJECTNAME sequentialLabeller)
-
-# Start a project.
 project(${PROJECTNAME})
 
-#set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_CURRENT_SOURCE_DIR})
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR})
 
 find_package(YARP)
-find_package(ICUB)
 find_package(ICUBcontrib)
 
 list(APPEND CMAKE_MODULE_PATH ${YARP_MODULE_PATH})
-list(APPEND CMAKE_MODULE_PATH ${ICUB_MODULE_PATH})
 list(APPEND CMAKE_MODULE_PATH ${ICUBCONTRIB_MODULE_PATH})
 
 include(YarpInstallationHelpers)

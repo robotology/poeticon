@@ -10,8 +10,9 @@
  * \section intro_sec Description
  *
  * Use this module in combination with your favourite segmentation algorithm
- * (usually lumaChroma+blobExtractor or EDISON), obtain a labelled image
- * suitable for computing object affordances (blobDescriptor module).
+ * (usually blobSpotter or lumaChroma+blobExtractor or EDISON), obtain a
+ * labelled image suitable for computing shape features (with blobDescriptor)
+ * and carry on from there (object affordances).
  *
  * Binary image: an image containing 0=background, 1=blobs
  * Labelled image: an image containing 0=background, 1=object, 2=another object,
@@ -19,7 +20,7 @@
  *
  * \section lib_sec Libraries
  *
- * YARP, iCub (?), OpenCV.
+ * YARP, OpenCV.
  *
  * <b>Command-line Parameters</b>
  *
@@ -37,9 +38,7 @@
  * \section portsa_sec Ports Accessed
  *
  * - <tt>propImg:o</tt> or <tt>rawImg:o</tt> \n
- *   Raw image port, propagated by a segmentation application (usually
- *   /blobExtractor/propImg:o in the case of lumaChroma,
- *   /edisonSegmentation/rawImg:o in the case of EDISON)
+ *   Raw image port, propagated by a segmentation application
  *
  * - <tt>binary:o</tt> \n
  *   Binary image port, previously created by a segmentation application
@@ -130,25 +129,19 @@ class SequentialLabellerModule : public RFModule
     /* private class variables and module parameters */
     string                            _moduleName;
 
-    string                            rawImgInputPortName;
-    string                            rawImgOutputPortName;
     string                            binaryImgInputPortName;
     string                            labeledImgOutputPortName;
     /* yarp image pointers to access image ports */
-    ImageOf<PixelRgb>                *yarpRawInputPtr;
     ImageOf<PixelMono>               *yarpBinaryInputPtr;
     /* yarp internal image buffers */ 
-    ImageOf<PixelRgb>                 yarpRawImg;
     ImageOf<PixelMono>                yarpBinaryImg;
-    ImageOf<PixelMono>                 yarpLabeledImg;
+    ImageOf<PixelMono>                yarpLabeledImg;
 
     int                               w, h;
     CvSize                            sz;
     
-    BufferedPort<ImageOf<PixelRgb> >  rawImgInputPort;
     BufferedPort<ImageOf<PixelMono> > binaryImgInputPort;
-    BufferedPort<ImageOf<PixelRgb> >  rawImgOutputPort;
-    BufferedPort<ImageOf<PixelMono> >  labeledImgOutputPort;
+    BufferedPort<ImageOf<PixelMono> > labeledImgOutputPort;
 
 public:
     virtual bool configure(ResourceFinder &rf); /* configure module parameters, return true if successful */

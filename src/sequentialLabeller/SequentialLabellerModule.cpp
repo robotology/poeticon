@@ -25,17 +25,6 @@ bool SequentialLabellerModule::configure(ResourceFinder &rf)
     setName( ("/"+_moduleName).c_str() );
 
     /* now, get the remaining parameters */
-    rawImgInputPortName         = getName(
-                                           rf.check( "raw_image_input_port",
-                                                     Value("/rawImg:i"),
-                                                     "Raw image input port (string)" ).asString()
-                                           );
-    rawImgOutputPortName        = getName(
-                                           rf.check( "raw_image_output_port",
-                                                     Value("/rawImg:o"),
-                                                     "Raw image output port (string)" ).asString()
-                                           );
-                                           
     binaryImgInputPortName      = getName(
                                            rf.check( "binary_image_input_port",
                                                      Value("/binImg:i"),
@@ -49,19 +38,9 @@ bool SequentialLabellerModule::configure(ResourceFinder &rf)
     //Network::init();
     
     /* open ports */
-    if(! rawImgInputPort.open(rawImgInputPortName.c_str()) )
-    {
-        cout << getName() << ": unable to open port" << rawImgInputPortName << endl;
-        return false;
-    }
     if(! binaryImgInputPort.open(binaryImgInputPortName.c_str()) )
     {
         cout << getName() << ": unable to open port" << binaryImgInputPortName << endl;
-        return false;
-    }
-    if(! rawImgOutputPort.open(rawImgOutputPortName.c_str()) )
-    {
-        cout << getName() << ": unable to open port" << rawImgOutputPortName << endl;
         return false;
     }
     if(! labeledImgOutputPort.open(labeledImgOutputPortName.c_str()) )
@@ -70,33 +49,22 @@ bool SequentialLabellerModule::configure(ResourceFinder &rf)
         return false;
     }
     
-    yarpRawInputPtr    = rawImgInputPort.read(true);
     yarpBinaryInputPtr = binaryImgInputPort.read(true);
     
-    if (yarpRawInputPtr!=NULL && yarpBinaryInputPtr!=NULL)
+    if (yarpBinaryInputPtr!=NULL)
     {
-    
-        /* check that raw and binary image dimensions are equal */
-        if( (yarpRawInputPtr->width() != yarpBinaryInputPtr->width()) || 
-            (yarpRawInputPtr->height() != yarpBinaryInputPtr->height()) )
-        {
-            cout << getName() << ": input image dimensions differ. Exiting..." << endl;
-            return false;
-        }    
-        w   = yarpRawInputPtr->width();
-        h   = yarpRawInputPtr->height();
+        w   = yarpBinaryInputPtr->width();
+        h   = yarpBinaryInputPtr->height();
         sz  = cvSize(w, h);
 
         /* allocate internal image buffers */
-        yarpRawImg.resize(w,h);
         yarpBinaryImg.resize(w,h);
         yarpLabeledImg.resize(w,h);
-    
     }
 
     return true; /* tell RFModule that everything went well, so that it will run the module */
 }
-    
+
 /**
  * Try to halt operations by threads managed by the module. Called asynchronously
  * after a quit command is received.
@@ -104,8 +72,6 @@ bool SequentialLabellerModule::configure(ResourceFinder &rf)
 bool SequentialLabellerModule::interruptModule()
 {
     cout << getName() << ": interrupting module, for port cleanup." << endl;
-    rawImgInputPort.interrupt();
-    rawImgOutputPort.interrupt();
     binaryImgInputPort.interrupt();
     labeledImgOutputPort.interrupt();
     return true;
@@ -118,8 +84,6 @@ bool SequentialLabellerModule::interruptModule()
 bool SequentialLabellerModule::close()
 {
     cout << getName() << ": closing module." << endl;
-    rawImgInputPort.close();
-    rawImgOutputPort.close();
     binaryImgInputPort.close();
     labeledImgOutputPort.close();
 
@@ -132,46 +96,28 @@ bool SequentialLabellerModule::close()
  */
 bool SequentialLabellerModule::updateModule()
 {
-    Stamp rawstamp, binarystamp, writestamp; 
-    
-    yarpRawInputPtr    = rawImgInputPort.read(true);
+    Stamp stamp; 
+
     yarpBinaryInputPtr = binaryImgInputPort.read(true);
 
-    /* check that both images have timestamps */
-    if( !rawImgInputPort.getEnvelope(rawstamp) || !binaryImgInputPort.getEnvelope(binarystamp) )
+    /* check if input image has timestamp */
+    bool useStamp = true;
+    if( !binaryImgInputPort.getEnvelope(stamp) )
     {
-        cout << getName() << ": this module requires ports with valid timestamp data. Stamps are missing. Exiting..." << endl;
-        return false;
+        cout << getName() << ": input image has no timestamp." << endl;
+        useStamp = false;
     }
-    /* synchronize the two images, if one of them is delayed, so that they correspond */
-    while( rawstamp.getCount() < binarystamp.getCount() )
-    {
-        cout << "warning: input images have different timestamps." << endl;
-        yarpRawInputPtr = rawImgInputPort.read(true);
-        rawImgInputPort.getEnvelope(rawstamp);
-    }
-    while( rawstamp.getCount() > binarystamp.getCount() )
-    {
-        cout << "warning: input images have different timestamps." << endl;
-        yarpBinaryInputPtr = binaryImgInputPort.read(true);
-        binaryImgInputPort.getEnvelope(binarystamp);
-    }
-    
-    // here both stamps are equal
-    writestamp = rawstamp;
 
-    if( yarpRawInputPtr==NULL || yarpBinaryInputPtr==NULL)
+    if(yarpBinaryInputPtr==NULL)
     {
         cout << getName() << ": no data on input port(s). Exiting..." << endl;
         return false;    
     }
-    yarpRawImg     = *yarpRawInputPtr;
     yarpBinaryImg  = *yarpBinaryInputPtr;
 
     // get OpenCV pointers to images, to more easily call OpenCV functions
     // TODO: use OpenCV 2 APIs
 
-    IplImage *opencvRawImg     = (IplImage *) yarpRawImg.getIplImage();
     IplImage *opencvBinaryImg  = (IplImage *) yarpBinaryImg.getIplImage();
     
     // call sequential labelling algorithm
@@ -189,18 +135,13 @@ bool SequentialLabellerModule::updateModule()
         cvCopyImage( opencvLabeledImg, (IplImage *)yarpLabeledImg.getIplImage() );
     }
 
-    /* output original (propagated) raw image */
-    ImageOf<PixelRgb> &yarpRawOutputImage = rawImgOutputPort.prepare();
-    yarpRawOutputImage = yarpRawImg;
-    rawImgOutputPort.setEnvelope(writestamp);
-    rawImgOutputPort.write();
-
     /* output sequentially labelled image */    
     ImageOf<PixelMono> &yarpLabeledOutputImage = labeledImgOutputPort.prepare();
     yarpLabeledOutputImage = yarpLabeledImg;
-    labeledImgOutputPort.setEnvelope(writestamp);
+    if(useStamp)
+        labeledImgOutputPort.setEnvelope(stamp);
     labeledImgOutputPort.write();
-    
+
     cvReleaseImage(&opencvLabeledImg);
     cvReleaseImage(&opencvTempImg);
 
