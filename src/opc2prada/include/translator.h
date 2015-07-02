@@ -20,11 +20,9 @@
 #include <yarp/os/RpcClient.h>
 #include <yarp/os/Time.h>
 #include <yarp/os/Vocab.h>
-//#include <cstdio>
-//#include <iostream>
-#include <fstream>
-#include <string.h>
 
+#include <fstream>
+#include <string>
 
 #include "OPC2PRADA_IDL.h"
 
@@ -66,11 +64,10 @@ class TranslatorModule: public RFModule, public OPC2PRADA_IDL {
 
     Thread_read *readingThread;
     
-    ofstream myfile,myfile2;
+    ofstream stateFile;
 
 private:
-    //const char* objIDsFileName, *stateFileName;
-    string objIDsFileName, stateFileName;
+    string stateFileName;
 public:
     
     double getPeriod();
@@ -80,18 +77,12 @@ public:
     bool close();
     switchCase hashtable(string command);
 
-        // IDL functions
+    // IDL functions
     bool attach(yarp::os::RpcServer &source);
     Bottle query2d(const int32_t ObjectID);
     Bottle querytool2d(const int32_t ObjectID);
     Bottle loadObjects();
     bool update();
     bool quit();
-
-
-
-
-
-
 };
 #endif // TRANSLATOR_H

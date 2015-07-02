@@ -16,7 +16,7 @@ using namespace std;
 
 // Translator Module
 double TranslatorModule::getPeriod() {
-    return 0;
+    return 0.0;
 }
 TranslatorModule::switchCase TranslatorModule::hashtable(string command){
     if(command=="name")  return name;
@@ -76,15 +76,8 @@ bool TranslatorModule::update(){
     //cout << "dataBase = " << dataBase.toString().c_str() << endl;
 
     if(dataBase.size()>0 && (dataBase.get(1).asString()!="empty")) {
-        //cout << "f1: " << objIDsFileName << "f2: " << stateFileName << endl;
-        //myfile.open( objIDsFileName);
-        //myfile2.open ( stateFileName);
+        stateFile.open ( stateFileName.c_str());
 
-        myfile.open( objIDsFileName.c_str());
-        myfile2.open ( stateFileName.c_str());
-
-        //myfile.open ("Object names-IDs.dat");
-        //myfile2.open ("state.dat");
         idsp = ids2.get(1).asList();
         idsp = idsp->get(1).asList();
         for(int i=1;i<dataBase.size();i++){ // for each object
@@ -94,7 +87,6 @@ bool TranslatorModule::update(){
                 switchCase r = hashtable(propriedade->get(0).asString());
                 switch(r) {
                     case name:{
-                        myfile <<"(" << idsp->get((i-1)).asInt() << "," << propriedade->get(1).asString().c_str() << ");";
                         break;
                     }
                     case desc: {
@@ -112,7 +104,7 @@ bool TranslatorModule::update(){
                         cout << "Obj_"<< idsp->get((i-1)).asInt()  << ": On_top Bottle: " << ontop->toString().c_str() << endl << "size" << ontop->size() << endl;
 
                         for(int k=0; k < ontop->size(); k++){
-                            myfile2 << idsp->get((i-1)).asInt() <<"_on_" <<ontop->get(k).asInt() <<"() ";
+                            stateFile << idsp->get((i-1)).asInt() <<"_on_" <<ontop->get(k).asInt() <<"() ";
                         }
                         break;
 
@@ -120,37 +112,37 @@ bool TranslatorModule::update(){
                     case re_w: {
                         Bottle *reachable = propriedade->get(1).asList();
                         for(int k=0; k < reachable->size(); k++){
-                            myfile2 << idsp->get((i-1)).asInt() <<"_isreachable_with_" <<reachable->get(k).asInt() <<"() ";
+                            stateFile << idsp->get((i-1)).asInt() <<"_isreachable_with_" <<reachable->get(k).asInt() <<"() ";
                         }
                         break;
                     }
                     case pu_w: {
                         Bottle *pullable = propriedade->get(1).asList();
                         for(int k=0; k < pullable->size(); k++){
-                            myfile2 << idsp->get((i-1)).asInt() <<"_ispullable_with_" <<pullable->get(k).asInt() <<"() ";
+                            stateFile << idsp->get((i-1)).asInt() <<"_ispullable_with_" <<pullable->get(k).asInt() <<"() ";
                         }
                         break;
                     }
 
                     case is_h: {
                         if(propriedade->get(1).asString() == "true") {
-                            myfile2 << idsp->get((i-1)).asInt() <<"_ishand" <<"() ";
+                            stateFile << idsp->get((i-1)).asInt() <<"_ishand" <<"() ";
                         }
                         break;
                     }
 
                     case free: {
                         if(propriedade->get(1).asString() == "true") {
-                            myfile2 << idsp->get((i-1)).asInt() <<"_clearhand" <<"() ";
+                            stateFile << idsp->get((i-1)).asInt() <<"_clearhand" <<"() ";
                         }
                         break;
                     }
                     case in_h: {
                         if(propriedade->get(1).asString() == "right") {
-                            myfile2 << idsp->get((i-1)).asInt() <<"_inhand_" << "12" << "() "; //according to dbhands.ini - id 12 corresponds to the right hand
+                            stateFile << idsp->get((i-1)).asInt() <<"_inhand_" << "12" << "() "; //according to dbhands.ini - id 12 corresponds to the right hand
                         }
                         if(propriedade->get(1).asString() == "left") {
-                            myfile2 << idsp->get((i-1)).asInt() <<"_inhand_" << "11" << "() "; //according to dbhands.ini - id 12 corresponds to the right hand
+                            stateFile << idsp->get((i-1)).asInt() <<"_inhand_" << "11" << "() "; //according to dbhands.ini - id 12 corresponds to the right hand
                         }
                         break;
                     }
@@ -164,13 +156,11 @@ bool TranslatorModule::update(){
             } // end for property
         } // end for object
 
-        myfile.close();
-        myfile2.close();
+        stateFile.close();
         return true;
     } // end if
     cout << "database is empty!"<< endl;
     return false; // return fail if the database is empty
-    
 }
 
 Bottle TranslatorModule::query2d(const int32_t ObjectID_r){
@@ -194,7 +184,6 @@ Bottle TranslatorModule::query2d(const int32_t ObjectID_r){
     }
     Bottle *objecto = dataBase.get(ObjectID+1).asList();
 
-    // Giovanni
     if (objecto!=NULL)
     {
 
@@ -241,7 +230,6 @@ Bottle TranslatorModule::querytool2d(const int32_t ObjectID_r){
     }
     Bottle *objecto = dataBase.get(ObjectID+1).asList();
 
-    // Giovanni
     if (objecto!=NULL)
     {
 
@@ -356,32 +344,11 @@ bool   TranslatorModule::configure(yarp::os::ResourceFinder &rf) {
         return false;    
     }
     else {
-        cout << "Context FOUND!" << endl;
-        //objIdsName=path+objIdsName;
-        objIDsFileName=path+objIdsName;//objIdsName.c_str();
-        //stateName = path+stateName;
-        stateFileName = path+stateName;//stateName.c_str();
-        cout << objIDsFileName << " and " << stateFileName<< endl;
+        cout << "Context FOUND! Full path of state file:" << endl;
+        stateFileName = path+stateName;
+        cout << stateFileName<< endl;
     }
 
-/*    if(rf.findFileByName("Object_names-IDs.dat") ==""){ // create file
-        cout << "Object_names-IDs.dat -> file not found" << endl;
-        return false;
-    }
-    else{
-        objIDsFileName = rf.findFileByName("Object_names-IDs.dat").c_str();
-    }
-    if(rf.findFileByName("state.dat") == "") { // create file
-        cout << "state.dat -> file not found" << endl;
-        return false;
-    } 
-    else{
-        stateFileName = rf.findFileByName("state.dat").c_str();
-    }
-*/
-
-
-    
     /* Create the reading rate thread */
     readingThread = new Thread_read(&port_broad,
                                 &rpc_port,
@@ -395,7 +362,6 @@ bool   TranslatorModule::configure(yarp::os::ResourceFinder &rf) {
 
     return true;
 }
-
 
 //// Thread_read
 
@@ -492,4 +458,3 @@ void Thread_read::run(){
         }
     }
 }
-
