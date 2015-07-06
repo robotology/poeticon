@@ -32,11 +32,3 @@ bool is_integer(const float k)
 {
     return std::floor(k)==k;
 }
-
-/**********************************************************/
-bool vectorsDiffer(const std::vector<int> &v1, const std::vector<int> &v2)
-{
-    return std::lexicographical_compare(v1.begin(),v1.end(),
-                                        v2.begin(),v2.end());
-}
-
