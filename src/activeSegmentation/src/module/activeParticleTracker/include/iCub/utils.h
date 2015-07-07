@@ -35,10 +35,13 @@
 #include <yarp/sig/Vector.h>
 #include <yarp/sig/Image.h>
 #include <yarp/os/Event.h>
+#include <yarp/os/LogStream.h>
 #include "iCub/targetContainer.h"
 #include "iCub/activeSeg.h"
 #include <gsl/gsl_rng.h>
 #include <gsl/gsl_randist.h>
+
+#include <pthread.h>
 
 #include <cv.h>
 #include <highgui.h>

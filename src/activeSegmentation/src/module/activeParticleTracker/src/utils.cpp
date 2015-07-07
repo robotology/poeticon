@@ -98,6 +98,7 @@ ParticleThread::~ParticleThread()
             free ( particles );
 
         gsl_rng_free ( rng );
+ 
     }
 }
 
@@ -124,14 +125,16 @@ void ParticleThread::run()
 {
     event.wait();
     mutex.wait();
+    //yInfo() << "[ParticleThread::run] " << __LINE__;
     if (shouldStop)
     {
+        yInfo() << "[ParticleThread::run] should stop" << __LINE__;
         mutex.post();
         return;
     }
     
     if (!image)
-        fprintf(stdout, "received a NULL image, skipping frame\n");
+        yError() << "received a NULL image, skipping frame";
     
     if (image)
     {
@@ -201,16 +204,25 @@ void ParticleThread::run()
 /**********************************************************/
 void ParticleThread::onStop()
 {
+    yDebug() << "[ParticleThread::onStop] start unlocking ";
     shouldStop = true;
     mutexThread.unlock();
     event.signal();
+   
+    yDebug() << "[ParticleThread::onStop] unlocking done ";
 }
 
 /**********************************************************/
 void ParticleThread::threadRelease()
 {
+    yDebug() << "[ParticleThread::threadRelease] start releasing";
+    mutex.wait();
     if (image)
         cvReleaseImage(&image);
+    
+    mutex.post();
+    
+    yDebug() << "[ParticleThread::threadRelease] releasing done";
 }
 
 /**********************************************************/
@@ -516,7 +528,7 @@ float ParticleThread::histo_dist_sq( histogram* h1, histogram* h2 )
     else
     {
         // should be impossible to get here...
-        fprintf(stdout,"Error in similarity computation!\n");
+        yError() << "[articleThread::histo_dist_sq] Error in similarity computation!";
         return 1.0f-sum;
     }
 }

@@ -41,7 +41,7 @@ bool TRACKERModule::configure(yarp::os::ResourceFinder &rf)
 
     if (!rpcPort.open(handlerPortName.c_str()))
     {
-        fprintf(stdout, "%s : Unable to open port %s\n", getName().c_str(), handlerPortName.c_str());
+        yError() << " Unable to open port " << getName().c_str() << " " << handlerPortName.c_str();
         return false;
     }
 
@@ -69,12 +69,19 @@ bool TRACKERModule::interruptModule()
 bool TRACKERModule::close()
 {
     rpcPort.close();
-    fprintf(stdout, "starting the shutdown procedure\n");
+    
+    yDebug() << "[TRACKERModule::close] starting the shutdown procedure" ;
+    
+    trackerManager->stopTrackers();
     trackerManager->interrupt();
     trackerManager->close();
-    fprintf(stdout, "deleting thread\n");
+    
+    yDebug() << "[TRACKERModule::close] deleting manager" ;
+    
     delete trackerManager;
-    fprintf(stdout, "done deleting thread\n");
+    
+    yDebug() << "[TRACKERModule::close] done deleting manager" ;
+    
     return true;
 }
 /**********************************************************/
@@ -142,6 +149,7 @@ bool TRACKERModule::resume(const int32_t id)
 /**********************************************************/
 bool TRACKERModule::reset()
 {
+
     trackerManager->stopTrackers();
     trackerManager->flag = false;
     return true;
@@ -190,7 +198,8 @@ TRACKERManager::~TRACKERManager()
 /**********************************************************/
 TRACKERManager::TRACKERManager( const string &moduleName, yarp::os::ResourceFinder &rf ) : container(TargetObjectRecord::getInstance())
 {
-    fprintf(stdout,"initialising Variables\n");
+    yInfo() << "initialising Variables\n";
+    
     this->moduleName = moduleName;
     fixationPoint.setManager(this);
     orig = NULL;
@@ -223,8 +232,9 @@ bool TRACKERManager::open()
 
     outTargetPortName = "/" + moduleName + "/target:o";
     targetOutPort.open( outTargetPortName.c_str() );
-
-    checkClosure=false;
+    
+    //yarp::os::Network::connect(("/"+moduleName+"/image:o").c_str(), "/seg");
+    //yarp::os::Network::connect("/icub/camcalib/left/out",("/"+moduleName+"/image:i").c_str());
 
     return true;
 }
@@ -232,20 +242,8 @@ bool TRACKERManager::open()
 /**********************************************************/
 void TRACKERManager::close()
 {
-    fprintf(stdout,"now closing ports...\n");
+    yDebug() << "[TRACKERManager::close] now closing ports" ;
     
-    
-    fprintf(stdout, "Going to stop %d Threads\n",(int)workerThreads.size());
-    
-    std::map< unsigned int, ParticleThread* >::iterator itr;
-    for (itr = workerThreads.begin(); itr!=workerThreads.end(); itr++)
-    {
-        itr->second->stop();
-        delete itr->second;
-    }
-    fprintf(stdout,"done stopping the threads port...\n");
-    
-    mutex.wait();
     imageOutPort.close();
 	fixationPoint.close();
     targetOutPort.writeStrict();
@@ -253,21 +251,20 @@ void TRACKERManager::close()
     imageSegOutPort.close();
     imageTplOutPort.close();
     BufferedPort<ImageOf<PixelRgb> >::close();
-    mutex.post();
-    fprintf(stdout,"finished closing the read port...\n");
+
+    yDebug() << "[TRACKERManager::close] finished closing ports" ;
 }
 
 /**********************************************************/
 void TRACKERManager::interrupt()
 {
-    checkClosure=true;
-    fprintf(stdout,"cleaning up...\n");
-    fprintf(stdout,"attempting to interrupt ports\n");
-
+    yDebug() << "[TRACKERManager::interrupt] attempting port interrupts " ;
+    
 	fixationPoint.interrupt();
 
     BufferedPort<ImageOf<PixelRgb> >::interrupt();
-    fprintf(stdout,"finished interrupt ports\n");
+    
+    yDebug() << "[TRACKERManager::interrupt] finished port interrupts " ;
 }
 
 /**********************************************************/
@@ -281,10 +278,16 @@ bool TRACKERManager::countFrom(int index)
 bool TRACKERManager::stopTracker(int id)
 {
     mutex.wait();
-    fprintf(stdout,"attempting to stop tracker id %d\n", id);
+    
+    yDebug() << "[TRACKERManager::stopTracker] attempting to stop tracker id " << id;
+    
+    workerThreads[id]->onStop();
     workerThreads[id]->stop();
     delete workerThreads[id];
     workerThreads.erase(id);
+
+    yDebug() << "[TRACKERManager::stopTracker] stopping tracker id " << id << "done";
+    
     mutex.post();
     return true;
 }
@@ -293,15 +296,15 @@ bool TRACKERManager::stopTracker(int id)
 bool TRACKERManager::pauseTracker(int id)
 {
     mutex.wait();
-    fprintf(stdout,"attempting to pause tracker id %d\n", id);
+    yDebug() << "[TRACKERManager::pauseTracker] attempting to pause tracker id \n" << id ;
     if (workerThreads[id]->isRunning())
     {
         workerThreads[id]->suspend();
         pausedThreads.push_back(id);
-        fprintf(stdout,"done pausing the tracker id %d\n", id);
+        yDebug() << "[TRACKERManager::pauseTracker] done pausing tracker id \n" << id ;
     }
     else
-        fprintf(stdout,"failed to pause tracker id %d - Not running..\n", id);
+        yError() << "[TRACKERManager::pauseTracker] failed to pause tracker id %d " << id << " - Not running.. ";
     
     mutex.post();
     return true;
@@ -311,7 +314,7 @@ bool TRACKERManager::pauseTracker(int id)
 bool TRACKERManager::resumeTracker(int id)
 {
     mutex.wait();
-    fprintf(stdout,"attempting to resume tracker id %d\n", id);
+    yDebug() << "[TRACKERManager::resumeTracker] attempting to resume tracker id \n" << id ;
     
     if (workerThreads[id]->isSuspended())
     {
@@ -319,10 +322,10 @@ bool TRACKERManager::resumeTracker(int id)
         
         pausedThreads.erase(std::remove(pausedThreads.begin(), pausedThreads.end(), id), pausedThreads.end());
         
-        fprintf(stdout,"done resuming the tracker id %d\n", id);
+        yDebug() << "[TRACKERManager::resumeTracker] done resuming tracker id \n" << id ;
     }
     else
-        fprintf(stdout,"failed to resume tracker id %d - Aleady running..\n", id);
+        yError() << "[TRACKERManager::resumeTracker] failed to resume tracker id %d " << id << " - Aleady running.. ";
     
     mutex.post();
     return true;
@@ -372,9 +375,9 @@ int TRACKERManager::processFixationPoint(Bottle &b)
     int id = -1;
 
     if (b.get(0).asString()=="again")
-        fprintf(stdout,"------------------TO DO-------------------send the previous segmentation(s) as template (s) \n");
+        yDebug() << "[TRACKERManager::processFixationPoint] TO DO send the previous segmentation(s) as template (s)" ;
     else if (b.get(0).asDouble() < 1 || b.get(1).asDouble() < 1)
-        fprintf(stdout,"error in the fixation point, ignoring it\n");
+        yError() << "[TRACKERManager::processFixationPoint] error in the fixation point, ignoring it";
     else
     {
         fix_x = b.get(0).asDouble();
@@ -388,7 +391,7 @@ int TRACKERManager::processFixationPoint(Bottle &b)
         if (!cropSizeHeight)
             cropSizeHeight = 50;
 
-        fprintf(stdout,"Fixation point is %lf %lf \n",fix_x, fix_y);
+        yDebug() << "[TRACKERManager::processFixationPoint] Fixation point is " << fix_x << " " << fix_y;
 
         bool shouldStart = true;
         if (orig!=NULL)
@@ -399,23 +402,23 @@ int TRACKERManager::processFixationPoint(Bottle &b)
                 double limits_x = fabs(workerThreads[itr->first]->particles[0].x - fix_x );
                 double limits_y = fabs(workerThreads[itr->first]->particles[0].y - fix_y );
 
-                fprintf(stdout,"The X points are: p: %lf fix: %lf with diff: %lf\n", workerThreads[itr->first]->particles[0].x, fix_x, limits_x );
-                fprintf(stdout,"The Y points are: p: %lf fix: %lf with diff: %lf\n", workerThreads[itr->first]->particles[0].y, fix_y, limits_y );
+                //fprintf(stdout,"The X points are: p: %lf fix: %lf with diff: %lf\n", workerThreads[itr->first]->particles[0].x, fix_x, limits_x );
+                //fprintf(stdout,"The Y points are: p: %lf fix: %lf with diff: %lf\n", workerThreads[itr->first]->particles[0].y, fix_y, limits_y );
 
                 if ( limits_x < cropSizeWidth-30 && limits_y < cropSizeHeight-30)
                 {
-                    fprintf(stdout, "HAVE THE SAME POINT AS PATICLES, should NOT start thread\n");
+                    yDebug() << "[TRACKERManager::processFixationPoint] Have the same points should not start the thread";
                     shouldStart = false;
                     break;
                 }
                 else
-                    fprintf(stdout, "OK SHOULD START THREAD\n");
+                    yDebug() << "[TRACKERManager::processFixationPoint] ok should start the thread";
             }
             if (shouldStart)
             {
                 SegInfo info (fix_x, fix_y, cropSizeWidth,  cropSizeHeight);
                 id = iter;
-                fprintf(stdout, "OK SHOULD START THREAD %d with ITER %d\n", id, iter);
+                yDebug() << "[TRACKERManager::processFixationPoint] ok should start the thread id " << id << " with ITER " << iter;
                 
                 workerThreads[id] = new ParticleThread(id, rf, info);
                 workerThreads[id]->start();
@@ -444,7 +447,6 @@ void TRACKERManager::onRead(ImageOf<yarp::sig::PixelRgb> &img)
     std::map< unsigned int, ParticleThread* >::iterator itr;
     for (itr = workerThreads.begin(); itr!=workerThreads.end(); itr++)
     {
-        //workerThreads[itr->first]->
         workerThreads[itr->first]->update(orig);
     }
     mutex.post();
@@ -453,12 +455,13 @@ void TRACKERManager::onRead(ImageOf<yarp::sig::PixelRgb> &img)
     {
         if (!deleted)
         {
-            fprintf(stdout,"will now delete TRACKER\n");
+            yDebug() << "[TRACKERManager::onRead] will now delete TRACKER";
             stopTracker(toDel[0]);
-            fprintf(stdout,"done ");
+            
             toDel.clear();
-            fprintf(stdout,"cleared ");
+            
             deleted = true;
+            yDebug() << "[TRACKERManager::onRead] will now delete TRACKER";
         }
     }
 

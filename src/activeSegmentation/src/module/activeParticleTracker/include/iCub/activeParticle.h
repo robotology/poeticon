@@ -67,7 +67,6 @@ private:
     yarp::os::BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelBgr> >    imageTplOutPort;        //output port Image
     yarp::os::BufferedPort<yarp::os::Bottle>                            targetOutPort;          //output port containing targets
 
-    bool                        checkClosure;
     int                         iter;
 
     yarp::sig::Vector           toDel;
