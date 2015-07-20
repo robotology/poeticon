@@ -20,11 +20,31 @@
 #include <yarp/sig/Vector.h>
 
 /**********************************************************/
+// http://stackoverflow.com/a/29798
+inline const char * const BoolToString(bool &b)
+{
+    return b ? "true" : "false";
+}
+
+/**********************************************************/
+struct compareSecond
+{
+    template <typename Pair>
+    bool operator()(const Pair &a, const Pair &b)
+    {
+        return a.second < b.second;
+    }
+};
+
+/**********************************************************/
 template<class key,class val>
 void dumpMap(const std::map<key,val> &m)
 {
-    std::ostringstream fullMapContent; // output stream we'll feed to yDebug macro
-    size_t items_remaining = m.size(); // http://stackoverflow.com/a/151112
+    // output stream we'll feed to yDebug macro
+    std::ostringstream fullMapContent;
+
+    // http://stackoverflow.com/a/151112
+    size_t items_remaining = m.size();
     bool last_iteration = false; 
     for(typename std::map<key,val>::const_iterator iter = m.begin();
         iter != m.end();
@@ -46,14 +66,26 @@ bool is_integer(const float k);
 
 /**********************************************************/
 template<class key,class val>
-bool mergeMaps(const std::map<key,val> &map1, const std::map<key,val> &map2, std::map<key,val> &result)
+bool mapContainsKey(const std::map<key,val> &m, const key &k)
 {
-    result = map1;
-    result.insert(map2.begin(), map2.end());
-    return true;
+    return m.count(k); // 1 if element present in the map, 0 otherwise
 }
 
 /**********************************************************/
-bool vectorsDiffer(const std::vector<int> &v1, const std::vector<int> &v2);
+template<class key,class val>
+bool mapContainsValue(const std::map<key,val> &m, const val &v)
+{
+    bool found = false;
+
+    for(typename std::map<key,val>::const_iterator iter = m.begin();
+        iter != m.end();
+        ++iter)
+    {
+        if (iter->second == v)
+            found = true;
+    }
+
+    return found;
+}
 
 #endif

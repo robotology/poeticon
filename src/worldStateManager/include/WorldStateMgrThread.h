@@ -30,6 +30,8 @@
 #include <iCub/ctrl/filters.h>
 
 #include "Helpers.h"
+#include "MemoryItemHand.h"
+#include "MemoryItemObj.h"
 
 // perception mode states
 #define STATE_PERCEPTION_WAIT_OPC         0
@@ -39,9 +41,10 @@
 #define STATE_PERCEPTION_INIT_TRACKER     4
 #define STATE_PERCEPTION_READ_TRACKER     5
 #define STATE_PERCEPTION_WAIT_ACTIVITYIF  6
-#define STATE_PERCEPTION_POPULATE_DB      7
-#define STATE_PERCEPTION_WAIT_CMD         8
-#define STATE_PERCEPTION_UPDATE_DB        9
+#define STATE_PERCEPTION_SET_MEMORY       7
+#define STATE_PERCEPTION_POPULATE_DB      8
+#define STATE_PERCEPTION_WAIT_CMD         9
+#define STATE_PERCEPTION_UPDATE_DB       10
 
 // playback mode states
 #define STATE_DUMMY_PARSE    100
@@ -63,6 +66,7 @@
 using namespace std;
 using namespace yarp::os;
 
+// TODO: remove after this is replaced
 typedef std::map<int,string> idLabelMap;
 
 class WorldStateMgrThread : public RateThread
@@ -96,7 +100,7 @@ class WorldStateMgrThread : public RateThread
 
         // perception mode
         bool needUpdate;
-        bool trackerInit;
+        //bool memoryInit;
         bool toldUserWaitBlobs;
         bool toldUserBlobsConnected;
         bool toldUserWaitTracker;
@@ -108,11 +112,11 @@ class WorldStateMgrThread : public RateThread
         Bottle *inToolAff;
         Bottle *inTargets;
         int sizeTargets, sizeAff;
-        std::vector<int> opcIDs;
-        std::vector<int> trackIDs;
-        idLabelMap opcMap;
-        idLabelMap trackMap;
-        idLabelMap wsMap;
+        std::vector<MemoryItemHand> hands;
+        std::vector<MemoryItemObj> objs;
+        Bottle trackIDs;
+
+        idLabelMap candidateTrackMap;
         std::vector<iCub::ctrl::MedianFilter> posFilter;
 
         // playback mode
@@ -137,25 +141,47 @@ class WorldStateMgrThread : public RateThread
 
         // perception and playback modes
         bool initCommonVars();
-        bool dumpWorldState();
         bool updateWorldState();
+        bool tellUserConnectOPC();
+        bool tellUserOPCConnected();
+        bool opcContainsID(const int &id);
 
         // perception mode
         bool initPerceptionVars();
+        bool tellUserConnectBlobs();
+        bool tellUserBlobsConnected();
+        bool tellUserConnectTracker();
+        bool tellUserConnectActivityIF();
+
+        bool checkTrackerStatus();
+        bool configureTracker();
+        bool getTrackNames();
         bool initTracker();
-        void fsmPerception();
-        void refreshOPC();
-        void refreshOPCIDs();
-        void refreshOPCNames();
-        void refreshTrackNames();
-        void refreshBlobs();
-        void refreshTracker();
-        void updateTrackIDsNoDupes();
-        void refreshPerception();
-        bool refreshPerceptionAndValidate();
-        bool doPopulateDB();
-        bool getTrackerBottleIndexFromID(const int &id, int &tbi);
+        bool refreshBlobs();
+        bool refreshTracker();
+
         bool getAffBottleIndexFromTrackROI(const int &u, const int &v, int &abi);
+        bool getTrackerBottleIndexFromID(const int &id, int &tbi);
+
+        bool computeObjProperties(const int &id, const string &label,
+                                  Bottle &pos2d,
+                                  Bottle &desc2d, Bottle &tooldesc2d,
+                                  string &inHand,
+                                  Bottle &onTopOf,
+                                  Bottle &reachW, Bottle &pullW);
+        bool constructMemoryFromMap();
+        bool constructMemoryFromOPCID(const int &opcID);
+        bool initMemoryFromOPC();
+        bool memoryContainsID(const int &id);
+        bool memoryContainsName(const string &n);
+        bool parseHandProperties(const Bottle *fields, bool &isFree);
+        bool parseObjProperties (const Bottle *fields,
+                                 Bottle &pos2d,
+                                 Bottle &desc2d, Bottle &tooldesc2d,
+                                 string &inHand, Bottle &onTopOf,
+                                 Bottle &reachW, Bottle &pullW);
+        bool printMemoryState();
+
         bool tellActivityGoHome();
         int label2id(const string &label);
         bool getLabel(const int &u, const int &v, string &label);
@@ -165,7 +191,11 @@ class WorldStateMgrThread : public RateThread
         bool isPullableWith(const string &objName, Bottle &objPullable);
         bool isHandFree(const string &handName);
         string inWhichHand(const string &objName);
+
         bool setFilterOrder(const int &n);
+
+        bool doPopulateDB();
+        void fsmPerception();
 
         // IDL functions
         bool pauseTrack(const string &objName);

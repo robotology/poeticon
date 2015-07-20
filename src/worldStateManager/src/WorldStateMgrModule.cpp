@@ -80,6 +80,7 @@ bool WorldStateMgrModule::close()
     yInfo("starting shutdown procedure");
     thread->interrupt();
     thread->close();
+    thread->stop();
     yInfo("deleting thread");
     if (thread) delete thread;
     yInfo("done deleting thread");
@@ -105,7 +106,7 @@ bool WorldStateMgrModule::attach(RpcServer &source)
 
 bool WorldStateMgrModule::dump()
 {
-    return thread->dumpWorldState();
+    return thread->printMemoryState();
 }
 
 bool WorldStateMgrModule::update()
