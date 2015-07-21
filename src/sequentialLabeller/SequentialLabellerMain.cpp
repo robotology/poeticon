@@ -12,7 +12,7 @@ int main(int argc, char *argv[])
     /* initialize YARP network */
     Network yarp;
     if(! yarp.checkNetwork() )
-        return -1; // EXIT_FAILURE
+        return 1; // EXIT_FAILURE
 
     /* create module */
     SequentialLabellerModule mod;

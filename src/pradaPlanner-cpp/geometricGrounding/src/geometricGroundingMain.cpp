@@ -15,7 +15,7 @@ int main(int argc, char *argv[])
     if(! yarp.checkNetwork() )
     {
         cout << "Error: yarp server does not seem available" << endl;
-        return -1; // EXIT_FAILURE
+        return 1; // EXIT_FAILURE
     }
 
     geoGround module;

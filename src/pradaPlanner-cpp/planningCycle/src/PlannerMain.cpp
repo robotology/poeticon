@@ -11,12 +11,10 @@ int main(int argc, char *argv[])
     rf.setDefaultConfigFile("planner.ini");  // overridden by --from
     rf.configure(argc, argv);
 
-
-
     if(! yarp.checkNetwork() )
     {
         yError("YARP server not available!");
-        return -1; // EXIT_FAILURE
+        return 1; // EXIT_FAILURE
     }
 
     PlannerModule module;

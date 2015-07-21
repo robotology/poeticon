@@ -50,7 +50,7 @@ int main(int argc, char *argv[])
     if(! yarp.checkNetwork() )
     {
         fprintf(stdout,"YARP server not available!\n");
-        return -1; // EXIT_FAILURE
+        return 1; // EXIT_FAILURE
     }
 
     SLICModule mod;

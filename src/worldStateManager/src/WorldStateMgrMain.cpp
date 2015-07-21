@@ -36,7 +36,7 @@ int main(int argc, char *argv[])
     if(! yarp.checkNetwork() )
     {
         yError("YARP server not available!");
-        return -1; // EXIT_FAILURE
+        return 1; // EXIT_FAILURE
     }
 
     WorldStateMgrModule mod;

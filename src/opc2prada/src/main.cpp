@@ -19,14 +19,14 @@ using namespace std;
 
 int main(int argc, char *argv[]) {
 
-	Network yarp;
+    Network yarp;
 
-	if(! yarp.checkNetwork() ) {
+    if(! yarp.checkNetwork() ) {
         fprintf(stdout,"Error: yarp server does not seem available\n");
-        return -1;
+        return 1;
     }
 
-	TranslatorModule module;
+    TranslatorModule module;
 
     ResourceFinder rf;
     rf.setVerbose(true);
