@@ -1,4 +1,11 @@
-
+/*
+ * Copyright: (C) 2012-2015 POETICON++, European Commission FP7 project ICT-288382
+ * Copyright: (C) 2015 VisLab, Institute for Systems and Robotics,
+ *                Instituto Superior Técnico, Universidade de Lisboa, Lisbon, Portugal
+ * Author: Alexandre Antunes <aleksander88@gmail.com>
+ * CopyPolicy: Released under the terms of the GNU GPL v2.0
+ *
+ */
 
 #ifndef __PLANNER_THREAD_H__
 #define __PLANNER_THREAD_H__
@@ -23,7 +30,6 @@
 #include <yarp/sig/Vector.h>
 
 #include "Helpers.h"
-
 
 // make sure __func__ is set correctly, http://stackoverflow.com/a/17528983
 //#if __STDC_VERSION__ < 199901L
@@ -114,14 +120,10 @@ class PlannerThread : public RateThread
 
         vector<vector<string> > subgoals;
         vector<vector<string> > object_IDs;
-        
-        
 
     public:
 
-
         bool closing;
-
 
         PlannerThread(const string &_moduleName,
                             const double _period,
@@ -181,7 +183,6 @@ class PlannerThread : public RateThread
         string showPlannedAction();
         string showCurrentState();
         string showCurrentGoal();
-
 };
 
 #endif

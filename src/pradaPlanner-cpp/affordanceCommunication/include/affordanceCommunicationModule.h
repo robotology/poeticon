@@ -1,8 +1,11 @@
-
-
-
-
-
+/*
+ * Copyright: (C) 2012-2015 POETICON++, European Commission FP7 project ICT-288382
+ * Copyright: (C) 2015 VisLab, Institute for Systems and Robotics,
+ *                Instituto Superior Técnico, Universidade de Lisboa, Lisbon, Portugal
+ * Author: Alexandre Antunes <aleksander88@gmail.com>
+ * CopyPolicy: Released under the terms of the GNU GPL v2.0
+ *
+ */
 
 #ifndef __AFFORDANCECOMMUNICATION_MODULE_H__
 #define __AFFORDANCECOMMUNICATION_MODULE_H__
@@ -26,11 +29,8 @@
 
 #include "Helpers.h"
 
-
-
 using namespace std;
 using namespace yarp::os;
-
 
 class affComm : public RFModule
 {
@@ -80,7 +80,6 @@ class affComm : public RFModule
         virtual bool interrupt();
         virtual double getPeriod();
 
-        
         void openPorts();
         bool loadObjs();
         bool plannerCommand();
@@ -95,8 +94,6 @@ class affComm : public RFModule
         bool getPutAff();
         bool getPushAff();
         bool getPullAff();
-        
-        
 };
 
 #endif
