@@ -145,6 +145,7 @@ class WorldStateMgrThread : public RateThread
         bool tellUserConnectOPC();
         bool tellUserOPCConnected();
         bool opcContainsID(const int &id);
+        bool checkOPCStatus(const int &minEntries, Bottle &ids);
 
         // perception mode
         bool initPerceptionVars();

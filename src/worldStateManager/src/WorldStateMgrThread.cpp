@@ -228,6 +228,43 @@ bool WorldStateMgrThread::opcContainsID(const int &id)
     return opcReply.get(0).asVocab()==Vocab::encode("ack");
 }
 
+/**********************************************************/
+bool WorldStateMgrThread::checkOPCStatus(const int &minEntries, Bottle &ids)
+{
+    // this function returns true/false if WSOPC already
+    // contains at least minEntries entries (hands + objects on the table).
+    // it also returns (as a parameter) the current OPC IDs.
+
+    if (opcPort.getOutputCount()<1)
+        return false;
+
+    // query: [ask] (all)
+    Bottle opcCmd, opcCmdContent, opcReply;
+    opcCmd.addVocab(Vocab::encode("ask"));
+    opcCmdContent.addString("all");
+    opcCmd.addList() = opcCmdContent;
+    opcPort.write(opcCmd, opcReply);
+
+    // reply: [ack] (id (11 12 13 ...))
+    bool init = false;
+    init = opcReply.size()>1 &&
+           opcReply.get(0).asVocab()==Vocab::encode("ack") &&
+           opcReply.get(1).isList() &&
+           opcReply.get(1).asList()->size()>0 &&
+           opcReply.get(1).asList()->get(0).asString()=="id" &
+           opcReply.get(1).asList()->get(1).isList() &&
+           opcReply.get(1).asList()->get(1).asList()->size()>=minEntries;
+
+    // return the current OPC IDs in the ids variable
+    if (init)
+    {
+        ids = * opcReply.get(1).asList()->get(1).asList();
+        //yDebug("%s: ids has size %d and content %s", __func__, ids.size(), ids.toString().c_str());
+    }
+
+    return init;
+}
+
 /* ************************************************************************** */
 /* perception mode                                                            */
 /* ************************************************************************** */
@@ -757,6 +794,9 @@ bool WorldStateMgrThread::computeObjProperties(const int &id, const string &labe
         foundID = label2id( bLabelsBelow.get(o).asString().c_str() );
         if (foundID != -1)
             onTopOf.addInt( foundID );
+        else
+            yWarning("problem translating on_top_of=%s to IDs",
+                     bLabelsBelow.toString().c_str());
     }
 
     // prepare reachable_with property
@@ -769,6 +809,9 @@ bool WorldStateMgrThread::computeObjProperties(const int &id, const string &labe
         foundID = label2id( bLabelsReaching.get(o).asString().c_str() );
         if (foundID != -1)
             reachW.addInt( foundID );
+        else
+            yWarning("problem translating reachable_with=%s to IDs",
+                     bLabelsReaching.toString().c_str());
     }
 
     // prepare pullable_with property
@@ -781,6 +824,9 @@ bool WorldStateMgrThread::computeObjProperties(const int &id, const string &labe
         foundID = label2id( bLabelsPulling.get(o).asString().c_str() );
         if (foundID != -1)
             pullW.addInt( foundID );
+        else
+            yWarning("problem translating pullable_with=%s to IDs",
+                     bLabelsPulling.toString().c_str());
     }
 
     // end symbols that depend on activityInterface
@@ -875,8 +921,9 @@ bool WorldStateMgrThread::constructMemoryFromOPCID(const int &opcID)
 
     if (memoryContainsID(opcID))
     {
-        yWarning() << __func__ << "cannot construct memory item"
-                   << opcID << "because this ID is already present in internal model";
+        // note: this happens e.g. when WSOPC is started & initialized before WSM
+        //yDebug() << __func__ << "cannot construct memory item"
+        //           << opcID << "because this ID is already present in internal short-term memory";
         return false;
     }
 
@@ -889,9 +936,10 @@ bool WorldStateMgrThread::constructMemoryFromOPCID(const int &opcID)
     }
     if (memoryContainsName(name))
     {
-        yWarning() << __func__ << "cannot construct memory item"
-                   << opcID << "with associated name" << name
-                   << "because this name is already present in internal model";
+        // note: this happens e.g. when WSOPC is started & initialized before WSM
+        //yDebug() << __func__ << "cannot construct memory item"
+        //           << opcID << "with associated name" << name
+        //           << "because this name is already present in internal short-term memory";
         return false;
     }
 
@@ -927,31 +975,19 @@ bool WorldStateMgrThread::initMemoryFromOPC()
     if (opcPort.getOutputCount()<1)
         return false;
 
-    // query: [ask] (all)
-    Bottle opcCmd, opcCmdContent, opcReply;
-    opcCmd.addVocab(Vocab::encode("ask"));
-    opcCmdContent.addString("all");
-    opcCmd.addList() = opcCmdContent;
-    opcPort.write(opcCmd, opcReply);
-
-    // reply: [ack] (id (11 12 ...))
-    bool validResponse = opcReply.size()>1 &&
-                         opcReply.get(0).asVocab()==Vocab::encode("ack") &&
-                         opcReply.get(1).isList() &&
-                         opcReply.get(1).asList()->size()>0 &&
-                         opcReply.get(1).asList()->get(0).asString()=="id";
-    if (!validResponse)
+    // make sure WSOPC contains at least 2 entries, and save them to opcIDs
+    Bottle opcIDs;
+    if (!checkOPCStatus(2,opcIDs))
     {
-        yWarning() << __func__ << "received invalid reply from from WSOPC";
+        yWarning("problem verifying that WSOPC has at least 2 entries");
         return false;
     }
 
     // construct memory item from each ID
-    Bottle *ids = opcReply.get(1).asList()->get(1).asList();
-    for (int o=0; o<ids->size(); o++)
+    for (int o=0; o<opcIDs.size(); o++)
     {
-        if (!constructMemoryFromOPCID(ids->get(o).asInt()))
-            yWarning() << "problem with constructMemoryFromOPCID" << ids->get(o).asInt();
+        if (!constructMemoryFromOPCID(opcIDs.get(o).asInt()))
+            yWarning() << "problem with constructMemoryFromOPCID" << opcIDs.get(o).asInt();
     }
 
     return true;
@@ -1032,6 +1068,8 @@ bool WorldStateMgrThread::parseObjProperties(const Bottle *fields,
 {
     if (fields==NULL)
         return false;
+
+    //yDebug() << __func__ << "*** fields =" << fields->toString().c_str();
 
     if ( fields->check("pos2d") &&
          fields->find("pos2d").isList() &&
@@ -1829,6 +1867,26 @@ void WorldStateMgrThread::fsmPerception()
 
         case STATE_PERCEPTION_SET_MEMORY:
         {
+            Bottle opcIDs;
+            if (checkOPCStatus(3,opcIDs))
+            {
+                yInfo("WSOPC was already initialized, it contains 3+ entries: %s. updating short-term memory.",
+                     opcIDs.toString().c_str());
+                printMemoryState();
+                // construct memory item from each ID
+                for (int o=0; o<opcIDs.size(); o++)
+                    constructMemoryFromOPCID(opcIDs.get(o).asInt());
+
+                // proceed
+                fsmState = STATE_PERCEPTION_POPULATE_DB;
+            }
+
+            // here we know that WSOPC does not have object entries yet ->
+            // we must acquire labels from object recognition then construct
+            // our internal short-term memory data structures
+            // (so that we can later add object entries to WSOPC)
+
+            // try acquiring unique labels
             if (getTrackNames())
             {
                 // add unique <ID,label> pairs to objs container
@@ -1845,7 +1903,10 @@ void WorldStateMgrThread::fsmPerception()
                 // failure -> stay in same state, clear candidates & try again
                 yWarning() << "failure in initializing IDs and names:" <<
                               "at least one of the candidate names was" <<
-                              "a duplicate or was skipped. trying again.";
+                              "a duplicate or was skipped. trying again." <<
+                              "if this goes on forever, check the status of" <<
+                              "1) object recognition, 2) activityInterface and "
+                              "3) WSOPC database.";
                 candidateTrackMap.clear();
             }
 
