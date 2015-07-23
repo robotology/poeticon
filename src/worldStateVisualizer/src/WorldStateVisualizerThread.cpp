@@ -152,33 +152,42 @@ void WorldStateVisualizerThread::mainProcessing()
 
                 double area;
                 area = pos2d.get(0).asDouble();
+                const int radius = sqrt(area) * 1.1;
 
-                // check if object is reachable with at least 1 hand
-                bool isReachable = false;
-                isReachable = reachW.size()>0 &&
-                              containsAtLeastOneHand(reachW);
+                // check if object is reachable
+                const int Left = 11;
+                const int Right = 12;
+                bool reachableWithLeft  = containsID(reachW, Left);
+                bool reachableWithRight = containsID(reachW, Right);
 
                 // draw on output image
-                const Scalar Reachable = Scalar(0,200,0);   // dark green
-                const Scalar Unreachable = Scalar(0,0,255); // red
-                if (isReachable)
-                {
-                    circle(outReachabilityMat,
-                           Point2f(pos2d.get(0).asDouble(),pos2d.get(1).asDouble()),
-                           sqrt(area), // radius
-                           Reachable, // color
-                           3, // thickness
-                           CV_AA); // lineType
-                }
-                else
-                {
-                    circle(outReachabilityMat,
-                           Point2f(pos2d.get(0).asDouble(),pos2d.get(1).asDouble()),
-                           sqrt(area), // radius
-                           Unreachable, // color
-                           3, // thickness
-                           CV_AA); // lineType
-                }
+                const Scalar DarkGreen = Scalar(0,200,0);
+                const Scalar DarkRed = Scalar(0,0,200);
+                const double StartAngle1 = 90.0;
+                const double StartAngle2 = 270.0;
+                const Scalar LeftColor = (reachableWithLeft ? DarkGreen : DarkRed);
+                const Scalar RightColor = (reachableWithRight ? DarkGreen : DarkRed);
+                const int Thickness = 4;
+
+                ellipse(outReachabilityMat,
+                        Point2f(pos2d.get(0).asDouble(),pos2d.get(1).asDouble()),
+                        Size(radius,radius),
+                        0, // angle
+                        StartAngle1,
+                        StartAngle1+180,
+                        LeftColor,
+                        Thickness,
+                        CV_AA); // lineType
+
+                ellipse(outReachabilityMat,
+                        Point2f(pos2d.get(0).asDouble(),pos2d.get(1).asDouble()),
+                        Size(radius,radius),
+                        0,
+                        StartAngle2,
+                        StartAngle2+180,
+                        RightColor,
+                        Thickness,
+                        CV_AA);
             }
 
             // write overlay image
@@ -273,14 +282,11 @@ bool WorldStateVisualizerThread::parseObjProperties(const Bottle *fields,
 }
 
 /**********************************************************/
-bool WorldStateVisualizerThread::containsAtLeastOneHand(const Bottle &b)
+bool WorldStateVisualizerThread::containsID(const Bottle &b, const int &id)
 {
-    const int Left = 11;
-    const int Right = 12;
-
     for (int idx=0; idx<b.size(); idx++)
     {
-        if (b.get(idx).asInt()==Left || b.get(idx).asInt()==Right)
+        if (b.get(idx).asInt()==id)
             return true;
     }
 

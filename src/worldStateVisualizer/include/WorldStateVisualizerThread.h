@@ -63,7 +63,7 @@ class WorldStateVisualizerThread : public RateThread
                                  Bottle &desc2d, Bottle &tooldesc2d,
                                  string &inHand, Bottle &onTopOf,
                                  Bottle &reachW, Bottle &pullW);
-        bool containsAtLeastOneHand(const Bottle &b);
+        bool containsID(const Bottle &b, const int &id);
 };
 
 #endif
