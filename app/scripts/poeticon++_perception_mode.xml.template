@@ -27,6 +27,10 @@
     <node>console</node>
 </module>
 <module>
+    <name>worldStateVisualizer</name>
+    <node>pwrNode</node>
+</module>
+<module>
     <name>objectsPropertiesCollector</name>
     <parameters>--name wsopc --context poeticon --db dbhands.ini --nosave --async_bc</parameters>
     <node>console</node>
@@ -60,6 +64,11 @@
 <module>
     <name>yarpview</name>
     <parameters>--name /view/track --x 660 --y 0</parameters>
+    <node>console</node>
+</module>
+<module>
+    <name>yarpview</name>
+    <parameters>--name /view/reachability --x 1000 --y 0</parameters>
     <node>console</node>
 </module>
 
@@ -128,6 +137,18 @@
 <connection>
     <from>/wsm/opc:io</from>
     <to>/wsopc/rpc</to>
+</connection>
+<connection>
+    <from>/wsopc/broadcast:o</from>
+    <to>/wsvisualizer/broadcast:i</to>
+</connection>
+<connection>
+    <from>/icub/camcalib/left/out</from>
+    <to>/wsvisualizer/rawImg:i</to>
+</connection>
+<connection>
+    <from>/wsvisualizer/reachabilityImg:o</from>
+    <to>/view/reachability</to>
 </connection>
 <connection>
     <from>/opc2prada/rpcClient</from>
