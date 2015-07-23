@@ -14,7 +14,7 @@
 
 #include <opencv2/core/core.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
-#include <opencv/cv.h> // legacy cvCopyImage
+#include <opencv2/legacy/compat.hpp> // cvCopyImage
 
 #include <yarp/os/Bottle.h>
 #include <yarp/os/BufferedPort.h>
