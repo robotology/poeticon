@@ -154,11 +154,11 @@ void WorldStateVisualizerThread::mainProcessing()
                 area = pos2d.get(0).asDouble();
                 const int radius = sqrt(area) * 1.1;
 
-                // check if object is reachable
+                // consider only objects that are not grasped and reachable
                 const int Left = 11;
                 const int Right = 12;
-                bool reachableWithLeft  = containsID(reachW, Left);
-                bool reachableWithRight = containsID(reachW, Right);
+                bool reachableWithLeft  = inHand=="none" && containsID(reachW,Left);
+                bool reachableWithRight = inHand=="none" && containsID(reachW,Right);
 
                 // draw on output image
                 const Scalar DarkGreen = Scalar(0,200,0);
@@ -169,6 +169,7 @@ void WorldStateVisualizerThread::mainProcessing()
                 const Scalar RightColor = (reachableWithRight ? DarkGreen : DarkRed);
                 const int Thickness = 4;
 
+                // http://stackoverflow.com/questions/22881878/how-can-i-draw-half-circle-in-opencv
                 ellipse(outReachabilityMat,
                         Point2f(pos2d.get(0).asDouble(),pos2d.get(1).asDouble()),
                         Size(radius,radius),
