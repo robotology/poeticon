@@ -549,17 +549,15 @@ bool WorldStateMgrThread::refreshBlobs()
     // update whole object descriptors
     inAff = inAffPort.read();
 
-    if (inAff != NULL)
+    // update object parts descriptors
+    inToolAff = inToolAffPort.read();
+
+    if (inAff!=NULL && inToolAff!=NULL)
     {
         // number of blobs
         sizeAff = static_cast<int>( inAff->get(0).asDouble() );
-    }
 
-    // update object parts descriptors
-    inToolAff = inToolAffPort.read();
-    if (inToolAff != NULL)
-    {
-        // BlobDescriptor design prevents this to happen, but just in case:
+        // BlobDescriptor should prevent this to happen, but just in case:
         if ( static_cast<int>(inToolAff->get(0).asDouble()) != sizeAff )
         {
             yWarning("number of whole object descriptors differ from number of object parts descriptors!");
@@ -668,7 +666,8 @@ bool WorldStateMgrThread::getTrackerBottleIndexFromID(const int &id, int &tbi)
         }
     }
 
-    yWarning() << __func__ << "did not find track id" << id << "in Bottle";
+    yDebug() << __func__ << "did not find track id" << id <<
+             "in Bottle: likely this object stopped being tracked";
     return false;
 }
 
@@ -683,8 +682,8 @@ bool WorldStateMgrThread::computeObjProperties(const int &id, const string &labe
     if (activityPort.getOutputCount()<1)
         return false;
 
-    // by default the object is tracked/blobbed and we can compute all symbols
-    bool currentlySeen = true;
+    // by default the object is tracked and we can compute all symbols
+    bool isVisible = true;
 
     // if possible, refresh inTargets Bottle
     if (trackerPort.getOutputCount()>0)
@@ -698,21 +697,31 @@ bool WorldStateMgrThread::computeObjProperties(const int &id, const string &labe
                  << "in tracker Bottle: object not visible ->"
                  << "going to update activityInterface symbols only,"
                  << "leaving shape descriptors untouched";
-        currentlySeen = false;
+        isVisible = false;
     }
 
-    if (currentlySeen)
+    // find the "affordance Bottle index" within inAff Bottle that matches
+    // with the selected tracker blob
+    double u=0.0, v=0.0;
+    u = inTargets->get(tbi).asList()->get(1).asDouble();
+    v = inTargets->get(tbi).asList()->get(2).asDouble();
+    int abi = tbi+1; // affordance blobs Bottle index
+    if (isVisible)
+    {
+        if (!getAffBottleIndexFromTrackROI(u,v,abi))
+        {
+            yDebug() << __func__
+                << "did not find affordance blob index from coordinates"
+                << u << v << "-> going to update activityInterface symbols only,"
+                << "leaving shape descriptors untouched";
+            isVisible = false;
+        }
+    }
+
+    // now we know that object was found in both tracker and shape descriptors
+    if (isVisible)
     {
         // begin symbols that depend on tracker and shape descriptors
-        double u=0.0, v=0.0;
-        u = inTargets->get(tbi).asList()->get(1).asDouble();
-        v = inTargets->get(tbi).asList()->get(2).asDouble();
-
-        // find the "affordance Bottle index" within inAff Bottle that matches
-        // with the selected tracker blob
-        int abi = tbi+1; // affordance blobs Bottle index
-        if (!getAffBottleIndexFromTrackROI(u,v,abi))
-            yDebug() << __func__ << "did not find affordance Bottle index";
 
         // prepare position property (pos2d)
         pos2d.clear();
@@ -745,33 +754,11 @@ bool WorldStateMgrThread::computeObjProperties(const int &id, const string &labe
         if (validToolDesc)
         {
             tooldesc2d.clear();
-            // add top half info: x y ar con ecc com cir sq el
+            // add top half info:    x y ar con ecc com cir sq el
             tooldesc2d.add( inToolAff->get(abi).asList()->get(0) );
-            /*
-            Bottle &tooldesc2d_top = tooldesc2d.addList();
-            for (int z=0;
-                 z<inToolAff->get(abi).asList()->get(0).asList()->size();
-                 z++)
-            {
-                tooldesc2d_top.addDouble(
-                    inToolAff->get(abi).asList()->get(0).asList()->get(z).asDouble() );
-            }
-            */
+
             // add bottom half info: x y ar con ecc com cir sq el
             tooldesc2d.add( inToolAff->get(abi).asList()->get(1) );
-            /*
-            Bottle &tooldesc2d_bot = tooldesc2d.addList();
-            for (int z=0;
-                 z<inToolAff->get(abi).asList()->get(1).asList()->size();
-                 z++)
-            {
-                tooldesc2d_bot.addDouble(
-                    inToolAff->get(abi).asList()->get(1).asList()->get(z).asDouble() );
-            }
-            */
-            // OLD - add list with 2 lists containing top half and bottom half
-            // descriptors, each having: x y ar con ecc com cir sq el
-            //tooldesc2d.add( inToolAff->get(abi) );
         }
         else
             yWarning("problem reading descriptors of object parts");
