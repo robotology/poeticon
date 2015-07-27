@@ -133,33 +133,6 @@ bool affComm::plannerCommand()
 
 bool affComm::loadObjs()
 {
-    /*string objFileName, line, temp_str;
-    ifstream objFile;
-    vector<string> aux_objects, temp_vect;
-    objFileName = PathName + "/Object_names-IDs.dat";
-    objFile.open(objFileName.c_str());
-    if (!objFile.is_open())
-    {
-        cout << "failed to open object file" << endl;
-        return false;
-    }
-    getline(objFile,line);
-    aux_objects = split(line, ';');
-    objects.clear();
-    tools.clear();
-    for (int i=0; i < aux_objects.size(); ++i)
-    {
-        temp_str = aux_objects[i];
-        temp_str.replace(temp_str.find("("), 1,"");
-        temp_str.replace(temp_str.find(")"), 1,"");
-        temp_vect = split(temp_str,',');
-        objects.push_back(temp_vect);
-        if (temp_vect[1] == "stick" || temp_vect[1] == "rake")
-        {
-            tools.push_back(temp_vect);
-        }
-    }
-    return true; */ 
 	vector<string> temp_vect;
 	if (objectQueryPort.getOutputCount() == 0){
         cout << "planner not connected!" << endl;
@@ -446,7 +419,6 @@ bool affComm::updateAffordances()
                     data.clear();
                     for (int i = 0; i < Affor_bottle_in->size(); ++i)
                     {
-                        //cout << Affor_bottle_in->get(i).asString() << endl;
                         data.push_back(Affor_bottle_in->get(i).asString());
                     }
                     break;

@@ -37,9 +37,6 @@ bool PlannerThread::openPorts()
 	portName = "/" + moduleName + "/ground_cmd:io";
     geo_yarp.open(portName);
 
-    //BufferedPort<Bottle> objects_yarp;
-    //objects_yarp.open("/planner/objects:io");
-
     //BufferedPort<Bottle> prax_yarp;
 	portName = "/" + moduleName + "/prax_inst:o";
     prax_yarp.open(portName);
@@ -70,7 +67,7 @@ void PlannerThread::threadRelease()
 
 void PlannerThread::close()
 {
-    yInfo("Closing ports");
+    yInfo("Closing module");
     closing = true;
     goal_yarp.close();
     geo_yarp.close();
@@ -79,7 +76,6 @@ void PlannerThread::close()
     world_rpc.close();
     actInt_rpc.close();
     opc2prada_rpc.close();
-	yInfo("Freeing memory");
 	cmd.clear();
     message.clear();
     reply.clear();
@@ -203,20 +199,14 @@ bool PlannerThread::resumePlanner()
     return resumePlan;
 }
 
-//bool PlannerThread::initCommonVars();
-//{
-//    
-//    return true;
-//}
-
 bool PlannerThread::updateState()
 {
     if (opc2prada_rpc.getOutputCount() == 0){
-        yWarning("opc2prada not connected!");
+        yError("opc2prada not connected!");
         return false;
     }
     if (world_rpc.getOutputCount() == 0){
-        yWarning("WorldStateManager not connected!");
+        yError("WorldStateManager not connected!");
         return false;
     }
     cmd.clear();
@@ -232,7 +222,7 @@ bool PlannerThread::updateState()
             return true;
         }
         else {
-            yWarning("Planner state update failed!");
+            yError("Planner state update failed!");
             return false;
         }
     }
@@ -249,20 +239,14 @@ bool PlannerThread::completePlannerState()
     stateFile.open(stateFileName.c_str());
     if (!stateFile.is_open())
     {
-        yWarning("unable to open state file!");
+        yError("unable to open state file!");
         return false;
     }
     if (!symbolFile.is_open())
     {
-        yWarning("unable to open symbols file!");
+        yError("unable to open symbols file!");
         return false;
     }
-    /*objFile.open(objFileName.c_str());
-    if (!objFile.is_open())
-    {
-        yWarning("unable to open objects file!");
-        return false;
-    }*/
     while (getline(symbolFile, line)){
         data.push_back(line);
     }
@@ -322,7 +306,7 @@ bool PlannerThread::completePlannerState()
     newstateFile.open(stateFileName.c_str());
     if (!newstateFile.is_open())
     {
-        yWarning("unable to open state file!");
+        yError("unable to open state file!");
         return false;
     }
     state_str = state_str + '\n';
@@ -336,11 +320,11 @@ bool PlannerThread::groundRules()
 {
     string command, data;
     if (geo_yarp.getOutputCount() == 0) {
-        yWarning("geometric grounding module not connected, unable to ground rules!");
+        yError("geometric grounding module not connected, unable to ground rules!");
         return false;
     }
     if (aff_yarp.getOutputCount() == 0) {
-        yWarning("Affordances communication module not connected, unable to ground rules!");
+        yError("Affordances communication module not connected, unable to ground rules!");
         return false;
     }
     Bottle& aff_bottle_out = aff_yarp.prepare();
@@ -359,7 +343,7 @@ bool PlannerThread::groundRules()
         }
         if (aff_yarp.getOutputCount() == 0)
         {
-            yWarning("Affordances communication module crashed");
+            yError("Affordances communication module crashed");
             return false;
         }
         Time::delay(0.1);
@@ -381,7 +365,7 @@ bool PlannerThread::groundRules()
         }
         if (geo_yarp.getOutputCount() == 0)
         {
-            yWarning("Geometric Grounding module crashed");
+            yError("Geometric Grounding module crashed");
             return false;
         }
         Time::delay(0.5);
@@ -394,10 +378,9 @@ bool PlannerThread::groundRules()
         aff_bottle_in = aff_yarp.read(false);
         if (aff_bottle_in){
             data = aff_bottle_in->toString();
-			//yInfo("%s",data.c_str());
             if (data == "()" || data == "")
             {
-                yWarning("empty bottle received, something might be wrong with the affordances module.");
+                yError("empty bottle received, something might be wrong with the affordances module.");
                 return false;
             }
             while (!closing){
@@ -413,7 +396,7 @@ bool PlannerThread::groundRules()
         }
         if (aff_yarp.getOutputCount() == 0)
         {
-            yWarning("Affordance communication module crashed");
+            yError("Affordance communication module crashed");
             return false;
         }
         Time::delay(0.1);
@@ -424,7 +407,7 @@ bool PlannerThread::groundRules()
 bool PlannerThread::compileGoal()
 {
     if (goal_yarp.getOutputCount() == 0) {
-        yWarning("Goal Compiler module not connected, unable to compile goals");
+        yError("Goal Compiler module not connected, unable to compile goals");
         return false;
     }
     Bottle& goal_bottle_out = goal_yarp.prepare();
@@ -442,7 +425,7 @@ bool PlannerThread::compileGoal()
             }
             else if (goal_bottle_in->toString() == "failed")
             {
-                yWarning("Praxicon disconnected or crashed, compiling failed.");
+                yError("Praxicon disconnected or crashed, compiling failed.");
                 return false;
             }
             else if (goal_bottle_in->toString() == "unknown")
@@ -452,13 +435,13 @@ bool PlannerThread::compileGoal()
             }
             else
             {
-                yWarning("non-standard message received, something failed with the Goal Compiler module.");
+                yError("non-standard message received, something failed with the Goal Compiler module.");
                 return false;
             }
         }
         if (goal_yarp.getOutputCount() == 0)
         {
-            yWarning("Goal compiler module crashed");
+            yError("Goal compiler module crashed");
             return false;
         }
         Time::delay(0.5);
@@ -483,13 +466,13 @@ bool PlannerThread::compileGoal()
 			}
             else
             {
-                yWarning("non-standard message received, something might be wrong with the Goal Compiler module.");
+                yError("non-standard message received, something might be wrong with the Goal Compiler module.");
                 return false;
             }
         }
         if (goal_yarp.getOutputCount() == 0)
         {
-            yWarning("Goal compiler module crashed");
+            yError("Goal compiler module crashed");
             return false;
         }
         Time::delay(0.5);
@@ -504,7 +487,7 @@ bool PlannerThread::loadSubgoals()
     subgoalFile.open(subgoalFileName.c_str());
     if (!subgoalFile.is_open())
     {
-        yWarning("unable to open subgoal file!");
+        yError("unable to open subgoal file!");
         return false;
     }
     subgoals.clear();
@@ -522,10 +505,9 @@ bool PlannerThread::loadGoal()
     goalFile.open(goalFileName.c_str());
     if (!goalFile.is_open())
     {
-        yWarning("unable to open goal file!");
+        yError("unable to open goal file!");
         return false;
     }
-    yInfo("Goal loaded");
     goal.clear();
     while (getline(goalFile, line,' ')){
         goal.push_back(line);
@@ -542,7 +524,7 @@ bool PlannerThread::resetConfig()
     configFile.open(configFileName.c_str());
     if (!configFile.is_open())
     {
-        yWarning("unable to open config file!");
+        yError("unable to open config file!");
         return false;
     }
     while (getline(configFile, line)){
@@ -559,7 +541,7 @@ bool PlannerThread::resetConfig()
     configFileOut.open(configFileName.c_str());
     if (!configFileOut.is_open())
     {
-        yWarning("unable to open config file!");
+        yError("unable to open config file!");
         return false;
     }
     for (int i = 0; i<config_data.size();++i){
@@ -578,37 +560,11 @@ Bottle PlannerThread::printObjs()
 
 bool PlannerThread::loadObjs()
 {
-    //string line;
-    //vector<string> aux_objs;
 	vector<string> temp_vect;
     vector<string> labels;
-    /*objFile.open(objFileName.c_str());
-    object_IDs.clear();
-    if (objFile.is_open()){
-        getline(objFile, line);
-        aux_objs = split(line, ';');
-        for (int j = 0; j < aux_objs.size(); ++j){
-            temp_vect = split(aux_objs[j], ',');
-            temp_vect[0].replace(temp_vect[0].find("("),1,"");
-            temp_vect[1].replace(temp_vect[1].find(")"),1,"");
-            object_IDs.push_back(temp_vect);
-            if (find_element(labels,temp_vect[1]) == 1)
-            {
-                yWarning("There are objects that share labels: %s", temp_vect[1].c_str());
-            }
-            labels.push_back(temp_vect[1]);
-        }
-        objFile.close();
-    }
-    else {
-        yWarning("unable to open objects file!");
-        return false;
-    }
-    return true;
-	*/
 	
 	if (opc2prada_rpc.getOutputCount() == 0){
-        yWarning("opc2prada not connected!");
+        yError("opc2prada not connected!");
         return false;
     }
 	object_IDs.clear();
@@ -618,7 +574,6 @@ bool PlannerThread::loadObjs()
     if (reply.size() > 0 && reply.get(0).isList() && reply.get(0).asList()->size() > 2){
 		object_bottle.clear();
 		object_bottle = *reply.get(0).asList();
-        yInfo("Objects updated!");
 		for (int i = 0; i < reply.get(0).asList()->size(); ++i)
 		{
 			temp_vect.clear();
@@ -634,7 +589,7 @@ bool PlannerThread::loadObjs()
 		return true;
     }
     else {
-        yWarning("Objects update failed!");
+        yError("Objects update failed!");
 		return false;
     }
 	return false;
@@ -666,7 +621,7 @@ bool PlannerThread::loadState()
         state.pop_back();
     }
     else {
-        yWarning("unable to open state file!");
+        yError("unable to open state file!");
         return false;
     }
     stateFile.close();
@@ -682,10 +637,6 @@ bool PlannerThread::preserveState()
 bool PlannerThread::compareState()
 {
 	vector<string> temp_vect;
-	/*for (int i = 0; i < state.size(); ++i)
-	{
-		yInfo("%s", state[i].c_str());
-	}*/
 	if (next_action != "")
 	{
 		for (int i = 0; i < rules.size(); ++i)
@@ -705,13 +656,11 @@ bool PlannerThread::compareState()
 	{
 		if (find_element(state, temp_vect[i]) == 0)
 		{
-			yInfo("state didn't change");
 			return true;
 		}
 	}
     if (vect_compare(state, old_state) == 1)
     {
-		yInfo("state didn't change");
         return true; // state did not change
     }
     else
@@ -724,7 +673,6 @@ bool PlannerThread::compareState()
 bool PlannerThread::preserveRules()
 {
     old_rules = rules;
-    yInfo("Rules saved");
     return true;
 }
 
@@ -734,10 +682,9 @@ bool PlannerThread::loadRules()
     rulesFile.open(rulesFileName.c_str());
     if (!rulesFile.is_open())
     {
-        yWarning("unable to open rules file!");
+        yError("unable to open rules file!");
         return false;
     }
-    yInfo("Loading rules");
     rules.clear();
     while (getline(rulesFile, line,'\n')){
         rules.push_back(line);
@@ -753,7 +700,7 @@ bool PlannerThread::adaptRules()
     rulesFileOut.open(rulesFileName.c_str());
     if (!rulesFileOut.is_open())
     {
-        yWarning("unable to open rules file!");
+        yError("unable to open rules file!");
         return false;
     }
     for (int t = 0; t < rules.size(); ++t){
@@ -780,7 +727,6 @@ bool PlannerThread::adaptRules()
                     adapt_rules[2] = static_cast<ostringstream*>( &(ostringstream() << (atof(adapt_rules[2].c_str())/5) ))->str();
                     temp_str = "";
                     for (int h = 0; h < adapt_rules.size(); ++h){
-						// yInfo("%s" ,adapt_rules[h].c_str());
 						if (adapt_rules[h] != "0")
 						{
                         	temp_str = temp_str + adapt_rules[h] + " ";
@@ -817,7 +763,7 @@ bool PlannerThread::goalUpdate()
     goalFileOut.open(goalFileName.c_str());
     if (!goalFileOut.is_open())
     {
-        yWarning("unable to open goal file!");
+        yError("unable to open goal file!");
         return false;
     }
     yInfo("Goal updated");
@@ -860,20 +806,19 @@ int PlannerThread::PRADA()
 {
     string line;
     vector<string> pipe_vect;
-    /*remove(pipeFileName.c_str());*/
     FILE * pFile;
     pFile = fopen(pipeFileName.c_str(),"w");
     fclose(pFile);
     int sys_flag = system(process_string.c_str());
     if (sys_flag == 34304)
     {
-        yWarning("Error with PRADA files, load failed");
+        yError("Error with PRADA files, load failed");
         return 0;
     }
     pipeFile.open(pipeFileName.c_str());
     if (!pipeFile.is_open())
     {
-        yWarning("unable to communicate with PRADA, pipe file not available.");
+        yError("unable to communicate with PRADA, pipe file not available.");
         return 0;
     }
     while (getline(pipeFile, line)){
@@ -883,6 +828,7 @@ int PlannerThread::PRADA()
     for (int t = 0; t < pipe_vect.size(); ++t){
         if (pipe_vect[t] == "The planner would like to kindly recommend the following action to you:" && t+1 < pipe_vect.size()){
             next_action = pipe_vect[t+1];
+			cout << endl;
             yInfo("Action found: %s", next_action.c_str());
             return 1;
         }
@@ -898,7 +844,7 @@ bool PlannerThread::increaseHorizon()
     configFile.open(configFileName.c_str());
     if (!configFile.is_open())
     {
-        yWarning("unable to open config file!");
+        yError("unable to open config file!");
         return false;
     }
     while (getline(configFile, line)){
@@ -912,8 +858,7 @@ bool PlannerThread::increaseHorizon()
             horizon = horizon + 1;
             if (horizon > 10)
             {
-                yWarning("horizon too large");
-				yInfo("Jumping to next goal");
+                yWarning("horizon too large, jumping to next goal");
                 jumpForward();
 				horizon = 5;
 				if (failed_goal.size() == 0)
@@ -942,23 +887,10 @@ bool PlannerThread::increaseHorizon()
                 			if (object_IDs[inde][0] == objects_failed[u]){
                     			if (object_IDs[inde][1] != "rake" && object_IDs[inde][1] != "stick" && object_IDs[inde][1] != "left" && object_IDs[inde][1] != "right"){
                         			prax_bottle_out.addString(object_IDs[inde][1]);
-									//yInfo("%s", object_IDs[inde][1].c_str());
 			                    }
             			    }
             			}
-        			}/*
-					Bottle& prax_bottle_out = prax_yarp.prepare();
-        			prax_bottle_out.clear();
-        			prax_bottle_out.addString("FAIL");
-        			for (int u = 0; u < objects_failed.size(); ++u){
-            			for (int inde = 0; inde < object_IDs.size(); ++inde){
-                			if (object_IDs[inde][0] == objects_failed[u]){
-                    			if (object_IDs[inde][1] != "rake" && object_IDs[inde][1] != "stick" && object_IDs[inde][1] != "left" && object_IDs[inde][1] != "right"){
-                        			prax_bottle_out.addString(object_IDs[inde][1]);
-                    			}
-                			}
-            			}
-        			}*/
+        			}
         			yInfo(" %s", prax_bottle_out.toString().c_str());
         			prax_yarp.write(); 
         			restartPlan = true;
@@ -972,7 +904,7 @@ bool PlannerThread::increaseHorizon()
     configFileOut.open(configFileName.c_str());
     if (!configFileOut.is_open())
     {
-        yWarning("unable to open config file!");
+        yError("unable to open config file!");
         return false;
     }
     for (int w = 0; w < configData.size(); ++w){
@@ -1021,7 +953,7 @@ bool PlannerThread::resetRules()
     rulesFileOut.open(rulesFileName.c_str());
     if (!rulesFileOut.is_open())
     {
-        yWarning("unable to open rules file!");
+        yError("unable to open rules file!");
         return false;
     }
     for (int y = 0; y < old_rules.size(); ++y){
@@ -1033,7 +965,6 @@ bool PlannerThread::resetRules()
 
 bool PlannerThread::loadUsedObjs()
 {
-    //loadObjs();
     vector<string> aux_used;
     objects_used.clear();
     for (int y = 0; y < object_IDs.size(); ++y){
@@ -1051,7 +982,6 @@ bool PlannerThread::loadUsedObjs()
 
 bool PlannerThread::codeAction()
 {
-    //loadObjs();
     vector<string> temp_vect;
     float temp_float;
     string tool1, tool2;
@@ -1107,7 +1037,6 @@ bool PlannerThread::codeAction()
         }
     }
     for (int k = 0; k < object_IDs.size(); ++k){
-        //yInfo("%s", object_IDs[k][0].c_str());
         if (act == object_IDs[k][0]){
             act = object_IDs[k][1];
         }
@@ -1136,8 +1065,6 @@ bool PlannerThread:: execAction()
     message.clear();
     if (act == "grasp" && (obj == "rake" || obj == "stick")){
         act = "askForTool";
-        //temp_str = act + " " + hand;
-        //message.addString(temp_str);
         message.addString(act);
         message.addString(hand);
         message.addInt(positx);
@@ -1145,15 +1072,11 @@ bool PlannerThread:: execAction()
     }
     else if (act == "grasp" && (obj != "rake" && obj != "stick")){
         act = "take";
-        //temp_str = act + " " + obj + " " + hand;
-        //message.addString(temp_str);
         message.addString(act);
         message.addString(obj);
         message.addString(hand);
     }
     else {
-        //temp_str = act + " " + obj + " " + hand;
-        //message.addString(temp_str);
         message.addString(act);
         message.addString(obj);
         message.addString(hand);
@@ -1172,12 +1095,9 @@ bool PlannerThread:: execAction()
             return false;
         }
         if (reply.size() != 1){
-            yWarning("activity interface is not connected, verify if the module is running, and all connections are established.");
+            yError("activity interface is not connected, verify if the module is running, and all connections are established.");
             return false;
         }
-		// for debugging purposes only!!!
-		/*prev_action = message.get(1).toString();
-		return true;*/
     }
     return false;
 }
@@ -1194,14 +1114,13 @@ bool PlannerThread::checkGoalCompletion()
 
 bool PlannerThread::checkFailure()
 {
-    //loadObjs();
     string line;
     int horizon;
     vector<string> config_data;
     configFile.open(configFileName.c_str());
     if (!configFile.is_open())
     {
-        yWarning("unable to open config file!");
+        yError("unable to open config file!");
         return false;
     }
     while (getline(configFile, line)){
