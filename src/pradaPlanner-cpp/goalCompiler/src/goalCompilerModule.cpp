@@ -113,7 +113,6 @@ bool goalCompiler::configure(ResourceFinder &rf)
                 return false;
             }
         }
-        //Time::delay(5);
     }
     close();
     return true;
@@ -240,38 +239,6 @@ bool goalCompiler::receiveInstructions()
 
 bool goalCompiler::loadObjs()
 {
-    /*string line;
-    objectFile.open(objIDsFileName.c_str());
-    vector<string> objects;
-    if (objectFile.is_open()){
-        getline(objectFile,line);
-        objects = split(line, ';');
-    }
-    else {
-        cout << "unable to open objects file" << endl;
-		objectFile.close();
-        return false;
-    }
-	objectFile.close();
-    vector<string> temp_trans;
-    string temp_str;
-	translat.clear();
-	object_list.clear();
-    for (int j = 0; j < objects.size(); ++j){
-        temp_str = objects[j];
-        temp_str.replace(temp_str.find("("), 1,"");
-        temp_str.replace(temp_str.find(")"), 1,"");
-        temp_trans = split(temp_str,',');
-        cout << temp_trans[0] << " " << temp_trans[1] << endl;
-		if (find_element(object_list, temp_trans[1]) == 1)
-		{
-			cout << "There are objects that share labels, unable to compile" << endl;
-			return false;
-		}
-        translat.push_back(temp_trans);
-        object_list.push_back(temp_trans[1]);
-    }
-    return true;*/
 	vector<string> temp_vect;
 	if (objectQueryPort.getOutputCount() == 0){
         cout << "planner not connected!" << endl;

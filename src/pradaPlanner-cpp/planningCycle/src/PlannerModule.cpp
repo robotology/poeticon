@@ -47,12 +47,10 @@ bool PlannerModule::close()
     yInfo("starting shutdown procedure");
     thread->interrupt();
     thread->close();
-    yInfo("deleting thread");
     delete thread;
-    yInfo("done deleting thread");
 
-    yInfo("closing RPC port");
     handlerPort.close();
+    yInfo("Module terminated");
     return true;
 }
 
@@ -187,7 +185,6 @@ string PlannerModule::checkGoalCompleted()
 
 bool PlannerModule::run1Step()
 {
-    yInfo("Running one planning loop");
     thread->planning_cycle();
     return true;
 }

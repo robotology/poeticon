@@ -9,9 +9,6 @@
 
 #include "geometricGroundingModule.h"
 
-/*geoGround::geoGround(const string &_moduleName, const string &_PathName):moduleName(_moduleName),PathName(_PathName)
-{
-}*/
 
 bool geoGround::configure(ResourceFinder &rf)
 {
@@ -36,8 +33,6 @@ bool geoGround::configure(ResourceFinder &rf)
         cout << "something went wrong with the module execution" << endl;
         return false;
     }
-    
-    //close();
     return true;
 }
 
@@ -84,7 +79,6 @@ bool geoGround::groundingCycle()
                 return false;
             }
         }
-        //yarp::os::Time::delay(5);
     }
     return true;
 }
@@ -188,39 +182,6 @@ vector<string> geoGround::create_rules(string pre_rule)
                     }
                 }
             }
-            /*else if ((temp_vect[2].find("push") != std::string::npos) || (temp_vect[2].find("pull") != std::string::npos)){
-                for (int j = 0; j < tools.size(); ++j){
-                    for (int c = 0; c < objects.size(); ++c){
-                        if ((objects[c] != tools[j]) && (find_element(hands, objects[c]) == 0)){
-                            for (int o = 0; o < temp_vect.size(); ++o){
-                                new_rule.push_back(temp_vect[o]);
-                            }
-                            new_rule.push_back("");
-                            new_rule.push_back("");
-                            for (int o = 0; o < temp_vect.size(); ++o){
-                                while (!isStopping()){
-                                    if (new_rule[k].find("_obj") != std::string::npos){
-                                        new_rule[k].replace(new_rule[k].find("_obj"),4,objects[c]);
-                                    }
-                                    else {
-                                        break;
-                                    }
-                                }
-                                while (!isStopping()){
-                                    if (new_rule[k].find("_tool") != std::string::npos){
-                                        new_rule[k].replace(new_rule[k].find("_tool"),5,tools[j]);
-                                    }
-                                    else {
-                                        break;
-                                    }
-                                }
-                                k++;
-                            }
-                            k=k+2;
-                        }
-                    }
-                }
-            }*/
             else {
                 for (int j = 0; j < objects.size(); ++j){
                     for (int c = 0; c < objects.size(); ++c){
@@ -357,7 +318,7 @@ vector<string> geoGround::create_symbols(string symbols){
                 for (int g = 0; g < hands.size(); ++g){
                     for (int j = 0; j < objects.size(); ++j){
                         for (int i = 0; i < objects.size(); ++i){
-                            if ((i!=j) && (hands[g] != objects[i]) && (hands[g] != objects[j])/*&& (find_element(hands,objects[i]) == 0) && (find_element(hands,objects[j]) == 0)*/){
+                            if ((i!=j) && (hands[g] != objects[i]) && (hands[g] != objects[j])){
                                 for (int o = 0; o < temp_vect.size(); ++o){
                                     new_symbol.push_back(temp_vect[o]);
                                 }
@@ -394,7 +355,7 @@ vector<string> geoGround::create_symbols(string symbols){
             else {
                 for (int g = 0; g < hands.size(); ++g){
                     for (int i = 0; i < objects.size(); ++i){
-                        if (/*find_element(hands,objects[i]) == 0*/hands[g] != objects[i]){
+                        if (hands[g] != objects[i]){
                             for (int o = 0; o < temp_vect.size(); ++o){
                                 new_symbol.push_back(temp_vect[o]);
                             }
@@ -420,35 +381,6 @@ vector<string> geoGround::create_symbols(string symbols){
                 }
             }
         }
-        /*else if ((temp_vect[0].find("push_") != std::string::npos) || (temp_vect[0].find("pull_") != std::string::npos)){
-            k = 0;
-            for (int j = 0; j < tools.size(); ++j){
-                for (int i = 0; i < objects.size(); ++i){
-                    if ((objects[i] != tools[j]) && (find_element(hands, objects[i]) == 0)){
-                        for (int o = 0; o < temp_vect.size(); ++o){
-                            new_symbol.push_back(temp_vect[o]);
-                        }
-                        while (!isStopping()){
-                            if (new_symbol[k].find("_tool") != std::string::npos){
-                                new_symbol[k].replace(new_symbol[k].find("_tool"),5,tools[j]);
-                            }
-                            else {
-                                break;
-                            }
-                        }
-                        while (!isStopping()){
-                            if (new_symbol[k].find("_obj") != std::string::npos){
-                                new_symbol[k].replace(new_symbol[k].find("_obj"),4,objects[i]);
-                            }
-                            else {
-                                break;
-                            }
-                        }
-                        k++;
-                    }
-                }
-            }
-        }*/
         else {
             k = 0;
             for (int j = 0; j < objects.size(); ++j){
@@ -545,31 +477,6 @@ bool geoGround::interrupt()
 
 bool geoGround::loadObjs()
 {
-    /*string line;
-    vector<string> temp_objects, temp_vect;
-    cout << objectsFileName << endl;
-    objectFile.open(objectsFileName.c_str());
-    if (objectFile.is_open()){
-        getline(objectFile,line);
-        temp_objects = split(line, ';');
-    }
-    else {
-        cout << "failed to open objects-IDs file" << endl;
-        return false;
-    }
-    objectFile.close();
-    objects.clear();
-    tools.clear();
-    for (int i = 0; i < temp_objects.size(); ++i){
-        temp_vect = split(temp_objects[i],',');
-        temp_vect[0].replace(temp_vect[0].find('('),1,"");
-        temp_vect[1].replace(temp_vect[1].find(')'),1,"");
-        objects.push_back(temp_vect[0]);
-        if ((temp_vect[1] == "stick") || (temp_vect[1] == "rake")){
-            tools.push_back(temp_vect[0]);
-        }
-    }
-    return true;*/
 
 	vector<string> temp_vect;
 	if (objectQueryPort.getOutputCount() == 0){
