@@ -193,4 +193,11 @@ service planningCycle_IDLserver
     * @returns ok/fail upon writing the file/failure
     **/
     bool increaseHorizon();
+
+	/**
+	* Prints all instances of that symbol present in the world state
+	* Available symbols are: reachable, pullable, inhand, ontopof
+	* @returns the list of symbols, i.e.: "inhand: left: 13 14 15"
+	**/
+	string showSymbol(string symbol);
 }

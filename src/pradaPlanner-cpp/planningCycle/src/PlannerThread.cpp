@@ -1535,3 +1535,133 @@ string PlannerThread::showCurrentGoal()
     }
     return temp_str; 
 }
+
+string PlannerThread::printSymbol(string symbol)
+{
+	loadObjs();
+	string reply_string = "";
+    vector<string> temp_vect, temp_vect2;
+	vector<vector<string> > answer;
+
+	if (symbol == "reachable")
+	{
+		for (int i = 0; i < object_IDs.size(); ++i)
+		{
+			temp_vect.clear();
+			temp_vect.push_back(object_IDs[i][1]);
+			for (int j = 0; j < state.size(); ++j)
+			{
+				if (state[j].find("reachable") != std::string::npos && state[j].find('-') == std::string::npos && state[j].find("with_"+ object_IDs[i][0]) != std::string::npos)
+				{
+					temp_vect2 = split(state[j], '_');
+					temp_vect.push_back(temp_vect2[0]);
+				}
+			}
+			answer.push_back(temp_vect);
+		}
+		reply_string = "reachable with: \n";
+		for (int i = 0; i < answer.size(); ++i)
+		{
+			reply_string = reply_string + answer[i][0] + ":";
+			for (int j = 1; j < answer[i].size(); ++j)
+			{
+				reply_string = reply_string + " " + answer[i][j];
+			}
+			reply_string = reply_string + "\n";
+		}
+		return reply_string;
+	}
+
+	else if (symbol == "pullable")
+	{
+		for (int i = 0; i < object_IDs.size(); ++i)
+		{
+			temp_vect.clear();
+			temp_vect.push_back(object_IDs[i][1]);
+			for (int j = 0; j < state.size(); ++j)
+			{
+				if (state[j].find("pullable") != std::string::npos && state[j].find('-') == std::string::npos && state[j].find("with_"+ object_IDs[i][0]) != std::string::npos)
+				{
+					temp_vect2 = split(state[j], '_');
+					temp_vect.push_back(temp_vect2[0]);
+				}
+			}
+			answer.push_back(temp_vect);
+		}
+		reply_string = "pullable with: \n";
+		for (int i = 0; i < answer.size(); ++i)
+		{
+			reply_string = reply_string + answer[i][0] + ":";
+			for (int j = 1; j < answer[i].size(); ++j)
+			{
+				reply_string = reply_string + " " + answer[i][j];
+			}
+			reply_string = reply_string + "\n";
+		}
+		return reply_string;
+	}
+
+	else if (symbol == "inhand")
+	{
+		for (int i = 0; i < object_IDs.size(); ++i)
+		{
+			temp_vect.clear();
+			temp_vect.push_back(object_IDs[i][1]);
+			for (int j = 0; j < state.size(); ++j)
+			{
+				if (state[j].find('-') == std::string::npos && state[j].find("inhand_"+ object_IDs[i][0]) != std::string::npos)
+				{
+					temp_vect2 = split(state[j], '_');
+					temp_vect.push_back(temp_vect2[0]);
+				}
+			}
+			answer.push_back(temp_vect);
+		}
+		reply_string = "inhand of: \n";
+		for (int i = 0; i < answer.size(); ++i)
+		{
+			reply_string = reply_string + answer[i][0] + ":";
+			for (int j = 1; j < answer[i].size(); ++j)
+			{
+				reply_string = reply_string + " " + answer[i][j];
+			}
+			reply_string = reply_string + "\n";
+		}
+		return reply_string;
+	}
+
+	else if (symbol == "ontopof")
+	{
+		for (int i = 0; i < object_IDs.size(); ++i)
+		{
+			temp_vect.clear();
+			temp_vect.push_back(object_IDs[i][1]);
+			for (int j = 0; j < state.size(); ++j)
+			{
+				if (state[j].find('-') == std::string::npos && state[j].find("on_"+ object_IDs[i][0]) != std::string::npos)
+				{
+					temp_vect2 = split(state[j], '_');
+					temp_vect.push_back(temp_vect2[0]);
+				}
+			}
+			answer.push_back(temp_vect);
+		}
+		reply_string = "on top of: \n";
+		for (int i = 0; i < answer.size(); ++i)
+		{
+			reply_string = reply_string + answer[i][0] + ":";
+			for (int j = 1; j < answer[i].size(); ++j)
+			{
+				reply_string = reply_string + " " + answer[i][j];
+			}
+			reply_string = reply_string + "\n";
+		}
+		return reply_string;
+	}
+	
+	else 
+	{
+		return "symbol not recognised, please insert one of the symbols on the list";
+	}
+	return "fail";
+}
