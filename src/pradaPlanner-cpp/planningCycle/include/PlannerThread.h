@@ -183,6 +183,7 @@ class PlannerThread : public RateThread
         string showPlannedAction();
         string showCurrentState();
         string showCurrentGoal();
+		string printSymbol(string symbol);
 };
 
 #endif

@@ -210,6 +210,11 @@ string PlannerModule::showCurrentGoal()
     return thread->showCurrentGoal();
 }
 
+string PlannerModule::showSymbol(string symbol)
+{
+	return thread->printSymbol(symbol);
+}
+
 bool PlannerModule::quit()
 {
     close();

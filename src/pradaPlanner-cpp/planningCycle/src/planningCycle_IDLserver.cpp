@@ -206,6 +206,15 @@ public:
   virtual bool read(yarp::os::ConnectionReader& connection);
 };
 
+class planningCycle_IDLserver_showSymbol : public yarp::os::Portable {
+public:
+  std::string symbol;
+  std::string _return;
+  void init(const std::string& symbol);
+  virtual bool write(yarp::os::ConnectionWriter& connection);
+  virtual bool read(yarp::os::ConnectionReader& connection);
+};
+
 bool planningCycle_IDLserver_quit::write(yarp::os::ConnectionWriter& connection) {
   yarp::os::idl::WireWriter writer(connection);
   if (!writer.writeListHeader(1)) return false;
@@ -730,6 +739,29 @@ void planningCycle_IDLserver_increaseHorizon::init() {
   _return = false;
 }
 
+bool planningCycle_IDLserver_showSymbol::write(yarp::os::ConnectionWriter& connection) {
+  yarp::os::idl::WireWriter writer(connection);
+  if (!writer.writeListHeader(2)) return false;
+  if (!writer.writeTag("showSymbol",1,1)) return false;
+  if (!writer.writeString(symbol)) return false;
+  return true;
+}
+
+bool planningCycle_IDLserver_showSymbol::read(yarp::os::ConnectionReader& connection) {
+  yarp::os::idl::WireReader reader(connection);
+  if (!reader.readListReturn()) return false;
+  if (!reader.readString(_return)) {
+    reader.fail();
+    return false;
+  }
+  return true;
+}
+
+void planningCycle_IDLserver_showSymbol::init(const std::string& symbol) {
+  _return = "";
+  this->symbol = symbol;
+}
+
 planningCycle_IDLserver::planningCycle_IDLserver() {
   yarp().setOwner(*this);
 }
@@ -979,6 +1011,16 @@ bool planningCycle_IDLserver::increaseHorizon() {
   helper.init();
   if (!yarp().canWrite()) {
     yError("Missing server method '%s'?","bool planningCycle_IDLserver::increaseHorizon()");
+  }
+  bool ok = yarp().write(helper,helper);
+  return ok?helper._return:_return;
+}
+std::string planningCycle_IDLserver::showSymbol(const std::string& symbol) {
+  std::string _return = "";
+  planningCycle_IDLserver_showSymbol helper;
+  helper.init(symbol);
+  if (!yarp().canWrite()) {
+    yError("Missing server method '%s'?","std::string planningCycle_IDLserver::showSymbol(const std::string& symbol)");
   }
   bool ok = yarp().write(helper,helper);
   return ok?helper._return:_return;
@@ -1268,6 +1310,22 @@ bool planningCycle_IDLserver::read(yarp::os::ConnectionReader& connection) {
       reader.accept();
       return true;
     }
+    if (tag == "showSymbol") {
+      std::string symbol;
+      if (!reader.readString(symbol)) {
+        reader.fail();
+        return false;
+      }
+      std::string _return;
+      _return = showSymbol(symbol);
+      yarp::os::idl::WireWriter writer(reader);
+      if (!writer.isNull()) {
+        if (!writer.writeListHeader(1)) return false;
+        if (!writer.writeString(_return)) return false;
+      }
+      reader.accept();
+      return true;
+    }
     if (tag == "help") {
       std::string functionName;
       if (!reader.readString(functionName)) {
@@ -1327,6 +1385,7 @@ std::vector<std::string> planningCycle_IDLserver::help(const std::string& functi
     helpString.push_back("resetConfig");
     helpString.push_back("resetLevel");
     helpString.push_back("increaseHorizon");
+    helpString.push_back("showSymbol");
     helpString.push_back("help");
   }
   else {
@@ -1488,6 +1547,12 @@ std::vector<std::string> planningCycle_IDLserver::help(const std::string& functi
       helpString.push_back("Increases the planning horizon by 1. The config file will be written over. ");
       helpString.push_back("Horizon won't exceed 15. ");
       helpString.push_back("@returns ok/fail upon writing the file/failure ");
+    }
+    if (functionName=="showSymbol") {
+      helpString.push_back("std::string showSymbol(const std::string& symbol) ");
+      helpString.push_back("Prints all instances of that symbol present in the world state ");
+      helpString.push_back("Available symbols are: reachable, pullable, inhand, ontopof ");
+      helpString.push_back("@returns the list of symbols, i.e.: \"inhand: left: 13 14 15\" ");
     }
     if (functionName=="help") {
       helpString.push_back("std::vector<std::string> help(const std::string& functionName=\"--all\")");

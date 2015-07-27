@@ -173,6 +173,12 @@ public:
    * @returns ok/fail upon writing the file/failure
    */
   virtual bool increaseHorizon();
+  /**
+   * Prints all instances of that symbol present in the world state
+   * Available symbols are: reachable, pullable, inhand, ontopof
+   * @returns the list of symbols, i.e.: "inhand: left: 13 14 15"
+   */
+  virtual std::string showSymbol(const std::string& symbol);
   virtual bool read(yarp::os::ConnectionReader& connection);
   virtual std::vector<std::string> help(const std::string& functionName="--all");
 };
