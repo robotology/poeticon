@@ -43,13 +43,13 @@ class goalCompiler : public RFModule
         vector<vector<string> > instructions;
         vector<vector<string> > translat;
         vector<vector<string> > subgoals;
+		vector<vector<string> > action_sequence;
         vector<string> actions;
         vector<string> object_list;
 
         string subgoalFileName;
         string preRuleFileName;
         string goalFileName;
-        string objIDsFileName;
 
         BufferedPort<Bottle> plannerPort;
         BufferedPort<Bottle> praxiconPort;
@@ -86,6 +86,7 @@ class goalCompiler : public RFModule
         bool compile();
         bool translate();
         bool writeFiles();
+		bool checkConsistency();
 };
 
 #endif
