@@ -105,6 +105,11 @@ bool goalCompiler::configure(ResourceFinder &rf)
 			if (!checkConsistency())
 			{
 				cout << "failed consistency test" << endl;
+            	if (!plannerReply("fail"))
+            	{
+                	cout << "failed to communicate with planner" << endl;
+                	return false;
+            	}
 				continue;
 			}
             if (!writeFiles())
@@ -281,6 +286,7 @@ bool goalCompiler::loadObjs()
 bool goalCompiler::loadRules()
 {
     string line;
+	actions.clear();
     preRuleFile.open(preRuleFileName.c_str());
     if (!preRuleFile.is_open())
     {
@@ -763,10 +769,10 @@ bool goalCompiler::compile()
             obj = prax_action[2];
         }
     }
-	/*for (int i = 0; i < action_sequence.size(); ++i)
+	for (int i = 0; i < action_sequence.size(); ++i)
 	{
-		cout << action_sequence[i] << endl;
-	}*/
+		cout << action_sequence[i][0] << endl;
+	}
     return true;
 }
 
