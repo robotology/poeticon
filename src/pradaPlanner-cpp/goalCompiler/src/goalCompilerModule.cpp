@@ -80,32 +80,42 @@ bool goalCompiler::configure(ResourceFinder &rf)
             if (!loadRules())
             {
                 cout << "failed to load rules" << endl;
-                return false;
+                continue;
             }
             if (!loadInstructions())
             {
                 cout << "failed to load instructions" << endl;
-                return false;
+                continue;
             }
             if (!processFirstInst())
             {
                 cout << "failed to process the first instruction" << endl;
-                return false;
+                continue;
             }
             if (!compile())
             {
                 cout << "failed to compile goals" << endl;
-                return false;
+                continue;
             }
             if (!translate())
             {
                 cout << "failed to translate goals" << endl;
-                return false;
+                continue;
             }
+			if (!checkConsistency())
+			{
+				cout << "failed consistency test" << endl;
+            	if (!plannerReply("fail"))
+            	{
+                	cout << "failed to communicate with planner" << endl;
+                	return false;
+            	}
+				continue;
+			}
             if (!writeFiles())
             {
                 cout << "failed to write files" << endl;
-                return false;
+                continue;
             }
             if (!plannerReply("done"))
             {
@@ -125,7 +135,6 @@ bool goalCompiler::updateModule()
 
 void goalCompiler::openFiles()
 {
-    objIDsFileName = PathName + "/Object_names-IDs.dat";
     goalFileName =PathName + "/goal.dat";
     subgoalFileName = PathName + "/subgoals.dat";
     preRuleFileName = PathName + "/pre_rules.dat";
@@ -277,6 +286,7 @@ bool goalCompiler::loadObjs()
 bool goalCompiler::loadRules()
 {
     string line;
+	actions.clear();
     preRuleFile.open(preRuleFileName.c_str());
     if (!preRuleFile.is_open())
     {
@@ -286,6 +296,7 @@ bool goalCompiler::loadRules()
     while ( getline(preRuleFile, line)){
         actions.push_back(line);
     }
+	preRuleFile.close();
     return true;
 }
 
@@ -305,8 +316,9 @@ bool goalCompiler::loadInstructions()
 bool goalCompiler::processFirstInst()
 {
     subgoals.clear();
+	action_sequence.clear();
     string temp_str;
-    vector<string> temp_vect, aux_subgoal;
+    vector<string> temp_vect, aux_subgoal, temp_rule, new_action, new_temp_rule;
     for (int g = 0; g<instructions[0].size(); ++g){
         temp_vect = split(instructions[0][g], ' ');
         temp_str = temp_vect[1];
@@ -315,6 +327,120 @@ bool goalCompiler::processFirstInst()
             for (int h = 0; h < actions.size(); ++h){
                 if (actions[h].find(temp_str) != std::string::npos){
                     temp_str = actions[h+2];
+					if (temp_str.find("_ALL") != std::string::npos){
+                        cout << "ALL detected" << endl;
+                        new_action = actions;
+                        aux_subgoal = split(actions[h+2],' ');
+                        for ( int u = 0; u < aux_subgoal.size(); ++u){
+                            if (aux_subgoal[u].find("_ALL") != std::string::npos){
+                                temp_str = new_action[h+2];
+                                while (!isStopping()) {
+                                    if (temp_str.find("_obj") != std::string::npos){
+                                        temp_str.replace(temp_str.find("_obj"),4,temp_vect[2]);
+                                    }
+                                    else {
+                                        break;
+                                    }
+                                }
+                                while (!isStopping()) {
+                                    if (temp_str.find("_tool") != std::string::npos){
+                                        temp_str.replace(temp_str.find("_tool"),5,temp_vect[0]);
+                                    }
+                                    else {
+                                        break;
+                                    }
+                                }
+                                while (!isStopping()) {
+                                    if (temp_str.find("_hand") != std::string::npos){
+                                        temp_str.replace(temp_str.find("_hand"),5,"left");
+                                    }
+                                    else {
+                                        break;
+                                    }
+                                }
+                                cout << "temp rule:" << temp_str << endl;
+                                temp_rule = split(temp_str,' ');
+                                temp_rule.erase(temp_rule.begin(), temp_rule.begin()+1);
+                                temp_rule.erase(temp_rule.begin(), temp_rule.begin()+1);
+								cout << temp_rule[0] << endl;
+                                for (int k = 0; k< translat.size(); ++k){
+                                    temp_str = aux_subgoal[u];
+									cout << temp_str << endl;
+                                    while (!isStopping()) {
+                                        if (temp_str.find("_obj") != std::string::npos){
+                                            temp_str.replace(temp_str.find("_obj"),4,temp_vect[2]);
+                                        }
+                                        else {
+                                            break;
+                                        }
+                                    }
+                                    while (!isStopping()) {
+                                        if (temp_str.find("_tool") != std::string::npos){
+                                            temp_str.replace(temp_str.find("_tool"),5,temp_vect[0]);
+                                        }
+                                        else {
+                                            break;
+                                        }
+                                    }
+                                    
+                                    if (temp_str.find(translat[k][1]) == std::string::npos){
+                                        while (!isStopping()) {
+                                            if (temp_str.find("_ALL") != std::string::npos){
+                                                temp_str.replace(temp_str.find("_ALL"),4,translat[k][1]);
+                                            }
+                                            else {
+                                                break;
+                                            }
+                                        }
+                                        temp_rule.push_back(temp_str);
+                                    }
+                                }
+                                string var_find;
+                                for (int w = 0; w < temp_rule.size(); ++w){
+                                    int not_add_flag = 0;
+                                    if (temp_rule[w].find("-") != 0){
+                                        var_find = temp_rule[w];
+                                    }
+                                    if (temp_rule[w].find("-") == 0){
+                                        var_find = temp_rule[w];
+                                        var_find.replace(var_find.find("-"),1,"");
+                                    }
+                                    for (int v = 0; v < new_temp_rule.size(); ++v){
+                                        if (new_temp_rule[v].find(var_find) != std::string::npos){
+                                            not_add_flag = 1;
+                                            break;
+	                                }
+                                    }
+                                    if (not_add_flag != 1){
+                                        new_temp_rule.push_back(temp_rule[w]);
+                                    }
+                                }
+                                temp_str = "";
+                                for (int p = 0; p<new_temp_rule.size(); ++p){
+                                    temp_str += new_temp_rule[p];
+	                        }
+                                new_action[h] = temp_str;
+                            }
+                        }
+                        for (int p = new_temp_rule.size()-1; p>0; --p){
+							cout << new_temp_rule[p] << endl;
+                            if (new_temp_rule[p].find("_ALL") != std::string::npos){
+                                new_temp_rule.erase(new_temp_rule.begin()+p);
+                            }
+                        }
+                        new_temp_rule.erase(new_temp_rule.begin(),new_temp_rule.begin()+1);
+                        aux_subgoal = new_temp_rule;
+                        vector<string> temp_subgoal;
+                        for (int i = 0; i < aux_subgoal.size(); ++i){
+                            temp_subgoal.push_back(aux_subgoal[i]);
+                        }
+                        subgoals.push_back(temp_subgoal);
+						cout << "first instruction compiled" << endl;
+						return true;
+                    }
+
+
+
                     while (!isStopping()){
                         if (temp_str.find("_obj") != std::string::npos){
                             temp_str.replace(temp_str.find("_obj"),4,temp_vect[2]);
@@ -358,8 +484,8 @@ bool goalCompiler::compile()
         cout << "no instructions to compile." << endl;
         return false;
     }
-    vector<string> prax_action, new_action, temp_rule, new_temp_rule, aux_subgoal, temp_vect;
-    string obj, tool, temp_str;
+    vector<string> prax_action, new_action, temp_rule, new_temp_rule, aux_subgoal, temp_vect, temp_action;
+    string obj, tool, temp_str, found_action;
     for (int g = 0; g<instructions[0].size(); ++g){
         prax_action = split(instructions[0][g], ' ');
         prax_action[1].push_back('_');
@@ -368,6 +494,7 @@ bool goalCompiler::compile()
             for (int j = 0; j < actions.size(); ++j){
                 if (actions[j].find(prax_action[1]) != std::string::npos){
                     obj = prax_action[2];
+					found_action = actions[j];
                     cout << "action found" << endl;
                     if (actions[j+4].find("_ALL") != std::string::npos){
                         cout << "ALL detected" << endl;
@@ -404,8 +531,11 @@ bool goalCompiler::compile()
                                 cout << "temp rule:" << temp_str << endl;
                                 temp_rule = split(temp_str,' ');
                                 temp_rule.erase(temp_rule.begin(), temp_rule.begin()+1);
+                                temp_rule.erase(temp_rule.begin(), temp_rule.begin()+1);
+								cout << temp_rule[0] << endl;
                                 for (int k = 0; k< translat.size(); ++k){
                                     temp_str = aux_subgoal[u];
+									cout << temp_str << endl;
                                     while (!isStopping()) {
                                         if (temp_str.find("_obj") != std::string::npos){
                                             temp_str.replace(temp_str.find("_obj"),4,obj);
@@ -462,7 +592,8 @@ bool goalCompiler::compile()
                                 new_action[j] = temp_str;
                             }
                         }
-                        for (int h = new_temp_rule.size(); h>0; --h){
+                        for (int h = new_temp_rule.size()-1; h>0; --h){
+							cout << new_temp_rule[h] << endl;
                             if (new_temp_rule[h].find("_ALL") != std::string::npos){
                                 new_temp_rule.erase(new_temp_rule.begin()+h);
                             }
@@ -473,10 +604,16 @@ bool goalCompiler::compile()
                         for (int i = 0; i < aux_subgoal.size(); ++i){
                             temp_subgoal.push_back(aux_subgoal[i]);
                         }
+						temp_action.clear();
+						temp_action.push_back(found_action);
+						temp_action.push_back(obj);
+						temp_action.push_back(tool);
+						action_sequence.push_back(temp_action);
                         subgoals.push_back(temp_subgoal);
                     }
                     else if (actions[j].find("put_") != std::string::npos){
                         cout << "put detected" << endl;
+						found_action = actions[j];
                         tool = prax_action[2];
                         temp_vect = split(instructions[0][g-1], ' ');
                         obj = temp_vect[2];
@@ -512,10 +649,16 @@ bool goalCompiler::compile()
                         for (int i = 0; i < aux_subgoal.size(); ++i){
                             temp_subgoal.push_back(aux_subgoal[i]);
                         }
+						temp_action.clear();
+						temp_action.push_back(found_action);
+						temp_action.push_back(obj);
+						temp_action.push_back(tool);
+						action_sequence.push_back(temp_action);
                         subgoals.push_back(temp_subgoal);
                     }
             	    else if ((actions[j].find("_obj") != std::string::npos && actions[j].find("_tool") != std::string::npos) || (actions[j].find("_obj") != std::string::npos && actions[j].find("_hand") != std::string::npos)){
                         cout << "action detected" << endl;
+						found_action = actions[j];
                         tool = prax_action[0];
                         obj = prax_action[2];
                         temp_str = actions[j+4];
@@ -569,6 +712,11 @@ bool goalCompiler::compile()
                             temp_subgoal.push_back(aux_subgoal[i]);
                         }
                         cout << "temp_subgoal done" << endl;
+						temp_action.clear();
+						temp_action.push_back(found_action);
+						temp_action.push_back(obj);
+						temp_action.push_back(tool);
+						action_sequence.push_back(temp_action);
                         subgoals.push_back(temp_subgoal);
                     }
                     cout << "action translated" << endl;
@@ -621,6 +769,10 @@ bool goalCompiler::compile()
             obj = prax_action[2];
         }
     }
+	for (int i = 0; i < action_sequence.size(); ++i)
+	{
+		cout << action_sequence[i][0] << endl;
+	}
     return true;
 }
 
@@ -691,4 +843,127 @@ bool goalCompiler::plannerReply(string reply)
     plannerBottleOut.addString(reply);
     plannerPort.write();
     return true;
+}
+
+bool goalCompiler::checkConsistency()
+{
+	string requirements, negated_symbol, failed_action, temp_str;
+	vector<string> required_state_vector, requirement_vector;
+	cout << "checking consistency" << endl;
+
+	for (int i = 0; i < action_sequence.size(); ++i)
+	{
+		for (int j = 0; j < actions.size(); ++j)
+		{
+			if (actions[j] == action_sequence[i][0])
+			{
+				requirements = actions[j+2];
+				while (!isStopping())
+				{
+					if (requirements.find("_obj") != std::string::npos)
+					{
+                    	requirements.replace(requirements.find("_obj"),4,action_sequence[i][1]);
+                    }
+                    else if (requirements.find("_tool") != std::string::npos)
+					{
+						requirements.replace(requirements.find("_tool"),5,action_sequence[i][2]);
+					}
+					else if (requirements.find("_hand") != std::string::npos)
+					{
+						requirements.replace(requirements.find("_hand"),5,"left");
+					}
+					else {
+                        break;
+                    }
+				}
+				requirement_vector = split(requirements, ' ');
+				requirements = "";
+				for (int k = 0; k < requirement_vector.size(); ++k)
+				{
+					if (requirement_vector[k].find("_ALL") != std::string::npos)
+					{
+						for (int y = 0; y < translat.size(); ++y)
+						{
+							if (requirement_vector[k].find(translat[y][1]) == std::string::npos)
+							{
+								temp_str = requirement_vector[k];
+								temp_str.replace(requirement_vector[k].find("_ALL"),4,translat[y][1]);
+								requirements = requirements + temp_str + " ";
+							}
+						}
+					}
+					else
+					{
+						requirements = requirements + requirement_vector[k] + " ";
+					}
+				}
+				for (int k = 0; k < translat.size(); ++k)
+				{
+					while (!isStopping()) {
+                    	if (requirements.find(translat[k][1]) != std::string::npos){
+                    	    requirements.replace(requirements.find(translat[k][1]),translat[k][1].size(),translat[k][0]);
+                    	}
+                    	else {
+                    	    break;
+                    	}
+					}                
+				}
+				cout << action_sequence[i][0] << endl;
+				cout << requirements << endl;
+				required_state_vector = split(requirements, ' ');
+				for (int k = 0; k < required_state_vector.size(); ++k)
+				{
+					if (required_state_vector[k].find('-') != std::string::npos)
+					{
+						negated_symbol = required_state_vector[k];
+						negated_symbol.replace(negated_symbol.find('-'),1,"");
+						if (find_element(subgoals[i], negated_symbol) == 1)
+						{
+							cout << "plan not executable" << endl;
+							failed_action = action_sequence[i][0];
+							if (failed_action.find("_obj") != std::string::npos)
+							{
+								failed_action.replace(failed_action.find("_obj"),4,action_sequence[i][1]);
+							}
+							if (failed_action.find("_tool") != std::string::npos)
+							{
+								failed_action.replace(failed_action.find("_tool"),5,action_sequence[i][2]);
+							}
+							if (failed_action.find("_hand") != std::string::npos)
+							{
+								failed_action.replace(failed_action.find("_hand"),5,"left");
+							}
+							cout << "failed step: " << 	failed_action << endl;
+							return false;
+						}
+					}
+					else 
+					{
+						negated_symbol = "-" + required_state_vector[k];
+						if (find_element(subgoals[i], negated_symbol) == 1)
+						{
+							cout << "plan not executable" << endl;
+							failed_action = action_sequence[i][0];
+							if (failed_action.find("_obj") != std::string::npos)
+							{
+								failed_action.replace(failed_action.find("_obj"),4,action_sequence[i][1]);
+							}
+							if (failed_action.find("_tool") != std::string::npos)
+							{
+								failed_action.replace(failed_action.find("_tool"),5,action_sequence[i][2]);
+							}
+							if (failed_action.find("_hand") != std::string::npos)
+							{
+								failed_action.replace(failed_action.find("_hand"),5,"left");
+							}
+							cout << "failed step: " << 	failed_action << endl;
+							return false;
+						}
+					}
+				}
+				break;
+			}
+		}
+	}
+	return true;
 }
