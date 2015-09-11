@@ -146,6 +146,8 @@ protected:
     
     std::map<std::string, cv::Scalar>   stakedObject;
     
+    std::vector<std::string>            availableTools;
+    
     int                                 elements;
     std::vector<int>                    pausedThreads;
     

@@ -1559,7 +1559,7 @@ std::vector<std::string> activityInterface_IDLServer::help(const std::string& fu
     }
     if (functionName=="inHand") {
       helpString.push_back("std::string inHand(const std::string& objName) ");
-      helpString.push_back("Figure out if the requested object is actually located in the hand of the robot ");
+      helpString.push_back("Figure out if the requested object is actually located in one of the robots hand ");
       helpString.push_back("@param objName specifies the name of the object ");
       helpString.push_back("@return string with the name of the hand left, right or none if not located in any hand. ");
     }

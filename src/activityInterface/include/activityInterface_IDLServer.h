@@ -39,7 +39,7 @@ public:
    */
   virtual std::string getLabel(const int32_t xpos, const int32_t ypos);
   /**
-   * Figure out if the requested object is actually located in the hand of the robot
+   * Figure out if the requested object is actually located in one of the robots hand
    * @param objName specifies the name of the object
    * @return string with the name of the hand left, right or none if not located in any hand.
    */
