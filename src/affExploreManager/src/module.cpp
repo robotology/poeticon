@@ -402,6 +402,85 @@ bool Manager::updateModule()
         }
     }
 
+    if (rxCmd==Vocab::encode("observe"))     // currently implemented ONLY for the real robot!
+    {  
+        actionId = 0;
+
+
+        targetName = cmd.get(1).asString();
+       
+        reply.addString("observe ");    
+        reply.addString(targetName.data()); //object name
+        reply.addString(" motion");
+        rpcHuman.reply(reply);
+
+        lookAtObject();
+        updateObjVisPos();
+        objectPos.clear();
+        get3DPosition(objImgPos_onTable, objectPos);
+        segmentAndTrack(objImgPos.x, objImgPos.y);  
+
+        //fprintf(stderr,"eff %d %s %s\n", actionId, toolName.data(), targetName.data());
+        
+        effData << "observe" << " ";
+
+        effData << "tool-X"   << " ";
+        effData << targetName.data() << " ";
+        
+        effData << actionId   << " ";
+
+        yarp::sig::Vector objectPosTracker;
+        yarp::sig::Vector *trackVec = targetPF.read(true);
+
+        objImgPos.x = (*trackVec)[0];
+        objImgPos.y = (*trackVec)[5];
+
+        get3DPosition(objImgPos,objectPosTracker);
+
+        fprintf(stderr,"\n\n***********Get FIRST object sample\n\n");
+
+        effData << objectPosTracker[0] << " "
+        << objectPosTracker[1] << " "
+        << objectPosTracker[2] << " "
+        << objImgPos.x << " "
+        << objImgPos.y;
+
+        //human user performs action on object
+
+        for (int i=0; i<motSteps; i++) 
+        {
+            fprintf(stderr,"Error: While reading and storing the tracker data");
+            fprintf(stderr,"\n\n***********Get %d' object sample\n\n", (i+1));
+            Time::delay(actionTime/(double)motSteps);
+            trackVec = targetPF.read(true);
+            objImgPos.x = (*trackVec)[0];
+            objImgPos.y = (*trackVec)[5];
+            objectPosTracker.clear();
+            get3DPosition(objImgPos, objectPosTracker);
+
+            effData << " " <<  objectPosTracker[0] << " "
+            << objectPosTracker[1] << " "
+            << objectPosTracker[2] << " "
+            << objImgPos.x << " "
+            << objImgPos.y;
+        }
+
+        Time::delay(0.5);
+
+        fprintf(stderr,"\n\n**********Get LAST object sample\n\n");
+
+        effData << " " <<  objectPosTracker[0] << " "
+        << objectPosTracker[1] << " "
+        << objectPosTracker[2] << " "
+        << objImgPos.x << " "
+        << objImgPos.y;
+
+        effData << '\n';
+        effData.close();
+        effData.open(effdataFileName.c_str(), ofstream::out | ofstream::app);
+
+    }
+
     if (rxCmd==Vocab::encode("eff")) 
     {
         actionId = cmd.get(1).asInt();
@@ -1404,14 +1483,14 @@ void Manager::lookAtObject()
 
     //if the object is on the table, the expected background (for blob segmentation) should be "table"
     fprintf(stdout,"Looking at the table...\n");
-    Bottle cmdBlobSpot,replyBlobSpot;
-    cmdBlobSpot.clear();
-    replyBlobSpot.clear();
-    cmdBlobSpot.addString("setHist");
-    cmdBlobSpot.addInt(1); //table-histogram id (if the object is on the table...)
-    fprintf(stdout,"CMD: %s\n",cmdBlobSpot.toString().c_str());
-    rpcBlobSpot.write(cmdBlobSpot, replyBlobSpot);
-    fprintf(stdout,"REPLY: %s:\n",replyBlobSpot.toString().c_str());
+    //Bottle cmdBlobSpot,replyBlobSpot;
+    //cmdBlobSpot.clear();
+    //replyBlobSpot.clear();
+    //cmdBlobSpot.addString("setHist");
+    //cmdBlobSpot.addInt(1); //table-histogram id (if the object is on the table...)
+    //fprintf(stdout,"CMD: %s\n",cmdBlobSpot.toString().c_str());
+    //rpcBlobSpot.write(cmdBlobSpot, replyBlobSpot);
+    //fprintf(stdout,"REPLY: %s:\n",replyBlobSpot.toString().c_str());
 
     Bottle autoGo;
     autoGo.addString("go");
