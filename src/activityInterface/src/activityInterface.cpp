@@ -821,18 +821,18 @@ Bottle ActivityInterface::get2D(const string &objName)
 }
 
 /**********************************************************/
-Bottle ActivityInterface::getOffset(const string &objName)
+Bottle ActivityInterface::getOffset(const string &toolName)
 {
     Bottle toolOffset;
     toolOffset.clear();
     
-    if (strcmp ("rake", objName.c_str() ) == 0)
+    if (strcmp ("rake", toolName.c_str() ) == 0)
     {
         toolOffset.addDouble(0.18);
         toolOffset.addDouble(-0.18); //right hand should be negative
         toolOffset.addDouble(0.04);
     }
-    else if (strcmp ("stick", objName.c_str() ) == 0)
+    else if (strcmp ("stick", toolName.c_str() ) == 0)
     {
         toolOffset.addDouble(0.18);
         toolOffset.addDouble(-0.18);
@@ -1414,7 +1414,7 @@ bool ActivityInterface::pull(const string &objName, const string &toolName)
     
     yInfo( "[pull] asked to pull %s with %s\n", objName.c_str(), toolName.c_str());
     Bottle position = get3D(objName);
-    Bottle toolOffset = getOffset(objName);
+    Bottle toolOffset = getOffset(toolName);
     
     //tool attach
     string handName = inHand(toolName);
@@ -1502,8 +1502,6 @@ bool ActivityInterface::pull(const string &objName, const string &toolName)
         executeSpeech("I have nothing in my hand");
         yError("[pull] Nothing in my hand\n");
     }
-    
-    
     
     //ask for tool
     //do the pushing action
