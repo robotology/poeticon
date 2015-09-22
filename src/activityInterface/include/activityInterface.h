@@ -217,6 +217,8 @@ public:
     bool                push(const std::string &objName, const std::string &toolName);
     bool                pull(const std::string &objName, const std::string &toolName);
     bool                goHome();
+    bool                resetObjStack();
+    bool                testFill();
     
     bool                quit();
 };

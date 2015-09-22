@@ -164,6 +164,16 @@ public:
    */
   virtual yarp::os::Bottle trackStackedObject(const std::string& objName);
   /**
+   * Reset the object stack.
+   * @return true/false on success/failure
+   */
+  virtual bool resetObjStack();
+  /**
+   * Just a simple function to fill in data for testing.
+   * @return true/false on success/failure
+   */
+  virtual bool testFill();
+  /**
    * Quit the module.
    * @return true/false on success/failure
    */

@@ -1533,6 +1533,31 @@ Bottle ActivityInterface::underOf(const std::string &objName)
 }
 
 /**********************************************************/
+bool ActivityInterface::testFill()
+{
+    int elements = 0;
+    
+    onTopElements.insert(pair<int, string>(elements, "bun-bottom"));
+    elements ++;
+    onTopElements.insert(pair<int, string>(elements, "meat"));
+    elements ++;
+    onTopElements.insert(pair<int, string>(elements, "cheese"));
+    elements ++;
+    onTopElements.insert(pair<int, string>(elements, "pickles"));
+    elements ++;
+    onTopElements.insert(pair<int, string>(elements, "bun-top"));
+    
+    return true;
+}
+
+/**********************************************************/
+bool ActivityInterface::resetObjStack()
+{
+    onTopElements.clear();
+    return true;
+}
+
+/**********************************************************/
 Bottle ActivityInterface::getNames()
 {
     Bottle Memory = getMemoryBottle();

@@ -225,6 +225,22 @@ public:
   virtual bool read(yarp::os::ConnectionReader& connection);
 };
 
+class activityInterface_IDLServer_resetObjStack : public yarp::os::Portable {
+public:
+  bool _return;
+  void init();
+  virtual bool write(yarp::os::ConnectionWriter& connection);
+  virtual bool read(yarp::os::ConnectionReader& connection);
+};
+
+class activityInterface_IDLServer_testFill : public yarp::os::Portable {
+public:
+  bool _return;
+  void init();
+  virtual bool write(yarp::os::ConnectionWriter& connection);
+  virtual bool read(yarp::os::ConnectionReader& connection);
+};
+
 class activityInterface_IDLServer_quit : public yarp::os::Portable {
 public:
   bool _return;
@@ -781,6 +797,48 @@ void activityInterface_IDLServer_trackStackedObject::init(const std::string& obj
   this->objName = objName;
 }
 
+bool activityInterface_IDLServer_resetObjStack::write(yarp::os::ConnectionWriter& connection) {
+  yarp::os::idl::WireWriter writer(connection);
+  if (!writer.writeListHeader(1)) return false;
+  if (!writer.writeTag("resetObjStack",1,1)) return false;
+  return true;
+}
+
+bool activityInterface_IDLServer_resetObjStack::read(yarp::os::ConnectionReader& connection) {
+  yarp::os::idl::WireReader reader(connection);
+  if (!reader.readListReturn()) return false;
+  if (!reader.readBool(_return)) {
+    reader.fail();
+    return false;
+  }
+  return true;
+}
+
+void activityInterface_IDLServer_resetObjStack::init() {
+  _return = false;
+}
+
+bool activityInterface_IDLServer_testFill::write(yarp::os::ConnectionWriter& connection) {
+  yarp::os::idl::WireWriter writer(connection);
+  if (!writer.writeListHeader(1)) return false;
+  if (!writer.writeTag("testFill",1,1)) return false;
+  return true;
+}
+
+bool activityInterface_IDLServer_testFill::read(yarp::os::ConnectionReader& connection) {
+  yarp::os::idl::WireReader reader(connection);
+  if (!reader.readListReturn()) return false;
+  if (!reader.readBool(_return)) {
+    reader.fail();
+    return false;
+  }
+  return true;
+}
+
+void activityInterface_IDLServer_testFill::init() {
+  _return = false;
+}
+
 bool activityInterface_IDLServer_quit::write(yarp::os::ConnectionWriter& connection) {
   yarp::os::idl::WireWriter writer(connection);
   if (!writer.writeListHeader(1)) return false;
@@ -1041,6 +1099,26 @@ yarp::os::Bottle activityInterface_IDLServer::trackStackedObject(const std::stri
   helper.init(objName);
   if (!yarp().canWrite()) {
     yError("Missing server method '%s'?","yarp::os::Bottle activityInterface_IDLServer::trackStackedObject(const std::string& objName)");
+  }
+  bool ok = yarp().write(helper,helper);
+  return ok?helper._return:_return;
+}
+bool activityInterface_IDLServer::resetObjStack() {
+  bool _return = false;
+  activityInterface_IDLServer_resetObjStack helper;
+  helper.init();
+  if (!yarp().canWrite()) {
+    yError("Missing server method '%s'?","bool activityInterface_IDLServer::resetObjStack()");
+  }
+  bool ok = yarp().write(helper,helper);
+  return ok?helper._return:_return;
+}
+bool activityInterface_IDLServer::testFill() {
+  bool _return = false;
+  activityInterface_IDLServer_testFill helper;
+  helper.init();
+  if (!yarp().canWrite()) {
+    yError("Missing server method '%s'?","bool activityInterface_IDLServer::testFill()");
   }
   bool ok = yarp().write(helper,helper);
   return ok?helper._return:_return;
@@ -1464,6 +1542,28 @@ bool activityInterface_IDLServer::read(yarp::os::ConnectionReader& connection) {
       reader.accept();
       return true;
     }
+    if (tag == "resetObjStack") {
+      bool _return;
+      _return = resetObjStack();
+      yarp::os::idl::WireWriter writer(reader);
+      if (!writer.isNull()) {
+        if (!writer.writeListHeader(1)) return false;
+        if (!writer.writeBool(_return)) return false;
+      }
+      reader.accept();
+      return true;
+    }
+    if (tag == "testFill") {
+      bool _return;
+      _return = testFill();
+      yarp::os::idl::WireWriter writer(reader);
+      if (!writer.isNull()) {
+        if (!writer.writeListHeader(1)) return false;
+        if (!writer.writeBool(_return)) return false;
+      }
+      reader.accept();
+      return true;
+    }
     if (tag == "quit") {
       bool _return;
       _return = quit();
@@ -1533,6 +1633,8 @@ std::vector<std::string> activityInterface_IDLServer::help(const std::string& fu
     helpString.push_back("resumeAllTrackers");
     helpString.push_back("initObjectTracker");
     helpString.push_back("trackStackedObject");
+    helpString.push_back("resetObjStack");
+    helpString.push_back("testFill");
     helpString.push_back("quit");
     helpString.push_back("help");
   }
@@ -1681,6 +1783,16 @@ std::vector<std::string> activityInterface_IDLServer::help(const std::string& fu
       helpString.push_back("yarp::os::Bottle trackStackedObject(const std::string& objName) ");
       helpString.push_back("trackStackedObject Function ");
       helpString.push_back("@return true/false ");
+    }
+    if (functionName=="resetObjStack") {
+      helpString.push_back("bool resetObjStack() ");
+      helpString.push_back("Reset the object stack. ");
+      helpString.push_back("@return true/false on success/failure ");
+    }
+    if (functionName=="testFill") {
+      helpString.push_back("bool testFill() ");
+      helpString.push_back("Just a simple function to fill in data for testing. ");
+      helpString.push_back("@return true/false on success/failure ");
     }
     if (functionName=="quit") {
       helpString.push_back("bool quit() ");

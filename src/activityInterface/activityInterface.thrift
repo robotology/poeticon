@@ -187,6 +187,18 @@ service activityInterface_IDLServer
     Bottle trackStackedObject(1:string objName)
     
     /**
+     * Reset the object stack.
+     * @return true/false on success/failure
+     */
+    bool resetObjStack();
+    
+    /**
+     * Just a simple function to fill in data for testing.
+     * @return true/false on success/failure
+     */
+    bool testFill();
+    
+    /**
      * Quit the module.
      * @return true/false on success/failure
      */
