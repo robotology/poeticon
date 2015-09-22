@@ -1222,6 +1222,7 @@ bool ActivityInterface::put(const string &objName, const string &targetName)
 {
     pauseAllTrackers();
     string handName = inHand(objName);
+    
     if (strcmp (handName.c_str(), "none" ) != 0 )
     {
         bool useStackedObjs = false;
@@ -1270,7 +1271,6 @@ bool ActivityInterface::put(const string &objName, const string &targetName)
                 cmd.addString("gently");
                 cmd.addString(handName.c_str());
                 rpcAREcmd.write(cmd, reply);
-
             }
             else
             {
@@ -1288,7 +1288,6 @@ bool ActivityInterface::put(const string &objName, const string &targetName)
                     onTopElements.insert(pair<int, string>(elements, targetName.c_str()));
                     elements++;
                 }
-                
                 onTopElements.insert(pair<int, string>(elements, objName.c_str()));
                 elements++;
             }
@@ -1302,7 +1301,10 @@ bool ActivityInterface::put(const string &objName, const string &targetName)
                 }
             }
         }
-        
+    }
+    else
+    {
+        yInfo("[put] I have nothing in my hand ");
     }
     resumeAllTrackers();
     return true;
@@ -1554,6 +1556,7 @@ bool ActivityInterface::testFill()
 bool ActivityInterface::resetObjStack()
 {
     onTopElements.clear();
+    elements = 0;
     return true;
 }
 
