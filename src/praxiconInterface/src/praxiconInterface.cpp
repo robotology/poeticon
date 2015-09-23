@@ -1,3 +1,11 @@
+/*
+ * Copyright: (C) 2012-2015 POETICON++, European Commission FP7 project ICT-288382
+ * Copyright: (C) 2015 iCub Facility, Istituto Italiano di Tecnologia
+ * Author: Vadim Tikhanoff <vadim.tikhanoff@iit.it>
+ * CopyPolicy: Released under the terms of the GNU GPL v2.0
+ *
+ */
+
 #include <iostream>
 #include <list>
 
@@ -11,12 +19,12 @@
 using namespace std;
 using namespace yarp::os;
 
-class PraxiconInterface:public RFModule
+class PraxiconInterface : public RFModule
 {
     Port handlerPort; //a port to handle messages
     Port speechPort;
-    
-    string moduleName; 
+
+    string moduleName;
     string inputSpeechPort;
     string handlerPortName;
     Bottle speech;
@@ -38,12 +46,13 @@ public:
         return 0.1; //module periodicity (seconds)
     }
 
-    void queryPraxicon(std::vector<xsd__anyType *> objAround, std::string praxMess, std::vector<xsd__anyType *> objMissing){
+    void queryPraxicon(std::vector<xsd__anyType *> objAround, std::string praxMess, std::vector<xsd__anyType *> objMissing)
+    {
         cout << "Praxicon Query: " << praxMess << endl;
         praxiconQuery.query = &praxMess;
         praxiconQuery.noObjects = objMissing;
         praxiconQuery.objectsAround = objAround;
-            
+
         if(q.__ns1__queryPRAXICON(&praxiconQuery, &responsePRAXICON) == SOAP_OK)
         {
             res = responsePRAXICON.return_;
@@ -53,11 +62,11 @@ public:
                     action = res->response.at(i);
                     object1 = action->object1;
                     object2 = action->object2;
-                    
+
                     cout<<"object1: "  << *(object1->name)    <<endl;
                     cout<<"movement: " << *(action->movement) <<endl;
                     cout<<"object2: "  << *(object2->name)    <<endl;
-                  
+
                     relations[i] += *(object1->name);
                     relations[i] += " ";
                     relations[i] += *(action->movement);
@@ -74,7 +83,7 @@ public:
         speech.clear();
         response.clear();
         speechPort.read(speech, true);
-        
+
         //if (speech!=NULL)
         if (!speech.isNull()) // gsaponaro
         {
@@ -85,7 +94,7 @@ public:
             list1.addString("bun-bottom");
             list1.addString("cheese");
             list1.addString("tomato");
-			list1.addString("bun-top");
+            list1.addString("bun-top");
 
             Bottle tempQuery;
             tempQuery.addString("query");
@@ -103,7 +112,7 @@ public:
 
             //DO LIST PROCESSING...
 
-			//fprintf (stdout, "the query is %s \n", speech.toString().c_str());
+            //fprintf (stdout, "the query is %s \n", speech.toString().c_str());
 
             //LOOK FOR LIST OF AVAILABLE OBJECTS
             //create soap vectors
@@ -136,7 +145,7 @@ public:
             //cout << endl;
             //cout << "Query: " << endl;
             //cout << query << endl;
-            
+
             //Fill up unknown lists
             std::string missing = speech.findGroup("missing").toString().c_str();
 
@@ -214,7 +223,7 @@ public:
 
         /* do all initialization here */
         /* open ports  */ 
-           
+
         if (!speechPort.open(inputSpeechPort.c_str())) {
             cout << getName() << ": unable to open port " << inputSpeechPort << endl;
             return false;  // unable to open; let RFModule know so that it won't run
@@ -227,7 +236,7 @@ public:
 
         handlerPortName =  "/";
         handlerPortName += getName();         // use getName() rather than a literal 
-     
+
         if (!handlerPort.open(handlerPortName.c_str())) {           
             cout << getName() << ": Unable to open port " << handlerPortName << endl;  
             return false;
@@ -267,6 +276,11 @@ public:
 int main(int argc, char * argv[])
 {
     Network yarp;
+    if(! yarp.checkNetwork() )
+    {
+        cout << "YARP server not available!" << endl;
+        return 1; // EXIT_FAILURE
+    }
 
     PraxiconInterface module;
     ResourceFinder rf;
