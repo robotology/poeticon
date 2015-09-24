@@ -40,6 +40,7 @@ bool geoGround::groundingCycle()
 {
     while (!isStopping())
     {
+		yarp::os::Time::delay(0.1);
         if (plannerPort.getInputCount() == 0)
         {
             cout << "planner not connected" << endl;
@@ -514,6 +515,7 @@ string geoGround::plannerCommand()
 {
     string command;
     while (!isStopping()){
+		yarp::os::Time::delay(0.1);
         plannerBottle = plannerPort.read(false);
         if (plannerBottle != NULL){
             command = plannerBottle->toString().c_str();

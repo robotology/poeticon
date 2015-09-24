@@ -121,12 +121,18 @@ bool affComm::interrupt()
 
 bool affComm::plannerCommand()
 {
+	if (plannerPort.getInputCount() == 0)
+	{
+		cout << "planner not connected" << endl;
+		return false;
+	}
     while (!isStopping()){
         plannerBottle = plannerPort.read(false);
         if (plannerBottle != NULL){
             command = plannerBottle->toString().c_str();
             return true;
         }
+        yarp::os::Time::delay(0.1);
     }
     return false;
 }
@@ -173,20 +179,22 @@ bool affComm::affordancesCycle()
         if (plannerPort.getInputCount() == 0)
         {
             cout << "planner not connected" << endl;
-            yarp::os::Time::delay(5);
+            yarp::os::Time::delay(1);
         }
-
-        if (plannerCommand())
-        {
-            if (command == "update")
-            {
-                cout << "command received: update" << endl;
-                Bottle& planner_bottle_out = plannerPort.prepare();
-                planner_bottle_out.clear();
-                planner_bottle_out.addString("ready");
-                plannerPort.write();
-            }
-        }
+		else
+		{
+        	if (plannerCommand())
+        	{
+            	if (command == "update")
+            	{
+                	cout << "command received: update" << endl;
+                	Bottle& planner_bottle_out = plannerPort.prepare();
+                	planner_bottle_out.clear();
+                	planner_bottle_out.addString("ready");
+                	plannerPort.write();
+            	}
+        	}
+		}
         if (command == "query")
         {
             cout << "command received: query" << endl;
@@ -221,7 +229,7 @@ bool affComm::affordancesCycle()
                 return false;
             }
         }
-
+		yarp::os::Time::delay(0.1);
     }
     return true;
 }
@@ -406,6 +414,7 @@ bool affComm::updateAffordances()
                 comm = Affor_bottle_in->toString();
                 break;
             }
+			yarp::os::Time::delay(0.1);
         }
         // cout << "command received from grounding: " << comm << endl;
         if (comm == "done")
@@ -427,6 +436,7 @@ bool affComm::updateAffordances()
                     }
                     break;
                 }
+				yarp::os::Time::delay(0.1);
             }
             //cout << "rule command received" << endl;
             rule = data[0];
@@ -664,6 +674,7 @@ bool affComm::getPushAff()
                         }
                         break;
                     }
+					yarp::os::Time::delay(0.1);
                 }
                 prob_succ1 = 0.0;
                 cout << "waiting for replies" << endl;
@@ -727,6 +738,7 @@ bool affComm::getPushAff()
                         }
                         break;
                     }
+					yarp::os::Time::delay(0.1);
                 }
                 prob_succ2 = 0.0;
                 cout << affnet_bottle_in->toString() << endl;
@@ -888,6 +900,7 @@ bool affComm::getPullAff()
                         }
                         break;
                     }
+					yarp::os::Time::delay(0.1);
                 }
                 prob_succ1 = 0.0;
                 for (int g = 0; g < affnet_bottle_in->get(0).asList()->size(); ++g)
@@ -946,7 +959,8 @@ bool affComm::getPullAff()
                             return true;
                         }
                         break;
-                    }
+					}
+					yarp::os::Time::delay(0.1);
                 }
                 prob_succ2 = 0.0;
                 for (int g = 0; g < affnet_bottle_in->get(0).asList()->size(); ++g)
