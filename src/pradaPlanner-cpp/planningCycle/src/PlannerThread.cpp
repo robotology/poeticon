@@ -153,6 +153,7 @@ void PlannerThread::run()
             }
         }
         startPlan = false;
+        yarp::os::Time::delay(0.05);
     }
     return;
 }
@@ -371,13 +372,14 @@ bool PlannerThread::groundRules()
             yError("Geometric Grounding module crashed");
             return false;
         }
-        Time::delay(0.5);
+        Time::delay(0.1);
     }
     aff_bottle_out = aff_yarp.prepare();
     aff_bottle_out.clear();
     aff_bottle_out.addString("query");
     aff_yarp.write();
     while (!closing) {
+        yarp::os::Time::delay(0.1);
         aff_bottle_in = aff_yarp.read(false);
         if (aff_bottle_in){
             data = aff_bottle_in->toString();
@@ -420,6 +422,7 @@ bool PlannerThread::compileGoal()
     goal_yarp.write();
     yInfo("Waiting for praxicon...");
     while (!closing) {
+        yarp::os::Time::delay(0.1);
         goal_bottle_in = goal_yarp.read(false);
         if (goal_bottle_in){
             if (goal_bottle_in->toString() == "done")
@@ -455,6 +458,7 @@ bool PlannerThread::compileGoal()
     goal_bottle_out.addString("update");
     goal_yarp.write();
     while (!closing) {
+        yarp::os::Time::delay(0.1);
         goal_bottle_in = goal_yarp.read(false);
         if (goal_bottle_in)
         {
@@ -1095,6 +1099,7 @@ bool PlannerThread:: execAction()
     }
     yInfo("Message: %s" , message.toString().c_str());
     while (!closing){
+        yarp::os::Time::delay(0.1);
         actInt_rpc.write(message, reply);
         yInfo("%s", reply.toString().c_str());
         if (reply.size() == 1 && reply.get(0).asVocab() == 27503){

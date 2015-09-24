@@ -30,6 +30,7 @@ bool goalCompiler::configure(ResourceFinder &rf)
 
     while (!isStopping())
     {
+		yarp::os::Time::delay(0.1);
         if (plannerPort.getInputCount() == 0)
         {
             cout << "planner not connected" << endl;
@@ -174,6 +175,7 @@ string goalCompiler::plannerCommand()
 {
     string command;
     while (!isStopping()){
+		yarp::os::Time::delay(0.1);
         plannerBottle = plannerPort.read(false);
         if (plannerBottle != NULL){
             command = plannerBottle->toString().c_str();
@@ -188,6 +190,7 @@ bool goalCompiler::receiveInstructions()
     string temp_str;
     int timer_count = 0;
     while (!isStopping()){
+		yarp::os::Time::delay(0.1);
         if (timer_count == 3000)
         {
             cout << "timeout: no instructions received before 5 minutes time" << endl;
