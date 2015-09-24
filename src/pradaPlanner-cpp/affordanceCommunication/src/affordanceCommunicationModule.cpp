@@ -281,64 +281,68 @@ bool affComm::queryToolDescriptors()
     vector<double> data, temp_vect;
     vector<vector<double> > tool_data;
 	tooldescriptors.clear();
-    for (int i = 0; i < tools.size(); ++i)
+    for (int i = 0; i < objects.size(); ++i) //tools
     {
-        cout << "i'm building bottles" << endl;
-        cmd.clear();
-        cmd.addString("querytool2d");
-        cmd.addInt(atoi(tools[i][0].c_str()));
-        reply.clear();
-        cout << cmd.toString() << endl;
-        descQueryPort.write(cmd,reply);
-        cout << reply.toString() << endl;
-        if (reply.size() == 1){
-            if (reply.toString() != "ACK" && reply.toString() != "()" && reply.toString() != "" && reply.toString() != "[fail]")
-            {
-                data.clear();
-                tool_data.clear();
-                data.push_back(atof(tools[i][0].c_str()));
-                tool_data.push_back(data);
-                data.clear();
-                for (int j = 0; j < reply.get(0).asList()->get(0).asList()->get(0).asList()->size(); ++j)
-                {
-                    data.push_back(reply.get(0).asList()->get(0).asList()->get(0).asList()->get(j).asDouble());
-                }
-                tool_data.push_back(data);
-                data.clear();
-                for (int j = 0; j < reply.get(0).asList()->get(0).asList()->get(1).asList()->size(); ++j)
-                {
-                    data.push_back(reply.get(0).asList()->get(0).asList()->get(1).asList()->get(j).asDouble());
-                }
-                tool_data.push_back(data);
-                tooldescriptors.push_back(tool_data);
-            }
-            else
-            {
-                tool_data.clear();
-                temp_vect.push_back(atof(tools[i][0].c_str()));
-                tool_data.push_back(temp_vect);
-                temp_vect.clear();
-                temp_vect.push_back(0.0);
-                temp_vect.push_back(0.0);
-                temp_vect.push_back(0.0);
-                temp_vect.push_back(0.0);
-                temp_vect.push_back(0.0);
-                temp_vect.push_back(0.0);
-                temp_vect.push_back(0.0);
-                tool_data.push_back(temp_vect);
-                temp_vect.clear();
-                temp_vect.push_back(0.0);
-                temp_vect.push_back(0.0);
-                temp_vect.push_back(0.0);
-                temp_vect.push_back(0.0);
-                temp_vect.push_back(0.0);
-                temp_vect.push_back(0.0);
-                temp_vect.push_back(0.0);
-                tool_data.push_back(temp_vect);
-                tooldescriptors.push_back(tool_data);
-            }
-        }
-    }
+        if (objects[i][0] != "11" && objects[i][0] != "12")
+        {
+	        cout << "i'm building bottles" << endl;
+    	    cmd.clear();
+    	    cmd.addString("querytool2d");
+    	    cmd.addInt(atoi(objects[i][0].c_str())); // tools
+    	    reply.clear();
+    	    cout << cmd.toString() << endl;
+    	    descQueryPort.write(cmd,reply);
+    	    cout << reply.toString() << endl;
+    	    if (reply.size() == 1){
+    	        if (reply.toString() != "ACK" && reply.toString() != "()" && reply.toString() != "" && reply.toString() != "[fail]")
+    	        {
+    	            data.clear();
+    	            tool_data.clear();
+    	            data.push_back(atof(objects[i][0].c_str())); // tools
+    	            tool_data.push_back(data);
+    	            data.clear();
+    	            for (int j = 0; j < reply.get(0).asList()->get(0).asList()->get(0).asList()->size(); ++j)
+    	            {
+    	                data.push_back(reply.get(0).asList()->get(0).asList()->get(0).asList()->get(j).asDouble());
+    	            }
+    	            tool_data.push_back(data);
+    	            data.clear();
+    	            for (int j = 0; j < reply.get(0).asList()->get(0).asList()->get(1).asList()->size(); ++j)
+    	            {
+    	                data.push_back(reply.get(0).asList()->get(0).asList()->get(1).asList()->get(j).asDouble());
+    	            }
+    	            tool_data.push_back(data);
+    	            tooldescriptors.push_back(tool_data);
+    	        }
+    	        else
+    	        {
+					cout << "default descriptors" << endl;
+    	            tool_data.clear();
+    	            temp_vect.push_back(atof(objects[i][0].c_str())); // tools
+    	            tool_data.push_back(temp_vect);
+    	            temp_vect.clear();
+    	            temp_vect.push_back(0.0);
+    	            temp_vect.push_back(0.0);
+    	            temp_vect.push_back(0.0);
+    	            temp_vect.push_back(0.0);
+    	            temp_vect.push_back(0.0);
+    	            temp_vect.push_back(0.0);
+    	            temp_vect.push_back(0.0);
+    	            tool_data.push_back(temp_vect);
+    	            temp_vect.clear();
+    	            temp_vect.push_back(0.0);
+    	            temp_vect.push_back(0.0);
+    	            temp_vect.push_back(0.0);
+    	            temp_vect.push_back(0.0);
+    	            temp_vect.push_back(0.0);
+    	            temp_vect.push_back(0.0);
+    	            temp_vect.push_back(0.0);
+    	            tool_data.push_back(temp_vect);
+    	            tooldescriptors.push_back(tool_data);
+    	        }
+    	    }
+    	}
+	}
     return true;
 }
 
@@ -403,7 +407,7 @@ bool affComm::updateAffordances()
                 break;
             }
         }
-        cout << "command received from grounding: " << comm << endl;
+        // cout << "command received from grounding: " << comm << endl;
         if (comm == "done")
         {
             command = "";
@@ -424,14 +428,14 @@ bool affComm::updateAffordances()
                     break;
                 }
             }
-            cout << "rule command received" << endl;
+            //cout << "rule command received" << endl;
             rule = data[0];
-            cout << rule << endl;
+            //cout << rule << endl;
             context = data[1];
             outcome = data[2];
             outcome2 = data[3];
             outcome3 = data[4];
-            cout << "initialized" << endl;
+            //cout << "initialized" << endl;
             for (int i = 0; i < translation.size(); ++i)
             {
                 act.clear();
@@ -518,7 +522,7 @@ bool affComm::sendOutcomes()
 
 bool affComm::getGraspAff()
 {
-    cout << "Grasp affordances not implemented yet, going for default" << endl;
+    //cout << "Grasp affordances not implemented yet, going for default" << endl;
     if (!sendOutcomes())
     {
         cout << "failed to send probabilities to the grounding module" << endl;
@@ -529,7 +533,7 @@ bool affComm::getGraspAff()
 
 bool affComm::getDropAff()
 {
-    cout << "Drop affordances not implemented yet, going for default" << endl;
+    //cout << "Drop affordances not implemented yet, going for default" << endl;
     if (!sendOutcomes())
     {
         cout << "failed to send probabilities to the grounding module" << endl;
@@ -540,7 +544,7 @@ bool affComm::getDropAff()
 
 bool affComm::getPutAff()
 {
-    cout << "Put affordances not implemented yet, going for default" << endl;
+    //cout << "Put affordances not implemented yet, going for default" << endl;
     if (!sendOutcomes())
     {
         cout << "failed to send probabilities to the grounding module" << endl;
@@ -568,11 +572,22 @@ bool affComm::getPushAff()
         {
             for (int j = 0; j < tooldescriptors.size(); ++j)
             {
-                data.clear();
-                data.push_back(strtof(act[3].c_str(), NULL));
-                data.push_back(tooldescriptors[j][1][0]);
-                data.push_back(tooldescriptors[j][1][1]);
-                posits.push_back(data);
+				if (strtof(act[3].c_str(), NULL) == tooldescriptors[j][0][0])
+				{
+                	data.clear();
+                	data.push_back(strtof(act[3].c_str(), NULL));
+					if (tooldescriptors[j][1][1] > tooldescriptors[j][2][1])
+					{
+                	data.push_back(tooldescriptors[j][1][0]);
+                	data.push_back(tooldescriptors[j][1][1]);
+					}
+					else
+					{
+                	data.push_back(tooldescriptors[j][2][0]);
+                	data.push_back(tooldescriptors[j][2][1]);
+					}
+                	posits.push_back(data);
+				}
             }
         }
         return true;
@@ -799,11 +814,22 @@ bool affComm::getPullAff()
         {
             for (int j = 0; j < tooldescriptors.size(); ++j)
             {
-                data.clear();
-                data.push_back(strtof(act[3].c_str(), NULL));
-                data.push_back(tooldescriptors[j][2][0]);
-                data.push_back(tooldescriptors[j][2][1]);
-                posits.push_back(data);
+				if (strtof(act[3].c_str(), NULL) == tooldescriptors[j][0][0])
+				{
+                	data.clear();
+                	data.push_back(strtof(act[3].c_str(), NULL));
+					if (tooldescriptors[j][1][1] > tooldescriptors[j][2][1])
+					{
+                	data.push_back(tooldescriptors[j][1][0]);
+                	data.push_back(tooldescriptors[j][1][1]);
+					}
+					else
+					{
+                	data.push_back(tooldescriptors[j][2][0]);
+                	data.push_back(tooldescriptors[j][2][1]);
+					}
+                	posits.push_back(data);
+				}
             }
         }
         return true;

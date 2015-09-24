@@ -222,10 +222,13 @@ bool PlannerThread::updateState()
             return true;
         }
         else {
-            yError("Planner state update failed!");
+            yError("Planner state update failed: something wrong with the opc2prada module");
             return false;
         }
     }
+	else {
+		yError("Planner state update failed: something wrong with the World State Manager");
+	}
     return false;
     
 }
@@ -383,6 +386,7 @@ bool PlannerThread::groundRules()
                 yError("empty bottle received, something might be wrong with the affordances module.");
                 return false;
             }
+			yInfo(data);
             while (!closing){
                 if (data.find('"') != std::string::npos){
                     data.replace(data.find('"'),1,"");
@@ -806,6 +810,8 @@ int PlannerThread::PRADA()
 {
     string line;
     vector<string> pipe_vect;
+	string next_sequence;
+	int retrn_flag = 2;
     FILE * pFile;
     pFile = fopen(pipeFileName.c_str(),"w");
     fclose(pFile);
@@ -830,10 +836,16 @@ int PlannerThread::PRADA()
             next_action = pipe_vect[t+1];
 			cout << endl;
             yInfo("Action found: %s", next_action.c_str());
-            return 1;
+            retrn_flag = 1;
+        }
+        if (pipe_vect[t] == "*** Planning for a complete plan." && t+3 < pipe_vect.size()){
+            next_sequence = pipe_vect[t+3];
+			cout << endl;
+            yInfo("Sequence found: %s", next_sequence.c_str());
+            return retrn_flag;
         }
     }
-    return 2;
+    return retrn_flag;
 }
 
 bool PlannerThread::increaseHorizon()
