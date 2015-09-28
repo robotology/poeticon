@@ -140,7 +140,8 @@ bool ActivityInterface::configure(yarp::os::ResourceFinder &rf)
     yarp::os::Network::connect(("/"+moduleName+"/memory:rpc").c_str(), "/memory/rpc");
     yarp::os::Network::connect(("/"+moduleName+"/iolState:rpc").c_str(), "/iolStateMachineHandler/human:rpc");
 
-    yarp::os::Network::connect("/blobSpotter/image:o", inputBlobPortName.c_str());
+    //yarp::os::Network::connect("/blobSpotter/image:o", inputBlobPortName.c_str());
+    yarp::os::Network::connect("/blobExtractor/binary:o", inputBlobPortName.c_str());
     yarp::os::Network::connect("/icub/camcalib/left/out", inputImagePortName.c_str());
     yarp::os::Network::connect(("/"+moduleName+"/praxicon:rpc").c_str(), "/praxInterface/speech:i");
     yarp::os::Network::connect(("/blobSpotter/blobs:o"), ("/"+moduleName+"/blobs:i").c_str());
@@ -360,10 +361,13 @@ Bottle ActivityInterface::askPraxicon(const string &request)
     praxiconRequest = request;
     Bottle listOfGoals, cmdPrax, replyPrax;
     
-    Bottle toolLikeMemory = getToolLikeNames();
+    yInfo("[askPraxicon] request is : %s \n", praxiconRequest.c_str());
+    
+    //Bottle toolLikeMemory = getToolLikeNames();
+    
     Bottle objectsMemory = getNames();
     
-    yInfo("[askPraxicon] tool names: %s \n", toolLikeMemory.toString().c_str());
+    //yInfo("[askPraxicon] tool names: %s \n", toolLikeMemory.toString().c_str());
     yInfo("[askPraxicon] object names: %s \n", objectsMemory.toString().c_str());
     
     Bottle &listOfObjects = cmdPrax.addList();
@@ -371,7 +375,7 @@ Bottle ActivityInterface::askPraxicon(const string &request)
     //create available list
     listOfObjects.addString("available");
     
-    int passed[toolLikeMemory.size()];
+  /*  int passed[toolLikeMemory.size()];
     
     for (int i=0; i<objectsMemory.size(); i++)
     {
@@ -389,6 +393,10 @@ Bottle ActivityInterface::askPraxicon(const string &request)
         if (total==toolLikeMemory.size())
             listOfObjects.addString(objectsMemory.get(i).asString().c_str());
     }
+   */
+    
+    for (int i=0; i<objectsMemory.size(); i++)
+        listOfObjects.addString(objectsMemory.get(i).asString().c_str());
     
     Bottle &query=cmdPrax.addList();
     //create query list
