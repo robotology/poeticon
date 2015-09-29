@@ -363,11 +363,11 @@ Bottle ActivityInterface::askPraxicon(const string &request)
     
     yInfo("[askPraxicon] request is : %s \n", praxiconRequest.c_str());
     
-    //Bottle toolLikeMemory = getToolLikeNames();
+    Bottle toolLikeMemory = getToolLikeNames();
     
     Bottle objectsMemory = getNames();
     
-    //yInfo("[askPraxicon] tool names: %s \n", toolLikeMemory.toString().c_str());
+    yInfo("[askPraxicon] tool names: %s \n", toolLikeMemory.toString().c_str());
     yInfo("[askPraxicon] object names: %s \n", objectsMemory.toString().c_str());
     
     Bottle &listOfObjects = cmdPrax.addList();
@@ -375,7 +375,7 @@ Bottle ActivityInterface::askPraxicon(const string &request)
     //create available list
     listOfObjects.addString("available");
     
-  /*  int passed[toolLikeMemory.size()];
+    int passed[toolLikeMemory.size()];
     
     for (int i=0; i<objectsMemory.size(); i++)
     {
@@ -393,10 +393,6 @@ Bottle ActivityInterface::askPraxicon(const string &request)
         if (total==toolLikeMemory.size())
             listOfObjects.addString(objectsMemory.get(i).asString().c_str());
     }
-   */
-    
-    for (int i=0; i<objectsMemory.size(); i++)
-        listOfObjects.addString(objectsMemory.get(i).asString().c_str());
     
     Bottle &query=cmdPrax.addList();
     //create query list
