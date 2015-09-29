@@ -947,8 +947,7 @@ Bottle ActivityInterface::getCog(const int32_t tlpos_x, const int32_t tlpos_y, c
     Bottle cog = getBlobCOG(cmd, 0);
     
     yInfo("the orig points are %d %d %d %d\n", tlpos_x, tlpos_y, brpos_x, brpos_y);
-    yInfo("the blob poits are %d %d\n", cog.get(0).asInt(), cog.get(1).asInt());
-    
+    yInfo("the blob points are %d %d\n", cog.get(0).asInt(), cog.get(1).asInt());
     
     return cog;
 }

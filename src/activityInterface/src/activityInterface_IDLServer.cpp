@@ -1879,8 +1879,10 @@ std::vector<std::string> activityInterface_IDLServer::help(const std::string& fu
     if (functionName=="getCog") {
       helpString.push_back("yarp::os::Bottle getCog(const int32_t tlxpos, const int32_t tlypos, const int32_t brxpos, const int32_t brypos) ");
       helpString.push_back("Just a simple function to get the cog of the closest blob for testing ");
-      helpString.push_back("@param xpos specifies the 2D position of the object on the X axis ");
-      helpString.push_back("@param ypos specifies the 2D position of the object on the Y axis ");
+      helpString.push_back("@param tlxpos specifies the 2D position of the object bounding box (top left on the X axis) ");
+      helpString.push_back("@param tlxpos specifies the 2D position of the object bounding box (top left on the Y axis) ");
+      helpString.push_back("@param brxpos specifies the 2D position of the object bounding box (bottom right on the X axis) ");
+      helpString.push_back("@param brxpos specifies the 2D position of the object bounding box (bottom right on the Y axis) ");
       helpString.push_back("@return string with the name of the object ");
     }
     if (functionName=="quit") {
