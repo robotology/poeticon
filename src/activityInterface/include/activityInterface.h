@@ -219,6 +219,7 @@ public:
     bool                goHome();
     bool                resetObjStack();
     bool                testFill();
+    yarp::os::Bottle    getCog(const int32_t tlpos_x, const int32_t tlpos_y, const int32_t brpos_x, const int32_t brpos_y);
     
     bool                quit();
 };

@@ -31,7 +31,7 @@ service activityInterface_IDLServer
     * @return true/false on holding or not
     **/
     bool handStat(1:string handName)
-    
+
     /**
      * Get the label of the object located in the vicinity of xpo and ypos
      * @param xpos specifies the 2D position of the object on the X axis
@@ -197,6 +197,14 @@ service activityInterface_IDLServer
      * @return true/false on success/failure
      */
     bool testFill();
+    
+    /**
+     * Just a simple function to get the cog of the closest blob for testing
+     * @param xpos specifies the 2D position of the object on the X axis
+     * @param ypos specifies the 2D position of the object on the Y axis
+     * @return string with the name of the object
+     **/
+    Bottle getCog(1:i32 tlxpos, 2:i32 tlypos, 3:i32 brxpos, 4:i32 brypos);
     
     /**
      * Quit the module.

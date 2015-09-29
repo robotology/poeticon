@@ -174,6 +174,13 @@ public:
    */
   virtual bool testFill();
   /**
+   * Just a simple function to get the cog of the closest blob for testing
+   * @param xpos specifies the 2D position of the object on the X axis
+   * @param ypos specifies the 2D position of the object on the Y axis
+   * @return string with the name of the object
+   */
+  virtual yarp::os::Bottle getCog(const int32_t tlxpos, const int32_t tlypos, const int32_t brxpos, const int32_t brypos);
+  /**
    * Quit the module.
    * @return true/false on success/failure
    */

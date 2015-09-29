@@ -140,8 +140,7 @@ bool ActivityInterface::configure(yarp::os::ResourceFinder &rf)
     yarp::os::Network::connect(("/"+moduleName+"/memory:rpc").c_str(), "/memory/rpc");
     yarp::os::Network::connect(("/"+moduleName+"/iolState:rpc").c_str(), "/iolStateMachineHandler/human:rpc");
 
-    //yarp::os::Network::connect("/blobSpotter/image:o", inputBlobPortName.c_str());
-    yarp::os::Network::connect("/blobExtractor/binary:o", inputBlobPortName.c_str());
+    yarp::os::Network::connect("/blobSpotter/image:o", inputBlobPortName.c_str());
     yarp::os::Network::connect("/icub/camcalib/left/out", inputImagePortName.c_str());
     yarp::os::Network::connect(("/"+moduleName+"/praxicon:rpc").c_str(), "/praxInterface/speech:i");
     yarp::os::Network::connect(("/blobSpotter/blobs:o"), ("/"+moduleName+"/blobs:i").c_str());
@@ -931,6 +930,26 @@ Bottle ActivityInterface::getBlobCOG(const Bottle &blobs, const int i)
         cog.addDouble(X);
         cog.addDouble(Y);
     }
+    return cog;
+}
+
+/**********************************************************/
+Bottle ActivityInterface::getCog(const int32_t tlpos_x, const int32_t tlpos_y, const int32_t brpos_x, const int32_t brpos_y)
+{
+    
+    Bottle cmd;
+    Bottle &list=cmd.addList();
+    list.addInt(tlpos_x);
+    list.addInt(tlpos_y);
+    list.addInt(brpos_x);
+    list.addInt(brpos_y);
+    
+    Bottle cog = getBlobCOG(cmd, 0);
+    
+    yInfo("the orig points are %d %d %d %d\n", tlpos_x, tlpos_y, brpos_x, brpos_y);
+    yInfo("the blob poits are %d %d\n", cog.get(0).asInt(), cog.get(1).asInt());
+    
+    
     return cog;
 }
 

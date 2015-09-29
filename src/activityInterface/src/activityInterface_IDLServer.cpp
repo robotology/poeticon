@@ -241,6 +241,18 @@ public:
   virtual bool read(yarp::os::ConnectionReader& connection);
 };
 
+class activityInterface_IDLServer_getCog : public yarp::os::Portable {
+public:
+  int32_t tlxpos;
+  int32_t tlypos;
+  int32_t brxpos;
+  int32_t brypos;
+  yarp::os::Bottle _return;
+  void init(const int32_t tlxpos, const int32_t tlypos, const int32_t brxpos, const int32_t brypos);
+  virtual bool write(yarp::os::ConnectionWriter& connection);
+  virtual bool read(yarp::os::ConnectionReader& connection);
+};
+
 class activityInterface_IDLServer_quit : public yarp::os::Portable {
 public:
   bool _return;
@@ -839,6 +851,34 @@ void activityInterface_IDLServer_testFill::init() {
   _return = false;
 }
 
+bool activityInterface_IDLServer_getCog::write(yarp::os::ConnectionWriter& connection) {
+  yarp::os::idl::WireWriter writer(connection);
+  if (!writer.writeListHeader(5)) return false;
+  if (!writer.writeTag("getCog",1,1)) return false;
+  if (!writer.writeI32(tlxpos)) return false;
+  if (!writer.writeI32(tlypos)) return false;
+  if (!writer.writeI32(brxpos)) return false;
+  if (!writer.writeI32(brypos)) return false;
+  return true;
+}
+
+bool activityInterface_IDLServer_getCog::read(yarp::os::ConnectionReader& connection) {
+  yarp::os::idl::WireReader reader(connection);
+  if (!reader.readListReturn()) return false;
+  if (!reader.read(_return)) {
+    reader.fail();
+    return false;
+  }
+  return true;
+}
+
+void activityInterface_IDLServer_getCog::init(const int32_t tlxpos, const int32_t tlypos, const int32_t brxpos, const int32_t brypos) {
+  this->tlxpos = tlxpos;
+  this->tlypos = tlypos;
+  this->brxpos = brxpos;
+  this->brypos = brypos;
+}
+
 bool activityInterface_IDLServer_quit::write(yarp::os::ConnectionWriter& connection) {
   yarp::os::idl::WireWriter writer(connection);
   if (!writer.writeListHeader(1)) return false;
@@ -1119,6 +1159,16 @@ bool activityInterface_IDLServer::testFill() {
   helper.init();
   if (!yarp().canWrite()) {
     yError("Missing server method '%s'?","bool activityInterface_IDLServer::testFill()");
+  }
+  bool ok = yarp().write(helper,helper);
+  return ok?helper._return:_return;
+}
+yarp::os::Bottle activityInterface_IDLServer::getCog(const int32_t tlxpos, const int32_t tlypos, const int32_t brxpos, const int32_t brypos) {
+  yarp::os::Bottle _return;
+  activityInterface_IDLServer_getCog helper;
+  helper.init(tlxpos,tlypos,brxpos,brypos);
+  if (!yarp().canWrite()) {
+    yError("Missing server method '%s'?","yarp::os::Bottle activityInterface_IDLServer::getCog(const int32_t tlxpos, const int32_t tlypos, const int32_t brxpos, const int32_t brypos)");
   }
   bool ok = yarp().write(helper,helper);
   return ok?helper._return:_return;
@@ -1564,6 +1614,37 @@ bool activityInterface_IDLServer::read(yarp::os::ConnectionReader& connection) {
       reader.accept();
       return true;
     }
+    if (tag == "getCog") {
+      int32_t tlxpos;
+      int32_t tlypos;
+      int32_t brxpos;
+      int32_t brypos;
+      if (!reader.readI32(tlxpos)) {
+        reader.fail();
+        return false;
+      }
+      if (!reader.readI32(tlypos)) {
+        reader.fail();
+        return false;
+      }
+      if (!reader.readI32(brxpos)) {
+        reader.fail();
+        return false;
+      }
+      if (!reader.readI32(brypos)) {
+        reader.fail();
+        return false;
+      }
+      yarp::os::Bottle _return;
+      _return = getCog(tlxpos,tlypos,brxpos,brypos);
+      yarp::os::idl::WireWriter writer(reader);
+      if (!writer.isNull()) {
+        if (!writer.writeListHeader(1)) return false;
+        if (!writer.write(_return)) return false;
+      }
+      reader.accept();
+      return true;
+    }
     if (tag == "quit") {
       bool _return;
       _return = quit();
@@ -1635,6 +1716,7 @@ std::vector<std::string> activityInterface_IDLServer::help(const std::string& fu
     helpString.push_back("trackStackedObject");
     helpString.push_back("resetObjStack");
     helpString.push_back("testFill");
+    helpString.push_back("getCog");
     helpString.push_back("quit");
     helpString.push_back("help");
   }
@@ -1793,6 +1875,13 @@ std::vector<std::string> activityInterface_IDLServer::help(const std::string& fu
       helpString.push_back("bool testFill() ");
       helpString.push_back("Just a simple function to fill in data for testing. ");
       helpString.push_back("@return true/false on success/failure ");
+    }
+    if (functionName=="getCog") {
+      helpString.push_back("yarp::os::Bottle getCog(const int32_t tlxpos, const int32_t tlypos, const int32_t brxpos, const int32_t brypos) ");
+      helpString.push_back("Just a simple function to get the cog of the closest blob for testing ");
+      helpString.push_back("@param xpos specifies the 2D position of the object on the X axis ");
+      helpString.push_back("@param ypos specifies the 2D position of the object on the Y axis ");
+      helpString.push_back("@return string with the name of the object ");
     }
     if (functionName=="quit") {
       helpString.push_back("bool quit() ");
