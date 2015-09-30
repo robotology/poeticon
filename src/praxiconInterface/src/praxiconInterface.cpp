@@ -29,7 +29,9 @@ class PraxiconInterface : public RFModule
     string handlerPortName;
     Bottle speech;
     Bottle response;
-    string relations[10];
+    //string relations[100];
+    vector<string> relations;
+
 
     PraxiconTreePortBinding q;
     ns1__queryPRAXICON praxiconQuery;
@@ -56,6 +58,9 @@ public:
         if(q.__ns1__queryPRAXICON(&praxiconQuery, &responsePRAXICON) == SOAP_OK)
         {
             res = responsePRAXICON.return_;
+
+            //cout << "response size " << res->response.size() << endl;
+
             if (res!=NULL || res->response.size()!=3){
                 for (int i = 0; i < (int) res->response.size(); i++)
                 {
@@ -67,11 +72,8 @@ public:
                     cout<<"movement: " << *(action->movement) <<endl;
                     cout<<"object2: "  << *(object2->name)    <<endl;
 
-                    relations[i] += *(object1->name);
-                    relations[i] += " ";
-                    relations[i] += *(action->movement);
-                    relations[i] += " ";
-                    relations[i] += *(object2->name);
+                    string tmp = *(object1->name) + " " + *(action->movement) + " " + *(object2->name);
+                    relations.push_back(tmp);
                 }
             }
         }
@@ -167,13 +169,15 @@ public:
             //send query to the praxicon
             queryPraxicon(objectsAround, query, noObjects);
 
-            if (res!=NULL || res->response.size()!=3){
+            if (res!=NULL || res->response.size()!=3)
+            {
                 cout << "response size " << res->response.size() << endl;
                 for (int rep = 0; rep< (int)res->response.size(); rep++)
                 {
                     response.addString( relations[rep].c_str() );
-                    relations[rep].clear();
                 }
+
+            relations.clear();
             }
             speechPort.reply(response);
         }
