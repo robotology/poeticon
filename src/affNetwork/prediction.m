@@ -39,6 +39,24 @@ switch bn
         
 end
 
+%% FIG SIZE AND POS
+
+figWidth = 400;  % 450
+figHeight = 380; % 430
+figLeftDefault = 1900; %2000
+figBottomDefault = 0; %50
+
+figIndexX_MAX = 2;
+figIndexY_MAX = 1;
+
+figLeft = figLeftDefault;
+figBottom = figBottomDefault;
+
+%% MISC
+
+queryActionID = 1;
+queryActionName = 'draw';
+
 %% YARP
 % Initialize YARP:
 LoadYarp;
@@ -68,6 +86,7 @@ disp('opened port /Eprediction/write:o');
 pause(0.5);
 disp('Done opening ports');
 i=1;
+display=true;
 %% Run until you get the quit signal:
 while(~done)
     
@@ -78,6 +97,16 @@ while(~done)
         disp(query);
         
         %checking for quit signal
+        if(strcmp(query.toString, 'displayON'))
+            display=true;
+            disp('Display is now ON');
+            continue;
+        end
+        if(strcmp(query.toString, 'displayOFF'))
+            display=false;
+            disp('Display is now OFF');
+            continue;      
+        end
         if (strcmp(query.toString, 'quit'))
             done=1;
             disp('Quiting');
@@ -178,26 +207,46 @@ while(~done)
                     
             x = [0.5,1.5,2.5,3.5,4.5];
             
-            hFig(i) = figure(i);
-            str = sprintf('Affordances of iteration %d',i); % maybe change the title :p
-            title(str);
-            set(hFig(i), 'Position', [500 500 450 430]) % maybe change the position of the window
-            axis([0 5 0 5.5])
-            hold on;
-            scatter (x, 0.5*ones(1,5) , 5000,prob.T(1,:),'filled','s')
-            hold on;
-            scatter (x, 1.5*ones(1,5) , 5000,prob.T(2,:),'filled','s')
-            hold on;
-            scatter (x, 2.5*ones(1,5) , 5000, prob.T(3,:),'filled','s')
-            hold on;
-            scatter (x, 3.5*ones(1,5) , 5000,prob.T(4,:), 'filled','s')
-            hold on;
-            scatter (x, 4.5*ones(1,5) , 5000, prob.T(5,:),'filled','s')
-            hold on;
-            colormap gray;
-            plot(2.5,5.25,'r*','LineWidth',8) ; % Display robot position
-            pause(1);
-            i=i+1;
+            
+            figIndexX = mod ((i-1),figIndexX_MAX);
+            %figIndexX
+            
+            figIndexY = mod ( int32(fix((i-1)/figIndexX_MAX)) ,figIndexY_MAX);
+            %figIndexY
+            
+            %figLeft = figLeftDefault + (i-1)*figWidth;
+            figLeft = figLeftDefault + figIndexX*figWidth;
+            %figLeft
+            figBottom = figBottomDefault + figIndexY*figHeight;
+            %figBottom
+            
+            if (action == 1.0)
+                queryActionName = 'draw';
+            elseif (action == 2.0)
+                queryActionName = 'push';
+            end
+            if(display)
+                hFig(i) = figure(i);
+                str = sprintf('%s prediction %d',queryActionName, i); % maybe change the title :p
+                title(str);
+                set(hFig(i), 'Position', [figLeft figBottom figWidth figHeight]) % maybe change the position of the window
+                axis([0 5 0 5.5])
+                hold on;
+                scatter (x, 0.5*ones(1,5) , 5000, prob.T(1,:),'filled','s')
+                hold on;
+                scatter (x, 1.5*ones(1,5) , 5000, prob.T(2,:),'filled','s')
+                hold on;
+                scatter (x, 2.5*ones(1,5) , 5000, prob.T(3,:),'filled','s')
+                hold on;
+                scatter (x, 3.5*ones(1,5) , 5000, prob.T(4,:), 'filled','s')
+                hold on;
+                scatter (x, 4.5*ones(1,5) , 5000, prob.T(5,:),'filled','s')
+                hold on;
+                colormap gray;
+                plot(2.5,5.25,'r*','LineWidth',8) ; % Display robot position
+                pause(1);
+                i=i+1;
+            end
             portOutput.write(answer);
             disp('Done');            
         end
