@@ -31,19 +31,8 @@
 
 #include "Helpers.h"
 
-// make sure __func__ is set correctly, http://stackoverflow.com/a/17528983
-//#if __STDC_VERSION__ < 199901L
-//# if __GNUC__ >= 2
-//#  define __func__ __FUNCTION__
-//# else
-//#  define __func__ "<unknown>"
-//# endif
-//#endif
-
 using namespace std;
 using namespace yarp::os;
-
-typedef std::map<int,string> idLabelMap;
 
 class PlannerThread : public RateThread
 {
@@ -55,7 +44,6 @@ class PlannerThread : public RateThread
         string configFileName;
         string subgoalFileName;
         string stateFileName;
-        string objFileName;
         string pipeFileName;
         string symbolFileName;
 
@@ -100,7 +88,7 @@ class PlannerThread : public RateThread
         int positx;
         int posity;
         
-		Bottle object_bottle;
+        Bottle object_bottle;
         Bottle cmd;
         Bottle message;
         Bottle reply;
@@ -135,11 +123,6 @@ class PlannerThread : public RateThread
         virtual bool threadInit();
         virtual void threadRelease();
         virtual void run();
-
-        // Helpers
-        // int find_element(vector<string> vect, string elem);
-        // int vect_compare (vector<string> vect1, vector<string> vect2);
-        // std::vector<std::string> split(const std::string &s, char delim);
 
         // module
         void stopPlanning();
@@ -183,7 +166,7 @@ class PlannerThread : public RateThread
         string showPlannedAction();
         string showCurrentState();
         string showCurrentGoal();
-		string printSymbol(string symbol);
+        string printSymbol(string symbol);
 };
 
 #endif

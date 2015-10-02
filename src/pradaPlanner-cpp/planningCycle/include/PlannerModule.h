@@ -49,8 +49,8 @@ class PlannerModule : public RFModule, public planningCycle_IDLserver
         bool goForward();
         bool goBack();
         bool updateState();
-		bool loadObjects();
-		Bottle printObjects();
+        bool loadObjects();
+        Bottle printObjects();
         bool loadState();
         bool updateGoals();
         bool plan();
@@ -67,7 +67,7 @@ class PlannerModule : public RFModule, public planningCycle_IDLserver
         string showPlannedAction();
         string showCurrentState();
         string showCurrentGoal();
-		string showSymbol(string symbol);
+        string showSymbol(string symbol);
         virtual bool quit();
 };
 

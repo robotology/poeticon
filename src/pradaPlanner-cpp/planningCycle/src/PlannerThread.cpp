@@ -21,40 +21,32 @@ void PlannerThread::openFiles()
     configFileName = PathName + "/config";
     subgoalFileName = PathName + "/subgoals.dat";
     stateFileName = PathName + "/state.dat";
-    objFileName = PathName + "/Object_names-IDs.dat";
     pipeFileName = PathName + "/pipe.txt";
     symbolFileName = PathName + "/symbols.dat";
 }
 
 bool PlannerThread::openPorts()
 {
-	string portName;
-    //BufferedPort<Bottle> goal_yarp;
-	portName = "/" + moduleName + "/goal_cmd:io";
+    string portName;
+    portName = "/" + moduleName + "/goal_cmd:io";
     goal_yarp.open(portName);
 
-    //BufferedPort<Bottle> geo_yarp;
-	portName = "/" + moduleName + "/ground_cmd:io";
+    portName = "/" + moduleName + "/ground_cmd:io";
     geo_yarp.open(portName);
 
-    //BufferedPort<Bottle> prax_yarp;
-	portName = "/" + moduleName + "/prax_inst:o";
+    portName = "/" + moduleName + "/prax_inst:o";
     prax_yarp.open(portName);
 
-    //BufferedPort<Bottle> aff_yarp;
-	portName = "/" + moduleName + "/affordances_cmd:io";
+    portName = "/" + moduleName + "/affordances_cmd:io";
     aff_yarp.open(portName);
 
-    //RpcClient world_rpc;
-	portName = "/" + moduleName + "/wsm_rpc:o";
+    portName = "/" + moduleName + "/wsm_rpc:o";
     world_rpc.open(portName);
 
-    //RpcClient actInt_rpc;
-	portName = "/" + moduleName + "/actInt_rpc:o";
+    portName = "/" + moduleName + "/actInt_rpc:o";
     actInt_rpc.open(portName);
 
-    //RpcClient opc2prada_rpc;
-	portName = "/" + moduleName + "/opc2prada_rpc:o";
+    portName = "/" + moduleName + "/opc2prada_rpc:o";
     opc2prada_rpc.open(portName);
 
     return true;
@@ -76,7 +68,7 @@ void PlannerThread::close()
     world_rpc.close();
     actInt_rpc.close();
     opc2prada_rpc.close();
-	cmd.clear();
+    cmd.clear();
     message.clear();
     reply.clear();
     toolhandle.clear();
@@ -86,9 +78,9 @@ void PlannerThread::close()
     old_rules.clear();
     objects_used.clear();
     goal.clear();
-	subgoals.clear();
+    subgoals.clear();
     object_IDs.clear();
-	yarp::os::Time::delay(0.1);
+    yarp::os::Time::delay(0.1);
 }
 
 void PlannerThread::interrupt()
@@ -112,13 +104,13 @@ bool PlannerThread::threadInit()
     plan_level = 0;
     // initialize file names
     openFiles();
-    process_string = "cd && cd .. && cd .. && cd " + PathName + " && ./planner.exe > " + pipeFileName;
+    process_string = "cd && cd .. && cd .. && cd " + PathName + " && ./planner.exe > " + pipeFileName; // TODO: cd PathName
     if ( !openPorts() )
     {
         yError("problem opening ports");
         return false;
     }
- 
+
     return true;
 }
 
@@ -175,7 +167,7 @@ bool PlannerThread::checkPause()
     {
         yarp::os::Time::delay(0.1);
         timer = timer + 1;
-        if (timer == 100)
+        if (timer == 200)
         {
             yInfo("Planning cycle paused");
             timer = 0;
@@ -227,11 +219,10 @@ bool PlannerThread::updateState()
             return false;
         }
     }
-	else {
-		yError("Planner state update failed: something wrong with the World State Manager");
-	}
+    else {
+        yError("Planner state update failed: something wrong with the World State Manager");
+    }
     return false;
-    
 }
 
 bool PlannerThread::completePlannerState()
@@ -388,7 +379,7 @@ bool PlannerThread::groundRules()
                 yError("empty bottle received, something might be wrong with the affordances module.");
                 return false;
             }
-			yInfo(data);
+            //yDebug(data);
             while (!closing){
                 if (data.find('"') != std::string::npos){
                     data.replace(data.find('"'),1,"");
@@ -467,11 +458,11 @@ bool PlannerThread::compileGoal()
                 yInfo("Goal Compiling is complete!");
                 break;
             }
-			else if (goal_bottle_in->toString() == "fail")
-			{
-				yWarning("Something failed while loading the objects on the Goal Compiler module");
-				return false;
-			}
+            else if (goal_bottle_in->toString() == "fail")
+            {
+                yWarning("Something failed while loading the objects on the Goal Compiler module");
+                return false;
+            }
             else
             {
                 yError("non-standard message received, something might be wrong with the Goal Compiler module.");
@@ -549,7 +540,7 @@ bool PlannerThread::resetConfig()
     configFileOut.open(configFileName.c_str());
     if (!configFileOut.is_open())
     {
-        yError("unable to open config file!");
+        yError("unable to open PRADA config file!");
         return false;
     }
     for (int i = 0; i<config_data.size();++i){
@@ -557,50 +548,50 @@ bool PlannerThread::resetConfig()
         configFileOut << '\n';
     }
     configFileOut.close();
-    yInfo("Config file reset");
+    yInfo("PRADA config file reset");
     return true;
 }
 
 Bottle PlannerThread::printObjs()
 {
-	return object_bottle;
+    return object_bottle;
 }
 
 bool PlannerThread::loadObjs()
 {
-	vector<string> temp_vect;
+    vector<string> temp_vect;
     vector<string> labels;
-	
-	if (opc2prada_rpc.getOutputCount() == 0){
+
+    if (opc2prada_rpc.getOutputCount() == 0){
         yError("opc2prada not connected!");
         return false;
     }
-	object_IDs.clear();
+    object_IDs.clear();
     cmd.clear();
     cmd.addString("loadObjects");
     opc2prada_rpc.write(cmd,reply);
     if (reply.size() > 0 && reply.get(0).isList() && reply.get(0).asList()->size() > 2){
-		object_bottle.clear();
-		object_bottle = *reply.get(0).asList();
-		for (int i = 0; i < reply.get(0).asList()->size(); ++i)
-		{
-			temp_vect.clear();
-			temp_vect.push_back( NumbertoString(reply.get(0).asList()->get(i).asList()->get(0).asInt() ) );
-			temp_vect.push_back(reply.get(0).asList()->get(i).asList()->get(1).asString());
-			object_IDs.push_back(temp_vect);
-           	if (find_element(labels,temp_vect[1]) == 1)
-           	{
-               	yWarning("There are objects that share labels: %s", temp_vect[1].c_str());
-           	}
-           	labels.push_back(temp_vect[1]);
-		}
-		return true;
+        object_bottle.clear();
+        object_bottle = *reply.get(0).asList();
+        for (int i = 0; i < reply.get(0).asList()->size(); ++i)
+        {
+            temp_vect.clear();
+            temp_vect.push_back( NumbertoString(reply.get(0).asList()->get(i).asList()->get(0).asInt() ) );
+            temp_vect.push_back(reply.get(0).asList()->get(i).asList()->get(1).asString());
+            object_IDs.push_back(temp_vect);
+               if (find_element(labels,temp_vect[1]) == 1)
+               {
+                   yWarning("There are objects that share labels: %s", temp_vect[1].c_str());
+               }
+               labels.push_back(temp_vect[1]);
+        }
+        return true;
     }
     else {
         yError("Objects update failed!");
-		return false;
+        return false;
     }
-	return false;
+    return false;
 }
 
 void PlannerThread::stopPlanning()
@@ -644,29 +635,29 @@ bool PlannerThread::preserveState()
 
 bool PlannerThread::compareState()
 {
-	vector<string> temp_vect;
-	if (next_action != "")
-	{
-		for (int i = 0; i < rules.size(); ++i)
-		{
-			if (rules[i].find(next_action) != std::string::npos)
-			{
-				temp_vect = split(rules[i+4], ' ');
-				temp_vect.erase(temp_vect.begin());
-				temp_vect.erase(temp_vect.begin());
-				temp_vect.erase(temp_vect.begin());
-				yInfo("%s", temp_vect[0].c_str());
-				break;
-			}
-		}
-	}
-	for (int i = 0; i < temp_vect.size(); ++i)
-	{
-		if (find_element(state, temp_vect[i]) == 0)
-		{
-			return true;
-		}
-	}
+    vector<string> temp_vect;
+    if (next_action != "")
+    {
+        for (int i = 0; i < rules.size(); ++i)
+        {
+            if (rules[i].find(next_action) != std::string::npos)
+            {
+                temp_vect = split(rules[i+4], ' ');
+                temp_vect.erase(temp_vect.begin());
+                temp_vect.erase(temp_vect.begin());
+                temp_vect.erase(temp_vect.begin());
+                //yDebug("State comparison: %s", temp_vect[0].c_str());
+                break;
+            }
+        }
+    }
+    for (int i = 0; i < temp_vect.size(); ++i)
+    {
+        if (find_element(state, temp_vect[i]) == 0)
+        {
+            return true;
+        }
+    }
     if (vect_compare(state, old_state) == 1)
     {
         return true; // state did not change
@@ -735,10 +726,10 @@ bool PlannerThread::adaptRules()
                     adapt_rules[2] = static_cast<ostringstream*>( &(ostringstream() << (atof(adapt_rules[2].c_str())/5) ))->str();
                     temp_str = "";
                     for (int h = 0; h < adapt_rules.size(); ++h){
-						if (adapt_rules[h] != "0")
-						{
-                        	temp_str = temp_str + adapt_rules[h] + " ";
-						}
+                        if (adapt_rules[h] != "0")
+                        {
+                            temp_str = temp_str + adapt_rules[h] + " ";
+                        }
                     }
                     rules[t+4] = temp_str;
                     adapt_noise = split(rules[t+p-1], ' ');
@@ -746,9 +737,9 @@ bool PlannerThread::adaptRules()
                     temp_str = "";
                     for (int h = 0; h < adapt_noise.size(); ++h){
                         if (adapt_noise[h] != "0")
-						{
-                        	temp_str = temp_str + adapt_noise[h] + " ";
-						}
+                        {
+                            temp_str = temp_str + adapt_noise[h] + " ";
+                        }
                     }
                     rules[t+p-1] = temp_str;
                     break;
@@ -758,7 +749,7 @@ bool PlannerThread::adaptRules()
             for (int y = 0; y < rules.size(); ++y){
                 rulesFileOut << rules[y] << endl;
             }
-            yInfo("Rules adapted");
+            yInfo("Rules adapted, probability of %s reduced", next_action.c_str());
             break;
         }
     }
@@ -775,10 +766,10 @@ bool PlannerThread::goalUpdate()
         return false;
     }
     yInfo("Goal updated");
-	if (plan_level >= subgoals.size())
-	{
-		plan_level = subgoals.size()-1;
-	}
+    if (plan_level >= subgoals.size())
+    {
+        plan_level = subgoals.size()-1;
+    }
     for (int y = 0; y < subgoals[plan_level].size(); ++y){
         goalFileOut << subgoals[plan_level][y] << " ";
     }
@@ -788,7 +779,6 @@ bool PlannerThread::goalUpdate()
 
 bool PlannerThread::planCompletion()
 {
-    /*loadObjs();*/
     if (plan_level >= subgoals.size()){
         yInfo("Plan completed!!");
         Bottle& prax_bottle_out = prax_yarp.prepare();
@@ -814,8 +804,8 @@ int PlannerThread::PRADA()
 {
     string line;
     vector<string> pipe_vect;
-	string next_sequence;
-	int retrn_flag = 2;
+    string next_sequence;
+    int retrn_flag = 2;
     FILE * pFile;
     pFile = fopen(pipeFileName.c_str(),"w");
     fclose(pFile);
@@ -838,14 +828,14 @@ int PlannerThread::PRADA()
     for (int t = 0; t < pipe_vect.size(); ++t){
         if (pipe_vect[t] == "The planner would like to kindly recommend the following action to you:" && t+1 < pipe_vect.size()){
             next_action = pipe_vect[t+1];
-			cout << endl;
+            cout << endl;
             yInfo("Action found: %s", next_action.c_str());
             retrn_flag = 1;
         }
         if (pipe_vect[t] == "*** Planning for a complete plan." && t+3 < pipe_vect.size()){
             next_sequence = pipe_vect[t+3];
-			cout << endl;
-            yInfo("Sequence found: %s", next_sequence.c_str());
+            cout << endl;
+            yDebug("Sequence found: %s", next_sequence.c_str());
             return retrn_flag;
         }
     }
@@ -860,7 +850,7 @@ bool PlannerThread::increaseHorizon()
     configFile.open(configFileName.c_str());
     if (!configFile.is_open())
     {
-        yError("unable to open config file!");
+        yError("unable to open PRADA config file!");
         return false;
     }
     while (getline(configFile, line)){
@@ -876,42 +866,42 @@ bool PlannerThread::increaseHorizon()
             {
                 yWarning("horizon too large, jumping to next goal");
                 jumpForward();
-				horizon = 5;
-				if (failed_goal.size() == 0)
-				{
-					for (int t = 0; t < goal.size(); ++t)
-					{
-						if (find_element(state,goal[t]) == 0)
-						{
-							failed_goal.push_back(goal[t]);
-						}
-					}
-				}
-				if ((plan_level >= subgoals.size() && !checkGoalCompletion()) || !checkHoldingSymbols())
-				{
-					for (int t = 0; t < failed_goal.size(); ++t)
-					{
-						temp_vect = split(failed_goal[t], '_');
-						objects_failed.push_back(temp_vect[0]);
-					}
-					yInfo("Plan failed");
-        			Bottle& prax_bottle_out = prax_yarp.prepare();
-        			prax_bottle_out.clear();
-        			prax_bottle_out.addString("FAIL");
-        			for (int u = 0; u < objects_failed.size(); ++u){
-            			for (int inde = 0; inde < object_IDs.size(); ++inde){
-                			if (object_IDs[inde][0] == objects_failed[u]){
-                    			if (object_IDs[inde][1] != "rake" && object_IDs[inde][1] != "stick" && object_IDs[inde][1] != "left" && object_IDs[inde][1] != "right"){
-                        			prax_bottle_out.addString(object_IDs[inde][1]);
-			                    }
-            			    }
-            			}
-        			}
-        			yInfo(" %s", prax_bottle_out.toString().c_str());
-        			prax_yarp.write(); 
-        			restartPlan = true;
-					return false;
-				}
+                horizon = 5;
+                if (failed_goal.size() == 0)
+                {
+                    for (int t = 0; t < goal.size(); ++t)
+                    {
+                        if (find_element(state,goal[t]) == 0)
+                        {
+                            failed_goal.push_back(goal[t]);
+                        }
+                    }
+                }
+                if ((plan_level >= subgoals.size() && !checkGoalCompletion()) || !checkHoldingSymbols())
+                {
+                    for (int t = 0; t < failed_goal.size(); ++t)
+                    {
+                        temp_vect = split(failed_goal[t], '_');
+                        objects_failed.push_back(temp_vect[0]);
+                    }
+                    yInfo("Plan failed");
+                    Bottle& prax_bottle_out = prax_yarp.prepare();
+                    prax_bottle_out.clear();
+                    prax_bottle_out.addString("FAIL");
+                    for (int u = 0; u < objects_failed.size(); ++u){
+                        for (int inde = 0; inde < object_IDs.size(); ++inde){
+                            if (object_IDs[inde][0] == objects_failed[u]){
+                                if (object_IDs[inde][1] != "rake" && object_IDs[inde][1] != "stick" && object_IDs[inde][1] != "left" && object_IDs[inde][1] != "right"){
+                                    prax_bottle_out.addString(object_IDs[inde][1]);
+                                }
+                            }
+                        }
+                    }
+                    yDebug("Sending to Praxicon: %s", prax_bottle_out.toString().c_str());
+                    prax_yarp.write(); 
+                    restartPlan = true;
+                    return false;
+                }
             }
             configData[w+2] = "PRADA_horizon " + static_cast<ostringstream*>( &(ostringstream() << horizon) )->str();
             break;
@@ -920,7 +910,7 @@ bool PlannerThread::increaseHorizon()
     configFileOut.open(configFileName.c_str());
     if (!configFileOut.is_open())
     {
-        yError("unable to open config file!");
+        yError("unable to open PRADA config file!");
         return false;
     }
     for (int w = 0; w < configData.size(); ++w){
@@ -1071,7 +1061,7 @@ bool PlannerThread::codeAction()
             }
         }
     }
-    yInfo("%s %s %s", act.c_str(), obj.c_str(), hand.c_str());
+    yDebug("%s %s %s", act.c_str(), obj.c_str(), hand.c_str());
     return true;
 }
 
@@ -1097,11 +1087,11 @@ bool PlannerThread:: execAction()
         message.addString(obj);
         message.addString(hand);
     }
-    yInfo("Message: %s" , message.toString().c_str());
+    yInfo("Request execution of action: %s" , message.toString().c_str());
     while (!closing){
         yarp::os::Time::delay(0.1);
         actInt_rpc.write(message, reply);
-        yInfo("%s", reply.toString().c_str());
+        yInfo("Received reply: %s", reply.toString().c_str());
         if (reply.size() == 1 && reply.get(0).asVocab() == 27503){
             prev_action = message.get(1).toString();
             return true;
@@ -1112,7 +1102,7 @@ bool PlannerThread:: execAction()
             return false;
         }
         if (reply.size() != 1){
-            yError("activity interface is not connected, verify if the module is running, and all connections are established.");
+            yError("activityInterface is not connected, verify if the module is running, and all connections are established.");
             return false;
         }
     }
@@ -1190,7 +1180,7 @@ bool PlannerThread::checkFailure()
                 }
             }
         }
-        yInfo(" %s", prax_bottle_out.toString().c_str());
+        yInfo("Sending to Praxicon: %s", prax_bottle_out.toString().c_str());
         prax_yarp.write();
         restartPlan = true;
         return true;
@@ -1220,10 +1210,10 @@ bool PlannerThread::plan_init()
     {
         return false;
     }
-	if (!loadObjs())
-	{
-		return false;
-	}
+    if (!loadObjs())
+    {
+        return false;
+    }
     if (!loadState())
     {
         return false;
@@ -1451,9 +1441,9 @@ bool PlannerThread::planning_cycle()
             {
                 return false;
             }
-			string tmp_str = showCurrentGoal(); 
-			yInfo("%s", tmp_str.c_str());
-            yarp::os::Time::delay(1);
+            string tmp_str = showCurrentGoal(); 
+            yInfo("Current subgoal: %s", tmp_str.c_str());
+            //yarp::os::Time::delay(1);
             int flag_prada = PRADA();
             if (!checkPause())
             {
@@ -1522,7 +1512,7 @@ bool PlannerThread::planning_cycle()
         return false;
     }
     return true;
-}    
+}
 
 string PlannerThread::showPlannedAction()
 {
@@ -1555,130 +1545,130 @@ string PlannerThread::showCurrentGoal()
 
 string PlannerThread::printSymbol(string symbol)
 {
-	loadObjs();
-	string reply_string = "";
+    loadObjs();
+    string reply_string = "";
     vector<string> temp_vect, temp_vect2;
-	vector<vector<string> > answer;
+    vector<vector<string> > answer;
 
-	if (symbol == "reachable")
-	{
-		for (int i = 0; i < object_IDs.size(); ++i)
-		{
-			temp_vect.clear();
-			temp_vect.push_back(object_IDs[i][1]);
-			for (int j = 0; j < state.size(); ++j)
-			{
-				if (state[j].find("reachable") != std::string::npos && state[j].find('-') == std::string::npos && state[j].find("with_"+ object_IDs[i][0]) != std::string::npos)
-				{
-					temp_vect2 = split(state[j], '_');
-					temp_vect.push_back(temp_vect2[0]);
-				}
-			}
-			answer.push_back(temp_vect);
-		}
-		reply_string = "reachable with: \n";
-		for (int i = 0; i < answer.size(); ++i)
-		{
-			reply_string = reply_string + answer[i][0] + ":";
-			for (int j = 1; j < answer[i].size(); ++j)
-			{
-				reply_string = reply_string + " " + answer[i][j];
-			}
-			reply_string = reply_string + "\n";
-		}
-		return reply_string;
-	}
+    if (symbol == "reachable")
+    {
+        for (int i = 0; i < object_IDs.size(); ++i)
+        {
+            temp_vect.clear();
+            temp_vect.push_back(object_IDs[i][1]);
+            for (int j = 0; j < state.size(); ++j)
+            {
+                if (state[j].find("reachable") != std::string::npos && state[j].find('-') == std::string::npos && state[j].find("with_"+ object_IDs[i][0]) != std::string::npos)
+                {
+                    temp_vect2 = split(state[j], '_');
+                    temp_vect.push_back(temp_vect2[0]);
+                }
+            }
+            answer.push_back(temp_vect);
+        }
+        reply_string = "reachable with: \n";
+        for (int i = 0; i < answer.size(); ++i)
+        {
+            reply_string = reply_string + answer[i][0] + ":";
+            for (int j = 1; j < answer[i].size(); ++j)
+            {
+                reply_string = reply_string + " " + answer[i][j];
+            }
+            reply_string = reply_string + "\n";
+        }
+        return reply_string;
+    }
 
-	else if (symbol == "pullable")
-	{
-		for (int i = 0; i < object_IDs.size(); ++i)
-		{
-			temp_vect.clear();
-			temp_vect.push_back(object_IDs[i][1]);
-			for (int j = 0; j < state.size(); ++j)
-			{
-				if (state[j].find("pullable") != std::string::npos && state[j].find('-') == std::string::npos && state[j].find("with_"+ object_IDs[i][0]) != std::string::npos)
-				{
-					temp_vect2 = split(state[j], '_');
-					temp_vect.push_back(temp_vect2[0]);
-				}
-			}
-			answer.push_back(temp_vect);
-		}
-		reply_string = "pullable with: \n";
-		for (int i = 0; i < answer.size(); ++i)
-		{
-			reply_string = reply_string + answer[i][0] + ":";
-			for (int j = 1; j < answer[i].size(); ++j)
-			{
-				reply_string = reply_string + " " + answer[i][j];
-			}
-			reply_string = reply_string + "\n";
-		}
-		return reply_string;
-	}
+    else if (symbol == "pullable")
+    {
+        for (int i = 0; i < object_IDs.size(); ++i)
+        {
+            temp_vect.clear();
+            temp_vect.push_back(object_IDs[i][1]);
+            for (int j = 0; j < state.size(); ++j)
+            {
+                if (state[j].find("pullable") != std::string::npos && state[j].find('-') == std::string::npos && state[j].find("with_"+ object_IDs[i][0]) != std::string::npos)
+                {
+                    temp_vect2 = split(state[j], '_');
+                    temp_vect.push_back(temp_vect2[0]);
+                }
+            }
+            answer.push_back(temp_vect);
+        }
+        reply_string = "pullable with: \n";
+        for (int i = 0; i < answer.size(); ++i)
+        {
+            reply_string = reply_string + answer[i][0] + ":";
+            for (int j = 1; j < answer[i].size(); ++j)
+            {
+                reply_string = reply_string + " " + answer[i][j];
+            }
+            reply_string = reply_string + "\n";
+        }
+        return reply_string;
+    }
 
-	else if (symbol == "inhand")
-	{
-		for (int i = 0; i < object_IDs.size(); ++i)
-		{
-			temp_vect.clear();
-			temp_vect.push_back(object_IDs[i][1]);
-			for (int j = 0; j < state.size(); ++j)
-			{
-				if (state[j].find('-') == std::string::npos && state[j].find("inhand_"+ object_IDs[i][0]) != std::string::npos)
-				{
-					temp_vect2 = split(state[j], '_');
-					temp_vect.push_back(temp_vect2[0]);
-				}
-			}
-			answer.push_back(temp_vect);
-		}
-		reply_string = "inhand of: \n";
-		for (int i = 0; i < answer.size(); ++i)
-		{
-			reply_string = reply_string + answer[i][0] + ":";
-			for (int j = 1; j < answer[i].size(); ++j)
-			{
-				reply_string = reply_string + " " + answer[i][j];
-			}
-			reply_string = reply_string + "\n";
-		}
-		return reply_string;
-	}
+    else if (symbol == "inhand")
+    {
+        for (int i = 0; i < object_IDs.size(); ++i)
+        {
+            temp_vect.clear();
+            temp_vect.push_back(object_IDs[i][1]);
+            for (int j = 0; j < state.size(); ++j)
+            {
+                if (state[j].find('-') == std::string::npos && state[j].find("inhand_"+ object_IDs[i][0]) != std::string::npos)
+                {
+                    temp_vect2 = split(state[j], '_');
+                    temp_vect.push_back(temp_vect2[0]);
+                }
+            }
+            answer.push_back(temp_vect);
+        }
+        reply_string = "inhand of: \n";
+        for (int i = 0; i < answer.size(); ++i)
+        {
+            reply_string = reply_string + answer[i][0] + ":";
+            for (int j = 1; j < answer[i].size(); ++j)
+            {
+                reply_string = reply_string + " " + answer[i][j];
+            }
+            reply_string = reply_string + "\n";
+        }
+        return reply_string;
+    }
 
-	else if (symbol == "ontopof")
-	{
-		for (int i = 0; i < object_IDs.size(); ++i)
-		{
-			temp_vect.clear();
-			temp_vect.push_back(object_IDs[i][1]);
-			for (int j = 0; j < state.size(); ++j)
-			{
-				if (state[j].find('-') == std::string::npos && state[j].find("on_"+ object_IDs[i][0]) != std::string::npos)
-				{
-					temp_vect2 = split(state[j], '_');
-					temp_vect.push_back(temp_vect2[0]);
-				}
-			}
-			answer.push_back(temp_vect);
-		}
-		reply_string = "on top of: \n";
-		for (int i = 0; i < answer.size(); ++i)
-		{
-			reply_string = reply_string + answer[i][0] + ":";
-			for (int j = 1; j < answer[i].size(); ++j)
-			{
-				reply_string = reply_string + " " + answer[i][j];
-			}
-			reply_string = reply_string + "\n";
-		}
-		return reply_string;
-	}
-	
-	else 
-	{
-		return "symbol not recognised, please insert one of the symbols on the list";
-	}
-	return "fail";
+    else if (symbol == "ontopof")
+    {
+        for (int i = 0; i < object_IDs.size(); ++i)
+        {
+            temp_vect.clear();
+            temp_vect.push_back(object_IDs[i][1]);
+            for (int j = 0; j < state.size(); ++j)
+            {
+                if (state[j].find('-') == std::string::npos && state[j].find("on_"+ object_IDs[i][0]) != std::string::npos)
+                {
+                    temp_vect2 = split(state[j], '_');
+                    temp_vect.push_back(temp_vect2[0]);
+                }
+            }
+            answer.push_back(temp_vect);
+        }
+        reply_string = "on top of: \n";
+        for (int i = 0; i < answer.size(); ++i)
+        {
+            reply_string = reply_string + answer[i][0] + ":";
+            for (int j = 1; j < answer[i].size(); ++j)
+            {
+                reply_string = reply_string + " " + answer[i][j];
+            }
+            reply_string = reply_string + "\n";
+        }
+        return reply_string;
+    }
+    
+    else 
+    {
+        return "symbol not recognised, please insert one of the symbols on the list";
+    }
+    return "fail";
 }
