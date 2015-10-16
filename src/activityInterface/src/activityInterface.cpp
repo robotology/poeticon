@@ -140,9 +140,14 @@ bool ActivityInterface::configure(yarp::os::ResourceFinder &rf)
     yarp::os::Network::connect(("/"+moduleName+"/memory:rpc").c_str(), "/memory/rpc");
     yarp::os::Network::connect(("/"+moduleName+"/iolState:rpc").c_str(), "/iolStateMachineHandler/human:rpc");
 
-    yarp::os::Network::connect("/blobSpotter/image:o", inputBlobPortName.c_str());
+    
     yarp::os::Network::connect("/icub/camcalib/left/out", inputImagePortName.c_str());
     yarp::os::Network::connect(("/"+moduleName+"/praxicon:rpc").c_str(), "/praxInterface/speech:i");
+    
+    //yarp::os::Network::connect("/blobExtractor/binary:o", inputBlobPortName.c_str());
+    //yarp::os::Network::connect(("/blobExtractor/blobs:o"), ("/"+moduleName+"/blobs:i").c_str());
+    
+    yarp::os::Network::connect("/blobSpotter/image:o", inputBlobPortName.c_str());
     yarp::os::Network::connect(("/blobSpotter/blobs:o"), ("/"+moduleName+"/blobs:i").c_str());
     
     yarp::os::Network::connect(("/"+moduleName+"/karma:o"), ("/karmaMotor/rpc"));
@@ -408,14 +413,12 @@ Bottle ActivityInterface::askPraxicon(const string &request)
     //send it all to praxicon
     rpcPraxiconInterface.write(cmdPrax,replyPrax);
     
-    
     Bottle &tmpList = listOfGoals.addList();
     //listOfGoals.clear();
     vector<string> tokens;
     
     if (replyPrax.size() > 0)
     {
-    
         for (int i=0; i<replyPrax.size()-1; i++) //-1 to remove (mouth speak goal from praxicon)
         {
             string replytmp = replyPrax.get(i).asString().c_str();
@@ -977,16 +980,20 @@ string ActivityInterface::getLabel(const int32_t pos_x, const int32_t pos_y)
                 
                 Bottle cog = getBlobCOG(positionBBox, 0);
                 
+                yInfo("[getLabel] cog  %d %d\n", cog.get(0).asInt(), cog.get(1).asInt());
+                yInfo("[getLabel] pos  %d %d\n", pos_x, pos_y);
+                
                 int diffx = abs(cog.get(0).asInt() - pos_x);
                 int diffy = abs(cog.get(1).asInt() - pos_y);
                 
-                yInfo("the dffs are %d %d total %d\n", diffx, diffy, abs (diffx + diffy));
+                yInfo("[getLabel] the dffs are %d %d total %d\n", diffx, diffy, abs (diffx + diffy));
                 
-                if ( abs(diffx + diffy)/2 < 30)
+                if ( abs(diffx + diffy) < 20)
                 {
                     if (propField->check("name"))
                     {
                         label = propField->find("name").asString().c_str();
+                        yInfo("[getLabel] adding label %s",label.c_str());
                     }
                 }
             }
@@ -1109,7 +1116,6 @@ double ActivityInterface::getManip(const string &objName, const std::string &han
             if (strcmp (handName.c_str(),"right") == 0)
                 manip = 0.1;
         }
-
     }
     return manip;
 }
@@ -1743,6 +1749,8 @@ Bottle ActivityInterface::getToolLikeNames()
     {
         double area = cv::contourArea( contours[i],false);
         
+        yDebug("[getToolLikeNames] area %lf \n", area);
+        
         if (area > 1000 && area < 5000) //first screaning - only accept something big enough
         {
             double length = getAxes(contours[i], dst);
@@ -1754,6 +1762,8 @@ Bottle ActivityInterface::getToolLikeNames()
     double max_diff = getPairMax(allLengths) - (getPairMin(allLengths) + getPairMin(allLengths)/2);
     
     std::vector<cv::Point > tempPoints;
+    
+    yError("[getToolLikeNames] allLength size %d \n",allLengths.size());
     
     for (std::map<int, double>::iterator it=allLengths.begin(); it!=allLengths.end(); ++it)
     {
@@ -1773,19 +1783,26 @@ Bottle ActivityInterface::getToolLikeNames()
             bool shouldAdd = true;
             for (int i = 0; i < tempPoints.size(); i++)
             {
+                yDebug("[getToolLikeNames] res %d %d \n", res.x, res.y);
+                yDebug("[getToolLikeNames] tempPoints %d %d \n", tempPoints[i].x, tempPoints[i].y);
+                
                 if ( abs(res.x - tempPoints[i].x)<10 && abs(res.y - tempPoints[i].y)<10)
+                {
                     shouldAdd = false;
+                    yDebug("Adding");
+                }
             }
             if (shouldAdd)
             {
                 string label = getLabel(res.x, res.y);
                 
                 names.addString(label.c_str());
+                yDebug("[getToolLikeNames] Adding %s \n", label.c_str());
+                
             }
             tempPoints.push_back(res);
         }
     }
-    
     return names;
 }
 
