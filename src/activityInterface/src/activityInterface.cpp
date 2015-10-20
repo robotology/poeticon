@@ -1741,21 +1741,39 @@ Bottle ActivityInterface::getToolLikeNames()
     
     std::vector<cv::Point> convex_hull;
     
-    findContours( temp, contours, hierarchy,CV_RETR_CCOMP, CV_CHAIN_APPROX_SIMPLE );
+    findContours( temp, contours, hierarchy, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_TC89_L1 );
+    
+    // Get the moments
+    vector<cv::Moments> mu(contours.size() );
+    for( int i = 0; i < contours.size(); i++ )
+        mu[i] = moments( contours[i], false );
+    
+    // Get the mass centers:
+    vector<cv::Point2f> mc( contours.size() );
+    
+    for( int i = 0; i < contours.size(); i++ )
+        mc[i] = cv::Point2f( mu[i].m10/mu[i].m00 , mu[i].m01/mu[i].m00 );
     
     std::map<int, double> allLengths;
     
+    yDebug("[getToolLikeNames] Number of contours is %d \n", contours.size());
+    
+    //vector<cv::Vec4i> hrch;
+    
     for( int i = 0; i< contours.size(); i++ )
     {
-        double area = cv::contourArea( contours[i],false);
+        yDebug("[getToolLikeNames] Contour[%d] -X[%lf]  -Y[%lf] Area: %.2f Length: %.2f \n", i, mc[i].x, mc[i].y, contourArea(contours[i]), arcLength( contours[i], true ) );
         
-        yDebug("[getToolLikeNames] area %lf \n", area);
+        double lenght = arcLength( contours[i], true );//cv::contourArea( contours[i], false);
         
-        if (area > 1000 && area < 5000) //first screaning - only accept something big enough
+        //yDebug("[getToolLikeNames] area %lf \n", area);
+        
+        if (lenght > 200 ) //first screaning - only accept something big enough
         {
-            double length = getAxes(contours[i], dst);
-            allLengths.insert(pair<int, double>(i, length));
+            double axes = getAxes(contours[i], dst);
+            allLengths.insert(pair<int, double>(i, axes));
         }
+        //cv::drawContours( temp, contours, i, cvScalar(255,255,255), 2, 8, hrch, 0, cv::Point() );
     }
     
     //make sure that the max diff is a bit smaller than only min (therefore min+min/2)
@@ -1763,7 +1781,7 @@ Bottle ActivityInterface::getToolLikeNames()
     
     std::vector<cv::Point > tempPoints;
     
-    yError("[getToolLikeNames] allLength size %d \n",allLengths.size());
+    yError("[getToolLikeNames] number of tool like objects found %d \n", allLengths.size());
     
     for (std::map<int, double>::iterator it=allLengths.begin(); it!=allLengths.end(); ++it)
     {
@@ -1789,7 +1807,7 @@ Bottle ActivityInterface::getToolLikeNames()
                 if ( abs(res.x - tempPoints[i].x)<10 && abs(res.y - tempPoints[i].y)<10)
                 {
                     shouldAdd = false;
-                    yDebug("Adding");
+                    yDebug("Not adding ");
                 }
             }
             if (shouldAdd)
