@@ -15,10 +15,17 @@ yarp.includefile="yarp/os/Bottle.h"
 service WorldStateMgr_IDL
 {
   /**
+  * Check if initialization phase has been completed. This is accomplished when
+  * tracker, short-term memory model and WSOPC database possess all entries.
+  * @return true/false on initialized/uninitialized
+  */
+  bool isInitialized();
+
+  /**
   * Print information the current world state on the screen.
   * @return true/false on success/failure
   */
-  bool dump();  
+  bool dump();
 
   /**
   * Update the world state database.
@@ -39,7 +46,7 @@ service WorldStateMgr_IDL
    * @return true/false on success/failure
    */
   bool pause(1:string objName);
-  
+
   /**
    * Resumes a specific stacking thread. This will
    * resume the required tracking thread with the name

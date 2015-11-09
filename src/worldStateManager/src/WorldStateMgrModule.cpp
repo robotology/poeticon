@@ -99,6 +99,11 @@ double WorldStateMgrModule::getPeriod()
 }
 
 // IDL functions
+bool WorldStateMgrModule::isInitialized()
+{
+    return thread->isInitialized();
+}
+
 bool WorldStateMgrModule::attach(RpcServer &source)
 {
     return this->yarp().attachAsServer(source);

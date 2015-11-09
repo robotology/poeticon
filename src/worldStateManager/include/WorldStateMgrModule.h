@@ -48,6 +48,7 @@ class WorldStateMgrModule : public RFModule, public WorldStateMgr_IDL
         virtual double getPeriod();
 
         // IDL functions
+        bool isInitialized();
         bool attach(yarp::os::RpcServer &source);
         bool dump();
         bool update();

@@ -97,6 +97,7 @@ class WorldStateMgrThread : public RateThread
         int countFrom;
         bool withFilter;
         int filterOrder;
+        bool initFinished;
 
         // perception mode
         bool needUpdate;
@@ -199,6 +200,7 @@ class WorldStateMgrThread : public RateThread
         void fsmPerception();
 
         // IDL functions
+        bool isInitialized();
         bool pauseTrack(const string &objName);
         bool resumeTrack(const string &objName);
         Bottle getColorHistogram(const int32_t &u, const int32_t &v);

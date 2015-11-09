@@ -15,6 +15,12 @@ class WorldStateMgr_IDL : public yarp::os::Wire {
 public:
   WorldStateMgr_IDL();
   /**
+   * Check if initialization phase has been completed. This is accomplished when
+   * tracker, short-term memory model and WSOPC database possess all entries.
+   * @return true/false on initialized/uninitialized
+   */
+  virtual bool isInitialized();
+  /**
    * Print information the current world state on the screen.
    * @return true/false on success/failure
    */

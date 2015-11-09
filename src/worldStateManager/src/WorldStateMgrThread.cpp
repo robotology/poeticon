@@ -147,6 +147,7 @@ bool WorldStateMgrThread::initCommonVars()
     fsmState = (playbackMode ? STATE_DUMMY_PARSE : STATE_PERCEPTION_WAIT_OPC);
     toldUserConnectOPC = false;
     toldUserOPCConnected = false;
+    initFinished = false;
 
     return true;
 }
@@ -1911,6 +1912,8 @@ void WorldStateMgrThread::fsmPerception()
             // populate database: if success proceed, else stay in same state
             if ( doPopulateDB() )
             {
+                yInfo("initialization complete (tracker, short-term memory, WSOPC database)");
+                initFinished = true;
                 fsmState = STATE_PERCEPTION_WAIT_CMD;
             }
             else
@@ -1962,6 +1965,17 @@ void WorldStateMgrThread::fsmPerception()
 
 // IDL functions
 /**********************************************************/
+bool WorldStateMgrThread::isInitialized()
+{
+    if (playbackMode)
+    {
+        yWarning("not available in playback mode, requires perception mode!");
+        return false;
+    }
+
+    return initFinished;
+}
+
 bool WorldStateMgrThread::pauseTrack(const string &objName)
 {
     if (playbackMode)

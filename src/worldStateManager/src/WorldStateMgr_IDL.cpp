@@ -6,6 +6,14 @@
 
 
 
+class WorldStateMgr_IDL_isInitialized : public yarp::os::Portable {
+public:
+  bool _return;
+  void init();
+  virtual bool write(yarp::os::ConnectionWriter& connection);
+  virtual bool read(yarp::os::ConnectionReader& connection);
+};
+
 class WorldStateMgr_IDL_dump : public yarp::os::Portable {
 public:
   bool _return;
@@ -57,6 +65,27 @@ public:
   virtual bool write(yarp::os::ConnectionWriter& connection);
   virtual bool read(yarp::os::ConnectionReader& connection);
 };
+
+bool WorldStateMgr_IDL_isInitialized::write(yarp::os::ConnectionWriter& connection) {
+  yarp::os::idl::WireWriter writer(connection);
+  if (!writer.writeListHeader(1)) return false;
+  if (!writer.writeTag("isInitialized",1,1)) return false;
+  return true;
+}
+
+bool WorldStateMgr_IDL_isInitialized::read(yarp::os::ConnectionReader& connection) {
+  yarp::os::idl::WireReader reader(connection);
+  if (!reader.readListReturn()) return false;
+  if (!reader.readBool(_return)) {
+    reader.fail();
+    return false;
+  }
+  return true;
+}
+
+void WorldStateMgr_IDL_isInitialized::init() {
+  _return = false;
+}
 
 bool WorldStateMgr_IDL_dump::write(yarp::os::ConnectionWriter& connection) {
   yarp::os::idl::WireWriter writer(connection);
@@ -194,6 +223,16 @@ void WorldStateMgr_IDL_quit::init() {
 WorldStateMgr_IDL::WorldStateMgr_IDL() {
   yarp().setOwner(*this);
 }
+bool WorldStateMgr_IDL::isInitialized() {
+  bool _return = false;
+  WorldStateMgr_IDL_isInitialized helper;
+  helper.init();
+  if (!yarp().canWrite()) {
+    yError("Missing server method '%s'?","bool WorldStateMgr_IDL::isInitialized()");
+  }
+  bool ok = yarp().write(helper,helper);
+  return ok?helper._return:_return;
+}
 bool WorldStateMgr_IDL::dump() {
   bool _return = false;
   WorldStateMgr_IDL_dump helper;
@@ -264,6 +303,17 @@ bool WorldStateMgr_IDL::read(yarp::os::ConnectionReader& connection) {
   if (direct) tag = reader.readTag();
   while (!reader.isError()) {
     // TODO: use quick lookup, this is just a test
+    if (tag == "isInitialized") {
+      bool _return;
+      _return = isInitialized();
+      yarp::os::idl::WireWriter writer(reader);
+      if (!writer.isNull()) {
+        if (!writer.writeListHeader(1)) return false;
+        if (!writer.writeBool(_return)) return false;
+      }
+      reader.accept();
+      return true;
+    }
     if (tag == "dump") {
       bool _return;
       _return = dump();
@@ -384,6 +434,7 @@ std::vector<std::string> WorldStateMgr_IDL::help(const std::string& functionName
   std::vector<std::string> helpString;
   if(showAll) {
     helpString.push_back("*** Available commands:");
+    helpString.push_back("isInitialized");
     helpString.push_back("dump");
     helpString.push_back("update");
     helpString.push_back("pause");
@@ -393,6 +444,12 @@ std::vector<std::string> WorldStateMgr_IDL::help(const std::string& functionName
     helpString.push_back("help");
   }
   else {
+    if (functionName=="isInitialized") {
+      helpString.push_back("bool isInitialized() ");
+      helpString.push_back("Check if initialization phase has been completed. This is accomplished when ");
+      helpString.push_back("tracker, short-term memory model and WSOPC database possess all entries. ");
+      helpString.push_back("@return true/false on initialized/uninitialized ");
+    }
     if (functionName=="dump") {
       helpString.push_back("bool dump() ");
       helpString.push_back("Print information the current world state on the screen. ");
