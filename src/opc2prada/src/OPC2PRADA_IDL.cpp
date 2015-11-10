@@ -87,7 +87,6 @@ bool OPC2PRADA_IDL_loadObjects::read(yarp::os::ConnectionReader& connection) {
 }
 
 void OPC2PRADA_IDL_loadObjects::init() {
-  _return;
 }
 
 bool OPC2PRADA_IDL_query2d::write(yarp::os::ConnectionWriter& connection) {
@@ -109,7 +108,6 @@ bool OPC2PRADA_IDL_query2d::read(yarp::os::ConnectionReader& connection) {
 }
 
 void OPC2PRADA_IDL_query2d::init(const int32_t id) {
-  _return;
   this->id = id;
 }
 
@@ -132,7 +130,6 @@ bool OPC2PRADA_IDL_querytool2d::read(yarp::os::ConnectionReader& connection) {
 }
 
 void OPC2PRADA_IDL_querytool2d::init(const int32_t id) {
-  _return;
   this->id = id;
 }
 
@@ -165,7 +162,7 @@ bool OPC2PRADA_IDL::update() {
   OPC2PRADA_IDL_update helper;
   helper.init();
   if (!yarp().canWrite()) {
-    fprintf(stderr,"Missing server method '%s'?\n","bool OPC2PRADA_IDL::update()");
+    yError("Missing server method '%s'?","bool OPC2PRADA_IDL::update()");
   }
   bool ok = yarp().write(helper,helper);
   return ok?helper._return:_return;
@@ -175,7 +172,7 @@ yarp::os::Bottle OPC2PRADA_IDL::loadObjects() {
   OPC2PRADA_IDL_loadObjects helper;
   helper.init();
   if (!yarp().canWrite()) {
-    fprintf(stderr,"Missing server method '%s'?\n","yarp::os::Bottle OPC2PRADA_IDL::loadObjects()");
+    yError("Missing server method '%s'?","yarp::os::Bottle OPC2PRADA_IDL::loadObjects()");
   }
   bool ok = yarp().write(helper,helper);
   return ok?helper._return:_return;
@@ -185,7 +182,7 @@ yarp::os::Bottle OPC2PRADA_IDL::query2d(const int32_t id) {
   OPC2PRADA_IDL_query2d helper;
   helper.init(id);
   if (!yarp().canWrite()) {
-    fprintf(stderr,"Missing server method '%s'?\n","yarp::os::Bottle OPC2PRADA_IDL::query2d(const int32_t id)");
+    yError("Missing server method '%s'?","yarp::os::Bottle OPC2PRADA_IDL::query2d(const int32_t id)");
   }
   bool ok = yarp().write(helper,helper);
   return ok?helper._return:_return;
@@ -195,7 +192,7 @@ yarp::os::Bottle OPC2PRADA_IDL::querytool2d(const int32_t id) {
   OPC2PRADA_IDL_querytool2d helper;
   helper.init(id);
   if (!yarp().canWrite()) {
-    fprintf(stderr,"Missing server method '%s'?\n","yarp::os::Bottle OPC2PRADA_IDL::querytool2d(const int32_t id)");
+    yError("Missing server method '%s'?","yarp::os::Bottle OPC2PRADA_IDL::querytool2d(const int32_t id)");
   }
   bool ok = yarp().write(helper,helper);
   return ok?helper._return:_return;
@@ -205,7 +202,7 @@ bool OPC2PRADA_IDL::quit() {
   OPC2PRADA_IDL_quit helper;
   helper.init();
   if (!yarp().canWrite()) {
-    fprintf(stderr,"Missing server method '%s'?\n","bool OPC2PRADA_IDL::quit()");
+    yError("Missing server method '%s'?","bool OPC2PRADA_IDL::quit()");
   }
   bool ok = yarp().write(helper,helper);
   return ok?helper._return:_return;
