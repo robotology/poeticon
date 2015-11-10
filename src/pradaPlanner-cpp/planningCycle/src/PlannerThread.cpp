@@ -573,14 +573,14 @@ bool PlannerThread::loadObjs()
     wsmCmd.addString("isInitialized");
     world_rpc.write(wsmCmd, wsmReply);
     if (wsmReply.size() > 0 &&
-        wsmReply.get(0).asVocab() != Vocab::encode("ack"))
+        wsmReply.get(0).asVocab() != Vocab::encode("ok"))
     {
         yWarning("worldStateManager not initialized yet, waiting...");
         yarp::os::Time::delay(0.1);
         return false;
     }
 
-    // then opc2prada for list of items in database
+    // then query opc2prada for list of items in database
     if (opc2prada_rpc.getOutputCount() == 0){
         yError("opc2prada not connected!");
         return false;
