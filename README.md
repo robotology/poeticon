@@ -14,7 +14,7 @@ This is the repository of the [POETICON++ EU project](http://www.poeticon.eu).
 ### Additional dependencies for specific modules
 
 PRADA probabilistic planner dependencies:
-- [libPRADA](http://www.informatik.uni-hamburg.de/ML/contents/people/lang/private/prada/)
+- [libPRADA](http://www.informatik.uni-hamburg.de/ML/contents/people/lang/private/prada/), mirrored in the *3rdparty* directory
 
 Affordance network dependencies:
 - MATLAB
@@ -38,6 +38,7 @@ Installation of the core POETICON++ build:
 Instructions to install libPRADA, required by the probabilistic planner:
 
     cd poeticon
+    // a copy of libPRADA.tgz is in the *3rdparty* directory
     wget http://www.informatik.uni-hamburg.de/ML/contents/people/lang/private/prada/libPRADA.tgz
     tar xzvf libPRADA.tgz && cd libPRADA
     patch src/MT/util.h < ../extern/libPRADA/prada_unistd.patch
