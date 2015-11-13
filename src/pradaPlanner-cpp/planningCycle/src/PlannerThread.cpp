@@ -812,6 +812,7 @@ bool PlannerThread::planCompletion()
                 }
             }
         }
+        yDebug("string sent to activityInterface prada:i port: %s", prax_bottle_out.toString().c_str());
         prax_yarp.write();
         restartPlan = true;
         return false;
