@@ -626,7 +626,7 @@ void PlannerThread::stopPlanning()
 bool PlannerThread::resetPlanVars()
 {
     plan_level = 0;
-	objects_used.clear();
+    objects_used.clear();
     return resetConfig();
 }
 
