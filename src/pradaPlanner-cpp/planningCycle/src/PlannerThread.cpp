@@ -626,6 +626,7 @@ void PlannerThread::stopPlanning()
 bool PlannerThread::resetPlanVars()
 {
     plan_level = 0;
+	objects_used.clear();
     return resetConfig();
 }
 
@@ -992,14 +993,14 @@ bool PlannerThread::resetRules()
 bool PlannerThread::loadUsedObjs()
 {
     vector<string> aux_used;
-    objects_used.clear();
+    /*objects_used.clear();*/
     for (int y = 0; y < object_IDs.size(); ++y){
         if (next_action.find(object_IDs[y][0]) != std::string::npos){
             aux_used.push_back(object_IDs[y][0]);
         }
     }
     for (int u = 0; u < aux_used.size(); ++u){
-        if (find_element(toolhandle,aux_used[u]) == 0){
+        if (find_element(toolhandle,aux_used[u]) == 0 && find_element(objects_used, aux_used[u]) == 0){
             objects_used.push_back(aux_used[u]);
         }
     }
