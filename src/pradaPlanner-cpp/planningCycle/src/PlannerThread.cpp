@@ -999,18 +999,18 @@ bool PlannerThread::loadUsedObjs()
             aux_used.push_back(object_IDs[y][0]);
         }
     }
-	yDebug("Objects used in last action:");
+    yDebug("Objects used in last action:");
     for (int u = 0; u < aux_used.size(); ++u){
-		yDebug("%s", aux_used[u].c_str());
+        yDebug("%s", aux_used[u].c_str());
         if (find_element(toolhandle,aux_used[u]) == 0 && find_element(objects_used, aux_used[u]) == 0){
             objects_used.push_back(aux_used[u]);
         }
     }
-	yDebug("Objects used until now:");
-	for (int u = 0; u < objects_used.size(); ++u)
-	{
-		yDebug("%s", objects_used[u].c_str());
-	}
+    yDebug("Objects used until now:");
+    for (int u = 0; u < objects_used.size(); ++u)
+    {
+        yDebug("%s", objects_used[u].c_str());
+    }
     return true;
 }
 

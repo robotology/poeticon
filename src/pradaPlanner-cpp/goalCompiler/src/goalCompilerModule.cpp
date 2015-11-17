@@ -603,12 +603,12 @@ bool goalCompiler::compile()
                         }
                         new_temp_rule.erase(new_temp_rule.begin(),new_temp_rule.begin()+1);
                         aux_subgoal = new_temp_rule;
-						vector<string> temp_subgoal;
+                        vector<string> temp_subgoal;
 						if (subgoals.size() > 0)
-						{
-							temp_subgoal = subgoals[subgoals.size()-1];
+                        {
+                            temp_subgoal = subgoals[subgoals.size()-1];
                         }
-						for (int i = 0; i < aux_subgoal.size(); ++i){
+                        for (int i = 0; i < aux_subgoal.size(); ++i){
                             temp_subgoal.push_back(aux_subgoal[i]);
                         }
 						temp_action.clear();
@@ -651,10 +651,10 @@ bool goalCompiler::compile()
                         }
                         aux_subgoal = split(temp_str,' ');
                         aux_subgoal.erase(aux_subgoal.begin(),aux_subgoal.begin()+3);
-						vector<string> temp_subgoal;
-						if (subgoals.size() > 0)
-						{
-							temp_subgoal = subgoals[subgoals.size()-1];
+                        vector<string> temp_subgoal;
+                        if (subgoals.size() > 0)
+                        {
+                            temp_subgoal = subgoals[subgoals.size()-1];
                         }
                         for (int i = 0; i < aux_subgoal.size(); ++i){
                             temp_subgoal.push_back(aux_subgoal[i]);
