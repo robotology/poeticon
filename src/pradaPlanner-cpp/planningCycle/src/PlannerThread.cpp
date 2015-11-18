@@ -995,14 +995,14 @@ bool PlannerThread::loadUsedObjs()
     vector<string> aux_used;
     /*objects_used.clear();*/
     for (int y = 0; y < object_IDs.size(); ++y){
-        if (next_action.find(object_IDs[y][0]) != std::string::npos){
+        if (next_action.find(object_IDs[y][0]) != std::string::npos && object_IDs[y][1] != "stick" && object_IDs[y][1] != "rake" && object_IDs[y][0] != "11" && object_IDs[y][0] != "12"){
             aux_used.push_back(object_IDs[y][0]);
         }
     }
     yDebug("Objects used in last action:");
     for (int u = 0; u < aux_used.size(); ++u){
         yDebug("%s", aux_used[u].c_str());
-        if (find_element(toolhandle,aux_used[u]) == 0 && find_element(objects_used, aux_used[u]) == 0){
+        if (/*find_element(toolhandle,aux_used[u]) == 0 && */find_element(objects_used, aux_used[u]) == 0){
             objects_used.push_back(aux_used[u]);
         }
     }
