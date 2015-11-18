@@ -649,7 +649,7 @@ bool WorldStateMgrThread::getAffBottleIndexFromTrackROI(const int &u, const int 
 /**********************************************************/
 bool WorldStateMgrThread::getTrackerBottleIndexFromID(const int &id, int &tbi)
 {
-    // assumption: activeParticleTrack is streaming a Bottle with ordered IDs:
+    // we assume that activeParticleTrack is streaming a Bottle with ordered IDs:
     // ((13 ...) (14 ...) (15 ...))
     // TODO: verify that this is the case, else reorder
 
