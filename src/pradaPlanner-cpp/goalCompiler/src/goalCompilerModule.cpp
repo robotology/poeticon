@@ -258,6 +258,7 @@ bool goalCompiler::loadObjs()
     }
 	object_list.clear();
 	translat.clear();
+    action_sequence.clear();
     cmd.clear();
     cmd.addString("printObjects");
     objectQueryPort.write(cmd,reply);
@@ -861,7 +862,7 @@ bool goalCompiler::checkConsistency()
 	vector<string> required_state_vector, requirement_vector;
 	cout << "checking consistency" << endl;
 
-	for (int i = 0; i < action_sequence.size(); ++i)
+	for (int i = 1; i < action_sequence.size(); ++i)
 	{
 		for (int j = 0; j < actions.size(); ++j)
 		{
@@ -927,7 +928,7 @@ bool goalCompiler::checkConsistency()
 					{
 						negated_symbol = required_state_vector[k];
 						negated_symbol.replace(negated_symbol.find('-'),1,"");
-						if (find_element(subgoals[i], negated_symbol) == 1)
+						if (find_element(subgoals[i-1], negated_symbol) == 1)
 						{
 							cout << "plan not executable" << endl;
 							failed_action = action_sequence[i][0];
@@ -950,7 +951,7 @@ bool goalCompiler::checkConsistency()
 					else 
 					{
 						negated_symbol = "-" + required_state_vector[k];
-						if (find_element(subgoals[i], negated_symbol) == 1)
+						if (find_element(subgoals[i-1], negated_symbol) == 1)
 						{
 							cout << "plan not executable" << endl;
 							failed_action = action_sequence[i][0];
