@@ -783,7 +783,8 @@ bool WorldStateMgrThread::computeObjProperties(const int &id, const string &labe
         if (foundID != -1)
             onTopOf.addInt( foundID );
         else
-            yWarning("problem translating on_top_of=%s to IDs",
+            yWarning("problem translating element %s of on_top_of=%s to IDs",
+                     bLabelsBelow.get(o).asString().c_str(),
                      bLabelsBelow.toString().c_str());
     }
 
@@ -798,7 +799,8 @@ bool WorldStateMgrThread::computeObjProperties(const int &id, const string &labe
         if (foundID != -1)
             reachW.addInt( foundID );
         else
-            yWarning("problem translating reachable_with=%s to IDs",
+            yWarning("problem translating element %s of reachable_with=%s to IDs",
+                     bLabelsReaching.get(o).asString().c_str(),
                      bLabelsReaching.toString().c_str());
     }
 
@@ -813,7 +815,8 @@ bool WorldStateMgrThread::computeObjProperties(const int &id, const string &labe
         if (foundID != -1)
             pullW.addInt( foundID );
         else
-            yWarning("problem translating pullable_with=%s to IDs",
+            yWarning("problem translating element %s of pullable_with=%s to IDs",
+                     bLabelsPulling.get(o).asString().c_str(),
                      bLabelsPulling.toString().c_str());
     }
 
@@ -1170,6 +1173,12 @@ bool WorldStateMgrThread::tellActivityGoHome()
 /**********************************************************/
 int WorldStateMgrThread::label2id(const string &label)
 {
+    if (label.empty())
+    {
+        yWarning() << __func__ << "was called with empty label argument!";
+        return false;
+    }
+
     //yDebug() << __func__ << "looking for label" << label.c_str();
 
     // search in hands memory
@@ -1200,7 +1209,7 @@ int WorldStateMgrThread::label2id(const string &label)
     }
 
     // id not found anywhere
-    yWarning("did not find id corresponding to label %s", label.c_str());
+    //yWarning("did not find id corresponding to label %s", label.c_str());
     return -1;
 }
 
@@ -1984,6 +1993,12 @@ bool WorldStateMgrThread::pauseTrack(const string &objName)
         return false;
     }
 
+    if (objName.empty())
+    {
+        yWarning() << __func__ << "was called with empty objName argument!";
+        return false;
+    }
+
     if (trackerPort.getOutputCount()<1)
     {
         yWarning("not connected to /activeParticleTrack/rpc:i");
@@ -2027,6 +2042,12 @@ bool WorldStateMgrThread::resumeTrack(const string &objName)
         return false;
     }
 
+    if (objName.empty())
+    {
+        yWarning() << __func__ << "was called with empty objName argument!";
+        return false;
+    }
+
     if (trackerPort.getOutputCount()<1)
     {
         yWarning("not connected to /activeParticleTrack/rpc:i");
@@ -2043,7 +2064,7 @@ bool WorldStateMgrThread::resumeTrack(const string &objName)
     id = label2id(objName);
     if (id==-1)
     {
-        yWarning() << __func__ << "did not find tracker ID corresponding to label, not going to resume" << objName.c_str();
+        yWarning() << __func__ << "did not find tracker ID corresponding to" << objName.c_str() << "- not able to resume it";
         return false;
     }
 
