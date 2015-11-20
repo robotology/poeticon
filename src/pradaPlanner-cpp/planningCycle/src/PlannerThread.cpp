@@ -995,7 +995,7 @@ bool PlannerThread::loadUsedObjs()
     vector<string> aux_used;
     /*objects_used.clear();*/
     for (int y = 0; y < object_IDs.size(); ++y){
-        if (next_action.find(object_IDs[y][0]) != std::string::npos && object_IDs[y][1] != "stick" && object_IDs[y][1] != "rake" && object_IDs[y][0] != "11" && object_IDs[y][0] != "12"){
+        if (next_action.find(object_IDs[y][0]) != std::string::npos && object_IDs[y][1] != "stick" && object_IDs[y][1] != "rake" && object_IDs[y][1] != "left" && object_IDs[y][1] != "right"){
             aux_used.push_back(object_IDs[y][0]);
         }
     }
