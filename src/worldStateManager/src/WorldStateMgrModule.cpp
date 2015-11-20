@@ -119,6 +119,11 @@ bool WorldStateMgrModule::update()
     return thread->updateWorldState();
 }
 
+bool WorldStateMgrModule::reset()
+{
+    return thread->resetWorldState();
+}
+
 bool WorldStateMgrModule::pause(const string &objName)
 {
     return thread->pauseTrack(objName);

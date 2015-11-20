@@ -52,6 +52,7 @@ class WorldStateMgrModule : public RFModule, public WorldStateMgr_IDL
         bool attach(yarp::os::RpcServer &source);
         bool dump();
         bool update();
+        bool reset();
         bool pause(const string &objName);
         bool resume(const string &objName);
         Bottle getColorHist(const int32_t u, const int32_t v);

@@ -30,6 +30,14 @@ public:
   virtual bool read(yarp::os::ConnectionReader& connection);
 };
 
+class WorldStateMgr_IDL_reset : public yarp::os::Portable {
+public:
+  bool _return;
+  void init();
+  virtual bool write(yarp::os::ConnectionWriter& connection);
+  virtual bool read(yarp::os::ConnectionReader& connection);
+};
+
 class WorldStateMgr_IDL_pause : public yarp::os::Portable {
 public:
   std::string objName;
@@ -126,6 +134,27 @@ bool WorldStateMgr_IDL_update::read(yarp::os::ConnectionReader& connection) {
 }
 
 void WorldStateMgr_IDL_update::init() {
+  _return = false;
+}
+
+bool WorldStateMgr_IDL_reset::write(yarp::os::ConnectionWriter& connection) {
+  yarp::os::idl::WireWriter writer(connection);
+  if (!writer.writeListHeader(1)) return false;
+  if (!writer.writeTag("reset",1,1)) return false;
+  return true;
+}
+
+bool WorldStateMgr_IDL_reset::read(yarp::os::ConnectionReader& connection) {
+  yarp::os::idl::WireReader reader(connection);
+  if (!reader.readListReturn()) return false;
+  if (!reader.readBool(_return)) {
+    reader.fail();
+    return false;
+  }
+  return true;
+}
+
+void WorldStateMgr_IDL_reset::init() {
   _return = false;
 }
 
@@ -253,6 +282,16 @@ bool WorldStateMgr_IDL::update() {
   bool ok = yarp().write(helper,helper);
   return ok?helper._return:_return;
 }
+bool WorldStateMgr_IDL::reset() {
+  bool _return = false;
+  WorldStateMgr_IDL_reset helper;
+  helper.init();
+  if (!yarp().canWrite()) {
+    yError("Missing server method '%s'?","bool WorldStateMgr_IDL::reset()");
+  }
+  bool ok = yarp().write(helper,helper);
+  return ok?helper._return:_return;
+}
 bool WorldStateMgr_IDL::pause(const std::string& objName) {
   bool _return = false;
   WorldStateMgr_IDL_pause helper;
@@ -328,6 +367,17 @@ bool WorldStateMgr_IDL::read(yarp::os::ConnectionReader& connection) {
     if (tag == "update") {
       bool _return;
       _return = update();
+      yarp::os::idl::WireWriter writer(reader);
+      if (!writer.isNull()) {
+        if (!writer.writeListHeader(1)) return false;
+        if (!writer.writeBool(_return)) return false;
+      }
+      reader.accept();
+      return true;
+    }
+    if (tag == "reset") {
+      bool _return;
+      _return = reset();
       yarp::os::idl::WireWriter writer(reader);
       if (!writer.isNull()) {
         if (!writer.writeListHeader(1)) return false;
@@ -437,6 +487,7 @@ std::vector<std::string> WorldStateMgr_IDL::help(const std::string& functionName
     helpString.push_back("isInitialized");
     helpString.push_back("dump");
     helpString.push_back("update");
+    helpString.push_back("reset");
     helpString.push_back("pause");
     helpString.push_back("resume");
     helpString.push_back("getColorHist");
@@ -462,6 +513,13 @@ std::vector<std::string> WorldStateMgr_IDL::help(const std::string& functionName
       helpString.push_back("be created from robot perception. If the module was started in playback ");
       helpString.push_back("mode, the new state will be created from the next time instant in the ");
       helpString.push_back("world state text file. ");
+      helpString.push_back("@return true/false on success/failure ");
+    }
+    if (functionName=="reset") {
+      helpString.push_back("bool reset() ");
+      helpString.push_back("Reset the world state database, initializing it from scratch. ");
+      helpString.push_back("NOTE: you still have to manually restart this module: ");
+      helpString.push_back("objectsPropertiesCollector --name wsopc --context poeticon --db dbhands.ini --nosave --async_bc ");
       helpString.push_back("@return true/false on success/failure ");
     }
     if (functionName=="pause") {

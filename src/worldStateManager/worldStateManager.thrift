@@ -38,6 +38,14 @@ service WorldStateMgr_IDL
   bool update();
 
   /**
+  * Reset the world state database, initializing it from scratch.
+  * NOTE: you still have to manually restart this module:
+  * objectsPropertiesCollector --name wsopc --context poeticon --db dbhands.ini --nosave --async_bc
+  * @return true/false on success/failure
+  */
+  bool reset();
+
+  /**
    * Pauses a specific stacking thread. This will
    * pause the required tracking thread with the name
    * provided by the user.

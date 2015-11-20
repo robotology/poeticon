@@ -592,6 +592,60 @@ bool WorldStateMgrThread::refreshTracker()
 }
 
 /**********************************************************/
+bool WorldStateMgrThread::resetWorldState()
+{
+    if (playbackMode)
+    {
+        yWarning("not available in playback mode, requires perception mode!");
+        return false;
+    }
+
+    // reset variables
+    toldUserConnectOPC = false;
+    toldUserOPCConnected = false;
+    initFinished = false;
+
+    // reset WSOPC
+    yInfo("please manually restart this module: objectsPropertiesCollector --name wsopc --context poeticon --db dbhands.ini --nosave --async_bc");
+
+    // reset activeParticleTracker
+    resetTracker();
+
+    // reset internal short-term memory
+    hands.clear();
+    objs.clear();
+    trackIDs.clear();
+    candidateTrackMap.clear();
+
+    // enter FSM
+    fsmState = STATE_PERCEPTION_INIT_TRACKER;
+
+    return true;
+}
+
+/**********************************************************/
+bool WorldStateMgrThread::resetTracker()
+{
+    if (trackerPort.getOutputCount()<1)
+    {
+        yWarning() << __func__ << "not connected to tracker";
+        return false;
+    }
+
+    Bottle trackerCmd, trackerReply;
+    trackerCmd.addString("reset");
+    trackerPort.write(trackerCmd, trackerReply);
+    yDebug() << __func__ <<  "sending query to activeParticleTracker:" << trackerCmd.toString().c_str();
+    bool validResponse = false;
+    validResponse = trackerReply.size()>0 &&
+                    trackerReply.get(0).asVocab()==Vocab::encode("ok");
+    if (!validResponse)
+        yWarning() << __func__ <<  "obtained invalid response:" << trackerReply.toString().c_str();
+
+    return true;
+}
+
+/**********************************************************/
 bool WorldStateMgrThread::getAffBottleIndexFromTrackROI(const int &u, const int &v, int &abi)
 {
     // Finds the AffBottleIndex of inAff->get(abi) corresponding to
