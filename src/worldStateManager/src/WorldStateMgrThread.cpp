@@ -148,6 +148,7 @@ bool WorldStateMgrThread::initCommonVars()
     toldUserConnectOPC = false;
     toldUserOPCConnected = false;
     initFinished = false;
+    t = yarp::os::Time::now();
 
     return true;
 }
@@ -600,25 +601,50 @@ bool WorldStateMgrThread::resetWorldState()
         return false;
     }
 
+    // if WSOPC is running and connected, disconnect it
+    string wsopcInPortName = "/wsopc/rpc";
+    if (opcPort.getOutputCount()>0)
+    {
+        // disconnect /wsm/opc:io /wsopc/rpc
+        if (!yarp::os::NetworkBase::disconnect(opcPortName.c_str(), wsopcInPortName.c_str()))
+        {
+            yWarning() << __func__ << "problem attempting to disconnect" << opcPortName.c_str() << wsopcInPortName.c_str();
+            return false;
+        }
+    }
+
+    // tell user to restart WSOPC process and reconnect /wsm/opc:io /wsopc/rpc
+    do
+    {
+        yarp::os::Time::delay(0.01);
+        double t0 = yarp::os::Time::now();
+        if ((t0 - t) > 10.0)
+        {
+            yInfo("1. manually restart this module: objectsPropertiesCollector --name wsopc --context poeticon --db dbhands.ini --nosave --async_bc\t 2. reconnect %s %s", opcPortName.c_str(), wsopcInPortName.c_str());
+            t = t0;
+        }
+    } while (opcPort.getOutputCount()<1);
+
+    if (opcPort.getOutputCount()>0)
+        yInfo("detected WSOPC module restart - proceeding with reset routine");
+
     // reset variables
     toldUserConnectOPC = false;
     toldUserOPCConnected = false;
     initFinished = false;
 
-    // reset WSOPC
-    yInfo("please manually restart this module: objectsPropertiesCollector --name wsopc --context poeticon --db dbhands.ini --nosave --async_bc");
-
     // reset activeParticleTracker
     resetTracker();
 
     // reset internal short-term memory
-    hands.clear();
+    hands.clear(); // empty hands container
+    initMemoryFromOPC(); // put left and right entries into hands container
     objs.clear();
     trackIDs.clear();
     candidateTrackMap.clear();
 
     // enter FSM
-    fsmState = STATE_PERCEPTION_INIT_TRACKER;
+    fsmState = STATE_PERCEPTION_WAIT_TRACKER;
 
     return true;
 }
@@ -635,7 +661,7 @@ bool WorldStateMgrThread::resetTracker()
     Bottle trackerCmd, trackerReply;
     trackerCmd.addString("reset");
     trackerPort.write(trackerCmd, trackerReply);
-    yDebug() << __func__ <<  "sending query to activeParticleTracker:" << trackerCmd.toString().c_str();
+    yInfo() << __func__ <<  "sending instruction to activeParticleTracker:" << trackerCmd.toString().c_str();
     bool validResponse = false;
     validResponse = trackerReply.size()>0 &&
                     trackerReply.get(0).asVocab()==Vocab::encode("ok");
@@ -967,8 +993,8 @@ bool WorldStateMgrThread::constructMemoryFromOPCID(const int &opcID)
     if (memoryContainsID(opcID))
     {
         // note: this happens e.g. when WSOPC is started & initialized before WSM
-        //yDebug() << __func__ << "cannot construct memory item"
-        //           << opcID << "because this ID is already present in internal short-term memory";
+        yDebug() << __func__ << "cannot construct memory item"
+                 << opcID << "because this ID is already present in internal short-term memory";
         return false;
     }
 

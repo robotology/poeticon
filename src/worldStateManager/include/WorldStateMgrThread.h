@@ -92,6 +92,7 @@ class WorldStateMgrThread : public RateThread
         // perception and playback modes
         bool playbackMode;
         int fsmState;
+        double t;
         bool toldUserConnectOPC;
         bool toldUserOPCConnected;
         int countFrom;
