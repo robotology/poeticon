@@ -9,7 +9,7 @@ This is the repository of the [POETICON++ EU project](http://www.poeticon.eu).
 
 - [YARP](https://github.com/robotology/yarp)
 - [icub-contrib-common](https://github.com/robotology/icub-contrib-common)
-- [OpenCV](http://opencv.org/downloads.html)
+- [OpenCV](http://opencv.org/downloads.html), version 2.4
 
 ### Additional dependencies for specific modules
 

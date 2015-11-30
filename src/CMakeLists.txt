@@ -8,7 +8,7 @@ project(${PROJECTNAME})
 
 find_package(YARP)
 find_package(ICUBcontrib)
-find_package(OpenCV)
+find_package(OpenCV 2.4)
 list(APPEND CMAKE_MODULE_PATH ${YARP_MODULE_PATH}
                               ${ICUBCONTRIB_MODULE_PATH})
 
