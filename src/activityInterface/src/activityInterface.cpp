@@ -1814,8 +1814,11 @@ Bottle ActivityInterface::getToolLikeNames()
             {
                 string label = getLabel(res.x, res.y);
                 
-                names.addString(label.c_str());
-                yDebug("[getToolLikeNames] Adding %s \n", label.c_str());
+                if (label.length()>0)
+                {
+                    names.addString(label.c_str());
+                    yDebug("[getToolLikeNames] Adding %s \n", label.c_str());
+                }
                 
             }
             tempPoints.push_back(res);
