@@ -206,6 +206,8 @@ class WorldStateMgrThread : public RateThread
         bool isInitialized();
         bool pauseTrack(const string &objName);
         bool resumeTrack(const string &objName);
+        bool pauseTrackID(const int32_t &objID);
+        bool resumeTrackID(const int32_t &objID);
         Bottle getColorHistogram(const int32_t &u, const int32_t &v);
 
         // playback mode

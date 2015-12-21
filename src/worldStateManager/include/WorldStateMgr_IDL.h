@@ -43,7 +43,7 @@ public:
   virtual bool reset();
   /**
    * Pauses a specific stacking thread. This will
-   * pause the required tracking thread with the name
+   * pause the required tracking thread with the _name_
    * provided by the user.
    * @param objName specifies the label of the tracking thread
    * to be paused
@@ -52,13 +52,31 @@ public:
   virtual bool pause(const std::string& objName);
   /**
    * Resumes a specific stacking thread. This will
-   * resume the required tracking thread with the name
+   * resume the required tracking thread with the _name_
    * provided by the user.
    * @param objName specifies the label of the tracking thread
    * to be resumed
    * @return true/false on success/failure
    */
   virtual bool resume(const std::string& objName);
+  /**
+   * Pauses a specific stacking thread. This will
+   * pause the required tracking thread with the _ID_
+   * provided by the user.
+   * @param objID specifies the numeric identifier of the tracking thread
+   * to be paused
+   * @return true/false on success/failure
+   */
+  virtual bool pauseID(const int32_t objID);
+  /**
+   * Resumes a specific stacking thread. This will
+   * resume the required tracking thread with the _ID_
+   * provided by the user.
+   * @param objID specifies the numeric identifier of the tracking thread
+   * to be resumed
+   * @return true/false on success/failure
+   */
+  virtual bool resumeID(const int32_t objID);
   /**
    * Get the color histogram of the object requested by the user.
    * @param u specifies the u coordinate of the object

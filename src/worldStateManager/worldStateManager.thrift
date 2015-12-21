@@ -47,7 +47,7 @@ service WorldStateMgr_IDL
 
   /**
    * Pauses a specific stacking thread. This will
-   * pause the required tracking thread with the name
+   * pause the required tracking thread with the _name_
    * provided by the user.
    * @param objName specifies the label of the tracking thread
    * to be paused
@@ -57,13 +57,33 @@ service WorldStateMgr_IDL
 
   /**
    * Resumes a specific stacking thread. This will
-   * resume the required tracking thread with the name
+   * resume the required tracking thread with the _name_
    * provided by the user.
    * @param objName specifies the label of the tracking thread
    * to be resumed
    * @return true/false on success/failure
    */
   bool resume(1:string objName);
+
+  /**
+   * Pauses a specific stacking thread. This will
+   * pause the required tracking thread with the _ID_
+   * provided by the user.
+   * @param objID specifies the numeric identifier of the tracking thread
+   * to be paused
+   * @return true/false on success/failure
+   */
+  bool pauseID(1:i32 objID);
+
+  /**
+   * Resumes a specific stacking thread. This will
+   * resume the required tracking thread with the _ID_
+   * provided by the user.
+   * @param objID specifies the numeric identifier of the tracking thread
+   * to be resumed
+   * @return true/false on success/failure
+   */
+  bool resumeID(1:i32 objID);
 
   /**
    * Get the color histogram of the object requested by the user.

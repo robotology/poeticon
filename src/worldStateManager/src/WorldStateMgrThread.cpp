@@ -2163,6 +2163,88 @@ bool WorldStateMgrThread::resumeTrack(const string &objName)
 }
 
 /**********************************************************/
+bool WorldStateMgrThread::pauseTrackID(const int32_t &objID)
+{
+    if (playbackMode)
+    {
+        yWarning("not available in playback mode, requires perception mode!");
+        return false;
+    }
+
+    if (objID<0)
+    {
+        yWarning() << __func__ << "was called with invalid objID argument!";
+        return false;
+    }
+
+    if (trackerPort.getOutputCount()<1)
+    {
+        yWarning("not connected to /activeParticleTrack/rpc:i");
+        return false;
+    }
+
+    if (!checkTrackerStatus())
+    {
+        yWarning("tracker not initialized, cannot pause %d", objID);
+        return false;
+    }
+
+    Bottle trackerCmd, trackerReply;
+    trackerCmd.addString("pause");
+    trackerCmd.addInt(objID);
+    trackerPort.write(trackerCmd, trackerReply);
+    //yDebug() << __func__ <<  "sending query to activeParticleTracker:" << trackerCmd.toString().c_str();
+    bool validResponse = false;
+    validResponse = trackerReply.size()>0 &&
+                    trackerReply.get(0).asVocab()==Vocab::encode("ok");
+    if (!validResponse)
+        yWarning() << __func__ <<  "obtained invalid response:" << trackerReply.toString().c_str();
+
+    return true;
+}
+
+/**********************************************************/
+bool WorldStateMgrThread::resumeTrackID(const int32_t &objID)
+{
+    if (playbackMode)
+    {
+        yWarning("not available in playback mode, requires perception mode!");
+        return false;
+    }
+
+    if (objID<0)
+    {
+        yWarning() << __func__ << "was called with invalid objID argument!";
+        return false;
+    }
+
+    if (trackerPort.getOutputCount()<1)
+    {
+        yWarning("not connected to /activeParticleTrack/rpc:i");
+        return false;
+    }
+
+    if (!checkTrackerStatus())
+    {
+        yWarning("tracker not initialized, cannot resume %d", objID);
+        return false;
+    }
+
+    Bottle trackerCmd, trackerReply;
+    trackerCmd.addString("resume");
+    trackerCmd.addInt(objID);
+    trackerPort.write(trackerCmd, trackerReply);
+    //yDebug() << __func__ <<  "sending query to activeParticleTracker:" << trackerCmd.toString().c_str();
+    bool validResponse = false;
+    validResponse = trackerReply.size()>0 &&
+                    trackerReply.get(0).asVocab()==Vocab::encode("ok");
+    if (!validResponse)
+        yWarning() << __func__ <<  "obtained invalid response:" << trackerReply.toString().c_str();
+
+    return true;
+}
+
+/**********************************************************/
 Bottle WorldStateMgrThread::getColorHistogram(const int32_t &u,
                                               const int32_t &v)
 {

@@ -134,6 +134,16 @@ bool WorldStateMgrModule::resume(const string &objName)
     return thread->resumeTrack(objName);
 }
 
+bool WorldStateMgrModule::pauseID(const int32_t objID)
+{
+    return thread->pauseTrackID(objID);
+}
+
+bool WorldStateMgrModule::resumeID(const int32_t objID)
+{
+    return thread->resumeTrackID(objID);
+}
+
 Bottle WorldStateMgrModule::getColorHist(const int32_t u, const int32_t v)
 {
     return thread->getColorHistogram(u,v);
