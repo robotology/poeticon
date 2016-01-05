@@ -23,6 +23,7 @@
 #include <yarp/os/RateThread.h>
 #include <yarp/os/Semaphore.h>
 #include <yarp/os/Stamp.h>
+#include <yarp/os/Value.h>
 #include <yarp/sig/Image.h>
 
 using namespace cv;
