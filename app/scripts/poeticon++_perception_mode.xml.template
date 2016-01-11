@@ -3,7 +3,7 @@
 
 <dependencies>
     <port>/icub/camcalib/left/out</port>
-    <port>/blobSpotter/image:o</port>
+    <port>/lbpExtract/image:o</port>
 </dependencies>
 
 <module>
@@ -40,19 +40,19 @@
     <node>console</node>
 </module>
 <module>
-    <name>planningCycle</name> <!-- planning_cycle.py -->
+    <name>planningCycle</name>
     <node>console</node>
 </module>
 <module>
-    <name>geometricGrounding</name> <!-- geometric_grounding.py -->
+    <name>geometricGrounding</name>
     <node>console</node>
 </module>
 <module>
-    <name>goalCompiler</name> <!-- goal_imaginer.py -->
+    <name>goalCompiler</name>
     <node>console</node>
 </module>
 <module>
-    <name>affordanceCommunication</name> <!-- affordance_communication.py -->
+    <name>affordanceCommunication</name>
     <node>console</node>
 </module>
 
@@ -167,15 +167,15 @@
     <to>/activityInterface/rpc:i</to>
 </connection>
 <connection>
-    <from>/affordanceCommunication/aff_query:io</from> <!-- /AffordanceComm/aff_query:io -->
+    <from>/affordanceCommunication/aff_query:io</from>
     <to>/Eprediction/read:i</to>
 </connection>
 <connection>
     <from>/Eprediction/write:o</from>
-    <to>/affordanceCommunication/aff_query:io</to> <!-- /AffordanceComm/aff_query:io -->
+    <to>/affordanceCommunication/aff_query:io</to>
 </connection>
 <connection>
-    <from>/affordanceCommunication/actInt_rpc:o</from> <!-- /AffordanceComm/actInt_rpc:io -->
+    <from>/affordanceCommunication/actInt_rpc:o</from>
     <to>/activityInterface/rpc:i</to>
 </connection>
 <connection>
@@ -207,24 +207,24 @@
     <to>/activityInterface/prada:i</to>
 </connection>
 <connection>
-    <from>/affordanceCommunication/ground_cmd:io</from> <!-- /AffordanceComm/ground_cmd:io -->
+    <from>/affordanceCommunication/ground_cmd:io</from>
     <to>/geometricGrounding/affordances_cmd:io</to>
 </connection>
 <connection>
     <from>/geometricGrounding/affordances_cmd:io</from>
-    <to>/affordanceCommunication/ground_cmd:io</to> <!-- /AffordanceComm/ground_cmd:io -->
+    <to>/affordanceCommunication/ground_cmd:io</to>
 </connection>
 <connection>
-    <from>/affordanceCommunication/opc2prada_query:io</from> <!-- /AffordanceComm/desc_query:io, is now connected to an rpc port instead of two ports -->
+    <from>/affordanceCommunication/opc2prada_query:io</from>
     <to>/opc2prada/rpc:i</to>
 </connection>
 <connection>
-    <from>/affordanceCommunication/planner_cmd:io</from> <!-- /AffordanceComm/planner_cmd:io -->
+    <from>/affordanceCommunication/planner_cmd:io</from>
     <to>/planner/affordances_cmd:io</to>
 </connection>
 <connection>
     <from>/planner/affordances_cmd:io</from>
-    <to>/affordanceCommunication/planner_cmd:io</to> <!-- /AffordanceComm/planner_cmd:io -->
+    <to>/affordanceCommunication/planner_cmd:io</to>
 </connection>
 <!-- connection between three auxiliary planner modules, and the rpc port -->
 <connection>

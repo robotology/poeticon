@@ -1,0 +1,43 @@
+<application>
+    <name>POETICON++ segmentation</name>
+
+    <dependencies>
+        <port>/icub/camcalib/left/out</port>
+    </dependencies>
+
+     <module>
+        <name>lbpExtract</name>
+        <node>pwrNode</node>
+    </module>
+
+    <module>
+        <name>yarpview</name>
+        <node>console</node>
+        <parameters>--name /seg/input --x 0 --y 0 --p 33</parameters>
+    </module>
+
+     <module>
+        <name>yarpview</name>
+        <node>console</node>
+        <parameters>--name /seg/output --x 330 --y 0 --p 33</parameters>
+    </module>
+
+    <connection>
+        <from>/icub/camcalib/left/out</from>
+        <to>/lbpExtract/image:i</to>
+        <protocol>udp</protocol>
+    </connection>
+
+    <connection>
+        <from>/lbpExtract/propagated:o</from>
+        <to>/seg/input</to>
+        <protocol>udp</protocol>
+    </connection>
+
+    <connection>
+        <from>/lbpExtract/image:o</from>
+        <to>/seg/output</to>
+        <protocol>udp</protocol>
+    </connection>
+
+</application>
