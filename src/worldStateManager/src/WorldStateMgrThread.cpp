@@ -2096,7 +2096,7 @@ bool WorldStateMgrThread::pauseTrack(const string &objName)
     id = label2id(objName);
     if (id==-1)
     {
-        yWarning() << __func__ << "did not find tracker ID corresponding to label, not going to pause" << objName.c_str();
+        yWarning() << __func__ << "did not find tracker ID corresponding to" << objName.c_str() << " - not able to pause it";
         return false;
     }
 
