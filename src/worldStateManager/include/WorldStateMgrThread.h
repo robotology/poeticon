@@ -93,7 +93,6 @@ class WorldStateMgrThread : public RateThread
         bool playbackMode;
         int fsmState;
         double t;
-        bool toldUserConnectOPC;
         bool toldUserOPCConnected;
         int countFrom;
         bool withFilter;
@@ -102,12 +101,8 @@ class WorldStateMgrThread : public RateThread
 
         // perception mode
         bool needUpdate;
-        //bool memoryInit;
-        bool toldUserWaitBlobs;
         bool toldUserBlobsConnected;
-        bool toldUserWaitTracker;
         bool toldUserTrackerConnected;
-        bool toldUserWaitActivityIF;
         bool toldActivityGoHome;
         bool toldUserActivityIFConnected;
         Bottle *inAff;

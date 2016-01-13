@@ -145,7 +145,6 @@ void WorldStateMgrThread::run()
 bool WorldStateMgrThread::initCommonVars()
 {
     fsmState = (playbackMode ? STATE_DUMMY_PARSE : STATE_PERCEPTION_WAIT_OPC);
-    toldUserConnectOPC = false;
     toldUserOPCConnected = false;
     initFinished = false;
     t = yarp::os::Time::now();
@@ -187,10 +186,11 @@ bool WorldStateMgrThread::updateWorldState()
 /**********************************************************/
 bool WorldStateMgrThread::tellUserConnectOPC()
 {
-    if (!toldUserConnectOPC)
+    double t0 = yarp::os::Time::now();
+    if (t0-t>10.0 && opcPort.getOutputCount()<1)
     {
         yInfo("waiting for connection: %s /wsopc/rpc", opcPortName.c_str());
-        toldUserConnectOPC = true;
+        t = t0;
     }
 
     return true;
@@ -278,12 +278,8 @@ bool WorldStateMgrThread::initPerceptionVars()
     inToolAff = NULL;
     inTargets = NULL;
     needUpdate = false;
-    //memoryInit = false;
-    toldUserWaitBlobs = false;
     toldUserBlobsConnected = false;
-    toldUserWaitTracker = false;
     toldUserTrackerConnected = false;
-    toldUserWaitActivityIF = false;
     toldActivityGoHome = false;
     toldUserActivityIFConnected = false;
 
@@ -293,12 +289,16 @@ bool WorldStateMgrThread::initPerceptionVars()
 /**********************************************************/
 bool WorldStateMgrThread::tellUserConnectBlobs()
 {
-    if (!toldUserWaitBlobs || inAffPort.getInputCount()<1 || inToolAffPort.getInputCount()<1)
+    double t0 = yarp::os::Time::now();
+    if (t0-t>10.0)
     {
-        yInfo("waiting for connections:");
-        yInfo("/blobDescriptor/affDescriptor:o %s", inAffPortName.c_str());
-        yInfo("/blobDescriptor/toolAffDescriptor:o %s", inToolAffPortName.c_str());
-        toldUserWaitBlobs = true;
+        if (inAffPort.getInputCount()<1 || inToolAffPort.getInputCount()<1)
+        {
+            yInfo("waiting for connections:");
+            yInfo("/blobDescriptor/affDescriptor:o %s", inAffPortName.c_str());
+            yInfo("/blobDescriptor/toolAffDescriptor:o %s", inToolAffPortName.c_str());
+            t = t0;
+        }
     }
 
     return true;
@@ -322,11 +322,12 @@ bool WorldStateMgrThread::tellUserBlobsConnected()
 /**********************************************************/
 bool WorldStateMgrThread::tellUserConnectTracker()
 {
-    if (!toldUserWaitTracker)
+    double t0 = yarp::os::Time::now();
+    if (t0-t>10.0 && trackerPort.getOutputCount()<1)
     {
         yInfo("waiting for connection: /activeParticleTrack/target:o %s",
               inTargetsPortName.c_str());
-        toldUserWaitTracker = true;
+        t = t0;
     }
 
     return true;
@@ -335,11 +336,12 @@ bool WorldStateMgrThread::tellUserConnectTracker()
 /**********************************************************/
 bool WorldStateMgrThread::tellUserConnectActivityIF()
 {
-    if (!toldUserWaitActivityIF)
+    double t0 = yarp::os::Time::now();
+    if (t0-t>10.0 && activityPort.getOutputCount()<1)
     {
         yInfo("waiting for connection: %s /activityInterface/rpc:i",
               activityPortName.c_str());
-        toldUserWaitActivityIF = true;
+        t = t0;
     }
 
     return true;
@@ -629,7 +631,6 @@ bool WorldStateMgrThread::resetWorldState()
         yInfo("detected WSOPC module restart - proceeding with reset routine");
 
     // reset variables
-    toldUserConnectOPC = false;
     toldUserOPCConnected = false;
     initFinished = false;
 
@@ -1933,7 +1934,7 @@ void WorldStateMgrThread::fsmPerception()
             tellUserConnectActivityIF();
             tellActivityGoHome();
 
-            if (toldUserWaitActivityIF && toldActivityGoHome)
+            if (toldActivityGoHome)
             {
                 // proceed
                 fsmState = STATE_PERCEPTION_SET_MEMORY;
