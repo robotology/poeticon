@@ -22,6 +22,7 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/../conf"
 find_package(TBB)
 
 # modules that do not need OpenCV
+add_subdirectory(dummyWorldStateManager)
 add_subdirectory(opc2prada)
 add_subdirectory(pradaPlanner-cpp)
 add_subdirectory(worldStateManager)

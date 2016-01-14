@@ -7,7 +7,7 @@
     <node>console</node>
 </module>
 <module>
-    <name>worldStateManager</name>
+    <name>dummyWorldStateManager</name>
     <parameters>--playback dbdummy.ini</parameters>
     <node>console</node>
 </module>
