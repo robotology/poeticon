@@ -1,6 +1,6 @@
 /*
  * Copyright: (C) 2012-2015 POETICON++, European Commission FP7 project ICT-288382
- * Copyright: (C) 2014 VisLab, Institute for Systems and Robotics,
+ * Copyright: (C) 2016 VisLab, Institute for Systems and Robotics,
  *                Instituto Superior Técnico, Universidade de Lisboa, Lisbon, Portugal
  * Author: Giovanni Saponaro <gsaponaro@isr.ist.utl.pt>
  * CopyPolicy: Released under the terms of the GNU GPL v2.0
@@ -13,12 +13,10 @@
 WorldStateMgrThread::WorldStateMgrThread(
     const string &_moduleName,
     const double _period,
-    const bool _playbackMode,
     const int _countFrom,
     const bool _withFilter)
     : moduleName(_moduleName),
       RateThread(int(_period*1000.0)),
-      playbackMode(_playbackMode),
       countFrom(_countFrom),
       withFilter(_withFilter)
 {
@@ -27,14 +25,11 @@ WorldStateMgrThread::WorldStateMgrThread(
 /**********************************************************/
 bool WorldStateMgrThread::openPorts()
 {
-    // perception and playback modes
     bool ret = true;
+
     opcPortName = "/" + moduleName + "/opc:io";
     ret = ret && opcPort.open(opcPortName.c_str());
-    
-    if (playbackMode) return ret;
 
-    // perception mode only
     inTargetsPortName = "/" + moduleName + "/target:i";
     ret = ret && inTargetsPort.open(inTargetsPortName.c_str());
 
@@ -56,13 +51,9 @@ bool WorldStateMgrThread::openPorts()
 /**********************************************************/
 void WorldStateMgrThread::close()
 {
-    // perception and playback modes
     yInfo("closing ports");
+
     opcPort.close();
-
-    if (playbackMode) return;
-
-    // perception mode only
     inTargetsPort.close();
     inAffPort.close();
     inToolAffPort.close();
@@ -73,14 +64,10 @@ void WorldStateMgrThread::close()
 /**********************************************************/
 void WorldStateMgrThread::interrupt()
 {
-    // perception and playback modes
     closing = true;
+
     yInfo("interrupting ports");
     opcPort.interrupt();
-
-    if (playbackMode) return;
-
-    // perception mode only
     inTargetsPort.interrupt();
     inAffPort.interrupt();
     inToolAffPort.interrupt();
@@ -91,7 +78,6 @@ void WorldStateMgrThread::interrupt()
 /**********************************************************/
 bool WorldStateMgrThread::threadInit()
 {
-    // perception and playback modes
     closing = false;
 
     if ( !openPorts() )
@@ -100,11 +86,13 @@ bool WorldStateMgrThread::threadInit()
         return false;
     }
 
-    // initialize variables common to both perception and playback modes
-    initCommonVars();
+    if (! initVars() )
+    {
+        yError("problem initializing variables");
+        return false;
+    }
 
-    // initialize specific variables
-    return ( playbackMode ? initPlaybackVars() : initPerceptionVars() );
+    return true;
 }
 
 /**********************************************************/
@@ -112,73 +100,38 @@ void WorldStateMgrThread::run()
 {
     while (!closing)
     {
-        if (!playbackMode)
+        /*
+        // update internal memory all the time
+        // TODO: call it also without filter
+        if (withFilter)
         {
-            /*
-            // update internal memory all the time
-            // TODO: call it also without filter
-            if (withFilter)
-            {
-                updateMemoryFilters();
-                yarp::os::Time::delay(1.0);
-            }
-            */
+            updateMemoryFilters();
+            yarp::os::Time::delay(1.0);
+        }
+        */
 
-            // enter perception state machine
-            fsmPerception();
-        }
-        else
-        {
-            // enter playback state machine
-            fsmPlayback();
-        }
+        // enter perception state machine
+        fsmPerception();
 
         yarp::os::Time::delay(0.01);
     }
 }
 
-/* ************************************************************************** */
-/* perception and playback modes                                              */
-/* ************************************************************************** */
-
 /**********************************************************/
-bool WorldStateMgrThread::initCommonVars()
+bool WorldStateMgrThread::initVars()
 {
-    fsmState = (playbackMode ? STATE_DUMMY_PARSE : STATE_PERCEPTION_WAIT_OPC);
+    fsmState = STATE_PERCEPTION_WAIT_OPC;
     toldUserOPCConnected = false;
     initFinished = false;
     t = yarp::os::Time::now();
-
-    return true;
-}
-
-/**********************************************************/
-bool WorldStateMgrThread::updateWorldState()
-{
-    if (!playbackMode)
-    {
-        // perception mode
-        if (activityPort.getOutputCount()<1)
-        {
-            yWarning("not connected to activityInterface, cannot update world state!");
-            return false;
-        }
-        if (!checkTrackerStatus())
-        {
-            yWarning("tracker not initialized, cannot update world state!");
-            return false;
-        }
-        needUpdate = true;
-        yInfo("updating world state from robot perception");
-    }
-    else
-    {
-        // playback mode
-        playbackPaused = false;
-        yInfo("updating world state from playback file");
-    }
-
-    // TODO: opcPort.write() should be here instead of inner functions
+    inAff = NULL;
+    inToolAff = NULL;
+    inTargets = NULL;
+    needUpdate = false;
+    toldUserBlobsConnected = false;
+    toldUserTrackerConnected = false;
+    toldActivityGoHome = false;
+    toldUserActivityIFConnected = false;
 
     return true;
 }
@@ -206,6 +159,67 @@ bool WorldStateMgrThread::tellUserOPCConnected()
     {
         yInfo("connected to WSOPC, you can now send RPC commands to /%s/rpc:i", moduleName.c_str());
         toldUserOPCConnected = true;
+    }
+
+    return true;
+}
+
+/**********************************************************/
+bool WorldStateMgrThread::tellUserConnectBlobs()
+{
+    double t0 = yarp::os::Time::now();
+    if (t0-t>10.0)
+    {
+        if (inAffPort.getInputCount()<1 || inToolAffPort.getInputCount()<1)
+        {
+            yInfo("waiting for connections:");
+            yInfo("/blobDescriptor/affDescriptor:o %s", inAffPortName.c_str());
+            yInfo("/blobDescriptor/toolAffDescriptor:o %s", inToolAffPortName.c_str());
+            t = t0;
+        }
+    }
+
+    return true;
+}
+
+/**********************************************************/
+bool WorldStateMgrThread::tellUserBlobsConnected()
+{
+    if (inAffPort.getInputCount()<1 || inToolAffPort.getInputCount()<1)
+        return false;
+
+    if (!toldUserBlobsConnected)
+    {
+        yInfo("connected to BlobDescriptor, waiting for shape data - requires segmentation");
+        toldUserBlobsConnected = true;
+    }
+
+    return true;
+}
+
+/**********************************************************/
+bool WorldStateMgrThread::tellUserConnectTracker()
+{
+    double t0 = yarp::os::Time::now();
+    if (t0-t>10.0 && trackerPort.getOutputCount()<1)
+    {
+        yInfo("waiting for connection: /activeParticleTrack/target:o %s",
+              inTargetsPortName.c_str());
+        t = t0;
+    }
+
+    return true;
+}
+
+/**********************************************************/
+bool WorldStateMgrThread::tellUserConnectActivityIF()
+{
+    double t0 = yarp::os::Time::now();
+    if (t0-t>10.0 && activityPort.getOutputCount()<1)
+    {
+        yInfo("waiting for connection: %s /activityInterface/rpc:i",
+              activityPortName.c_str());
+        t = t0;
     }
 
     return true;
@@ -267,81 +281,28 @@ bool WorldStateMgrThread::checkOPCStatus(const int &minEntries, Bottle &ids)
     return init;
 }
 
-/* ************************************************************************** */
-/* perception mode                                                            */
-/* ************************************************************************** */
-
 /**********************************************************/
-bool WorldStateMgrThread::initPerceptionVars()
-{
-    inAff = NULL;
-    inToolAff = NULL;
-    inTargets = NULL;
-    needUpdate = false;
-    toldUserBlobsConnected = false;
-    toldUserTrackerConnected = false;
-    toldActivityGoHome = false;
-    toldUserActivityIFConnected = false;
-
-    return true;
-}
-
-/**********************************************************/
-bool WorldStateMgrThread::tellUserConnectBlobs()
-{
-    double t0 = yarp::os::Time::now();
-    if (t0-t>10.0)
-    {
-        if (inAffPort.getInputCount()<1 || inToolAffPort.getInputCount()<1)
-        {
-            yInfo("waiting for connections:");
-            yInfo("/blobDescriptor/affDescriptor:o %s", inAffPortName.c_str());
-            yInfo("/blobDescriptor/toolAffDescriptor:o %s", inToolAffPortName.c_str());
-            t = t0;
-        }
-    }
-
-    return true;
-}
-
-/**********************************************************/
-bool WorldStateMgrThread::tellUserBlobsConnected()
+bool WorldStateMgrThread::refreshBlobs()
 {
     if (inAffPort.getInputCount()<1 || inToolAffPort.getInputCount()<1)
         return false;
 
-    if (!toldUserBlobsConnected)
+    // update whole object descriptors
+    inAff = inAffPort.read();
+
+    // update object parts descriptors
+    inToolAff = inToolAffPort.read();
+
+    if (inAff!=NULL && inToolAff!=NULL)
     {
-        yInfo("connected to BlobDescriptor, waiting for shape data - requires segmentation");
-        toldUserBlobsConnected = true;
-    }
+        // number of blobs
+        sizeAff = static_cast<int>( inAff->get(0).asDouble() );
 
-    return true;
-}
-
-/**********************************************************/
-bool WorldStateMgrThread::tellUserConnectTracker()
-{
-    double t0 = yarp::os::Time::now();
-    if (t0-t>10.0 && trackerPort.getOutputCount()<1)
-    {
-        yInfo("waiting for connection: /activeParticleTrack/target:o %s",
-              inTargetsPortName.c_str());
-        t = t0;
-    }
-
-    return true;
-}
-
-/**********************************************************/
-bool WorldStateMgrThread::tellUserConnectActivityIF()
-{
-    double t0 = yarp::os::Time::now();
-    if (t0-t>10.0 && activityPort.getOutputCount()<1)
-    {
-        yInfo("waiting for connection: %s /activityInterface/rpc:i",
-              activityPortName.c_str());
-        t = t0;
+        // BlobDescriptor should prevent this to happen, but just in case:
+        if ( static_cast<int>(inToolAff->get(0).asDouble()) != sizeAff )
+        {
+            yWarning("number of whole object descriptors differ from number of object parts descriptors!");
+        }
     }
 
     return true;
@@ -545,33 +506,6 @@ bool WorldStateMgrThread::initTracker()
 }
 
 /**********************************************************/
-bool WorldStateMgrThread::refreshBlobs()
-{
-    if (inAffPort.getInputCount()<1 || inToolAffPort.getInputCount()<1)
-        return false;
-
-    // update whole object descriptors
-    inAff = inAffPort.read();
-
-    // update object parts descriptors
-    inToolAff = inToolAffPort.read();
-
-    if (inAff!=NULL && inToolAff!=NULL)
-    {
-        // number of blobs
-        sizeAff = static_cast<int>( inAff->get(0).asDouble() );
-
-        // BlobDescriptor should prevent this to happen, but just in case:
-        if ( static_cast<int>(inToolAff->get(0).asDouble()) != sizeAff )
-        {
-            yWarning("number of whole object descriptors differ from number of object parts descriptors!");
-        }
-    }
-
-    return true;
-}
-
-/**********************************************************/
 bool WorldStateMgrThread::refreshTracker()
 {
     if (trackerPort.getOutputCount()<1)
@@ -590,62 +524,6 @@ bool WorldStateMgrThread::refreshTracker()
 
     // number of tracked objects
     sizeTargets = inTargets->size();
-
-    return true;
-}
-
-/**********************************************************/
-bool WorldStateMgrThread::resetWorldState()
-{
-    if (playbackMode)
-    {
-        yWarning("not available in playback mode, requires perception mode!");
-        return false;
-    }
-
-    // if WSOPC is running and connected, disconnect it
-    string wsopcInPortName = "/wsopc/rpc";
-    if (opcPort.getOutputCount()>0)
-    {
-        // disconnect /wsm/opc:io /wsopc/rpc
-        if (!yarp::os::NetworkBase::disconnect(opcPortName.c_str(), wsopcInPortName.c_str()))
-        {
-            yWarning() << __func__ << "problem attempting to disconnect" << opcPortName.c_str() << wsopcInPortName.c_str();
-            return false;
-        }
-    }
-
-    // tell user to restart WSOPC process and reconnect /wsm/opc:io /wsopc/rpc
-    do
-    {
-        yarp::os::Time::delay(0.01);
-        double t0 = yarp::os::Time::now();
-        if ((t0 - t) > 10.0)
-        {
-            yInfo("1. manually restart this module: objectsPropertiesCollector --name wsopc --context poeticon --db dbhands.ini --nosave --async_bc\t 2. reconnect %s %s", opcPortName.c_str(), wsopcInPortName.c_str());
-            t = t0;
-        }
-    } while (opcPort.getOutputCount()<1);
-
-    if (opcPort.getOutputCount()>0)
-        yInfo("detected WSOPC module restart - proceeding with reset routine");
-
-    // reset variables
-    toldUserOPCConnected = false;
-    initFinished = false;
-
-    // reset activeParticleTracker
-    resetTracker();
-
-    // reset internal short-term memory
-    hands.clear(); // empty hands container
-    initMemoryFromOPC(); // put left and right entries into hands container
-    objs.clear();
-    trackIDs.clear();
-    candidateTrackMap.clear();
-
-    // enter FSM
-    fsmState = STATE_PERCEPTION_WAIT_TRACKER;
 
     return true;
 }
@@ -1192,34 +1070,6 @@ bool WorldStateMgrThread::parseObjProperties(const Bottle *fields,
         pullW = * fields->find("pullable_with").asList();
     else
         yWarning("problem parsing pullable_with");
-
-    return true;
-}
-
-/**********************************************************/
-bool WorldStateMgrThread::printMemoryState()
-{
-    yInfo("short-term memory:");
-        
-    for(std::vector<MemoryItemHand>::const_iterator iter = hands.begin();
-        iter != hands.end();
-        ++iter)
-    {
-        // print result of MemoryItemHand::toString()
-        ostringstream s;
-        s << *iter;
-        yInfo(s.str());
-    }
-
-    for(std::vector<MemoryItemObj>::const_iterator iter = objs.begin();
-        iter != objs.end();
-        ++iter)
-    {
-        // print result of MemoryItemObj::toString()
-        ostringstream s;
-        s << *iter;
-        yInfo(s.str());
-    }
 
     return true;
 }
@@ -2037,26 +1887,116 @@ void WorldStateMgrThread::fsmPerception()
 }
 
 // IDL functions
+
+/**********************************************************/
+bool WorldStateMgrThread::printMemoryState()
+{
+    yInfo("short-term memory:");
+        
+    for(std::vector<MemoryItemHand>::const_iterator iter = hands.begin();
+        iter != hands.end();
+        ++iter)
+    {
+        // print result of MemoryItemHand::toString()
+        ostringstream s;
+        s << *iter;
+        yInfo(s.str());
+    }
+
+    for(std::vector<MemoryItemObj>::const_iterator iter = objs.begin();
+        iter != objs.end();
+        ++iter)
+    {
+        // print result of MemoryItemObj::toString()
+        ostringstream s;
+        s << *iter;
+        yInfo(s.str());
+    }
+
+    return true;
+}
+
+/**********************************************************/
+bool WorldStateMgrThread::updateWorldState()
+{
+    // perception mode
+    if (activityPort.getOutputCount()<1)
+    {
+        yWarning("not connected to activityInterface, cannot update world state!");
+        return false;
+    }
+    if (!checkTrackerStatus())
+    {
+        yWarning("tracker not initialized, cannot update world state!");
+        return false;
+    }
+    needUpdate = true;
+    yInfo("updating world state from robot perception");
+
+    // TODO: opcPort.write() should be here instead of inner functions
+
+    return true;
+}
+
+/**********************************************************/
+bool WorldStateMgrThread::resetWorldState()
+{
+    // if WSOPC is running and connected, disconnect it
+    string wsopcInPortName = "/wsopc/rpc";
+    if (opcPort.getOutputCount()>0)
+    {
+        // disconnect /wsm/opc:io /wsopc/rpc
+        if (!yarp::os::NetworkBase::disconnect(opcPortName.c_str(), wsopcInPortName.c_str()))
+        {
+            yWarning() << __func__ << "problem attempting to disconnect" << opcPortName.c_str() << wsopcInPortName.c_str();
+            return false;
+        }
+    }
+
+    // tell user to restart WSOPC process and reconnect /wsm/opc:io /wsopc/rpc
+    do
+    {
+        yarp::os::Time::delay(0.01);
+        double t0 = yarp::os::Time::now();
+        if ((t0 - t) > 10.0)
+        {
+            yInfo("1. manually restart this module: objectsPropertiesCollector --name wsopc --context poeticon --db dbhands.ini --nosave --async_bc\t 2. reconnect %s %s", opcPortName.c_str(), wsopcInPortName.c_str());
+            t = t0;
+        }
+    } while (opcPort.getOutputCount()<1);
+
+    if (opcPort.getOutputCount()>0)
+        yInfo("detected WSOPC module restart - proceeding with reset routine");
+
+    // reset variables
+    toldUserOPCConnected = false;
+    initFinished = false;
+
+    // reset activeParticleTracker
+    resetTracker();
+
+    // reset internal short-term memory
+    hands.clear(); // empty hands container
+    initMemoryFromOPC(); // put left and right entries into hands container
+    objs.clear();
+    trackIDs.clear();
+    candidateTrackMap.clear();
+
+    // enter FSM
+    fsmState = STATE_PERCEPTION_WAIT_TRACKER;
+
+    return true;
+}
+
 /**********************************************************/
 bool WorldStateMgrThread::isInitialized()
 {
-    if (playbackMode)
-    {
-        yWarning("not available in playback mode, requires perception mode!");
-        return false;
-    }
-
     return initFinished;
 }
 
+/**********************************************************/
 bool WorldStateMgrThread::pauseTrack(const string &objName)
 {
-    if (playbackMode)
-    {
-        yWarning("not available in playback mode, requires perception mode!");
-        return false;
-    }
-
     if (objName.empty())
     {
         yWarning() << __func__ << "was called with empty objName argument!";
@@ -2100,12 +2040,6 @@ bool WorldStateMgrThread::pauseTrack(const string &objName)
 /**********************************************************/
 bool WorldStateMgrThread::resumeTrack(const string &objName)
 {
-    if (playbackMode)
-    {
-        yWarning("not available in playback mode, requires perception mode!");
-        return false;
-    }
-
     if (objName.empty())
     {
         yWarning() << __func__ << "was called with empty objName argument!";
@@ -2149,12 +2083,6 @@ bool WorldStateMgrThread::resumeTrack(const string &objName)
 /**********************************************************/
 bool WorldStateMgrThread::pauseTrackID(const int32_t &objID)
 {
-    if (playbackMode)
-    {
-        yWarning("not available in playback mode, requires perception mode!");
-        return false;
-    }
-
     if (objID<0)
     {
         yWarning() << __func__ << "was called with invalid objID argument!";
@@ -2190,12 +2118,6 @@ bool WorldStateMgrThread::pauseTrackID(const int32_t &objID)
 /**********************************************************/
 bool WorldStateMgrThread::resumeTrackID(const int32_t &objID)
 {
-    if (playbackMode)
-    {
-        yWarning("not available in playback mode, requires perception mode!");
-        return false;
-    }
-
     if (objID<0)
     {
         yWarning() << __func__ << "was called with invalid objID argument!";
@@ -2234,12 +2156,6 @@ Bottle WorldStateMgrThread::getColorHistogram(const int32_t &u,
 {
     Bottle colors;
 
-    if (playbackMode)
-    {
-        yWarning("not available in playback mode, requires perception mode!");
-        return colors;
-    }
-
     if (inAffPort.getInputCount()<1)
     {
         yWarning("not connected to BlobDescriptor!");
@@ -2272,199 +2188,4 @@ Bottle WorldStateMgrThread::getColorHistogram(const int32_t &u,
     yDebug() << "found color histogram:" << colors.toString().c_str();
 
     return colors;
-}
-
-/* ************************************************************************** */
-/* playback mode                                                              */
-/* ************************************************************************** */
-
-/**********************************************************/
-bool WorldStateMgrThread::initPlaybackVars()
-{
-    toldUserEof = false;
-    playbackPaused = true;
-    sizePlaybackFile = -1;
-    currPlayback = -1;
-
-    return true;
-}
-
-/**********************************************************/
-void WorldStateMgrThread::setPlaybackFile(const string &file)
-{
-    playbackFile = file;
-}
-
-/**********************************************************/
-void WorldStateMgrThread::fsmPlayback()
-{
-    //yDebug("playback state=%d", fsmState);
-    switch (fsmState)
-    {
-        case STATE_DUMMY_PARSE:
-        {
-            // acquire Bottle with whole file content
-            Property wholeFile;
-            wholeFile.fromConfigFile(playbackFile.c_str());
-            stateBottle.read(wholeFile);
-            sizePlaybackFile = stateBottle.size();
-            if (sizePlaybackFile < 1)
-            {
-                yError("file empty or not parsable");
-                fsmState = STATE_DUMMY_ERROR;
-                break;
-            }
-            
-            yDebug("file parsed successfully: %d state entries", sizePlaybackFile);
-            fsmState = STATE_DUMMY_WAIT_OPC;
-            break;
-        }
-
-        case STATE_DUMMY_WAIT_OPC:
-        {
-            tellUserConnectOPC();
-
-            if (opcPort.getOutputCount()>0)
-            {
-                tellUserOPCConnected();
-
-                // proceed
-                fsmState = STATE_DUMMY_WAIT_CMD;
-            }
-
-            break;
-        }
-
-        case STATE_DUMMY_WAIT_CMD:
-        {
-            playbackPaused = true;
-
-            // initially we are in "[state00]"
-            currPlayback = 0;
-            fsmState = STATE_DUMMY_STEP;
-
-            break;
-        }
-
-        case STATE_DUMMY_STEP:
-        {
-            if (!playbackPaused)
-            {
-                // parse group "[state##]" of file
-                // TODO: make it work for "[state##]" with ##>9, simplify
-                ostringstream tag;
-                tag << "state" << std::setw(2) << std::setfill('0') << currPlayback << "";
-                Bottle &bCurr = stateBottle.findGroup(tag.str().c_str());
-                if (bCurr.size() < 1)
-                {
-                    yWarning() << tag.str().c_str() << "not found";
-                    playbackPaused = true;
-                    fsmState = STATE_DUMMY_EOF;
-                    break;
-                }
-                yDebug("loaded group %s, has size %d incl. group tag", tag.str().c_str(), bCurr.size());
-
-                Bottle opcCmd, content, opcReply;
-                Bottle *obj_j;
-
-                // parse each entry/line of current group "[state##]"
-                for (int j=1; j<bCurr.size(); j++)
-                {
-                    // going to ask WSOPC whether entry already exists
-                    opcCmd.clear();
-                    content.clear();
-                    opcCmd.addVocab(Vocab::encode("get"));
-                    obj_j = bCurr.get(j).asList();
-                    opcCmd.addList() = *obj_j->get(0).asList();
-                    yDebug() << __func__ <<  "sending query to WSOPC:" << opcCmd.toString().c_str();
-                    opcPort.write(opcCmd, opcReply);
-                    yDebug() << __func__ <<  "received response:" << opcReply.toString().c_str();
-
-                    // stop here if no WSOPC connection
-                    if (opcPort.getOutputCount()<1)
-                    {
-                        yWarning() << __func__ << "not connected to WSOPC";
-                        break;
-                    }
-
-                    if (opcReply.get(0).asVocab() == Vocab::encode("ack"))
-                    {
-                        // yes -> just update entry's properties
-                        yDebug("modifying existing entry in database");
-                        opcCmd.clear();
-                        opcCmd.addVocab(Vocab::encode("set"));
-                        obj_j = bCurr.get(j).asList();
-                        content.addList() = *obj_j->get(0).asList(); // ID
-                        content.append(*obj_j->get(1).asList());     // propSet
-                        opcCmd.addList() = content;
-                        opcPort.write(opcCmd, opcReply);
-                    }
-                    else
-                    {
-                        // no -> add entry
-                        yDebug("adding new entry to database");
-                        opcCmd.clear();
-                        opcCmd.addVocab(Vocab::encode("add"));
-                        obj_j = bCurr.get(j).asList();
-                        content.append(*obj_j->get(1).asList()); // propSet
-                        opcCmd.addList() = content;
-                        opcPort.write(opcCmd, opcReply);
-
-                        // handle problems and inconsistencies
-                        if (opcReply.get(1).asList()->get(1).asInt() !=
-                            obj_j->get(0).asList()->get(1).asInt())
-                        {
-                            yWarning() << "ID problem:" <<
-                                opcReply.get(1).asList()->get(1).asInt() <<
-                                "in WSOPC database, but" <<
-                                obj_j->get(0).asList()->get(1).asInt() <<
-                                "in playback file";
-
-                            //break;
-                        }
-                    }
-
-                } // end for parse each entry/line
-
-                // send "dump" instruction to WSOPC
-                opcCmd.clear();
-                opcReply.clear();
-                opcCmd.addVocab(Vocab::encode("dump"));
-                //yDebug() << __func__ << "sending command to WSOPC:" << opcCmd.toString().c_str();
-                opcPort.write(opcCmd, opcReply);
-                //yDebug() << __func__ << "received response:" << opcReply.toString().c_str();
-                opcCmd.clear();
-                opcReply.clear();
-
-                ++currPlayback;
-                playbackPaused = true;
-            } // end if (!playbackPaused)
-
-            // stay in same state, wait for next update instruction over rpc
-
-            break;
-        }
-
-        case STATE_DUMMY_EOF:
-        {
-            if (!toldUserEof)
-                yInfo("finished reading from playback file");
-
-            toldUserEof = true;
-            break;        
-        }
-
-        case STATE_DUMMY_ERROR:
-        {
-            closing = true;
-            yError("please quit the module");
-            break;        
-        }
-
-        default:
-        {
-            yWarning("unknown FSM state");
-            break;
-        }
-    } // end switch
 }

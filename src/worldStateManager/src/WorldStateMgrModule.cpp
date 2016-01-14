@@ -1,6 +1,6 @@
 /*
  * Copyright: (C) 2012-2015 POETICON++, European Commission FP7 project ICT-288382
- * Copyright: (C) 2014 VisLab, Institute for Systems and Robotics,
+ * Copyright: (C) 2016 VisLab, Institute for Systems and Robotics,
  *                Instituto Superior Técnico, Universidade de Lisboa, Lisbon, Portugal
  * Author: Giovanni Saponaro <gsaponaro@isr.ist.utl.pt>
  * CopyPolicy: Released under the terms of the GNU GPL v2.0
@@ -11,6 +11,12 @@
 
 bool WorldStateMgrModule::configure(ResourceFinder &rf)
 {
+    if (rf.check("playback"))
+    {
+        yError("DEPRECATED option, use dummyWorldStateManager module for this functionality");
+        return false;
+    }
+
     // module parameters
     moduleName = rf.check("name", Value("wsm")).asString();
     setName(moduleName.c_str());
@@ -21,19 +27,6 @@ bool WorldStateMgrModule::configure(ResourceFinder &rf)
 
     // thread stuff
     threadPeriod = 0.033; // [s]
-    playbackMode = rf.check("playback");
-    if (playbackMode)
-    {
-        yInfo("module started in playback mode");
-        playbackFile = rf.findFile("playback").c_str();
-        if (playbackFile.empty())
-        {
-            yError() << "playback file not found";
-            return false;
-        }
-        else
-            yInfo() << "playback file loaded successfully:" << playbackFile;
-    }
     countFrom   = rf.check("countFrom", Value(13)).asInt();
     withFilter  = rf.check("filter") && rf.find("filter").asString()!="off";
     if (withFilter)
@@ -45,15 +38,11 @@ bool WorldStateMgrModule::configure(ResourceFinder &rf)
     // create new thread and pass pointers to the module parameters
     thread = new WorldStateMgrThread(moduleName,
                                      threadPeriod,
-                                     playbackMode,
                                      countFrom,
                                      withFilter);
 
     // additional settings for filtering
     if (withFilter) thread->setFilterOrder(filterOrder);
-
-    // additional settings for playback mode
-    if (playbackMode) thread->setPlaybackFile(playbackFile);
 
     // start the thread to do the work
     if (!thread->start())

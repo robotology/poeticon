@@ -1,16 +1,16 @@
 /*
  * Copyright: (C) 2012-2015 POETICON++, European Commission FP7 project ICT-288382
- * Copyright: (C) 2014 VisLab, Institute for Systems and Robotics,
+ * Copyright: (C) 2016 VisLab, Institute for Systems and Robotics,
  *                Instituto Superior Técnico, Universidade de Lisboa, Lisbon, Portugal
  * Author: Giovanni Saponaro <gsaponaro@isr.ist.utl.pt>
  * CopyPolicy: Released under the terms of the GNU GPL v2.0
  *
  */
 
-#ifndef __WSM_THREAD_H__
-#define __WSM_THREAD_H__
+#ifndef WSM_THREAD_H
+#define WSM_THREAD_H
 
-#include <iomanip>
+//#include <iomanip>
 #include <iostream> // __func__
 #include <map>
 #include <string>
@@ -46,14 +46,6 @@
 #define STATE_PERCEPTION_WAIT_CMD         9
 #define STATE_PERCEPTION_UPDATE_DB       10
 
-// playback mode states
-#define STATE_DUMMY_PARSE    100
-#define STATE_DUMMY_WAIT_OPC 101
-#define STATE_DUMMY_WAIT_CMD 102
-#define STATE_DUMMY_STEP     103
-#define STATE_DUMMY_EOF      104
-#define STATE_DUMMY_ERROR    105
-
 // make sure __func__ is set correctly, http://stackoverflow.com/a/17528983
 #if __STDC_VERSION__ < 199901L
 # if __GNUC__ >= 2
@@ -88,8 +80,6 @@ class WorldStateMgrThread : public RateThread
 
         bool closing;
 
-        // perception and playback modes
-        bool playbackMode;
         int fsmState;
         double t;
         bool toldUserOPCConnected;
@@ -97,8 +87,6 @@ class WorldStateMgrThread : public RateThread
         bool withFilter;
         int filterOrder;
         bool initFinished;
-
-        // perception mode
         bool needUpdate;
         bool toldUserBlobsConnected;
         bool toldUserTrackerConnected;
@@ -115,18 +103,9 @@ class WorldStateMgrThread : public RateThread
         idLabelMap candidateTrackMap;
         std::vector<iCub::ctrl::MedianFilter> posFilter;
 
-        // playback mode
-        string playbackFile;
-        bool playbackPaused;
-        bool toldUserEof;
-        Bottle stateBottle;
-        int sizePlaybackFile;
-        int currPlayback;
-
     public:
         WorldStateMgrThread(const string &_moduleName,
                             const double _period,
-                            const bool _playbackMode,
                             const int _countFrom,
                             const bool _withFilter);
         bool openPorts();
@@ -135,28 +114,24 @@ class WorldStateMgrThread : public RateThread
         bool threadInit();
         void run();
 
-        // perception and playback modes
-        bool initCommonVars();
-        bool updateWorldState();
+        bool initVars();
         bool tellUserConnectOPC();
         bool tellUserOPCConnected();
-        bool opcContainsID(const int &id);
-        bool checkOPCStatus(const int &minEntries, Bottle &ids);
-
-        // perception mode
-        bool initPerceptionVars();
         bool tellUserConnectBlobs();
         bool tellUserBlobsConnected();
         bool tellUserConnectTracker();
         bool tellUserConnectActivityIF();
 
+        bool opcContainsID(const int &id);
+        bool checkOPCStatus(const int &minEntries, Bottle &ids);
+
+        bool refreshBlobs();
+
         bool checkTrackerStatus();
         bool configureTracker();
         bool getTrackNames();
         bool initTracker();
-        bool refreshBlobs();
         bool refreshTracker();
-        bool resetWorldState();
         bool resetTracker();
 
         bool getAffBottleIndexFromTrackROI(const int &u, const int &v, int &abi);
@@ -179,7 +154,6 @@ class WorldStateMgrThread : public RateThread
                                  Bottle &desc2d, Bottle &tooldesc2d,
                                  string &inHand, Bottle &onTopOf,
                                  Bottle &reachW, Bottle &pullW);
-        bool printMemoryState();
 
         bool tellActivityGoHome();
         int label2id(const string &label);
@@ -197,17 +171,15 @@ class WorldStateMgrThread : public RateThread
         void fsmPerception();
 
         // IDL functions
+        bool printMemoryState();
+        bool updateWorldState();
+        bool resetWorldState();
         bool isInitialized();
         bool pauseTrack(const string &objName);
         bool resumeTrack(const string &objName);
         bool pauseTrackID(const int32_t &objID);
         bool resumeTrackID(const int32_t &objID);
         Bottle getColorHistogram(const int32_t &u, const int32_t &v);
-
-        // playback mode
-        bool initPlaybackVars();
-        void setPlaybackFile(const string &_file);
-        void fsmPlayback();
 };
 
 #endif

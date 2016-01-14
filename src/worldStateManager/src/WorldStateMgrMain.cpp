@@ -1,6 +1,6 @@
 /*
  * Copyright: (C) 2012-2015 POETICON++, European Commission FP7 project ICT-288382
- * Copyright: (C) 2014 VisLab, Institute for Systems and Robotics,
+ * Copyright: (C) 2016 VisLab, Institute for Systems and Robotics,
  *                Instituto Superior Técnico, Universidade de Lisboa, Lisbon, Portugal
  * Author: Giovanni Saponaro <gsaponaro@isr.ist.utl.pt>
  * CopyPolicy: Released under the terms of the GNU GPL v2.0
@@ -29,7 +29,7 @@ int main(int argc, char *argv[])
         yInfo("--countFrom trackerStartIndex (default 13)");
         yInfo("--filter <on/off> (default off)");
         yInfo("--filterOrder n (default 5)");
-        yInfo("--playback filename (to read data from a file; if this option is selected, other ones are ignored)");
+        yInfo("--playback filename (DEPRECATED option, use dummyWorldStateManager module for this functionality)");
         return 0; // EXIT_SUCCESS
     }
 

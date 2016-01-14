@@ -1,14 +1,14 @@
 /*
  * Copyright: (C) 2012-2015 POETICON++, European Commission FP7 project ICT-288382
- * Copyright: (C) 2014 VisLab, Institute for Systems and Robotics,
+ * Copyright: (C) 2016 VisLab, Institute for Systems and Robotics,
  *                Instituto Superior Técnico, Universidade de Lisboa, Lisbon, Portugal
  * Author: Giovanni Saponaro <gsaponaro@isr.ist.utl.pt>
  * CopyPolicy: Released under the terms of the GNU GPL v2.0
  *
  */
 
-#ifndef __WSM_MODULE_H__
-#define __WSM_MODULE_H__
+#ifndef WSM_MODULE_H
+#define WSM_MODULE_H
 
 #include <yarp/os/Bottle.h>
 #include <yarp/os/LogStream.h>
@@ -34,8 +34,6 @@ class WorldStateMgrModule : public RFModule, public WorldStateMgr_IDL
 
         // thread stuff
         double threadPeriod;
-        bool playbackMode;
-        string playbackFile;
         int countFrom;
         bool withFilter;
         int filterOrder;
