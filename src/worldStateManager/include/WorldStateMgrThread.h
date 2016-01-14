@@ -66,7 +66,6 @@
 using namespace std;
 using namespace yarp::os;
 
-// TODO: remove after this is replaced
 typedef std::map<int,string> idLabelMap;
 
 class WorldStateMgrThread : public RateThread
