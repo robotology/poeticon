@@ -27,10 +27,7 @@ public:
   virtual bool dump();
   /**
    * Update the world state database.
-   * If the module was started in perception mode (default), the new state will
-   * be created from robot perception. If the module was started in playback
-   * mode, the new state will be created from the next time instant in the
-   * world state text file.
+   * The new state will be created from robot perception.
    * @return true/false on success/failure
    */
   virtual bool update();

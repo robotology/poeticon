@@ -627,10 +627,7 @@ std::vector<std::string> WorldStateMgr_IDL::help(const std::string& functionName
     if (functionName=="update") {
       helpString.push_back("bool update() ");
       helpString.push_back("Update the world state database. ");
-      helpString.push_back("If the module was started in perception mode (default), the new state will ");
-      helpString.push_back("be created from robot perception. If the module was started in playback ");
-      helpString.push_back("mode, the new state will be created from the next time instant in the ");
-      helpString.push_back("world state text file. ");
+      helpString.push_back("The new state will be created from robot perception. ");
       helpString.push_back("@return true/false on success/failure ");
     }
     if (functionName=="reset") {
