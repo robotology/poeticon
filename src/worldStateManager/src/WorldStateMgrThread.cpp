@@ -1227,7 +1227,7 @@ bool WorldStateMgrThread::getLabelMajorityVote(const int &u, const int &v,
     // pick winner - http://stackoverflow.com/a/3798349
     std::pair<string, int> max_el = *std::max_element(histogram.begin(), histogram.end(), compareSecond());
     if (max_el.second < majority)
-        yInfo("winning label --> %s <-- with %d/%d non-empty entries after %d queries, despite being less than majority %d",
+        yInfo("winning label --> %s <-- with %d/%zu non-empty entries after %d queries, despite being less than majority %d",
                  max_el.first.c_str(), max_el.second, votes.size(), rounds, majority);
     else
         yInfo("winning label --> %s <--", max_el.first.c_str());
@@ -1900,7 +1900,7 @@ bool WorldStateMgrThread::printMemoryState()
         // print result of MemoryItemHand::toString()
         ostringstream s;
         s << *iter;
-        yInfo(s.str());
+        yInfo("%s\n", s.str().c_str());
     }
 
     for(std::vector<MemoryItemObj>::const_iterator iter = objs.begin();
@@ -1910,7 +1910,7 @@ bool WorldStateMgrThread::printMemoryState()
         // print result of MemoryItemObj::toString()
         ostringstream s;
         s << *iter;
-        yInfo(s.str());
+        yInfo("%s\n", s.str().c_str());
     }
 
     return true;
