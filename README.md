@@ -27,6 +27,7 @@ External projects used in the full POETICON++ demo:
 - [Interactive Objects Learning](https://github.com/robotology/iol)
 - [karma](https://github.com/robotology/karma)
 - [segmentation](https://github.com/robotology/segmentation)
+- [stereo-vision](https://github.com/robotology/stereo-vision)
 
 Speech recognition dependencies:
 - [YARP Lua bindings](http://wiki.icub.org/yarpdoc/yarp_swig.html)
