@@ -54,6 +54,13 @@ Please refer to the documentation inside each module, and to the help commands a
 
 ## Articles
 
+- Alexandre Antunes, Lorenzo Jamone, Giovanni Saponaro, Alexandre Bernardino, Rodrigo Ventura. *From Human Instructions to Robot Actions: Formulation of Goals, Affordances and Probabilistic Planning*. IEEE International Conference on Robotics and Automation (ICRA 2016).
+- Tanis Mar, Vadim Tikhanoff, Giorgio Metta, Lorenzo Natale. *Self-supervised learning of grasp dependent tool affordances on the iCub Humanoid robot*. IEEE International Conference on Robotics and Automation (ICRA 2015).
+- Tanis Mar, Vadim Tikhanoff, Giorgio Metta, Lorenzo Natale. *Multi-model approach based on 3D functional features for tool affordance learning in robotics*. IEEE-RAS International Conference on Humanoid Robots (Humanoids 2015).
+- Afonso Gonçalves, João Abrantes, Giovanni Saponaro, Lorenzo Jamone, Alexandre Bernardino. *Learning Intermediate Object Affordances: Towards the Development of a Tool Concept*. IEEE International Conference on Development and Learning and on Epigenetic Robotics (ICDL-EpiRob 2014).
+- Afonso Gonçalves, Giovanni Saponaro, Lorenzo Jamone, Alexandre Bernardino. *Learning Visual Affordances of Objects and Tools through Autonomous Robot Exploration*. IEEE International Conference on Autonomous Robot Systems and Competitions (ICARSC 2014).
+- Vadim Tikhanoff, Ugo Pattacini, Lorenzo Natale, Giorgio Metta. *Exploring affordances and tool use on the iCub*. IEEE-RAS International Conference on Humanoid Robots (Humanoids 2013).
+
 ## License
 
 Released under the terms of the GPL v2.0 or later. See the file LICENSE for details.
