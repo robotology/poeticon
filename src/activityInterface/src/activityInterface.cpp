@@ -1342,7 +1342,6 @@ bool ActivityInterface::put(const string &objName, const string &targetName)
 bool ActivityInterface::askForTool(const std::string &handName, const int32_t pos_x, const int32_t pos_y)
 {
     // Get the label of the object requested
-    
     string label = getLabel(pos_x, pos_y);
     
     Bottle cmdHome, cmdReply;
@@ -1501,7 +1500,6 @@ bool ActivityInterface::pull(const string &objName, const string &toolName)
         
         if (result > 0 && result < 0.2)
         {
-            
             Bottle karmaMotor,KarmaReply;
             karmaMotor.addString("draw");
             karmaMotor.addDouble(position.get(0).asDouble() + 0.05);
@@ -1639,19 +1637,60 @@ Bottle ActivityInterface::reachableWith(const string &objName)
     
     position = get3D(objName);
 
-    if (position.get(0).asDouble() < -0.55)
-    {
+    if (position.get(0).asDouble() < -0.55){
+        
         Bottle list = pullableWith(objName);
         for (int i = 0; i<list.size(); i++)
             replyList.addString(list.get(i).asString());
+        
+        // check if tool is in hand
+        if (handStat("left")){
+         
+            for (std::map<string, string>::iterator it=inHandStatus.begin(); it!=inHandStatus.end(); ++it){
+                
+                if (strcmp (it->second.c_str(), "left" ) == 0)
+                    replyList.addString(it->first.c_str());
+            }
+            
+        }
+        if (handStat("right")){
+            for (std::map<string, string>::iterator it=inHandStatus.begin(); it!=inHandStatus.end(); ++it){
+                
+                if (strcmp (it->second.c_str(), "right" ) == 0)
+                    replyList.addString(it->first.c_str());
+            }
+        }
     }
-    else
-    {
+    else{
+        
+        Bottle toolList = getToolLikeNames();
+        
         Bottle list = getNames();
-        for (int i = 0; i<list.size(); i++)
-        {
+        for (int i = 0; i<list.size(); i++){
+            
             if (strcmp (objName.c_str(), list.get(i).asString().c_str() ) != 0)
                 replyList.addString(list.get(i).asString());
+            
+            if (strcmp (objName.c_str(), toolList.get(i).asString().c_str() ) != 0)
+                replyList.addString(toolList.get(i).asString());
+        
+            // check if tool is in hand
+            if (handStat("left")){
+                
+                for (std::map<string, string>::iterator it=inHandStatus.begin(); it!=inHandStatus.end(); ++it){
+                    
+                    if (strcmp (it->second.c_str(), "left" ) == 0)
+                        replyList.addString(it->first.c_str());
+                }
+                
+            }
+            if (handStat("right")){
+                for (std::map<string, string>::iterator it=inHandStatus.begin(); it!=inHandStatus.end(); ++it){
+                    
+                    if (strcmp (it->second.c_str(), "right" ) == 0)
+                        replyList.addString(it->first.c_str());
+                }
+            }
         }
         
         //double leftManip = getManip(objName, "left");
@@ -1663,8 +1702,7 @@ Bottle ActivityInterface::reachableWith(const string &objName)
             replyList.addString("left");
         else if (position.get(1).asDouble() >  0.2 )
             replyList.addString("right");
-        else
-        {
+        else{
             replyList.addString("left");
             replyList.addString("right");
         }

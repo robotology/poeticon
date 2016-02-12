@@ -41,8 +41,6 @@
 #include <gsl/gsl_rng.h>
 #include <gsl/gsl_randist.h>
 
-#include <pthread.h>
-
 #include <cv.h>
 #include <highgui.h>
 
