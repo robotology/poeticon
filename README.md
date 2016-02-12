@@ -32,9 +32,6 @@ Speech recognition dependencies:
 - [YARP Lua bindings](http://wiki.icub.org/yarpdoc/yarp_swig.html)
 - [rFSM](https://github.com/kmarkus/rFSM) (just clone it, no need to compile)
 
-SLIC Superpixels dependencies:
-- [TBB](https://www.threadingbuildingblocks.org/)
-
 ### Linux
 
 Installation of the core POETICON++ build:
