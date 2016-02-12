@@ -17,7 +17,7 @@ PRADA probabilistic planner also needs:
 
 Affordance network dependencies:
 - MATLAB
-- [pmtk3](https://github.com/probml/pmtk3)
+- [pmtk3](https://github.com/probml/pmtk3) (installation: launch MATLAB as superuser, run ```initPmtk3.m```, click on setPath, select the pmtk3 directories then Save to permanently add them to MATLABPATH)
 - [YARP Java bindings](http://www.yarp.it/yarp_swig.html)
 
 ### Additional dependencies for specific modules
