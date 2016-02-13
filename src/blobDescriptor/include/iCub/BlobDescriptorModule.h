@@ -6,34 +6,31 @@
  *
  */
 
-#ifndef __ICUB_BLOB_DESC_MODULE_H__
-#define __ICUB_BLOB_DESC_MODULE_H__
+#ifndef ICUB_BLOB_DESC_MODULE_H
+#define ICUB_BLOB_DESC_MODULE_H
 
-/* YARP */
+#include <cmath>
+#include <cstdio>
+#include <string>
+
+#include <opencv2/opencv.hpp>
+#include <opencv2/core/core.hpp>
+#include <opencv2/highgui/highgui.hpp>
+#include <opencv2/imgproc/imgproc.hpp>
+
 #include <yarp/os/BufferedPort.h>
 #include <yarp/os/Network.h>
 #include <yarp/os/Port.h>
 #include <yarp/os/RFModule.h>
 #include <yarp/os/Stamp.h>
 #include <yarp/os/Time.h>
-using namespace yarp::os;
 #include <yarp/sig/Image.h>
-using namespace yarp::sig;
 
-/* iCub */
 #include <iCub/BlobDescriptorSupport.h>
 
-/* OpenCV */
-#include <opencv2/opencv.hpp>
-#include <opencv2/core/core.hpp>
-#include <opencv2/highgui/highgui.hpp>
-#include <opencv2/imgproc/imgproc.hpp>
-
-/* system */
-#include <cmath>
-#include <string>
-#include <stdio.h>
 using namespace std;
+using namespace yarp::os;
+using namespace yarp::sig;
 
 class BlobDescriptorModule : public RFModule
 {
@@ -118,4 +115,4 @@ public:
     virtual double getPeriod();
 };
 
-#endif // __ICUB_BLOB_DESC_MODULE_H__
+#endif // ICUB_BLOB_DESC_MODULE_H

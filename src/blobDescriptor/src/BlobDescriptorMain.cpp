@@ -205,11 +205,9 @@
  */
 
 
-/* YARP */
 #include <yarp/os/Network.h>
 #include <yarp/os/RFModule.h>
 
-/* iCub */
 #include <iCub/BlobDescriptorModule.h>
 
 int main(int argc, char *argv[])

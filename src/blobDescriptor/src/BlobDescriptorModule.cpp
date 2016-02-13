@@ -7,19 +7,18 @@
  * CopyPolicy: Released under the terms of the GNU GPL v2.0 
  *
  */
- 
-/* YARP */
-#include <yarp/os/Network.h>
-using namespace yarp::os;
 
-/* iCub */
+#include <cstdio>
+#include <iostream>
+ 
+#include <yarp/os/Network.h>
+
 #include <iCub/BlobDescriptorModule.h>
 #include <iCub/BlobDescriptorSupport.h>
 
-/* system */
-#include <iostream>
-#include <stdio.h>
 using namespace std;
+using namespace yarp::os;
+
 
 /**
  * Receive a previously initialized Resource Finder object and process module parameters,

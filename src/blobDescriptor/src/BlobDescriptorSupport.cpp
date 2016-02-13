@@ -1,12 +1,8 @@
 // -*- mode:C++; tab-width:4; c-basic-offset:4; indent-tabs-mode:nil -*-
 
-/* iCub */
 #include <iCub/BlobDescriptorModule.h>
 #include <iCub/BlobDescriptorSupport.h>
 
-/* system */
-//#include <math.h>
-//#include <stdio.h>
 using namespace std;
 
 ObjectDescriptor::ObjectDescriptor()

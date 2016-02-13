@@ -1,27 +1,18 @@
-#ifndef __ICUB_BLOB_DESC_SUPPORT_H__
-#define __ICUB_BLOB_DESC_SUPPORT_H__
+#ifndef ICUB_BLOB_DESC_SUPPORT_H
+#define ICUB_BLOB_DESC_SUPPORT_H
 
 /* helper classes and functions - most are taken from Ivana Cingovska's 2008 work */
 
-/* OpenCV */
-// OpenCV 2
+#include <cmath>
+#include <cstdio>
+#include <string>
+
 #include <opencv2/opencv.hpp>
 #include <opencv2/core/core.hpp>
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/legacy/compat.hpp> // cvQueryHistValue_2D, cvCvtPixToPlane
-// OpenCV 1
-//#include <opencv/cv.h>
-//#include <opencv/cxcore.h>
-//#include <opencv/highgui.h>
 
-/* iCub */
 #include <iCub/BlobDescriptorModule.h>
-
-/* system */
-#include <math.h>
-#include <string>
-#include <stdio.h>
-//using namespace std;
 
 /* objectDescriptor.h */
 
@@ -120,4 +111,4 @@ void printImgLabels(IplImage *img, int numObjects);
 void drawBox( CvArr* img, CvBox2D box, CvScalar color );
 void drawBoxContour( CvArr* img, CvBox2D box, CvScalar color, int thickness );
 
-#endif // __ICUB_BLOB_DESC_SUPPORT_H__
+#endif // ICUB_BLOB_DESC_SUPPORT_H
