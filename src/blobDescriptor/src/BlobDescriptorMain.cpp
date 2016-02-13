@@ -204,7 +204,7 @@
  *
  */
 
-
+#include <yarp/os/Log.h>
 #include <yarp/os/Network.h>
 #include <yarp/os/RFModule.h>
 
@@ -216,7 +216,7 @@ int main(int argc, char *argv[])
     Network yarp;
     if(! yarp.checkNetwork() )
     {
-        fprintf(stdout,"Error: yarp server does not seem available\n");
+        yError("yarp server does not seem available");
         return 1; // EXIT_FAILURE
     }
 

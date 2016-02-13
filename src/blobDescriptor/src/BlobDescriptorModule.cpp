@@ -45,7 +45,7 @@ bool BlobDescriptorModule::configure(ResourceFinder &rf)
     _maxObjects = rf.check( "max_objects",Value(20),"Maximum number of objects to process" ).asInt();
     if( _maxObjects <= 0)
     {
-        cout << getName() << " WARNING: Invalid number of objects parameter. Will use default (20) instead." << endl;
+        yWarning("Invalid number of objects parameter. Will use default (20) instead.");
         _maxObjects = 20;
     }
 
@@ -59,7 +59,7 @@ bool BlobDescriptorModule::configure(ResourceFinder &rf)
     elongatedness_thr = (float) rf.check("elongatedness_thr", Value(0.8), "Minimum elongatedness required to display tool parts (only affects display image, not computation of descriptors)").asDouble();
     if( (elongatedness_thr<0.0) || (elongatedness_thr>1.0) )
     {
-        cout << getName() << " WARNING: Invalid elongatedness_thr. Will use default (0.8) instead." << endl;
+        yWarning("Invalid elongatedness_thr. Will use default (0.8) instead.");
         elongatedness_thr = 0.8;
     }
 
@@ -71,37 +71,37 @@ bool BlobDescriptorModule::configure(ResourceFinder &rf)
     /* open ports */
     if(! _rawImgInputPort.open(_rawImgInputPortName.c_str()) )
     {
-        cout << getName() << ": unable to open port" << _rawImgInputPortName << endl;
+        yError("unable to open port %s", _rawImgInputPortName.c_str());
         return false;
     }
     if(! binaryImgInputPort.open(binaryImgInputPortName.c_str()) )
     {
-        cout << getName() << ": unable to open port" << binaryImgInputPortName << endl;
+        yError("unable to open port %s", binaryImgInputPortName.c_str());
         return false;
     }
     if(! _labeledImgInputPort.open(_labeledImgInputPortName.c_str()) )
     {
-        cout << getName() << ": unable to open port" << _labeledImgInputPortName << endl;
+        yError("unable to open port %s", _labeledImgInputPortName.c_str());
         return false;
     }
     if(! _viewImgOutputPort.open(_viewImgOutputPortName.c_str()) )
     {
-        cout << getName() << ": unable to open port" << _viewImgOutputPortName << endl;
+        yError("unable to open port %s", _viewImgOutputPortName.c_str());
         return false;
     }
     if(! _affDescriptorOutputPort.open(_affDescriptorOutputPortName.c_str()) )
     {
-        cout << getName() << ": unable to open port" << _affDescriptorOutputPortName << endl;
+        yError("unable to open port %s", _affDescriptorOutputPortName.c_str());
         return false;
     }
     if(! toolAffDescriptorOutputPort.open(toolAffDescriptorOutputPortName.c_str()) )
     {
-        cout << getName() << ": unable to open port" << toolAffDescriptorOutputPortName << endl;
+        yError("unable to open port %s", toolAffDescriptorOutputPortName.c_str());
         return false;
     }
     if(! bothPartsImgOutputPort.open(bothPartsImgOutputPortName.c_str()) )
     {
-        cout << getName() << ": unable to open port" << bothPartsImgOutputPortName << endl;
+        yError("unable to open port %s", bothPartsImgOutputPortName.c_str());
         return false;
     }
 
@@ -112,7 +112,7 @@ bool BlobDescriptorModule::configure(ResourceFinder &rf)
     /* check to avoid memory leak when exiting and ports are not connected */
     if (_yarpRawInputPtr==NULL || _yarpLabeledInputPtr==NULL || yarpBinaryInputPtr==NULL)
     {
-        cout << getName() << ": input images not initialized. Exiting..." << endl;
+        yError("input images not initialized. Exiting...");
         return false;
     }
 
@@ -122,7 +122,7 @@ bool BlobDescriptorModule::configure(ResourceFinder &rf)
         (_yarpRawInputPtr->width()  != yarpBinaryInputPtr->width())    ||
         (_yarpRawInputPtr->height() != yarpBinaryInputPtr->height()) )
     {
-        cout << getName() << ": input image dimensions differ. Exiting..." << endl;
+        yError("input image dimensions differ. Exiting...");
         return false;
     }
 
@@ -154,7 +154,7 @@ bool BlobDescriptorModule::configure(ResourceFinder &rf)
  */
 bool BlobDescriptorModule::interruptModule()
 {
-    cout << getName() << ": interrupting module, for port cleanup." << endl;
+    yInfo("interrupting module, for port cleanup.");
 
     _rawImgInputPort.interrupt();
     binaryImgInputPort.interrupt();
@@ -172,7 +172,7 @@ bool BlobDescriptorModule::interruptModule()
  */
 bool BlobDescriptorModule::close()
 {
-    cout << getName() << ": closing module." << endl;
+    yInfo("closing module.");
 
     _rawImgInputPort.close();
     binaryImgInputPort.close();
@@ -193,7 +193,7 @@ bool BlobDescriptorModule::close()
  */
 bool BlobDescriptorModule::respond(const Bottle &command, Bottle &reply)
 {
-    cout << getName() << ": echoing received command." << endl;
+    yInfo("echoing received command.");
     reply = command;
     if(command.get(0).asString() == "quit")
         return false;
@@ -215,7 +215,7 @@ bool BlobDescriptorModule::updateModule()
 
     if( !_rawImgInputPort.getEnvelope(rawstamp) || !binaryImgInputPort.getEnvelope(binstamp) || !_labeledImgInputPort.getEnvelope(labeledstamp) )
     {
-        cout << "WARNING: timestamp missing from one or more input ports!" << endl;
+        yWarning("timestamp missing from one or more input ports!");
         if (synch_inputs) {
             // also quit
             return false;
@@ -281,7 +281,7 @@ bool BlobDescriptorModule::updateModule()
     /* compute numLabels as the max value within opencvLabeledImg */
     cvMinMaxLoc(opencvLabeledImg, &min_val, &max_val, NULL, NULL, NULL);
     if(min_val != 0)
-        cout << "WARNING: min_val of labeled image is different from zero !!!!" << endl;
+        yWarning("min_val of labeled image is different from zero !!!!");
 
     int numLabels = (int)max_val + 1;
 
@@ -289,7 +289,7 @@ bool BlobDescriptorModule::updateModule()
     _numObjects = selectObjects( opencvLabeledImg, opencvTempImg, numLabels, _minAreaThreshold);
     if(_numObjects > _maxObjects )
     {
-        cout << getName() << ": more objects (" << _numObjects << ") than the permitted maximum. Only " << _maxObjects << " will be processed." << endl;
+        yDebug() << "more objects (" << _numObjects << ") than the permitted maximum. Only " << _maxObjects << " will be processed.";
         _numObjects = _maxObjects;
     }
 
@@ -312,7 +312,7 @@ bool BlobDescriptorModule::updateModule()
                        );
 
         if(_objDescTable[i].contours == NULL)
-            cout << "Something very wrong happened. Object without edges" << endl;
+            yWarning("Something very wrong happened. Object without edges");
 
         _objDescTable[i].moments = cv::moments(cv::Mat(_objDescTable[i].mask_image), false);
     }
@@ -609,7 +609,7 @@ bool BlobDescriptorModule::updateModule()
             }
 
             if (wi==1 || he==1)
-                cout << "WARNING: enclosing_rectangle of blob " << i << " is one-dimensional" << endl;
+                yWarning("enclosing_rectangle of blob %d is one-dimensional", i);
 
             cv::Size2f half_size(wi,he); // initially, same size as whole object encl. rect
             // force width to be the smaller dimension, height to be the larger one
@@ -621,7 +621,7 @@ bool BlobDescriptorModule::updateModule()
             else
             {
                 // this should never happen in the first place
-                cout << "WARNING: width>height... need to swap them!" << endl;
+                yWarning("width>height... need to swap them!");
                 // to complete
             }
 
@@ -838,7 +838,7 @@ bool BlobDescriptorModule::updateModule()
 
             if (bot_cnt.size()==0)
             {
-                cout << "WARNING: blob "<< i << ", tool bottom has zero contours" << endl;
+                yWarning("blob %d, tool bottom has zero contours", i);
                 continue;
             }
 
@@ -1008,7 +1008,7 @@ bool BlobDescriptorModule::updateModule()
             belongs = cv::pointPolygonTest(cv::cvarrToMat(_objDescTable[i].contours), com, false);
             if (belongs < 0.0)
             {
-                cout << "WARNING: blob "<< i << ", centroid outside contour" << endl;
+                yWarning("blob %d, centroid outside contour", i);
             }
             //cvCircle(opencvViewImg, com, 5, CV_BGR(0,0,255), -1, CV_AA, 0);
 
@@ -1150,7 +1150,7 @@ bool BlobDescriptorModule::updateModule()
     */
 
     if (valid_objs > 0)
-        cout << "computed descriptors of frame with " << valid_objs << " valid blobs (out of " << _numObjects << ")" << endl;
+        yInfo("computed descriptors of %d valid blobs out of %d", valid_objs, _numObjects);
 
       return true;
 } // end updateModule

@@ -19,6 +19,8 @@
 #include <opencv2/imgproc/imgproc.hpp>
 
 #include <yarp/os/BufferedPort.h>
+#include <yarp/os/Log.h>
+#include <yarp/os/LogStream.h>
 #include <yarp/os/Network.h>
 #include <yarp/os/Port.h>
 #include <yarp/os/RFModule.h>
