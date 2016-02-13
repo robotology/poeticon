@@ -5,7 +5,6 @@
  *
  */
 
-/* system */
 #include <iostream>
 
 #include "SequentialLabellerModule.h"
@@ -40,12 +39,12 @@ bool SequentialLabellerModule::configure(ResourceFinder &rf)
     /* open ports */
     if(! binaryImgInputPort.open(binaryImgInputPortName.c_str()) )
     {
-        cout << getName() << ": unable to open port" << binaryImgInputPortName << endl;
+        yError("unable to open port %s", binaryImgInputPortName.c_str());
         return false;
     }
     if(! labeledImgOutputPort.open(labeledImgOutputPortName.c_str()) )
     {
-        cout << getName() << ": unable to open port" << labeledImgOutputPortName << endl;
+        yError("unable to open port %s", labeledImgOutputPortName.c_str());
         return false;
     }
     
@@ -71,7 +70,7 @@ bool SequentialLabellerModule::configure(ResourceFinder &rf)
  */
 bool SequentialLabellerModule::interruptModule()
 {
-    cout << getName() << ": interrupting module, for port cleanup." << endl;
+    yInfo("interrupting module, for port cleanup.");
     binaryImgInputPort.interrupt();
     labeledImgOutputPort.interrupt();
     return true;
@@ -83,7 +82,7 @@ bool SequentialLabellerModule::interruptModule()
  */
 bool SequentialLabellerModule::close()
 {
-    cout << getName() << ": closing module." << endl;
+    yInfo("closing module.");
     binaryImgInputPort.close();
     labeledImgOutputPort.close();
 
@@ -104,13 +103,13 @@ bool SequentialLabellerModule::updateModule()
     bool useStamp = true;
     if( !binaryImgInputPort.getEnvelope(stamp) )
     {
-        cout << getName() << ": input image has no timestamp." << endl;
+        yWarning("input image has no timestamp.");
         useStamp = false;
     }
 
     if(yarpBinaryInputPtr==NULL)
     {
-        cout << getName() << ": no data on input port(s). Exiting..." << endl;
+        yError("no data on input port(s). Exiting...");
         return false;    
     }
     yarpBinaryImg  = *yarpBinaryInputPtr;

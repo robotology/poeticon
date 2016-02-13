@@ -87,30 +87,29 @@
  *
  */
 
-#ifndef __SEQUENTIAL_LABELLER_MODULE_H__
-#define __SEQUENTIAL_LABELLER_MODULE_H__
+#ifndef SEQUENTIAL_LABELLER_MODULE_H
+#define SEQUENTIAL_LABELLER_MODULE_H
 
-/* YARP */
-#include <yarp/os/BufferedPort.h>
-#include <yarp/os/Network.h>
-#include <yarp/os/Port.h>
-#include <yarp/os/RFModule.h>
-#include <yarp/os/Stamp.h>
-using namespace yarp::os;
-#include <yarp/sig/Image.h>
-using namespace yarp::sig;
+#include <string>
 
-/* OpenCV */
 #include <opencv2/opencv.hpp>
 #include <opencv2/core/core.hpp>
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/legacy/compat.hpp> // cvCopyImage
 
+#include <yarp/os/BufferedPort.h>
+#include <yarp/os/Log.h>
+#include <yarp/os/Network.h>
+#include <yarp/os/Port.h>
+#include <yarp/os/RFModule.h>
+#include <yarp/os/Stamp.h>
+#include <yarp/sig/Image.h>
+
 #include "cvSeqLabel.h"
 
-/* system */
-#include <string>
 using namespace std;
+using namespace yarp::os;
+using namespace yarp::sig;
 
 class SequentialLabellerModule : public RFModule
 {
@@ -139,4 +138,4 @@ public:
     virtual double getPeriod();
 };
 
-#endif // __SEQUENTIAL_LABELLER_MODULE_H__
+#endif // SEQUENTIAL_LABELLER_MODULE_H
