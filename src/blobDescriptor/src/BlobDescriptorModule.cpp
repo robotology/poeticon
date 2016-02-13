@@ -247,17 +247,15 @@ bool BlobDescriptorModule::updateModule()
 
     writestamp = rawstamp;
 
-    // FIXME: graceful quit on ctrl+c. the following ifs solve the memory leaks, but the program hangs
-
-    //if (_yarpRawInputPtr != NULL)
+    if (_yarpRawInputPtr != NULL)
         _yarpRawImg     = *_yarpRawInputPtr;
 
-    //if (yarpBinaryInputPtr != NULL)
+    if (yarpBinaryInputPtr != NULL)
         yarpBinaryImg   = *yarpBinaryInputPtr;
 
     _yarpViewImg    =  _yarpRawImg;
 
-    //if (_yarpLabeledInputPtr != NULL)
+    if (_yarpLabeledInputPtr != NULL)
         _yarpLabeledImg = *_yarpLabeledInputPtr;
 
     /* get OpenCV pointers to images, to more easily call OpenCV functions */
