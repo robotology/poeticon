@@ -3,7 +3,7 @@
 
 <dependencies>
     <port>/icub/camcalib/left/out</port>
-    <port>/lbpExtract/image:o</port>
+    <port>/lbpExtract/extractedlbp:o</port>
 </dependencies>
 
 <module>
