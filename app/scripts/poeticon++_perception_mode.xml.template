@@ -73,12 +73,12 @@
 </module>
 
 <connection>
-    <from>/blobSpotter/image:o</from>
+    <from>/lbpExtract/extractedlbp:o</from>
     <to>/sequentialLabeller/binImg:i</to>
     <protocol>udp</protocol>
 </connection>
 <connection>
-    <from>/blobSpotter/image:o</from>
+    <from>/lbpExtract/extractedlbp:o</from>
     <to>/blobDescriptor/binImg:i</to>
     <protocol>udp</protocol>
 </connection>
