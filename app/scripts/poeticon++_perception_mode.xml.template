@@ -74,6 +74,16 @@
 
 <connection>
     <from>/lbpExtract/extractedlbp:o</from>
+    <to>/activityInterface/blobImg:i</to>
+    <protocol>udp</protocol>
+</connection>
+<connection>
+    <from>/lbpExtract/blobs:o</from>
+    <to>/activityInterface/blobs:i</to>
+    <protocol>udp</protocol>
+</connection>
+<connection>
+    <from>/lbpExtract/extractedlbp:o</from>
     <to>/sequentialLabeller/binImg:i</to>
     <protocol>udp</protocol>
 </connection>
