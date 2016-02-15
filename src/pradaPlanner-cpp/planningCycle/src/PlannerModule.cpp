@@ -47,7 +47,8 @@ bool PlannerModule::close()
     yInfo("starting shutdown procedure");
     thread->interrupt();
     thread->close();
-    delete thread;
+    thread->stop();
+    if (thread) delete thread;
 
     handlerPort.close();
     yInfo("Module terminated");

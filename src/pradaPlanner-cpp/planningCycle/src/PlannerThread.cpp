@@ -68,7 +68,7 @@ void PlannerThread::close()
     world_rpc.close();
     actInt_rpc.close();
     opc2prada_rpc.close();
-    cmd.clear();
+/*    cmd.clear();
     message.clear();
     reply.clear();
     toolhandle.clear();
@@ -79,7 +79,7 @@ void PlannerThread::close()
     objects_used.clear();
     goal.clear();
     subgoals.clear();
-    object_IDs.clear();
+    object_IDs.clear();*/
     yarp::os::Time::delay(0.1);
 }
 
