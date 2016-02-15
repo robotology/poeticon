@@ -705,6 +705,93 @@ bool Manager::updateModule()
         rpcHuman.reply(reply);
     }
 
+    if (rxCmd==Vocab::encode("info")) 
+    {
+        actionId = cmd.get(1).asInt();
+
+       /* reply.addString("info");
+        reply.addInt(actionId);
+        reply.addString(toolName.data());
+        reply.addString(targetName.data());
+        rpcHuman.reply(reply);*/
+
+        lookAtObject();
+        updateObjVisPos();
+        objectPos.clear();
+        get3DPosition(objImgPos_onTable, objectPos);
+        segmentAndTrack(objImgPos.x, objImgPos.y);  
+
+        //fprintf(stderr,"eff %d %s %s\n", actionId, toolName.data(), targetName.data());
+        
+        effData << "eff" << " ";
+        if (simMode.compare("on")==0)
+        {
+            effData << toolSimNum   << " ";
+            effData << targetSimNum << " ";
+        }
+        else 
+        {
+            effData << toolName.data()   << " ";
+            effData << targetName.data() << " ";
+        }
+        effData << actionId   << " ";
+
+        yarp::sig::Vector objectPosTracker;
+        yarp::sig::Vector *trackVec = targetPF.read(true);
+
+        objImgPos.x = (*trackVec)[0];
+        objImgPos.y = (*trackVec)[5];
+
+        get3DPosition(objImgPos,objectPosTracker);
+
+        fprintf(stderr,"\n\n***********Get FIRST object sample\n\n");
+
+        effData << objectPosTracker[0] << " "
+        << objectPosTracker[1] << " "
+        << objectPosTracker[2] << " "
+        << objImgPos.x << " "
+        << objImgPos.y;
+        getActionParam();
+
+    /*    performAction(); //on objectPos (not on objectPosTracker, which might be inaccurate)
+
+        for (int i=0; i<motSteps; i++) 
+        {
+            fprintf(stderr,"Error: While reading and storing the tracker data");
+            Time::delay(actionTime/(double)motSteps);
+            trackVec = targetPF.read(true);
+            objImgPos.x = (*trackVec)[0];
+            objImgPos.y = (*trackVec)[5];
+            objectPosTracker.clear();
+            get3DPosition(objImgPos, objectPosTracker);
+
+            effData << " " <<  objectPosTracker[0] << " "
+            << objectPosTracker[1] << " "
+            << objectPosTracker[2] << " "
+            << objImgPos.x << " "
+            << objImgPos.y;
+        }*/
+        
+        goHomeArmsHead();
+
+        Time::delay(0.5);
+
+        fprintf(stderr,"\n\n**********Get LAST object sample\n\n");
+        fprintf(stderr,"\n\n**********I reached end of info\n\n");
+
+        effData << " " <<  objectPosTracker[0] << " "
+        << objectPosTracker[1] << " "
+        << objectPosTracker[2] << " "
+        << objImgPos.x << " "
+        << objImgPos.y;
+
+        effData << '\n';
+        effData.close();
+        effData.open(effdataFileName.c_str(), ofstream::out | ofstream::app);
+
+
+    }
+
     return true;
 }
 
@@ -1397,6 +1484,198 @@ void Manager::performAction()
             fprintf(stderr,"\n Error! Doing nothing... \n");
     }
 }
+
+/**********************************************************/
+
+void Manager::getActionParam()
+{
+    //Attach the tool
+    //executeToolAttach(toolTransform[toolId-1]);
+
+    Bottle karmaMotor, KarmaReply, reply;
+    int pose=handNaturalPose;
+
+    yarp::sig::Vector actPos;
+    actPos.resize(3);
+
+    if (simMode.compare("on")==0) 
+    {
+        actPos[0]=-0.476;
+        actPos[1]=-0.100;
+        actPos[2]=-0.095;
+
+        fprintf(stdout,"Sim Object in position: x=-0.476 y=-0.100  z=-0.100\n");
+    }
+    else 
+    {
+        //actPos[0]=objectPos[0] - objectSizeOffset;      // takes in consideration the object dimension, for an object of about objectSizeOffset radius. This might be taken from the object descriptors as well... (FUTURE WORKS)
+        actPos[0]=objectPos[0];
+        actPos[1]=objectPos[1];
+        actPos[2]=objectPos[2] + tableHeightOffset;     // define table offset
+    }
+
+    fprintf(stdout,"Acting on position: x=%+.3f y=%+.3f z=%+.3f\n",actPos[0],actPos[1],actPos[2]);
+
+    yarp::sig::Vector *trackVec = targetPF.read(true);
+    yarp::sig::Vector vec = *trackVec;
+    objImgPos.x=vec[0];
+    objImgPos.y=vec[5];
+    yarp::sig::Vector objectPosTracker;
+    get3DPosition(objImgPos,objectPosTracker);
+
+    x_start = objectPosTracker[0];
+    y_start = objectPosTracker[1];
+    z_start = objectPosTracker[2];
+    u_start = objImgPos.x;
+    v_start = objImgPos.y;
+
+    //Bottle karmaMotor, KarmaReply;
+
+    switch(actionId) 
+    {
+        case 1:
+            fprintf(stderr,"\n Tap from right \n");
+
+            //fprintf(stdout,"Will now send to karmaMotor:\n");
+            //karmaMotor.addString("pusp");  //when using this method, you should add the 'pose' parameter
+            //reply.addString("push");
+            //karmaMotor.addInt(pose);
+            reply.addDouble(actPos[0]);
+            reply.addDouble(actPos[1]); 
+            reply.addDouble(actPos[2]);
+            reply.addDouble(90.0); // direction (from right)
+            reply.addDouble(objectSizeOffset); // Amount of the movement. It takes in consideration the object dimension, for an object of about objectSizeOffset radius. This might be taken from the object descriptors as well... (FUTURE WORKS)
+
+            fprintf(stdout,"%s\n",reply.toString().c_str());
+            rpcHuman.reply(reply);
+            //actionStartTime=Time::now();
+            //rpcMotorKarma.write(karmaMotor, KarmaReply);
+            //actionDurationTime=Time::now()-actionStartTime;
+            //fprintf(stdout,"action is %s:\n",KarmaReply.toString().c_str());
+            //fprintf(stdout,"Action duration time was: %.3lf\n",actionDurationTime);
+            break;
+
+        case 2:
+            fprintf(stderr,"\n Tap from left: \n");
+
+            fprintf(stdout,"Will now send to karmaMotor:\n");
+            //karmaMotor.addString("pusp");  //when using this method, you should add the 'pose' parameter
+            //karmaMotor.addString("push");
+            //karmaMotor.addInt(pose);
+            reply.addDouble(actPos[0]);
+            reply.addDouble(actPos[1]); 
+            reply.addDouble(actPos[2]);
+            reply.addDouble(270.0); // direction (from left)
+            reply.addDouble(objectSizeOffset); // Amount of the movement. It takes in consideration the object dimension, for an object of about objectSizeOffset radius. This might be taken from the object descriptors as well... (FUTURE WORKS)
+
+            fprintf(stdout,"%s\n",reply.toString().c_str());
+            rpcHuman.reply(reply);
+            //actionStartTime=Time::now();
+            //rpcMotorKarma.write(karmaMotor, KarmaReply);
+            //actionDurationTime=Time::now()-actionStartTime;
+            //fprintf(stdout,"outcome is %s:\n",KarmaReply.toString().c_str());
+            //fprintf(stdout,"Action duration time was: %.3lf\n",actionDurationTime);
+            break;
+
+        case 3:
+            fprintf(stderr,"\n Drawing simulation: \n");
+
+            //karmaMotor.addString("vdrp");  //when using this method, you should add the 'pose' parameter
+            karmaMotor.addString("vdra");
+            //karmaMotor.addInt(pose);
+            karmaMotor.addDouble(actPos[0]);
+            karmaMotor.addDouble(actPos[1]);
+            karmaMotor.addDouble(actPos[2]);
+            karmaMotor.addDouble(90.0); // direction (before it was 180.0)
+            karmaMotor.addDouble(objectSizeOffset); // initial tool-object distance
+            karmaMotor.addDouble(MOVEMENT_LENGTH); // movement lenght
+            fprintf(stdout,"Will now send to karmaMotor:\n");
+            fprintf(stdout,"%s\n",karmaMotor.toString().c_str());
+            rpcMotorKarma.write(karmaMotor, KarmaReply);
+            fprintf(stdout,"outcome is %s:\n",KarmaReply.toString().c_str());
+            rpcHuman.reply(KarmaReply);
+
+           /* if (KarmaReply.get(1).asDouble()<VDRAW_THR)
+            {
+                fprintf(stderr,"\n Draw: \n");
+
+                karmaMotor.clear();
+                //karmaMotor.addString("drap");  //when using this method, you should add the 'pose' parameter
+                karmaMotor.addString("draw");
+                //karmaMotor.addInt(pose);
+                karmaMotor.addDouble(actPos[0]);
+                karmaMotor.addDouble(actPos[1]);
+                karmaMotor.addDouble(actPos[2]);
+                karmaMotor.addDouble(90.0); // direction (before it was 180.0)
+                karmaMotor.addDouble(objectSizeOffset); // initial tool-object distance
+                karmaMotor.addDouble(MOVEMENT_LENGTH); // movement lenght
+                fprintf(stdout,"Will now send to karmaMotor:\n");
+                fprintf(stdout,"%s\n",karmaMotor.toString().c_str());
+                KarmaReply.clear();
+                actionStartTime=Time::now();
+                rpcMotorKarma.write(karmaMotor, KarmaReply);
+                actionDurationTime=Time::now()-actionStartTime;
+                fprintf(stdout,"outcome is %s:\n",KarmaReply.toString().c_str());
+                fprintf(stdout,"Action duration time was: %.3lf\n",actionDurationTime);
+            }
+            else 
+            {
+                fprintf(stderr,"iCub: Sorry man, cannot do that :( \n");
+            }*/
+            break;
+
+        case 4:
+            fprintf(stderr,"\n Pushing simulation: \n");
+
+            //karmaMotor.addString("vdrp");  //when using this method, you should add the 'pose' parameter
+            karmaMotor.addString("vdra");
+            //karmaMotor.addInt(pose);
+            karmaMotor.addDouble(actPos[0]);
+            karmaMotor.addDouble(actPos[1]);
+            karmaMotor.addDouble(actPos[2] + 0.03);
+            karmaMotor.addDouble(90.0); // direction (before it was 180.0)
+            karmaMotor.addDouble(-objectSizeOffset*2.0 - 0.05); // initial tool-object distance
+            karmaMotor.addDouble(-MOVEMENT_LENGTH); // movement lenght
+            fprintf(stdout,"Will now send to karmaMotor:\n");
+            fprintf(stdout,"%s\n",karmaMotor.toString().c_str());
+            //rpcMotorKarma.write(karmaMotor, KarmaReply);
+            fprintf(stdout,"outcome is %s:\n",KarmaReply.toString().c_str());
+            rpcHuman.reply(KarmaReply);
+
+            /*if (KarmaReply.get(1).asDouble()<VDRAW_THR) 
+            {
+                fprintf(stderr,"\n Push (opposite draw) \n");
+
+                karmaMotor.clear();
+                //karmaMotor.addString("drap"); //when using this method, you should add the 'pose' parameter
+                karmaMotor.addString("draw");
+                //karmaMotor.addInt(pose);
+                karmaMotor.addDouble(actPos[0]);
+                karmaMotor.addDouble(actPos[1]);
+                karmaMotor.addDouble(actPos[2] + 0.03);  //table offset is bigger for the Push action
+                karmaMotor.addDouble(90.0); // direction (before it was 180.0)
+                karmaMotor.addDouble(-objectSizeOffset*2.0 - 0.05); // initial tool-object distance
+                karmaMotor.addDouble(-MOVEMENT_LENGTH); // movement lenght
+                fprintf(stdout,"Will now send to karmaMotor:\n");
+                fprintf(stdout,"%s\n",karmaMotor.toString().c_str());
+                KarmaReply.clear();
+                actionStartTime=Time::now();
+                rpcMotorKarma.write(karmaMotor, KarmaReply);
+                actionDurationTime=Time::now()-actionStartTime;
+                fprintf(stdout,"outcome is %s:\n",KarmaReply.toString().c_str());
+                fprintf(stdout,"Action duration time was: %.3lf\n",actionDurationTime);
+            }
+            else 
+            {
+                fprintf(stderr,"iCub: Sorry man, cannot do that :( \n");
+            }*/
+            break;
+
+        default:
+            fprintf(stderr,"\n Error! Doing nothing... \n");
+    }
+}
+/**********************************************************/
 
 /**********************************************************/
 void Manager::lookAtRack()

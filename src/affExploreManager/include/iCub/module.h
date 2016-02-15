@@ -320,6 +320,7 @@ protected:
     yarp::os::BufferedPort<yarp::os::Bottle>        partsBlobDescriptorInputPort;
 
     void                        performAction();
+    void                        getActionParam();
     int                         lookAtTool();   //might be used if tools are on a rack...
     void                        lookAtObject();
     void                        computeObjectDesc();
