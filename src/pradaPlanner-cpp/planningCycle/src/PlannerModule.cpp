@@ -18,6 +18,7 @@ bool PlannerModule::configure(ResourceFinder &rf)
     handlerPortName = "/" + moduleName + "/rpc:i";
     handlerPort.open(handlerPortName.c_str());
     attach(handlerPort);
+    closing = false;
 
     // thread stuff
     threadPeriod = 0.033; // [s]
@@ -46,6 +47,7 @@ bool PlannerModule::close()
 
     yInfo("starting shutdown procedure");
     thread->interrupt();
+    thread->resumePlanner();
     thread->close();
     thread->stop();
     if (thread) delete thread;
@@ -57,7 +59,7 @@ bool PlannerModule::close()
 
 bool PlannerModule::updateModule()
 {
-    return !isStopping();
+    return !closing;
 }
 
 
@@ -218,6 +220,6 @@ string PlannerModule::showSymbol(string symbol)
 
 bool PlannerModule::quit()
 {
-    close();
+    closing = true;
     return true;
 }

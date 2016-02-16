@@ -27,6 +27,7 @@ class PlannerModule : public RFModule, public planningCycle_IDLserver
         string PathName;
         string handlerPortName;
         RpcServer handlerPort;
+        bool closing;
 
         // pointer to a new thread
         PlannerThread *thread;
