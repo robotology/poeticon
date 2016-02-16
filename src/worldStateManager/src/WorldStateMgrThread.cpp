@@ -1930,8 +1930,14 @@ bool WorldStateMgrThread::updateWorldState()
         yWarning("tracker not initialized, cannot update world state!");
         return false;
     }
+
+    yInfo("updating world state from robot perception...");
     needUpdate = true;
-    yInfo("updating world state from robot perception");
+
+    while (needUpdate)
+        yarp::os::Time::delay(0.1);
+
+    yInfo("...world state updated");
 
     // TODO: opcPort.write() should be here instead of inner functions
 
