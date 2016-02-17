@@ -671,6 +671,68 @@ bool Manager::updateModule()
         rpcHuman.reply(reply);
     }
 
+/*******************************************************define tool*************************************************/
+/*
+if (rxCmd==Vocab::encode("tool_transform")) 
+    {
+        if (cmd.size()>3)
+        {
+            toolX = cmd.get(1).asFloat();
+            
+        }
+        else
+        {
+            toolName = "default";
+        }
+
+        reply.addString("grab");
+        reply.addString(toolName.c_str());
+        rpcHuman.reply(reply);
+
+        
+                if (executeToolAttach(toolTransformDefault))
+		    fprintf(stderr,"\nTool attached (default transform)\n");
+		else
+		    fprintf(stderr,"\nERROR -- Problem in attaching the tool...\n");  
+                
+            }
+
+        }
+        else 
+        {
+            if (cmd.size()>1)
+            {
+                toolSimNum = cmd.get(1).asInt();
+            }
+	    else
+	    {
+		toolSimNum = 1;
+	    }
+            //toolSimNum = cmd.get(1).asInt();
+
+            goHomeArmsHead(); 
+            cmdSim.clear(); //clears the space in front of the robot
+            replySim.clear();
+            cmdSim.addString("clea");
+            simObjLoaderModuleOutputPort.write(cmdSim,replySim);
+            //moves the tool to the hand of the robot, magnet ON
+            cmdSim.clear();
+            replySim.clear();
+            cmdSim.addString("grab");
+            cmdSim.addInt(toolSimNum);
+            simObjLoaderModuleOutputPort.write(cmdSim,replySim);
+            
+            executeToolAttach(toolTransform[toolSimNum-1]);
+        }
+
+        goHomeArmsHead();
+        reply.addString("grab:");
+        reply.addString(toolName.c_str());
+        rpcHuman.reply(reply);
+    }
+
+*/
+/*******************************************************define tool*************************************************/
     if (rxCmd==Vocab::encode("drop")) 
     {
 
