@@ -147,8 +147,8 @@ bool ActivityInterface::configure(yarp::os::ResourceFinder &rf)
     //yarp::os::Network::connect("/blobExtractor/binary:o", inputBlobPortName.c_str());
     //yarp::os::Network::connect(("/blobExtractor/blobs:o"), ("/"+moduleName+"/blobs:i").c_str());
     
-    yarp::os::Network::connect("/blobSpotter/image:o", inputBlobPortName.c_str());
-    yarp::os::Network::connect(("/blobSpotter/blobs:o"), ("/"+moduleName+"/blobs:i").c_str());
+    yarp::os::Network::connect("/lbpExtract/extractedlbp:o", inputBlobPortName.c_str());
+    yarp::os::Network::connect(("/lbpExtract/blobs:o"), ("/"+moduleName+"/blobs:i").c_str());
     
     yarp::os::Network::connect(("/"+moduleName+"/karma:o"), ("/karmaMotor/rpc"));
     
@@ -1636,10 +1636,15 @@ Bottle ActivityInterface::reachableWith(const string &objName)
     replyList.clear();
     
     position = get3D(objName);
+    
+    yInfo("position is %lf %lf %lf \n", position.get(0).asDouble(), position.get(1).asDouble(), position.get(2).asDouble());
 
-    if (position.get(0).asDouble() < -0.55){
+    if (position.get(0).asDouble() < -0.48){
         
         Bottle list = pullableWith(objName);
+        
+        yInfo("pullableWith list is %s", list.toString().c_str());
+        
         for (int i = 0; i<list.size(); i++)
             replyList.addString(list.get(i).asString());
         
@@ -1663,39 +1668,50 @@ Bottle ActivityInterface::reachableWith(const string &objName)
     }
     else{
         
-        Bottle toolList = getToolLikeNames();
+        //Bottle toolList = getToolLikeNames();
+        //yInfo("toolList list is %s", toolList.toString().c_str());
         
         Bottle list = getNames();
+        
+        //yInfo("getNames list is %s with size %d", list.toString().c_str(), list.size());
+        
         for (int i = 0; i<list.size(); i++){
             
             if (strcmp (objName.c_str(), list.get(i).asString().c_str() ) != 0)
+            {
+                //yInfo("check for objects, adding: %s", list.get(i).toString().c_str());
                 replyList.addString(list.get(i).asString());
-            
-            if (strcmp (objName.c_str(), toolList.get(i).asString().c_str() ) != 0)
-                replyList.addString(toolList.get(i).asString());
-        
-            // check if tool is in hand
-            if (handStat("left")){
-                
-                for (std::map<string, string>::iterator it=inHandStatus.begin(); it!=inHandStatus.end(); ++it){
-                    
-                    if (strcmp (it->second.c_str(), "left" ) == 0)
-                        replyList.addString(it->first.c_str());
-                }
                 
             }
-            if (handStat("right")){
-                for (std::map<string, string>::iterator it=inHandStatus.begin(); it!=inHandStatus.end(); ++it){
-                    
-                    if (strcmp (it->second.c_str(), "right" ) == 0)
-                        replyList.addString(it->first.c_str());
-                }
+            
+            //yInfo("replyList so far: %s", replyList.toString().c_str());
+            
+        }
+        
+        // check if tool is in hand
+        if (handStat("left")){
+            
+            for (std::map<string, string>::iterator it=inHandStatus.begin(); it!=inHandStatus.end(); ++it){
+                
+                if (strcmp (it->second.c_str(), "left" ) == 0)
+                    replyList.addString(it->first.c_str());
+            }
+            
+        }
+        if (handStat("right")){
+            for (std::map<string, string>::iterator it=inHandStatus.begin(); it!=inHandStatus.end(); ++it){
+                
+                if (strcmp (it->second.c_str(), "right" ) == 0)
+                    replyList.addString(it->first.c_str());
             }
         }
+
         
         //double leftManip = getManip(objName, "left");
         //double rightManip = getManip(objName, "right");
         //fprintf(stdout, "\nleftManip: %lf and rightManip: %lf\n", leftManip, rightManip);
+        
+        yError("after all: %s", replyList.toString().c_str());
         
         //using 3D instead of manip for testing
         if(position.get(1).asDouble() < - 0.2 )
@@ -1706,6 +1722,7 @@ Bottle ActivityInterface::reachableWith(const string &objName)
             replyList.addString("left");
             replyList.addString("right");
         }
+        yError("will now send: %s", replyList.toString().c_str());
     }
     
     return replyList;
@@ -1725,14 +1742,14 @@ Bottle ActivityInterface::pullableWith(const string &objName)
     
     //-----------------------for tests @ IIT
     
-    yInfo("[pullableWith] available tools size = %d \n", availableTools.size());
+    yInfo("[pullableWith] available tools size = %lu \n", availableTools.size());
     yInfo("[pullableWith] list  size = %d \n", list.size());
     if (availableTools.size()<1)
     {
         for (int i = 0; i<list.size(); i++)
         {
             availableTools.push_back(list.get(i).asString().c_str());
-            yInfo("[pullableWith] adding \n", list.get(i).asString().c_str());
+            yInfo("[pullableWith] adding %s\n", list.get(i).asString().c_str());
         }
     }
     else // check that all names are in, in case new object come in view
@@ -1742,7 +1759,7 @@ Bottle ActivityInterface::pullableWith(const string &objName)
             if (std::find(availableTools.begin(), availableTools.end(), list.get(i).asString().c_str()) == availableTools.end())
             {
                 yInfo("[pullableWith] name %s NOT available\n", list.get(i).asString().c_str());
-                yInfo("[pullableWith] adding\n", list.get(i).asString().c_str());
+                yInfo("[pullableWith] adding %s\n", list.get(i).asString().c_str());
                 availableTools.push_back(list.get(i).asString().c_str());
             }
         }
