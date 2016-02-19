@@ -1683,9 +1683,7 @@ Bottle ActivityInterface::reachableWith(const string &objName)
                 replyList.addString(list.get(i).asString());
                 
             }
-            
-            //yInfo("replyList so far: %s", replyList.toString().c_str());
-            
+            //yInfo("replyList so far: %s", replyList.toString().c_str())
         }
         
         // check if tool is in hand
@@ -1705,13 +1703,11 @@ Bottle ActivityInterface::reachableWith(const string &objName)
                     replyList.addString(it->first.c_str());
             }
         }
-
-        
         //double leftManip = getManip(objName, "left");
         //double rightManip = getManip(objName, "right");
         //fprintf(stdout, "\nleftManip: %lf and rightManip: %lf\n", leftManip, rightManip);
         
-        yError("after all: %s", replyList.toString().c_str());
+        yInfo("after all: %s", replyList.toString().c_str());
         
         //using 3D instead of manip for testing
         if(position.get(1).asDouble() < - 0.2 )
@@ -1722,7 +1718,7 @@ Bottle ActivityInterface::reachableWith(const string &objName)
             replyList.addString("left");
             replyList.addString("right");
         }
-        yError("will now send: %s", replyList.toString().c_str());
+        yInfo("will now send: %s", replyList.toString().c_str());
     }
     
     return replyList;
