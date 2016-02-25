@@ -155,7 +155,7 @@
  *		- 26 (double) - compactness - ratio between the object area and its squared perimeter.
  *		- 27 (double) - circleness - ratio between the object area and the area of its enclosing circle.
  *		- 28 (double) - squareness - ratio between the object area and the area of its minimum-area enclosing rectangle
- *		- 29 (double) - elongatedness - linear combination between eccentricity and compactness
+ *		- 29 (double) - length
  *
  * - <tt>/blobDescriptor/toolAffDescriptor:o</tt> \n
  *   Tool affordance shape descriptor output port for the two object parts (tool top, tool bottom) \n
@@ -167,7 +167,7 @@
  *
  *   Example, where the numbers 1..N indicate the object index:
  *
- *      N ((1top_center.x 1top_center.y 1top_area 1top_convexity 1top_eccentricity 1top_compactness 1top_circleness 1top_squareness 1top_elongatedness) (1bottom_center.x 1bottom_center.y 1bottom_area 1bottom_convexity 1bottom_eccentricity 1bottom_compactness 1bottom_circleness 1bottom_squareness 1bottom_elongatedness)) ((2top_center.x 2top_center.y 2top_area ...) (2bottom_center.x 2bottom_center.y 2bottom_area ...)) ... ((Ntop_center.x Ntop_center.y Ntop_area ...) (Nbottom_center.x Nbottom_center.y Nbottom_area ...))
+ *      N ((1top_center.x 1top_center.y 1top_area 1top_convexity 1top_eccentricity 1top_compactness 1top_circleness 1top_squareness 1top_length) (1bottom_center.x 1bottom_center.y 1bottom_area 1bottom_convexity 1bottom_eccentricity 1bottom_compactness 1bottom_circleness 1bottom_squareness 1bottom_length)) ((2top_center.x 2top_center.y 2top_area ...) (2bottom_center.x 2bottom_center.y 2bottom_area ...)) ... ((Ntop_center.x Ntop_center.y Ntop_area ...) (Nbottom_center.x Nbottom_center.y Nbottom_area ...))
  *
  * <b>Input/Output ports</b>
  *

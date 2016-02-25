@@ -443,19 +443,7 @@ bool BlobDescriptorModule::updateModule()
             if(_objDescTable[i].rect_area > 0)
                 _objDescTable[i].squareness = _objDescTable[i].contour_area/_objDescTable[i].rect_area;
 
-            /*printf("\nArea: %f\n", contour_area);            // 1
-            printf("Convexity: %f\n", convexity);            // 2
-            printf("Eccentricity: %f\n", eccentricity);        // 3
-            printf("Compactness: %f\n", compactness);        // 4
-            printf("Circleness: %f\n", circleness);            // 5
-            printf("Squareness: %f\n\n", squareness);        // 6
-            
-            printf("\nminor_axis = %f, major_axis = %f, ", _objDescTable[i].minor_axis, _objDescTable[i].major_axis);
-            printf("eccentricity = %f, ", _objDescTable[i].eccentricity);
-            printf("compactness*10 = %f, ", _objDescTable[i].compactness*10);
-            */
-
-            /* POETICON++ elongatedness descriptor */
+            /* POETICON++ */
             if (_objDescTable[i].eccentricity>0.0 && _objDescTable[i].eccentricity<1.0)
                 _objDescTable[i].elongatedness = 1.0 - _objDescTable[i].eccentricity + _objDescTable[i].compactness*5;
             else
@@ -819,16 +807,6 @@ bool BlobDescriptorModule::updateModule()
             //cvCircle(opencvViewImg, top_tl, 3, CV_RGB(255,255,255), -1, CV_AA, 0);
             //cvCircle(opencvViewImg, bot_tl, 3, CV_RGB(255,255,255), -1, CV_AA, 0);
 
-            /*
-            cout << "\n\tTool Top largest contour (#" << top_largest_cnt_index << "): area=" << top_area;
-            cout << ", convexity=" << top_convexity;
-            cout << ", eccentricity=" << top_eccentricity;
-            cout << ", compactness=" << top_compactness;
-            cout << ", circleness=" << top_circleness;
-            cout << ", squareness=" << top_squareness;
-            cout << ", elongatedness=" << top_elongatedness << endl;
-            */
-
             // continue processing of bottom part, whose image is now safe to modify
 
             //cv::Mat botRectCroppedCopy = botRectCropped.clone(); // for visual debug
@@ -922,43 +900,6 @@ bool BlobDescriptorModule::updateModule()
             // consider the centers of newly-estimated (upright) rectangles as the new top, bottom centers
             cv::Point2f top_new, bot_new;
 
-            /*
-            // commented 2015-03-14
-            top_new.x = top_bounding_rect.width/2.;
-            top_new.y = top_bounding_rect.height/2.;
-            bot_new.x = bot_bounding_rect.width/2.;
-            bot_new.y = bot_bounding_rect.height/2.;
-
-            top_new.x += top_bounding_rect.tl().x-1;
-            top_new.y += top_bounding_rect.tl().y-1;
-            bot_new.x += bot_bounding_rect.tl().x-1;
-            bot_new.y += bot_bounding_rect.tl().y-1;
-            */
-
-            // FIXME: similar but with newly-estimated rotated rectangles
-            /*
-            if (top_enclosing_rect.size.width > top_enclosing_rect.size.height)
-            {
-                swap(top_enclosing_rect.size.width, top_enclosing_rect.size.height);
-                top_enclosing_rect.angle += 90.;
-            }
-            float top_a = top_enclosing_rect.angle;
-            float ctop_a = cos(top_a / 180.0 * CV_PI);
-            float stop_a = sin(top_a / 180.0 * CV_PI);
-            top_new.x =  ctop_a*top_enclosing_rect.center.x - (-stop_a)*top_enclosing_rect.center.y;
-            top_new.y =  ctop_a*top_enclosing_rect.center.y + (-stop_a)*top_enclosing_rect.center.x;
-            if (bot_enclosing_rect.size.width > bot_enclosing_rect.size.height)
-            {
-                swap(bot_enclosing_rect.size.width, bot_enclosing_rect.size.height);
-                bot_enclosing_rect.angle += 90.;
-            }
-            float bot_a = bot_enclosing_rect.angle;
-            float cbot_a = cos(bot_a / 180.0 * CV_PI);
-            float sbot_a = sin(bot_a / 180.0 * CV_PI);
-            top_new.x =  cbot_a*bot_enclosing_rect.center.x - (-sbot_a)*bot_enclosing_rect.center.y;
-            top_new.y =  cbot_a*bot_enclosing_rect.center.y + (-sbot_a)*bot_enclosing_rect.center.x;
-            */
-
             // compute top_new, bot_new as respective convex hull centres of gravity - Vadim 2015-03-14
             cv::Moments top_mo = cv::moments(top_hull);
             top_new = cv::Point( top_mo.m10/top_mo.m00, top_mo.m01/top_mo.m00 );
@@ -980,32 +921,6 @@ bool BlobDescriptorModule::updateModule()
             bot_new.y += bot_center.y;
             bot_new.y -= bot_bounding_rect.height/2.;
             bot_new.y -= VERT_CROPAREA_SHIFT;
-
-            /*
-            // commented 2015-03-14
-            top_new.x += top_tl2.x;
-            top_new.y += top_tl2.y;
-            bot_new.x += bot_tl2.x;
-            bot_new.y += bot_tl2.y;
-
-            // temporary hack until we fix the computation of top/bot_tl2 for all angles
-            if (an<0 || an>45)
-            {
-                // fallback to earlier estimations
-                top_new = top_center;
-                bot_new = bot_center;
-            }
-            */
-
-            /*
-            cout << "\tTool Bottom largest contour (#" << bot_largest_cnt_index << "): area=" << bot_area;
-            cout << ", convexity=" << bot_convexity;
-            cout << ", eccentricity=" << bot_eccentricity;
-            cout << ", compactness=" << bot_compactness;
-            cout << ", circleness=" << bot_circleness;
-            cout << ", squareness=" << bot_squareness;
-            cout << ", elongatedness=" << bot_elongatedness << endl;
-            */
 
             if (_objDescTable[i].elongatedness > elongatedness_thr)
             {
