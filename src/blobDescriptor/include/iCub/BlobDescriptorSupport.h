@@ -83,6 +83,7 @@ public: //everything public for a start
     double squareness;
     /* for POETICON++ */
     double elongatedness;
+    double length;
 };
 
 /* calcdistances.h */

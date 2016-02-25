@@ -64,7 +64,9 @@ ObjectDescriptor::ObjectDescriptor()
     compactness = 0;
     circleness = 0;
     squareness = 0;
-    // TODO: add elongatedness
+
+    elongatedness = 0;
+    length = 0;
 }
 
 bool ObjectDescriptor::Create(int width, int height)

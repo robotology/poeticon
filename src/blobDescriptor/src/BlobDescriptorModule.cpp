@@ -460,6 +460,12 @@ bool BlobDescriptorModule::updateModule()
                 _objDescTable[i].elongatedness = 1.0 - _objDescTable[i].eccentricity + _objDescTable[i].compactness*5;
             else
                 _objDescTable[i].elongatedness = 0.0;
+
+            // length descriptor, Feb. 2016
+            if (_objDescTable[i].major_axis>0.0)
+                _objDescTable[i].length = _objDescTable[i].major_axis;
+            else
+                _objDescTable[i].length = 0.0;
         }
     }
 
@@ -537,7 +543,7 @@ bool BlobDescriptorModule::updateModule()
             /*27*/objbot.addDouble((double)_objDescTable[i].circleness);
             /*28*/objbot.addDouble((double)_objDescTable[i].squareness);
             // for POETICON++
-            /*29*/objbot.addDouble((double)_objDescTable[i].elongatedness);
+            /*29*/objbot.addDouble((double)_objDescTable[i].length);
 
             // moments
             //const double MOM_NORMALIZATION = 1000.0;
@@ -737,7 +743,8 @@ bool BlobDescriptorModule::updateModule()
                    top_compactness,
                    top_circleness,
                    top_squareness,
-                   top_elongatedness;
+                   top_elongatedness,
+                   top_length;
 
             vector<cv::Point> top_hull;
 
@@ -801,6 +808,11 @@ bool BlobDescriptorModule::updateModule()
             else
                 top_elongatedness = 0;
 
+            if (top_major_axis > 0.0)
+                top_length = top_major_axis;
+            else
+                top_length = 0.0;
+
             // top-left corners of the two sub-rectangles expressed in whole image frame
             cv::Point2f top_tl( cvRound(cx+sa*half_size.height-ca*half_size.width/2.), cvRound(cy-ca*half_size.height-sa*half_size.width/2.) );
             cv::Point2f bot_tl( cvRound(cx-ca*half_size.width/2.), cvRound(cy-sa*half_size.width/2.) );
@@ -832,7 +844,8 @@ bool BlobDescriptorModule::updateModule()
                    bot_compactness,
                    bot_circleness,
                    bot_squareness,
-                   bot_elongatedness;
+                   bot_elongatedness,
+                   bot_length;
 
             vector<cv::Point> bot_hull;
 
@@ -896,6 +909,11 @@ bool BlobDescriptorModule::updateModule()
                 bot_elongatedness = 1 - bot_eccentricity + bot_compactness*5;
             else
                 bot_elongatedness = 0;
+
+            if (bot_major_axis > 0.0)
+                bot_length = bot_major_axis;
+            else
+                bot_length = 0.0;
 
             //cv::rectangle(botRectCroppedCopy, bot_bounding_rect, CV_BGR(0,0,255), 2, CV_AA, 0);
             //cv::imshow("bot", botRectCroppedCopy);
@@ -1027,7 +1045,7 @@ bool BlobDescriptorModule::updateModule()
             topBot.addDouble(top_compactness);
             topBot.addDouble(top_circleness);
             topBot.addDouble(top_squareness);
-            topBot.addDouble(top_elongatedness);
+            topBot.addDouble(top_length);
 
             // sublist for current object's bottom half
             Bottle &botBot = bothPartsBot.addList();
@@ -1042,7 +1060,7 @@ bool BlobDescriptorModule::updateModule()
             botBot.addDouble(bot_compactness);
             botBot.addDouble(bot_circleness);
             botBot.addDouble(bot_squareness);
-            botBot.addDouble(bot_elongatedness);
+            botBot.addDouble(bot_length);
         } // end if(..valid)
     } // end for(..numObjects)
     toolAffDescriptorOutputPort.setEnvelope(writestamp);
