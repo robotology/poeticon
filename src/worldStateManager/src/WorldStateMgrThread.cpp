@@ -137,6 +137,26 @@ bool WorldStateMgrThread::initVars()
 }
 
 /**********************************************************/
+bool WorldStateMgrThread::clearAll()
+{
+    // reset variables
+    toldUserOPCConnected = false;
+    initFinished = false;
+
+    // reset activeParticleTracker
+    resetTracker();
+
+    // reset internal short-term memory
+    hands.clear(); // empty hands container
+    initMemoryFromOPC(); // put left and right entries into hands container
+    objs.clear();
+    trackIDs.clear();
+    candidateTrackMap.clear();
+
+    return true;
+}
+
+/**********************************************************/
 bool WorldStateMgrThread::tellUserConnectOPC()
 {
     double t0 = yarp::os::Time::now();
@@ -1917,6 +1937,39 @@ bool WorldStateMgrThread::printMemoryState()
 }
 
 /**********************************************************/
+bool WorldStateMgrThread::initWorldState()
+{
+    if (initFinished)
+        yWarning("world state is already initialized");
+
+    if (activityPort.getOutputCount()<1)
+    {
+        yWarning("not connected to activityInterface, cannot initialize world state!");
+        return false;
+    }
+
+    if (inAffPort.getInputCount()<1 || inToolAffPort.getInputCount()<1)
+    {
+        yWarning("not connected to BlobDescriptor, cannot initialize world state!");
+        return false;
+    }
+
+    if (opcPort.getOutputCount()<1)
+    {
+        yWarning("not connected to WSOPC, cannot initialize world state!");
+        return false;
+    }
+
+    // reset variables, activeParticleTracker and internal short-term memory
+    clearAll();
+
+    // enter FSM
+    fsmState = STATE_PERCEPTION_WAIT_TRACKER;
+
+    return true;
+}
+
+/**********************************************************/
 bool WorldStateMgrThread::updateWorldState()
 {
     // perception mode
@@ -1974,19 +2027,8 @@ bool WorldStateMgrThread::resetWorldState()
     if (opcPort.getOutputCount()>0)
         yInfo("detected WSOPC module restart - proceeding with reset routine");
 
-    // reset variables
-    toldUserOPCConnected = false;
-    initFinished = false;
-
-    // reset activeParticleTracker
-    resetTracker();
-
-    // reset internal short-term memory
-    hands.clear(); // empty hands container
-    initMemoryFromOPC(); // put left and right entries into hands container
-    objs.clear();
-    trackIDs.clear();
-    candidateTrackMap.clear();
+    // reset variables, activeParticleTracker and internal short-term memory
+    clearAll();
 
     // enter FSM
     fsmState = STATE_PERCEPTION_WAIT_TRACKER;

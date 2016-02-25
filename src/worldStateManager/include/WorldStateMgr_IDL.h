@@ -15,6 +15,13 @@ class WorldStateMgr_IDL : public yarp::os::Wire {
 public:
   WorldStateMgr_IDL();
   /**
+   * Initialize the world state database.
+   * NOTE: before launching this command, make sure that segmentation and
+   *       object recognition are stable.
+   * @return true/false on success/failure
+   */
+  virtual bool init();
+  /**
    * Check if initialization phase has been completed. This is accomplished when
    * tracker, short-term memory model and WSOPC database possess all entries.
    * @return true/false on initialized/uninitialized

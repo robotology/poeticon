@@ -115,6 +115,7 @@ class WorldStateMgrThread : public RateThread
         void run();
 
         bool initVars();
+        bool clearAll();
         bool tellUserConnectOPC();
         bool tellUserOPCConnected();
         bool tellUserConnectBlobs();
@@ -172,6 +173,7 @@ class WorldStateMgrThread : public RateThread
 
         // IDL functions
         bool printMemoryState();
+        bool initWorldState();
         bool updateWorldState();
         bool resetWorldState();
         bool isInitialized();

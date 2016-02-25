@@ -88,6 +88,11 @@ double WorldStateMgrModule::getPeriod()
 }
 
 // IDL functions
+bool WorldStateMgrModule::init()
+{
+    return thread->initWorldState();
+}
+
 bool WorldStateMgrModule::isInitialized()
 {
     return thread->isInitialized();
