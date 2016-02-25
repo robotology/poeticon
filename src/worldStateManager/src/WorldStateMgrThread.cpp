@@ -1972,7 +1972,6 @@ bool WorldStateMgrThread::initWorldState()
 /**********************************************************/
 bool WorldStateMgrThread::updateWorldState()
 {
-    // perception mode
     if (activityPort.getOutputCount()<1)
     {
         yWarning("not connected to activityInterface, cannot update world state!");
