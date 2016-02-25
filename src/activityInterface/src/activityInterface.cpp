@@ -650,6 +650,7 @@ bool ActivityInterface::handleTrackers()
         
         string name = getMemoryNameBottle(id);
         
+        //yError("[handleTrackers] asking 3D");
         Bottle position = get3D(name);
     
         if (position.size() < 1 )
@@ -747,7 +748,7 @@ Bottle ActivityInterface::getMemoryBottle()
                     Bottle *timePassed = cmdReply.get(1).asList();
                     double time = timePassed->get(0).asDouble();
                     
-                    if (time < 0.5)
+                    if (time < 1.0)
                     {
                         cmdMemory.clear();
                         cmdMemory.addVocab(Vocab::encode("get"));
@@ -770,6 +771,8 @@ Bottle ActivityInterface::getMemoryBottle()
 Bottle ActivityInterface::get3D(const string &objName)
 {
     Bottle Memory = getMemoryBottle();
+    
+    //yError("[get3D] getMemoryBottle %s",Memory.toString().c_str() );
     Bottle position3D;
     
     for (int i=0; i<Memory.size(); i++)
@@ -1005,6 +1008,7 @@ string ActivityInterface::getLabel(const int32_t pos_x, const int32_t pos_y)
 /**********************************************************/
 double ActivityInterface::getManip(const string &objName, const std::string &handName)
 {
+    yInfo("[getManip] asking 3D");
     Bottle getObjectPos = get3D(objName);
     Vector o_left, o_right, x;
     
@@ -1086,6 +1090,7 @@ double ActivityInterface::getManip(const string &objName, const std::string &han
     else
     {
         //adding this in case of no robot
+        yInfo("[getManip] asking 3D");
         Bottle position = get3D(objName);
         
         if (position.get(0).asDouble() > -0.55 && position.get(1).asDouble() < - 0.07)
@@ -1148,6 +1153,7 @@ bool ActivityInterface::take(const string &objName, const string &handName)
     if (strcmp (handStatus.c_str(), "none" ) == 0 )
     {
         //talk to iolStateMachineHandler
+        yInfo("[take] asking 3D");
         Bottle position = get3D(objName);
     
         if (position.size()>0)
@@ -1285,6 +1291,7 @@ bool ActivityInterface::put(const string &objName, const string &targetName)
         else
         {
             //talk to iolStateMachineHandler
+            yInfo("[put] asking 3D");
             Bottle position = get3D(targetName);
             
             if (position.size()>0)
@@ -1442,6 +1449,7 @@ bool ActivityInterface::pull(const string &objName, const string &toolName)
     pauseAllTrackers();
     
     yInfo( "[pull] asked to pull %s with %s\n", objName.c_str(), toolName.c_str());
+    yInfo("[pull] asking 3D");
     Bottle position = get3D(objName);
     Bottle toolOffset = getOffset(toolName);
     
@@ -1635,15 +1643,16 @@ Bottle ActivityInterface::reachableWith(const string &objName)
     names.clear();
     replyList.clear();
     
+    yError("[reachableWith] asking 3D");
     position = get3D(objName);
     
-    yInfo("position is %lf %lf %lf \n", position.get(0).asDouble(), position.get(1).asDouble(), position.get(2).asDouble());
+    yInfo("[reachableWith] position is %lf %lf %lf \n", position.get(0).asDouble(), position.get(1).asDouble(), position.get(2).asDouble());
 
     if (position.get(0).asDouble() < -0.48){
         
         Bottle list = pullableWith(objName);
         
-        yInfo("pullableWith list is %s", list.toString().c_str());
+        yInfo("[reachableWith] pullableWith list is %s", list.toString().c_str());
         
         for (int i = 0; i<list.size(); i++)
             replyList.addString(list.get(i).asString());
@@ -1673,7 +1682,7 @@ Bottle ActivityInterface::reachableWith(const string &objName)
         
         Bottle list = getNames();
         
-        //yInfo("getNames list is %s with size %d", list.toString().c_str(), list.size());
+        yInfo("[reachableWith] getNames list is %s with size %d", list.toString().c_str(), list.size());
         
         for (int i = 0; i<list.size(); i++){
             
