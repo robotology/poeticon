@@ -81,6 +81,7 @@ class affComm : public RFModule
         virtual double getPeriod();
 
         void openPorts();
+        bool switchDisplayOff();
         bool loadObjs();
         bool plannerCommand();
         bool affordancesCycle();

@@ -206,6 +206,11 @@ bool affComm::affordancesCycle()
         }
         if (command == "update")
         {
+            if (!switchDisplayOff())
+            {
+                cout << "failed to turn graphics display off" << endl;
+                return false;
+            }
             if (!loadObjs())
             {
                 cout << "failed to initialize objects" << endl;
@@ -230,6 +235,24 @@ bool affComm::affordancesCycle()
             }
         }
 		yarp::os::Time::delay(0.1);
+    }
+    return true;
+}
+
+bool affComm::switchDisplayOff()
+{
+    if (affnetPort.getOutputCount() == 0)
+    {
+        cout << "affordance database not connected, using default" << endl;
+        return true;
+    }
+    else
+    {
+        Bottle& displayBottle = affnetPort.prepare();
+        displayBottle.clear();
+        string displayMessage = "displayOFF";
+        displayBottle.addString(displayMessage.c_str());
+        affnetPort.write();
     }
     return true;
 }
