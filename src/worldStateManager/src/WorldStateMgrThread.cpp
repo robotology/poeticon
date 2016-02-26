@@ -127,6 +127,7 @@ bool WorldStateMgrThread::initVars()
     inAff = NULL;
     inToolAff = NULL;
     inTargets = NULL;
+    needInit = false;
     needUpdate = false;
     toldUserBlobsConnected = false;
     toldUserTrackerConnected = false;
@@ -141,6 +142,7 @@ bool WorldStateMgrThread::clearAll()
 {
     // reset variables
     toldUserOPCConnected = false;
+    needInit = false;
     initFinished = false;
 
     // reset activeParticleTracker
@@ -368,7 +370,7 @@ bool WorldStateMgrThread::configureTracker()
 
     if (!checkTrackerStatus()) // tracker not yet initialized
     {
-        yInfo("sending instruction to tracker: countFrom %d", countFrom);
+        yInfo("configuring tracker with instruction: countFrom %d", countFrom);
         Bottle trackerCmd, trackerReply;
         trackerCmd.addString("countFrom");
         trackerCmd.addInt(countFrom);
@@ -1755,8 +1757,13 @@ void WorldStateMgrThread::fsmPerception()
         {
             if (!checkTrackerStatus())
             {
-                // start tracking blobs provided by segmentation/blobDesc
-                initTracker();
+                if (needInit)
+                {
+                    // start tracking blobs provided by segmentation/blobDesc
+                    initTracker();
+
+                    needInit = false;
+                }
             }
             else
             {
@@ -1962,6 +1969,9 @@ bool WorldStateMgrThread::initWorldState()
 
     // reset variables, activeParticleTracker and internal short-term memory
     clearAll();
+
+    yInfo("initializing world state from robot perception...");
+    needInit = true;
 
     // enter FSM
     fsmState = STATE_PERCEPTION_WAIT_TRACKER;
