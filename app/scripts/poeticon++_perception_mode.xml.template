@@ -72,6 +72,17 @@
     <node>console</node>
 </module>
 
+<module>
+    <name>poeticon_main.lua</name>
+    <deployer>lua</deployer>
+    <node>console</node>
+    <dependencies>
+        <port timeout="10">/iSpeak</port>
+        <port timeout="10">/speechRecognizer/rpc</port>
+        <port timeout="10">/iolStateMachineHandler/human:rpc</port>
+    </dependencies>
+</module>
+
 <connection>
     <from>/lbpExtract/extractedlbp:o</from>
     <to>/activityInterface/blobImg:i</to>
