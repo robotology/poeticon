@@ -16,9 +16,9 @@ PRADA probabilistic planner also needs:
 - [libPRADA](http://www.informatik.uni-hamburg.de/ML/contents/people/lang/private/prada/), mirrored in the *3rdparty* directory
 
 Affordance network dependencies:
-- MATLAB
+- [YARP Java bindings](http://www.yarp.it/yarp_swig.html) (in the YARP build directory, call CMake and enable ```YARP_COMPILE_BINDINGS```, ```CREATE_JAVA```, ```PREPARE_CLASS_FILES```)
+- YARP for MATLAB (add the directory with the Java ```*.class``` files to the classpath, and the directory with ```libjyarp.so``` to ```librarypath.txt```)
 - [pmtk3](https://github.com/probml/pmtk3) (installation: launch MATLAB as superuser, run ```initPmtk3.m```, click on setPath, select the pmtk3 directories then Save to permanently add them to MATLABPATH)
-- [YARP Java bindings](http://www.yarp.it/yarp_swig.html)
 
 ### Additional dependencies for specific modules
 
