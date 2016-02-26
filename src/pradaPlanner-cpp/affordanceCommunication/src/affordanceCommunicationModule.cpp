@@ -274,7 +274,7 @@ bool affComm::queryDescriptors()
             cmd.addString("query2d");
             cmd.addInt(atoi(objects[i][0].c_str()));
             reply.clear();
-            cout << cmd.toString() << endl;
+            cout << "query:" << cmd.toString() << endl;
             descQueryPort.write(cmd, reply);
             cout << "reply: " << reply.toString() << endl;
             if (reply.size() == 1){
@@ -321,9 +321,9 @@ bool affComm::queryToolDescriptors()
     	    cmd.addString("querytool2d");
     	    cmd.addInt(atoi(objects[i][0].c_str())); // tools
     	    reply.clear();
-    	    cout << cmd.toString() << endl;
+    	    cout << "query tools:" << cmd.toString() << endl;
     	    descQueryPort.write(cmd,reply);
-    	    cout << reply.toString() << endl;
+    	    cout << "reply tools:" << reply.toString() << endl;
     	    if (reply.size() == 1){
     	        if (reply.toString() != "ACK" && reply.toString() != "()" && reply.toString() != "" && reply.toString() != "[fail]")
     	        {
@@ -401,11 +401,11 @@ bool affComm::plannerQuery()
             
             std::ostringstream sin1, sin2, sin3;
             sin1 << int(posits[i][0]);
-			cout << sin1.str() << endl;
+			//cout << sin1.str() << endl;
             sin2 << int(posits[i][1]);
-			cout << sin2.str() << endl;
+			//cout << sin2.str() << endl;
             sin3 << int(posits[i][2]);
-			cout << sin3.str() << endl;
+			//cout << sin3.str() << endl;
             message = message + sin1.str() + " " + sin2.str() + " " + sin3.str() + " ";
 			cout << "coordinates:" << message << endl;
         }
@@ -665,12 +665,10 @@ bool affComm::getPushAff()
             cout << "done" << endl;
             if (tooldescriptors[toolnum][1][1] > tooldescriptors[toolnum][2][1])
             {
-                cout << "i'm in" << endl;
                 for (int j = 3; j < tool_desc1.size()-1; ++j)
                 {
                     affnet_bottle_out.addDouble(tool_desc1[j]);
                 }
-                cout << "maybe objects?" << endl;
                 for (int j = 2; j < obj_desc.size(); ++j)
                 {
                     affnet_bottle_out.addDouble(obj_desc[j]);
@@ -730,12 +728,10 @@ bool affComm::getPushAff()
             }
             else
             {
-                cout << "or else..." << endl;
                 for (int j = 3; j < tool_desc2.size()-1; ++j)
                 {
                     affnet_bottle_out.addDouble(tool_desc2[j]);
                 }
-                cout << "maybe objects?" << endl;
                 for (int j = 2; j < obj_desc.size(); ++j)
                 {
                     affnet_bottle_out.addDouble(obj_desc[j]);
