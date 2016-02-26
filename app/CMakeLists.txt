@@ -29,6 +29,7 @@ yarp_install(PROGRAMS ${prada} DESTINATION ${ICUBCONTRIB_CONTEXTS_INSTALL_DIR}/$
 yarp_install(FILES ${pradaFiles} DESTINATION ${ICUBCONTRIB_CONTEXTS_INSTALL_DIR}/${APPNAME})
 
 yarp_install(PROGRAMS ${lua_fsm} DESTINATION ${ICUBCONTRIB_CONTEXTS_INSTALL_DIR}/${APPNAME}/lua)
+
 # We cannot go for "yarp_install(PROGRAMS ${lua_bin} DESTINATION bin)", since on Windows, only
 # at build time (i.e. not during installation), we have to handle the Debug|Release subfolders.
 # Requirements: the cmake "-E copy" command does not change file permissions, hence the file needs

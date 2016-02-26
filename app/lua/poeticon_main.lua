@@ -17,7 +17,7 @@ object_port = yarp.Port()
 poeticon_port = yarp.Port()
 
 -- defining objects and actions vocabularies
-objects = {"rake", "meat", "cheese", "stick", "bun-bottom", "bun-top"}
+objects = {"rake", "meat", "cheese", "tomato", "stick", "bun-bottom", "bun-top"}
 actions = {"{point at}", "{what is this}"}
 
 -- defining speech grammar for Menu
@@ -43,9 +43,11 @@ grammar_teach = "Yes I do | No I do not | Finished"
 
 -- load state machine model and initalize it
 rf = yarp.ResourceFinder()
+-- rf:setDefaultContext("poeticon/lua")
 rf:setDefaultContext("iol/lua")
 rf:configure(arg)
-fsm_file = rf:findFile("poeticon_root_fsm.lua")
+-- fsm_file = rf:findFile("poeticon_root_fsm.lua")
+fsm_file = rf:findFile("iol_root_fsm.lua")
 fsm_model = rfsm.load(fsm_file)
 fsm = rfsm.init(fsm_model)
 rfsm.run(fsm)
