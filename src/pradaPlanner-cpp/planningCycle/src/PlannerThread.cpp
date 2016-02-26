@@ -152,7 +152,24 @@ void PlannerThread::run()
 
 bool PlannerThread::startPlanning()
 {
-    startPlan = true;
+    if (world_rpc.getOutputCount() == 0){
+        yError("WorldStateManager not connected!");
+        return false;
+    }
+    cmd.clear();
+    cmd.addString("init");
+    world_rpc.write(cmd, reply);
+    yInfo("Initializing World State....");
+    if ((reply.size() == 1) && (reply.get(0).asVocab() == yarp::os::Vocab::encode("ok")))
+    {
+        yInfo("World State initialized");
+        startPlan = true;
+    }
+    else 
+    {
+        yError("Failed to initialize World State.");
+        startPlan = false;
+    }
     return startPlan;
 }
 
