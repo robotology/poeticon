@@ -698,6 +698,7 @@ bool affComm::getPushAff()
 					yarp::os::Time::delay(0.1);
                 }
                 prob_succ1 = 0.0;
+                //prob_not_moving1 = 0.0;
                 cout << "waiting for replies" << endl;
                 for (int g = 0; g < affnet_bottle_in->get(0).asList()->size(); ++g)
                 {
@@ -708,6 +709,13 @@ bool affComm::getPushAff()
                             prob_succ1 = prob_succ1 + affnet_bottle_in->get(0).asList()->get(g).asList()->get(j).asDouble();
                         }
                     }
+                    /*if (g == 2)
+                    {
+                        for (int j = 0; j < affnet_bottle_in->get(0).asList()->get(g).asList()->size(); ++j)
+                        {
+                            prob_not_moving1 = prob_not_moving1 + affnet_bottle_in->get(0).asList()->get(g).asList()->get(j).asDouble();
+                        }
+                    }*/
                 }
                 cout << "probability obtained" << endl;
                 cout << prob_succ1 << endl;
@@ -719,6 +727,12 @@ bool affComm::getPushAff()
                 {
                     prob_succ1 = 0.5;
                 }
+                /*if (prob_succ1 + prob_not_moving1 >= 0.95)
+                {
+                    prob_succ1 = 0.95*prob_succ1;
+                    prob_not_moving1 = 0.95*prob_not_moving1;
+                }
+                prob_not_moving = prob_not_moving1;*/
                 prob_succ = prob_succ1;
                 data.clear();
                 data.push_back(strtof(tool.c_str(), NULL));
@@ -760,6 +774,7 @@ bool affComm::getPushAff()
 					yarp::os::Time::delay(0.1);
                 }
                 prob_succ2 = 0.0;
+                //prob_not_moving2 = 0.0;
                 cout << affnet_bottle_in->toString() << endl;
                 for (int g = 0; g < affnet_bottle_in->get(0).asList()->size(); ++g)
                 {
@@ -770,6 +785,13 @@ bool affComm::getPushAff()
                             prob_succ2 = prob_succ2 + affnet_bottle_in->get(0).asList()->get(g).asList()->get(j).asDouble();
                         }
                     }
+                    /*if (g == 2)
+                    {
+                        for (int j = 0; j < affnet_bottle_in->get(0).asList()->get(g).asList()->size(); ++j)
+                        {
+                            prob_not_moving2 = prob_not_moving2 + affnet_bottle_in->get(0).asList()->get(g).asList()->get(j).asDouble();
+                        }
+                    }*/
                 }
                 cout << "probabilities obtained" << endl;
                 cout << prob_succ2 << endl;
@@ -781,6 +803,12 @@ bool affComm::getPushAff()
                 {
                     prob_succ2 = 0.5;
                 }
+                /*if (prob_succ2 + prob_not_moving2 >= 0.95)
+                {
+                    prob_succ2 = 0.95*prob_succ2;
+                    prob_not_moving2 = 0.95*prob_not_moving2;
+                }
+                prob_not_moving = prob_not_moving1;*/
                 prob_succ = prob_succ2;
                 data.clear();
                 data.push_back(strtof(tool.c_str(), NULL));
@@ -789,10 +817,18 @@ bool affComm::getPushAff()
                 posits.push_back(data);
             }
             std::ostringstream sin, sfail;
+            //std::ostringstream snotmove;
             prob_fail = 1.0 - prob_succ;
+            //prob_fail = 1.0 - prob_succ - prob_not_moving;
             new_outcome = split(outcome, ' ');
             sin << prob_succ;
             new_outcome[2] = sin.str();
+            /*new_outcome2 = split(outcome2, ' ');
+            snotmove << prob_not_move;
+            new_outcome2[2] = snotmove.str();
+            new_outcome3 = split(outcome3, ' ');
+            sfail << prob_fail;
+            new_outcome3[2] = sfail.str();*/
             new_outcome2 = split(outcome2, ' ');
             sfail << prob_fail;
             new_outcome2[2] = sfail.str();
@@ -808,6 +844,12 @@ bool affComm::getPushAff()
                 new_outcome2_string = new_outcome2_string + new_outcome2[i] + " ";
             }
             outcome2 = new_outcome2_string;
+            /*new_outcome3_string = "";
+            for (int i = 0; i < new_outcome3.size(); ++i)
+            {
+                new_outcome3_string = new_outcome3_string + new_outcome3[i] + " ";
+            }
+            outcome3 = new_outcome3_string;*/
             if (!sendOutcomes())
             {
                 cout << "failed to send probabilities to grounding module" << endl;
@@ -922,6 +964,7 @@ bool affComm::getPullAff()
 					yarp::os::Time::delay(0.1);
                 }
                 prob_succ1 = 0.0;
+                //prob_not_moving1 = 0.0;
                 for (int g = 0; g < affnet_bottle_in->get(0).asList()->size(); ++g)
                 {
                     if (g > 2)
@@ -931,6 +974,13 @@ bool affComm::getPullAff()
                             prob_succ1 = prob_succ1 + affnet_bottle_in->get(0).asList()->get(g).asList()->get(j).asDouble();
                         }
                     }
+                    /*if (g == 2)
+                    {
+                        for (int j = 0; j < affnet_bottle_in->get(0).asList()->get(g).asList()->size(); ++j)
+                        {
+                            prob_not_moving1 = prob_not_moving1 + affnet_bottle_in->get(0).asList()->get(g).asList()->get(j).asDouble();
+                        }
+                    }*/
                 }
                 cout << "probabilities obtained" << endl;
                 cout << prob_succ1 << endl;
@@ -942,6 +992,12 @@ bool affComm::getPullAff()
                 {
                     prob_succ1 = 0.5;
                 }
+                /*if (prob_succ1 + prob_not_moving1 >= 0.95)
+                {
+                    prob_succ1 = 0.95*prob_succ1;
+                    prob_not_moving1 = 0.95*prob_not_moving1;
+                }
+                prob_not_moving = prob_not_moving1;*/
                 prob_succ = prob_succ1;
                 data.clear();
                 data.push_back(strtof(tool.c_str(), NULL));
@@ -982,6 +1038,7 @@ bool affComm::getPullAff()
 					yarp::os::Time::delay(0.1);
                 }
                 prob_succ2 = 0.0;
+                //prob_not_moving2 = 0.0;
                 for (int g = 0; g < affnet_bottle_in->get(0).asList()->size(); ++g)
                 {
                     if (g > 2)
@@ -991,6 +1048,13 @@ bool affComm::getPullAff()
                             prob_succ2 = prob_succ2 + affnet_bottle_in->get(0).asList()->get(g).asList()->get(j).asDouble();
                         }
                     }
+                    /*if (g == 2)
+                    {
+                        for (int j = 0; j < affnet_bottle_in->get(0).asList()->get(g).asList()->size(); ++j)
+                        {
+                            prob_not_moving2 = prob_not_moving2 + affnet_bottle_in->get(0).asList()->get(g).asList()->get(j).asDouble();
+                        }
+                    }*/
                 }
                 cout << "probabilities obtained" << endl;
                 cout << prob_succ2 << endl;
@@ -1002,6 +1066,12 @@ bool affComm::getPullAff()
                 {
                     prob_succ2 = 0.5;
                 }
+                /*if (prob_succ2 + prob_not_moving2 >= 0.95)
+                {
+                    prob_succ2 = 0.95*prob_succ2;
+                    prob_not_moving2 = 0.95*prob_not_moving2;
+                }
+                prob_not_moving = prob_not_moving2;*/
                 prob_succ = prob_succ2;
                 data.clear();
                 data.push_back(strtof(tool.c_str(), NULL));
@@ -1010,10 +1080,18 @@ bool affComm::getPullAff()
                 posits.push_back(data);
             }
             std::ostringstream sin, sfail;
+            //std::ostringstream snotmove;
+            //prob_fail = 1.0 - prob_succ - prob_not_moving;
             prob_fail = 1.0 - prob_succ;
             new_outcome = split(outcome, ' ');
             sin << prob_succ;
             new_outcome[2] = sin.str();
+            /*new_outcome2 = split(outcome2, ' ');
+            snotmove << prob_not_move;
+            new_outcome2[2] = snotmove.str();
+            new_outcome3 = split(outcome3, ' ');
+            sfail << prob_fail;
+            new_outcome3[2] = sfail.str();*/
             new_outcome2 = split(outcome2, ' ');
             sfail << prob_fail;
             new_outcome2[2] = sfail.str();
@@ -1029,6 +1107,12 @@ bool affComm::getPullAff()
                 new_outcome2_string = new_outcome2_string + new_outcome2[i] + " ";
             }
             outcome2 = new_outcome2_string;
+            /*new_outcome3_string = "";
+            for (int i = 0; i < new_outcome3.size(); ++i)
+            {
+                new_outcome3_string = new_outcome3_string + new_outcome3[i] + " ";
+            }
+            outcome3 = new_outcome3_string;*/
             if (!sendOutcomes())
             {
                 cout << "failed to send probabilities to grounding module" << endl;
