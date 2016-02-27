@@ -147,7 +147,7 @@ bool ActivityInterface::configure(yarp::os::ResourceFinder &rf)
     //yarp::os::Network::connect("/blobExtractor/binary:o", inputBlobPortName.c_str());
     //yarp::os::Network::connect(("/blobExtractor/blobs:o"), ("/"+moduleName+"/blobs:i").c_str());
     
-    yarp::os::Network::connect("/lbpExtract/extractedlbp:o", inputBlobPortName.c_str());
+    yarp::os::Network::connect("/lbpExtract/extractedlbp:o", ("/" + moduleName + "/blobImg:i").c_str());
     yarp::os::Network::connect(("/lbpExtract/blobs:o"), ("/"+moduleName+"/blobs:i").c_str());
     
     yarp::os::Network::connect(("/"+moduleName+"/karma:o"), ("/karmaMotor/rpc"));
@@ -446,6 +446,8 @@ Bottle ActivityInterface::askPraxicon(const string &request)
     }
     else
         executeSpeech("something went terribly wrong. I cannot " + request);
+    
+    
     
     praxiconToPradaPort.write(listOfGoals);
     
@@ -1816,7 +1818,7 @@ Bottle ActivityInterface::getToolLikeNames()
     
     std::map<int, double> allLengths;
     
-    yDebug("[getToolLikeNames] Number of contours is %d \n", contours.size());
+    yDebug("[getToolLikeNames] Number of contours is %zu \n", contours.size());
     
     //vector<cv::Vec4i> hrch;
     
@@ -1841,7 +1843,7 @@ Bottle ActivityInterface::getToolLikeNames()
     
     std::vector<cv::Point > tempPoints;
     
-    yError("[getToolLikeNames] number of tool like objects found %d \n", allLengths.size());
+    yError("[getToolLikeNames] number of tool like objects found %zu \n", allLengths.size());
     
     for (std::map<int, double>::iterator it=allLengths.begin(); it!=allLengths.end(); ++it)
     {
