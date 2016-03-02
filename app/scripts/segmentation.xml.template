@@ -35,7 +35,7 @@
     </connection>
 
     <connection>
-        <from>/lbpExtract/image:o</from>
+        <from>/lbpExtract/segmentedlbp:o</from>
         <to>/seg/output</to>
         <protocol>udp</protocol>
     </connection>
