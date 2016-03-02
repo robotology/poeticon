@@ -2085,11 +2085,23 @@ bool WorldStateMgrThread::pauseTrack(const string &objName)
     trackerCmd.addInt(id);
     trackerPort.write(trackerCmd, trackerReply);
     //yDebug() << __func__ <<  "sending query to activeParticleTracker:" << trackerCmd.toString().c_str();
-    bool validResponse = false;
-    validResponse = trackerReply.size()>0 &&
-                    trackerReply.get(0).asVocab()==Vocab::encode("ok");
-    if (!validResponse)
-        yWarning() << __func__ <<  "obtained invalid response:" << trackerReply.toString().c_str();
+
+    if (trackerReply.size()>0)
+    {
+        if (trackerReply.get(0).asVocab()==Vocab::encode("fail"))
+        {
+            yWarning() << __func__ << "received negative reply when asking to pause" << objName.c_str()
+                     << "with ID" << id;
+        }
+        else if (trackerReply.get(0).asVocab()==Vocab::encode("ok"))
+        {
+            yDebug() << __func__ << "successfully paused" << objName.c_str() << "with ID" << id;
+        }
+        else
+        {
+            yWarning() << __func__ << "received invalid response:" << trackerReply.toString().c_str();
+        }
+    }
 
     return true;
 }
@@ -2128,11 +2140,23 @@ bool WorldStateMgrThread::resumeTrack(const string &objName)
     trackerCmd.addInt(id);
     trackerPort.write(trackerCmd, trackerReply);
     //yDebug() << __func__ <<  "sending query to activeParticleTracker:" << trackerCmd.toString().c_str();
-    bool validResponse = false;
-    validResponse = trackerReply.size()>0 &&
-                    trackerReply.get(0).asVocab()==Vocab::encode("ok");
-    if (!validResponse)
-        yWarning() << __func__ <<  "obtained invalid response:" << trackerReply.toString().c_str();
+
+    if (trackerReply.size()>0)
+    {
+        if (trackerReply.get(0).asVocab()==Vocab::encode("fail"))
+        {
+            yWarning() << __func__ << "received negative reply when asking to resume" << objName.c_str()
+                     << "with ID" << id;
+        }
+        else if (trackerReply.get(0).asVocab()==Vocab::encode("ok"))
+        {
+            yDebug() << __func__ << "successfully resumed" << objName.c_str() << "with ID" << id;
+        }
+        else
+        {
+            yWarning() << __func__ << "received invalid response:" << trackerReply.toString().c_str();
+        }
+    }
 
     return true;
 }
@@ -2163,11 +2187,22 @@ bool WorldStateMgrThread::pauseTrackID(const int32_t &objID)
     trackerCmd.addInt(objID);
     trackerPort.write(trackerCmd, trackerReply);
     //yDebug() << __func__ <<  "sending query to activeParticleTracker:" << trackerCmd.toString().c_str();
-    bool validResponse = false;
-    validResponse = trackerReply.size()>0 &&
-                    trackerReply.get(0).asVocab()==Vocab::encode("ok");
-    if (!validResponse)
-        yWarning() << __func__ <<  "obtained invalid response:" << trackerReply.toString().c_str();
+
+    if (trackerReply.size()>0)
+    {
+        if (trackerReply.get(0).asVocab()==Vocab::encode("fail"))
+        {
+            yWarning() << __func__ << "received negative reply when asking to pause ID" << objID;
+        }
+        else if (trackerReply.get(0).asVocab()==Vocab::encode("ok"))
+        {
+            yDebug() << __func__ << "successfully paused ID" << objID;
+        }
+        else
+        {
+            yWarning() << __func__ << "received invalid response:" << trackerReply.toString().c_str();
+        }
+    }
 
     return true;
 }
@@ -2198,11 +2233,22 @@ bool WorldStateMgrThread::resumeTrackID(const int32_t &objID)
     trackerCmd.addInt(objID);
     trackerPort.write(trackerCmd, trackerReply);
     //yDebug() << __func__ <<  "sending query to activeParticleTracker:" << trackerCmd.toString().c_str();
-    bool validResponse = false;
-    validResponse = trackerReply.size()>0 &&
-                    trackerReply.get(0).asVocab()==Vocab::encode("ok");
-    if (!validResponse)
-        yWarning() << __func__ <<  "obtained invalid response:" << trackerReply.toString().c_str();
+
+    if (trackerReply.size()>0)
+    {
+        if (trackerReply.get(0).asVocab()==Vocab::encode("fail"))
+        {
+            yWarning() << __func__ << "received negative reply when asking to resume ID" << objID;
+        }
+        else if (trackerReply.get(0).asVocab()==Vocab::encode("ok"))
+        {
+            yDebug() << __func__ << "successfully resumed ID" << objID;
+        }
+        else
+        {
+            yWarning() << __func__ << "received invalid response:" << trackerReply.toString().c_str();
+        }
+    }
 
     return true;
 }
