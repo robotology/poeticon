@@ -135,15 +135,13 @@ bool TRACKERModule::untrack(const int32_t id)
 /**********************************************************/
 bool TRACKERModule::pause(const int32_t id)
 {
-    trackerManager->pauseTracker(id);
-    return true;
+    return trackerManager->pauseTracker(id);
 }
 
 /**********************************************************/
 bool TRACKERModule::resume(const int32_t id)
 {
-    trackerManager->resumeTracker(id);
-    return true;
+    return trackerManager->resumeTracker(id);;
 }
 
 /**********************************************************/
@@ -296,39 +294,92 @@ bool TRACKERManager::stopTracker(int id)
 bool TRACKERManager::pauseTracker(int id)
 {
     mutex.wait();
-    yDebug() << "[TRACKERManager::pauseTracker] attempting to pause tracker id \n" << id ;
-    if (workerThreads[id]->isRunning())
+    bool reply = true;
+    
+    Bottle ids = getIDs();
+    bool gotid = false;
+    
+    for (int i = 0; i <ids.size(); i++)
     {
-        workerThreads[id]->suspend();
-        pausedThreads.push_back(id);
-        yDebug() << "[TRACKERManager::pauseTracker] done pausing tracker id \n" << id ;
+        if (id == ids.get(i).asInt())
+        {
+            gotid = true;
+            yDebug()<< "got the ID " << id <<" == "<< ids.get(i).asInt();
+        }
+    }
+    
+    if (gotid)
+    {
+        yDebug() << "[TRACKERManager::pauseTracker] attempting to pause tracker id " << id ;
+        if (workerThreads[id]->isRunning())
+        {
+            workerThreads[id]->suspend();
+            pausedThreads.push_back(id);
+            yDebug() << "[TRACKERManager::pauseTracker] done pausing tracker id " << id ;
+            reply = true;
+        }
+        else
+        {
+            yError() << "[TRACKERManager::pauseTracker] failed to pause tracker id %d " << id << " - Not running.. ";
+            reply=false;
+        }
+    
     }
     else
+    {
         yError() << "[TRACKERManager::pauseTracker] failed to pause tracker id %d " << id << " - Not running.. ";
+        reply = false;
+    }
     
     mutex.post();
-    return true;
+    return reply;
 }
 
 /**********************************************************/
 bool TRACKERManager::resumeTracker(int id)
 {
     mutex.wait();
-    yDebug() << "[TRACKERManager::resumeTracker] attempting to resume tracker id \n" << id ;
+    bool reply = true;
+    Bottle ids = getPausedIDs();
+    bool gotpausedid = false;
     
-    if (workerThreads[id]->isSuspended())
+    for (int i = 0; i <ids.size(); i++)
     {
-        workerThreads[id]->resume();
+        if (id == ids.get(i).asInt())
+        {
+            gotpausedid = true;
+            yDebug()<< "got the ID " << id <<" == "<< ids.get(i).asInt();
+        }
+    }
+    
+    yDebug() << "[TRACKERManager::resumeTracker] attempting to resume tracker id " << id ;
+    
+    
+    if (gotpausedid)
+    {
+        if (workerThreads[id]->isSuspended())
+        {
+            workerThreads[id]->resume();
         
-        pausedThreads.erase(std::remove(pausedThreads.begin(), pausedThreads.end(), id), pausedThreads.end());
+            pausedThreads.erase(std::remove(pausedThreads.begin(), pausedThreads.end(), id), pausedThreads.end());
         
-        yDebug() << "[TRACKERManager::resumeTracker] done resuming tracker id \n" << id ;
+            yDebug() << "[TRACKERManager::resumeTracker] done resuming tracker id " << id ;
+            reply = true;
+        }
+        else
+        {
+            yError() << "[TRACKERManager::resumeTracker] failed to resume tracker id %d " << id << " - Aleady running.. ";
+            reply = false;
+        }
     }
     else
-        yError() << "[TRACKERManager::resumeTracker] failed to resume tracker id %d " << id << " - Aleady running.. ";
-    
+    {
+        yError() << "[TRACKERManager::resumeTracker] failed to resume tracker id %d " << id << " - Not running.. ";
+        reply = false;
+
+    }
     mutex.post();
-    return true;
+    return reply;
 }
 
 /**********************************************************/
@@ -564,7 +615,7 @@ void TRACKERManager::onRead(ImageOf<yarp::sig::PixelRgb> &img)
                         cvCircle ((IplImage*)outImg.getIplImage(), pts[0], 5,  CV_RGB(255, 0 , 255), CV_FILLED, CV_AA);
                         cvCircle ((IplImage*)outImg.getIplImage(), pts[1], 5,  CV_RGB(255, 0 , 255), CV_FILLED, CV_AA);
                         //cvSaveImage("output.png", (IplImage*)outImg.getIplImage());
-                        cloneTracker(obj, pts);
+                        //cloneTracker(obj, pts);
                     }
                 }
             }
