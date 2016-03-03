@@ -135,6 +135,7 @@ class WorldStateMgrThread : public RateThread
         bool initTracker();
         bool refreshTracker();
         bool resetTracker();
+        bool ensureTrackerHasID(const int &id);
 
         bool getAffBottleIndexFromTrackROI(const int &u, const int &v, int &abi);
         bool getTrackerBottleIndexFromID(const int &id, int &tbi);

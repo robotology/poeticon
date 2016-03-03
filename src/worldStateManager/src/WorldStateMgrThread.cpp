@@ -573,6 +573,38 @@ bool WorldStateMgrThread::resetTracker()
 }
 
 /**********************************************************/
+bool WorldStateMgrThread::ensureTrackerHasID(const int &id)
+{
+    if (trackerPort.getOutputCount()<1)
+    {
+        yWarning() << __func__ << "not connected to tracker";
+        return false;
+    }
+
+    // refresh trackIDs Bottle
+    if (!checkTrackerStatus())
+    {
+        yWarning() << __func__ << "problem refreshing tracker and trackIDs";
+        return false;
+    }
+
+    if (trackIDs.size()>0)
+    {
+        for (int idx=0; idx<trackIDs.size(); ++idx)
+        {
+            if (trackIDs.get(idx).asInt()==id)
+            {
+                //yDebug() << __func__ << "found ID" << id << "in trackIDs";
+                return true;
+            }
+        }
+    }
+
+    yWarning() << __func__ << "did not find ID" << id << "in trackIDs";
+    return false;
+}
+
+/**********************************************************/
 bool WorldStateMgrThread::getAffBottleIndexFromTrackROI(const int &u, const int &v, int &abi)
 {
     // Finds the AffBottleIndex of inAff->get(abi) corresponding to
@@ -1149,7 +1181,15 @@ int WorldStateMgrThread::label2id(const string &label)
         ++iter)
     {
         if (iter->name == label)
-            return iter->id;
+        {
+            if (ensureTrackerHasID(iter->id))
+            {
+                //yDebug("confirmed that tracker has ID %d", iter->id);
+                return iter->id;
+            }
+            else
+                yWarning("tracker does not have ID %d but short-term memory has it!", iter->id);
+        }
     }
 
     // search in candidateTrackMap (not yet saved to objects memory)
