@@ -62,10 +62,10 @@ bool Manager::configure(ResourceFinder &rf)
     objectSizeOffset=rf.check("objectSizeOffset", Value(OBJECT_SIZE_OFFSET_DEFAULT)).asDouble();
 
     handNaturalPose=rf.check("handNaturalPose", Value(HAND_NATURAL_POSE_DEFAULT)).asInt();
-    
+
     const ConstString icubContribEnvPath = yarp::os::getenv("ICUBcontrib_DIR");
     const ConstString localPath = "/share/ICUBcontrib/contexts/affExploreManager/";
-    
+
     descdataFileName = rf.check("descdataFileName",Value("descData.txt")).asString();
     descdataFileName = icubContribEnvPath + localPath + descdataFileName;
     descData.open(descdataFileName.c_str(), ofstream::out | ofstream::app);
@@ -83,7 +83,7 @@ bool Manager::configure(ResourceFinder &rf)
     //incoming
     fullBlobDescriptorInputPort.open(("/"+name+"/fullObjDesc:i").c_str());
     partsBlobDescriptorInputPort.open(("/"+name+"/partsObjDesc:i").c_str());
-    
+
     targetPF.open(("/"+name+"/particle:i").c_str());
     blobExtractor.open(("/"+name+"/blobs:i").c_str());
     //bayesianNetInputPort.open(("/"+name+"/bayesnet:i").c_str());
@@ -116,7 +116,7 @@ bool Manager::configure(ResourceFinder &rf)
     Bottle tool;
     char toolName[] = {'t', 'o', 'o', 'l', '0', '\0'};
 
-    for (int toolIndex = 0; toolIndex<n_tools; toolIndex++) 
+    for (int toolIndex = 0; toolIndex<n_tools; toolIndex++)
     {
         toolName[4]++;
         tool.clear();
@@ -175,7 +175,7 @@ bool Manager::close()
     rpcMotorKarma.close();
     rpcToolFinder.close();
     rpcBlobSpot.close();
-    targetPF.close();   
+    targetPF.close();
     descData.close();
     descDataMin.close();
     effData.close();
@@ -215,9 +215,9 @@ bool Manager::updateModule()
 
     int rxCmd=processHumanCmd(cmd,val);
 
-    if (rxCmd==Vocab::encode("extend")) 
+    if (rxCmd==Vocab::encode("extend"))
     {
-        if (cmd.size() > 2) 
+        if (cmd.size() > 2)
         {
             fprintf(stdout, "Will now use user selected arm and camera \n");
             hand   = cmd.get(1).asString().c_str();
@@ -244,10 +244,10 @@ bool Manager::updateModule()
         executeToolAttach(tTransform);
     }
 
-    if (rxCmd==Vocab::encode("test")) 
+    if (rxCmd==Vocab::encode("test"))
     {
         testAction = cmd.get(1).asString();
-    
+
         if (testAction.compare("draw")==0)
         {
             fprintf(stderr,"\n\n Will test a draw action\n\n");
@@ -270,7 +270,7 @@ bool Manager::updateModule()
             ackCmd=processHumanCmd(cmdAck,valAck);
             fprintf(stderr,"read...\n");
 
-            while ( !(ackCmd==Vocab::encode("y") || ackCmd==Vocab::encode("n")) && !isStopping()) 
+            while ( !(ackCmd==Vocab::encode("y") || ackCmd==Vocab::encode("n")) && !isStopping())
             {
                 fprintf(stderr,"\n\n Should I do the action? (y/n)\n\n");
                 rpcHuman.read(cmdAck, true);
@@ -294,21 +294,21 @@ bool Manager::updateModule()
                 {
                     fprintf(stderr,"\n\n ERROR - Problem when comparing predictions \n\n");
                     fprintf(stderr,"\n\n ERROR - No actions will be executed \n\n");
-                }   
+                }
 
             }
             else
             {
                 fprintf(stderr,"\n\n Ok, will not do the action\n\n");
             }
-            
+
         }
 
         goHomeArmsHead();
     }
 
 
-    if (rxCmd==Vocab::encode("tip")) 
+    if (rxCmd==Vocab::encode("tip"))
     {
         Bottle toSend;
         toSend.clear();
@@ -338,7 +338,7 @@ bool Manager::updateModule()
     */
 
 
-    if (rxCmd==Vocab::encode("desc")) 
+    if (rxCmd==Vocab::encode("desc"))
     {
         string objectName;
 
@@ -350,7 +350,7 @@ bool Manager::updateModule()
 
         goHomeArmsHead();
 
-        if (simMode.compare("on")==0) 
+        if (simMode.compare("on")==0)
         {
             objectId = cmd.get(1).asInt();
             //clears the space  in front of the robot
@@ -392,7 +392,7 @@ bool Manager::updateModule()
         descDataMin.close();
         descDataMin.open(descdataMinFileName.c_str(), ofstream::out | ofstream::app);
 
-        if (simMode.compare("on")==0) 
+        if (simMode.compare("on")==0)
         {
             //clears the space  in front of the robot
             cmdSim.clear();
@@ -403,13 +403,13 @@ bool Manager::updateModule()
     }
 
     if (rxCmd==Vocab::encode("observe"))     // currently implemented ONLY for the real robot!
-    {  
+    {
         actionId = 0;
 
 
         targetName = cmd.get(1).asString();
-       
-        reply.addString("observe ");    
+
+        reply.addString("observe ");
         reply.addString(targetName.data()); //object name
         reply.addString(" motion");
         rpcHuman.reply(reply);
@@ -418,15 +418,15 @@ bool Manager::updateModule()
         updateObjVisPos();
         objectPos.clear();
         get3DPosition(objImgPos_onTable, objectPos);
-        segmentAndTrack(objImgPos.x, objImgPos.y);  
+        segmentAndTrack(objImgPos.x, objImgPos.y);
 
         //fprintf(stderr,"eff %d %s %s\n", actionId, toolName.data(), targetName.data());
-        
+
         effData << "observe" << " ";
 
         effData << "tool-X"   << " ";
         effData << targetName.data() << " ";
-        
+
         effData << actionId   << " ";
 
         yarp::sig::Vector objectPosTracker;
@@ -447,7 +447,7 @@ bool Manager::updateModule()
 
         //human user performs action on object
 
-        for (int i=0; i<motSteps; i++) 
+        for (int i=0; i<motSteps; i++)
         {
             fprintf(stderr,"Error: While reading and storing the tracker data");
             fprintf(stderr,"\n\n***********Get %d' object sample\n\n", (i+1));
@@ -481,11 +481,11 @@ bool Manager::updateModule()
 
     }
 
-    if (rxCmd==Vocab::encode("eff")) 
+    if (rxCmd==Vocab::encode("eff"))
     {
         actionId = cmd.get(1).asInt();
 
-        if (simMode.compare("on")==0) 
+        if (simMode.compare("on")==0)
         {
             //moves the table and object to the front of the robot
             cmdSim.clear();
@@ -505,17 +505,17 @@ bool Manager::updateModule()
         updateObjVisPos();
         objectPos.clear();
         get3DPosition(objImgPos_onTable, objectPos);
-        segmentAndTrack(objImgPos.x, objImgPos.y);  
+        segmentAndTrack(objImgPos.x, objImgPos.y);
 
         //fprintf(stderr,"eff %d %s %s\n", actionId, toolName.data(), targetName.data());
-        
+
         effData << "eff" << " ";
         if (simMode.compare("on")==0)
         {
             effData << toolSimNum   << " ";
             effData << targetSimNum << " ";
         }
-        else 
+        else
         {
             effData << toolName.data()   << " ";
             effData << targetName.data() << " ";
@@ -540,7 +540,7 @@ bool Manager::updateModule()
 
         performAction(); //on objectPos (not on objectPosTracker, which might be inaccurate)
 
-        for (int i=0; i<motSteps; i++) 
+        for (int i=0; i<motSteps; i++)
         {
             fprintf(stderr,"Error: While reading and storing the tracker data");
             Time::delay(actionTime/(double)motSteps);
@@ -556,7 +556,7 @@ bool Manager::updateModule()
             << objImgPos.x << " "
             << objImgPos.y;
         }
-        
+
         goHomeArmsHead();
 
         Time::delay(0.5);
@@ -573,7 +573,7 @@ bool Manager::updateModule()
         effData.close();
         effData.open(effdataFileName.c_str(), ofstream::out | ofstream::app);
 
-        if (simMode.compare("on")==0) 
+        if (simMode.compare("on")==0)
         {
             //removes the object and table from the front of the robot
             cmdSim.clear();
@@ -584,7 +584,7 @@ bool Manager::updateModule()
         }
     }
 
-    if (rxCmd==Vocab::encode("grab")) 
+    if (rxCmd==Vocab::encode("grab"))
     {
         if (cmd.size()>1)
         {
@@ -599,9 +599,9 @@ bool Manager::updateModule()
         reply.addString(toolName.c_str());
         rpcHuman.reply(reply);
 
-        if (simMode.compare("on")!=0) 
+        if (simMode.compare("on")!=0)
         {
-            if (askForTool()) 
+            if (askForTool())
             {
                 graspTool();
 
@@ -618,7 +618,7 @@ bool Manager::updateModule()
 		    if (executeToolAttach(tTransform))
 		       fprintf(stderr,"\nTool attached \n");
 		    else
-		       fprintf(stderr,"\nERROR -- Problem in attaching the tool...\n"); 
+		       fprintf(stderr,"\nERROR -- Problem in attaching the tool...\n");
 		}
 		else
 		{
@@ -626,19 +626,19 @@ bool Manager::updateModule()
 		       fprintf(stderr,"\nTool attached \n");
 		    else
 		       fprintf(stderr,"\nERROR -- Problem in attaching the tool...\n");
-		} 
-                */         
+		}
+                */
 
                 // IF ALL TOOLS HAVE THE SAME, DEFAULT, TRANSFORM
                 if (executeToolAttach(toolTransformDefault))
 		    fprintf(stderr,"\nTool attached (default transform)\n");
 		else
-		    fprintf(stderr,"\nERROR -- Problem in attaching the tool...\n");  
-                
+		    fprintf(stderr,"\nERROR -- Problem in attaching the tool...\n");
+
             }
 
         }
-        else 
+        else
         {
             if (cmd.size()>1)
             {
@@ -650,7 +650,7 @@ bool Manager::updateModule()
 	    }
             //toolSimNum = cmd.get(1).asInt();
 
-            goHomeArmsHead(); 
+            goHomeArmsHead();
             cmdSim.clear(); //clears the space in front of the robot
             replySim.clear();
             cmdSim.addString("clea");
@@ -661,7 +661,7 @@ bool Manager::updateModule()
             cmdSim.addString("grab");
             cmdSim.addInt(toolSimNum);
             simObjLoaderModuleOutputPort.write(cmdSim,replySim);
-            
+
             executeToolAttach(toolTransform[toolSimNum-1]);
         }
 
@@ -672,71 +672,81 @@ bool Manager::updateModule()
     }
 
 /*******************************************************define tool*************************************************/
-/*
-if (rxCmd==Vocab::encode("tool_transform")) 
+
+if (rxCmd==Vocab::encode("tool_transform"))
     {
         if (cmd.size()>3)
         {
-            toolX = cmd.get(1).asFloat();
-            
+            toolName = cmd.get(1).asString();
+            toolTransformSimple[0]=cmd.get(2).asDouble();
+            toolTransformSimple[1]=cmd.get(3).asDouble();
+            toolTransformSimple[2]=cmd.get(4).asDouble();
+
         }
         else
         {
             toolName = "default";
         }
 
-        reply.addString("grab");
+        reply.addString("tool_transform");
         reply.addString(toolName.c_str());
+        reply.addDouble(*toolTransformSimple.data());
+//        reply.addDouble(toolTransform[1]);
+//        reply.addDouble(toolTransform[2]);
+//        std::ostringstream strs;
+//        strs << toolX;
+//        std::string toolX_str = strs.str();
+//        reply.addString(toolX_str.c_str());
         rpcHuman.reply(reply);
 
-        
-                if (executeToolAttach(toolTransformDefault))
-		    fprintf(stderr,"\nTool attached (default transform)\n");
-		else
-		    fprintf(stderr,"\nERROR -- Problem in attaching the tool...\n");  
-                
-            }
 
-        }
-        else 
-        {
-            if (cmd.size()>1)
-            {
-                toolSimNum = cmd.get(1).asInt();
-            }
-	    else
-	    {
-		toolSimNum = 1;
-	    }
-            //toolSimNum = cmd.get(1).asInt();
-
-            goHomeArmsHead(); 
-            cmdSim.clear(); //clears the space in front of the robot
-            replySim.clear();
-            cmdSim.addString("clea");
-            simObjLoaderModuleOutputPort.write(cmdSim,replySim);
-            //moves the tool to the hand of the robot, magnet ON
-            cmdSim.clear();
-            replySim.clear();
-            cmdSim.addString("grab");
-            cmdSim.addInt(toolSimNum);
-            simObjLoaderModuleOutputPort.write(cmdSim,replySim);
-            
-            executeToolAttach(toolTransform[toolSimNum-1]);
-        }
-
-        goHomeArmsHead();
-        reply.addString("grab:");
-        reply.addString(toolName.c_str());
-        rpcHuman.reply(reply);
+//                if (executeToolAttach(toolTransformDefault))
+//		    fprintf(stderr,"\nTool attached (default transform)\n");
+//		else
+//		    fprintf(stderr,"\nERROR -- Problem in attaching the tool...\n");
+//
+//            }
+//
+//        }
+//        else
+//        {
+//            if (cmd.size()>1)
+//            {
+//                toolSimNum = cmd.get(1).asInt();
+//            }
+//	    else
+//	    {
+//		toolSimNum = 1;
+//	    }
+//            //toolSimNum = cmd.get(1).asInt();
+//
+//            goHomeArmsHead();
+//            cmdSim.clear(); //clears the space in front of the robot
+//            replySim.clear();
+//            cmdSim.addString("clea");
+//            simObjLoaderModuleOutputPort.write(cmdSim,replySim);
+//            //moves the tool to the hand of the robot, magnet ON
+//            cmdSim.clear();
+//            replySim.clear();
+//            cmdSim.addString("grab");
+//            cmdSim.addInt(toolSimNum);
+//            simObjLoaderModuleOutputPort.write(cmdSim,replySim);
+//
+//            executeToolAttach(toolTransform[toolSimNum-1]);
+//        }
+//
+//        goHomeArmsHead();
+//        reply.addString("grab:");
+//        reply.addString(toolName.c_str());
+//        rpcHuman.reply(reply);
     }
 
-*/
+
 /*******************************************************define tool*************************************************/
-    if (rxCmd==Vocab::encode("drop")) 
+    if (rxCmd==Vocab::encode("drop"))
     {
 
-        if (simMode.compare("on")==0) 
+        if (simMode.compare("on")==0)
         {
             //removes the tool from the hand of the robot, magnet OFF
             cmdSim.clear();
@@ -754,10 +764,10 @@ if (rxCmd==Vocab::encode("tool_transform"))
         goHomeAll();
     }
 
-    if (rxCmd==Vocab::encode("targ")) 
+    if (rxCmd==Vocab::encode("targ"))
     {
         targetName = cmd.get(1).asString();
-        if (simMode.compare("on")==0) 
+        if (simMode.compare("on")==0)
         {
             targetSimNum = cmd.get(1).asInt();
         }
@@ -767,7 +777,7 @@ if (rxCmd==Vocab::encode("tool_transform"))
         rpcHuman.reply(reply);
     }
 
-    if (rxCmd==Vocab::encode("info")) 
+    if (rxCmd==Vocab::encode("info"))
     {
         actionId = cmd.get(1).asInt();
 
@@ -781,17 +791,17 @@ if (rxCmd==Vocab::encode("tool_transform"))
         updateObjVisPos();
         objectPos.clear();
         get3DPosition(objImgPos_onTable, objectPos);
-        segmentAndTrack(objImgPos.x, objImgPos.y);  
+        segmentAndTrack(objImgPos.x, objImgPos.y);
 
         //fprintf(stderr,"eff %d %s %s\n", actionId, toolName.data(), targetName.data());
-        
+
         effData << "eff" << " ";
         if (simMode.compare("on")==0)
         {
             effData << toolSimNum   << " ";
             effData << targetSimNum << " ";
         }
-        else 
+        else
         {
             effData << toolName.data()   << " ";
             effData << targetName.data() << " ";
@@ -817,7 +827,7 @@ if (rxCmd==Vocab::encode("tool_transform"))
 
     /*    performAction(); //on objectPos (not on objectPosTracker, which might be inaccurate)
 
-        for (int i=0; i<motSteps; i++) 
+        for (int i=0; i<motSteps; i++)
         {
             fprintf(stderr,"Error: While reading and storing the tracker data");
             Time::delay(actionTime/(double)motSteps);
@@ -833,7 +843,7 @@ if (rxCmd==Vocab::encode("tool_transform"))
             << objImgPos.x << " "
             << objImgPos.y;
         }*/
-        
+
         goHomeArmsHead();
 
         Time::delay(0.5);
@@ -862,7 +872,7 @@ int Manager::processHumanCmd(const Bottle &cmd, Bottle &b)
 {
     int ret=Vocab::encode(cmd.get(0).asString().c_str());
     b.clear();
-    if (cmd.size()>1) 
+    if (cmd.size()>1)
     {
         if (cmd.get(1).isList())
             b=*cmd.get(1).asList();
@@ -881,7 +891,7 @@ bool Manager::updateObjectDesc(const Bottle *msgO, const Bottle *msgOP)
     printf("%d blobs have been detected\n", N_blobs);
     N_blobs_parts = msgOP->get(0).asInt();
     printf("%d blobs have been divided in parts (two parts each, top and bottom)\n", N_blobs_parts);
-    
+
     printf("\n\nOnly the descriptors of one blob (the first from top left in the image) will be considered. \n");
 
     Bottle *objbot;
@@ -902,7 +912,7 @@ bool Manager::updateObjectDesc(const Bottle *msgO, const Bottle *msgOP)
         objDesc.special_point_x = objbot->get(5).asDouble();
         objDesc.special_point_y = objbot->get(6).asDouble();
 
-        for (int j=0; j<16; j++) 
+        for (int j=0; j<16; j++)
         {
              objDesc.hist[j]     = objbot->get(7+j).asDouble();
         }
@@ -914,13 +924,13 @@ bool Manager::updateObjectDesc(const Bottle *msgO, const Bottle *msgOP)
         objDesc.circleness      = objbot->get(27).asDouble();
         objDesc.squareness      = objbot->get(28).asDouble();
         objDesc.elongatedness   = objbot->get(29).asDouble();
-        
+
     }
     else
     {
         objDesc.clear();
     }
-    
+
     if (msgOP->size()>1)
     {
 
@@ -982,7 +992,7 @@ bool Manager::updateAllDesc_TEST(const Bottle *msgO, const Bottle *msgOP)
         fprintf(stderr, "\n\nERROR! Less than 3 blobs detected\n");
         return false;
     }
-    
+
     printf("\n\nOnly the descriptors of three blobs will be considered: \n");
     printf("- The leftmost one (TOOL A) \n");
     printf("- The rightmost one (TOOL B) \n");
@@ -1014,7 +1024,7 @@ bool Manager::updateAllDesc_TEST(const Bottle *msgO, const Bottle *msgOP)
         testBlob[i].special_point_x = objbot->get(5).asDouble();
         testBlob[i].special_point_y = objbot->get(6).asDouble();
 
-        for (int j=0; j<16; j++) 
+        for (int j=0; j<16; j++)
         {
              testBlob[i].hist[j]     = objbot->get(7+j).asDouble();
         }
@@ -1044,7 +1054,7 @@ bool Manager::updateAllDesc_TEST(const Bottle *msgO, const Bottle *msgOP)
         }
 
         fprintf(stderr, "\nend of loop 1 \n");
-        
+
     }
 
     printf("\n\nTools indexes: \n");
@@ -1053,7 +1063,7 @@ bool Manager::updateAllDesc_TEST(const Bottle *msgO, const Bottle *msgOP)
 
     for (int i=0; i<3; i++)
     {
-    
+
         fprintf(stderr, "\nstart of loop 2 \n");
 
         if (i==toolA_index)
@@ -1120,21 +1130,21 @@ bool Manager::updateAllDesc_TEST(const Bottle *msgO, const Bottle *msgOP)
     printf("- %s ", testBlob[toolA_index].geomToString().c_str());
     printf("\n");
     printf("- %s ", testToolA.geomToString().c_str());
-    
+
     printf("\n\n- TOOL B: %d %d \n", (int)testBlob[toolB_index].roi_x, (int)testBlob[toolB_index].roi_y);
     printf("- %s ", testBlob[toolB_index].geomToString().c_str());
     printf("\n");
     printf("- %s ", testToolB.geomToString().c_str());
 
-    printf("\n\n- TARGET OBJECT: %d %d \n\n", (int)testTargetObject.roi_x, (int)testTargetObject.roi_y);  
-    
+    printf("\n\n- TARGET OBJECT: %d %d \n\n", (int)testTargetObject.roi_x, (int)testTargetObject.roi_y);
+
     return true;
 }
 
 /***********************************************************/
 bool Manager::makePrediction_TEST(BlobPartInfo tool, BlobInfo object, int action, double* effects)
 {
-   
+
     Bottle query;
     Bottle queryResponse;
 
@@ -1164,7 +1174,7 @@ bool Manager::makePrediction_TEST(BlobPartInfo tool, BlobInfo object, int action
     {
         got=affPredictionsInPort.read(queryResponse);
     }
-        
+
     if (queryResponse.size() < 1)
     {
         fprintf(stderr,"\n\nERROR - No response to query \n");
@@ -1279,9 +1289,9 @@ bool Manager::makeAction_TEST(BlobPartInfo tool, BlobInfo object, int action)
     fprintf(stdout,"cmd sent: %s\n",cmdAre.toString().c_str());
     fprintf(stdout,"reply: %s\n",replyAre.toString().c_str());
 
-    if (askForTool()) 
+    if (askForTool())
     {
-        graspTool();       
+        graspTool();
 
         // IF ALL TOOLS HAVE THE SAME, DEFAULT, TRANSFORM
         if (executeToolAttach(toolTransformDefault))
@@ -1290,9 +1300,9 @@ bool Manager::makeAction_TEST(BlobPartInfo tool, BlobInfo object, int action)
         }
 	else
         {
-            fprintf(stderr,"\nERROR -- Problem in attaching the tool...\n");  
+            fprintf(stderr,"\nERROR -- Problem in attaching the tool...\n");
         }
-                
+
     }
 
     cmdAre.clear();
@@ -1308,7 +1318,7 @@ bool Manager::makeAction_TEST(BlobPartInfo tool, BlobInfo object, int action)
 
     Bottle karmaMotor, karmaReply;
     karmaMotor.clear();
-    karmaReply.clear();        
+    karmaReply.clear();
     karmaMotor.addString("vdra");
     karmaMotor.addDouble(actingPos[0]);
     karmaMotor.addDouble(actingPos[1]);
@@ -1340,10 +1350,10 @@ bool Manager::makeAction_TEST(BlobPartInfo tool, BlobInfo object, int action)
         fprintf(stdout,"cmd sent: %s\n",karmaMotor.toString().c_str());
         fprintf(stdout,"reply: %s\n",karmaReply.toString().c_str());
     }
-    else 
+    else
     {
         fprintf(stderr,"iCub: Sorry man, cannot do that :( \n");
-    }   
+    }
 
     return true;
 }
@@ -1373,7 +1383,7 @@ void Manager::performAction()
     yarp::sig::Vector actPos;
     actPos.resize(3);
 
-    if (simMode.compare("on")==0) 
+    if (simMode.compare("on")==0)
     {
         actPos[0]=-0.476;
         actPos[1]=-0.100;
@@ -1381,7 +1391,7 @@ void Manager::performAction()
 
         fprintf(stdout,"Sim Object in position: x=-0.476 y=-0.100  z=-0.100\n");
     }
-    else 
+    else
     {
         //actPos[0]=objectPos[0] - objectSizeOffset;      // takes in consideration the object dimension, for an object of about objectSizeOffset radius. This might be taken from the object descriptors as well... (FUTURE WORKS)
         actPos[0]=objectPos[0];
@@ -1406,7 +1416,7 @@ void Manager::performAction()
 
     //Bottle karmaMotor, KarmaReply;
 
-    switch(actionId) 
+    switch(actionId)
     {
         case 1:
             fprintf(stderr,"\n Tap from right \n");
@@ -1416,7 +1426,7 @@ void Manager::performAction()
             karmaMotor.addString("push");
             //karmaMotor.addInt(pose);
             karmaMotor.addDouble(actPos[0]);
-            karmaMotor.addDouble(actPos[1]); 
+            karmaMotor.addDouble(actPos[1]);
             karmaMotor.addDouble(actPos[2]);
             karmaMotor.addDouble(90.0); // direction (from right)
             karmaMotor.addDouble(objectSizeOffset); // Amount of the movement. It takes in consideration the object dimension, for an object of about objectSizeOffset radius. This might be taken from the object descriptors as well... (FUTURE WORKS)
@@ -1437,7 +1447,7 @@ void Manager::performAction()
             karmaMotor.addString("push");
             //karmaMotor.addInt(pose);
             karmaMotor.addDouble(actPos[0]);
-            karmaMotor.addDouble(actPos[1]); 
+            karmaMotor.addDouble(actPos[1]);
             karmaMotor.addDouble(actPos[2]);
             karmaMotor.addDouble(270.0); // direction (from left)
             karmaMotor.addDouble(objectSizeOffset); // Amount of the movement. It takes in consideration the object dimension, for an object of about objectSizeOffset radius. This might be taken from the object descriptors as well... (FUTURE WORKS)
@@ -1490,7 +1500,7 @@ void Manager::performAction()
                 fprintf(stdout,"outcome is %s:\n",KarmaReply.toString().c_str());
                 fprintf(stdout,"Action duration time was: %.3lf\n",actionDurationTime);
             }
-            else 
+            else
             {
                 fprintf(stderr,"iCub: Sorry man, cannot do that :( \n");
             }
@@ -1513,7 +1523,7 @@ void Manager::performAction()
             rpcMotorKarma.write(karmaMotor, KarmaReply);
             fprintf(stdout,"outcome is %s:\n",KarmaReply.toString().c_str());
 
-            if (KarmaReply.get(1).asDouble()<VDRAW_THR) 
+            if (KarmaReply.get(1).asDouble()<VDRAW_THR)
             {
                 fprintf(stderr,"\n Push (opposite draw) \n");
 
@@ -1536,7 +1546,7 @@ void Manager::performAction()
                 fprintf(stdout,"outcome is %s:\n",KarmaReply.toString().c_str());
                 fprintf(stdout,"Action duration time was: %.3lf\n",actionDurationTime);
             }
-            else 
+            else
             {
                 fprintf(stderr,"iCub: Sorry man, cannot do that :( \n");
             }
@@ -1560,7 +1570,7 @@ void Manager::getActionParam()
     yarp::sig::Vector actPos;
     actPos.resize(3);
 
-    if (simMode.compare("on")==0) 
+    if (simMode.compare("on")==0)
     {
         actPos[0]=-0.476;
         actPos[1]=-0.100;
@@ -1568,7 +1578,7 @@ void Manager::getActionParam()
 
         fprintf(stdout,"Sim Object in position: x=-0.476 y=-0.100  z=-0.100\n");
     }
-    else 
+    else
     {
         //actPos[0]=objectPos[0] - objectSizeOffset;      // takes in consideration the object dimension, for an object of about objectSizeOffset radius. This might be taken from the object descriptors as well... (FUTURE WORKS)
         actPos[0]=objectPos[0];
@@ -1593,7 +1603,7 @@ void Manager::getActionParam()
 
     //Bottle karmaMotor, KarmaReply;
 
-    switch(actionId) 
+    switch(actionId)
     {
         case 1:
             fprintf(stderr,"\n Tap from right \n");
@@ -1603,7 +1613,7 @@ void Manager::getActionParam()
             //reply.addString("push");
             //karmaMotor.addInt(pose);
             reply.addDouble(actPos[0]);
-            reply.addDouble(actPos[1]); 
+            reply.addDouble(actPos[1]);
             reply.addDouble(actPos[2]);
             reply.addDouble(90.0); // direction (from right)
             reply.addDouble(objectSizeOffset); // Amount of the movement. It takes in consideration the object dimension, for an object of about objectSizeOffset radius. This might be taken from the object descriptors as well... (FUTURE WORKS)
@@ -1625,7 +1635,7 @@ void Manager::getActionParam()
             //karmaMotor.addString("push");
             //karmaMotor.addInt(pose);
             reply.addDouble(actPos[0]);
-            reply.addDouble(actPos[1]); 
+            reply.addDouble(actPos[1]);
             reply.addDouble(actPos[2]);
             reply.addDouble(270.0); // direction (from left)
             reply.addDouble(objectSizeOffset); // Amount of the movement. It takes in consideration the object dimension, for an object of about objectSizeOffset radius. This might be taken from the object descriptors as well... (FUTURE WORKS)
@@ -1680,7 +1690,7 @@ void Manager::getActionParam()
                 fprintf(stdout,"outcome is %s:\n",KarmaReply.toString().c_str());
                 fprintf(stdout,"Action duration time was: %.3lf\n",actionDurationTime);
             }
-            else 
+            else
             {
                 fprintf(stderr,"iCub: Sorry man, cannot do that :( \n");
             }*/
@@ -1704,7 +1714,7 @@ void Manager::getActionParam()
             fprintf(stdout,"outcome is %s:\n",KarmaReply.toString().c_str());
             rpcHuman.reply(KarmaReply);
 
-            /*if (KarmaReply.get(1).asDouble()<VDRAW_THR) 
+            /*if (KarmaReply.get(1).asDouble()<VDRAW_THR)
             {
                 fprintf(stderr,"\n Push (opposite draw) \n");
 
@@ -1727,7 +1737,7 @@ void Manager::getActionParam()
                 fprintf(stdout,"outcome is %s:\n",KarmaReply.toString().c_str());
                 fprintf(stdout,"Action duration time was: %.3lf\n",actionDurationTime);
             }
-            else 
+            else
             {
                 fprintf(stderr,"iCub: Sorry man, cannot do that :( \n");
             }*/
@@ -1792,7 +1802,7 @@ int Manager::lookAtTool()
 
     //waits for a "done" message
 
-    while (rxCmd!=Vocab::encode("done") && !isStopping()) 
+    while (rxCmd!=Vocab::encode("done") && !isStopping())
     {
         fprintf(stderr,"looping...\n");
         rpcHuman.read(cmd, true);
@@ -1845,7 +1855,7 @@ void Manager::lookAtObject()
     rxCmd=processHumanCmd(cmd,val);
     fprintf(stderr,"read...\n");
 
-    while (rxCmd!=Vocab::encode("done") && !isStopping()) 
+    while (rxCmd!=Vocab::encode("done") && !isStopping())
     {
         fprintf(stderr,"looping...\n");
         rpcHuman.read(cmd, true);
@@ -1873,7 +1883,7 @@ void Manager::computeObjectDesc()
 
     fprintf(stderr,"check blobs...\n");
 
-    if (objBottle->size()>1) 
+    if (objBottle->size()>1)
     {
         updateObjectDesc(objBottle, objPartsBottle);
         fprintf(stderr,"msg received...\n");
@@ -1904,7 +1914,7 @@ void Manager::computeAllDesc_TEST()
 
     fprintf(stderr,"check blobs...\n");
 
-    if (objBottle->size()>1) 
+    if (objBottle->size()>1)
     {
         updateAllDesc_TEST(objBottle, objPartsBottle);
         fprintf(stderr,"msg received...\n");
@@ -2103,7 +2113,7 @@ bool Manager::get3DPosition(imgPoint point, Vector &x)
     rpcMotorAre.write(cmdMotor,replyMotor);
     printf("Received blob cartesian coordinates (for 2D coordinates %d %d): %s\n", point.x, point.y, replyMotor.toString().c_str());
 
-    if (replyMotor.size()>=3) 
+    if (replyMotor.size()>=3)
     {
         x.resize(3);
         x[0]=replyMotor.get(0).asDouble();

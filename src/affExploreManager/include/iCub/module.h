@@ -134,7 +134,7 @@ public:
 
   void clear()
   {
-      roi_x = 0; 
+      roi_x = 0;
       roi_y = 0;
       roi_width = 0;
       roi_height = 0;
@@ -150,7 +150,7 @@ public:
       area = 0;
       convexity = 0;
       eccentricity = 0;
-      compactness = 0; 
+      compactness = 0;
       circleness = 0;
       squareness = 0;
       elongatedness = 0;
@@ -203,13 +203,13 @@ public:
 
   void clear()
   {
-      roi_x = 0; 
+      roi_x = 0;
       roi_y = 0;
 
       area = 0;
       convexity = 0;
       eccentricity = 0;
-      compactness = 0; 
+      compactness = 0;
       circleness = 0;
       squareness = 0;
       elongatedness = 0;
@@ -253,6 +253,8 @@ protected:
 
     std::vector<yarp::sig::Vector> toolTransform;
     yarp::sig::Vector              toolTransformDefault;
+    yarp::sig::Vector              toolTransformSimple;
+
 
     bool                        get3DPosition(imgPoint point, yarp::sig::Vector &x);
     int                         processHumanCmd(const yarp::os::Bottle &cmd, yarp::os::Bottle &b);
@@ -272,10 +274,11 @@ protected:
     int                         toolId;
     int                         objectId;
     std::string                 toolName;
+    double                      toolX;
     int                         toolSimNum;
     std::string                 targetName;
     int                         targetSimNum;
-    std::string                 testAction; // action to be tested            
+    std::string                 testAction; // action to be tested
 
     double                      x_start;
     double                      y_start;
@@ -304,7 +307,7 @@ protected:
     BlobPartInfo                testToolA;
     BlobPartInfo                testToolB;
     BlobInfo                    testTargetObject;
-    
+
     imgPoint                    testToolPos_onTable;
     imgPoint                    targetPos_onTable;
 
