@@ -405,7 +405,6 @@ Bottle TRACKERManager::getPausedIDs()
     return listID;
 }
 
-
 /**********************************************************/
 bool TRACKERManager::stopTrackers()
 {
@@ -624,7 +623,7 @@ void TRACKERManager::onRead(ImageOf<yarp::sig::PixelRgb> &img)
     
     container.unlock();
     if (b.size())
-    targetOutPort.write();
+        targetOutPort.write();
 
     imageOutPort.write();
 }
