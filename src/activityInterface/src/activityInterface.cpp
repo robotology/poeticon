@@ -983,6 +983,8 @@ string ActivityInterface::getLabel(const int32_t pos_x, const int32_t pos_y)
                     list.addDouble(propFieldPos->get(i).asDouble());
                 }
                 
+                yInfo("[getLabel] the bounding box list is %s", positionBBox.toString().c_str());
+                
                 Bottle cog = getBlobCOG(positionBBox, 0);
                 
                 yInfo("[getLabel] cog  %d %d\n", cog.get(0).asInt(), cog.get(1).asInt());
@@ -1390,7 +1392,8 @@ bool ActivityInterface::askForTool(const std::string &handName, const int32_t po
         
         cmdAre.clear();
         replyAre.clear();
-        cmdAre.addString("clto");
+        cmdAre.addString("hand");
+        cmdAre.addString("close_hand_tool");
         cmdAre.addString(handName.c_str());
         rpcAREcmd.write(cmdAre, replyAre);
         Time::delay(5.0);
