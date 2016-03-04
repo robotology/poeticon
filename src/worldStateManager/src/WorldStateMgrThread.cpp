@@ -2065,7 +2065,7 @@ bool WorldStateMgrThread::resetWorldState()
         }
     }
 
-    // tell user to restart WSOPC process and reconnect /wsm/opc:io /wsopc/rpc
+    // blocking part - tell user to restart WSOPC process and reconnect /wsm/opc:io /wsopc/rpc
     do
     {
         yarp::os::Time::delay(0.01);
@@ -2080,11 +2080,10 @@ bool WorldStateMgrThread::resetWorldState()
     if (opcPort.getOutputCount()>0)
         yInfo("detected WSOPC module restart - proceeding with reset routine");
 
-    // reset variables, activeParticleTracker and internal short-term memory
-    clearAll();
+    // this needs to be reset before the call to initWorldState()
+    initFinished = false;
 
-    // enter FSM
-    fsmState = STATE_PERCEPTION_WAIT_TRACKER;
+    initWorldState();
 
     return true;
 }
