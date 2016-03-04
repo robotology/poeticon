@@ -1987,7 +1987,11 @@ bool WorldStateMgrThread::printMemoryState()
 bool WorldStateMgrThread::initWorldState()
 {
     if (initFinished)
+    {
         yWarning("world state is already initialized");
+        // return "ok" even if already initialized, to make PlannerThread::startPlanning() proceed
+        return true;
+    }
 
     if (activityPort.getOutputCount()<1)
     {
