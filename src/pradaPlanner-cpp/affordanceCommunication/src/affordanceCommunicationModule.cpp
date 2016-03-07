@@ -278,7 +278,8 @@ bool affComm::queryDescriptors()
             descQueryPort.write(cmd, reply);
             cout << "reply: " << reply.toString() << endl;
             if (reply.size() == 1){
-                if (reply.toString() != "ACK" && reply.toString() != "()" && reply.toString() != "" && reply.toString() != "[fail]")
+    	        //if (reply.toString() != "ACK" && reply.toString() != "()" && reply.toString() != "" && reply.toString() != "[fail]")
+                if (reply.get(0).asList()->size() > 0)
                 {
                     data.clear();
                     data.push_back(atof(objects[i][0].c_str()));
@@ -325,8 +326,13 @@ bool affComm::queryToolDescriptors()
     	    descQueryPort.write(cmd,reply);
     	    cout << "reply tools:" << reply.toString() << endl;
     	    if (reply.size() == 1){
-    	        if (reply.toString() != "ACK" && reply.toString() != "()" && reply.toString() != "" && reply.toString() != "[fail]")
+    	        //if (reply.toString() != "ACK" && reply.toString() != "()" && reply.toString() != "" && reply.toString() != "[fail]")
+                //cout << reply.get(0).toString() << endl;
+                //cout << reply.get(0).asList()->toString() << endl;
+                //cout << reply.get(0).asList()->get(0).asList()->toString() << endl;
+                if (reply.get(0).asList()->size() > 0 && reply.get(0).asList()->get(0).asList()->size() > 0)
     	        {
+                    //cout << "there are descriptors" << endl;
     	            data.clear();
     	            tool_data.clear();
     	            data.push_back(atof(objects[i][0].c_str())); // tools
