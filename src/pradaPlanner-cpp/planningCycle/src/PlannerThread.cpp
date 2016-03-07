@@ -803,6 +803,11 @@ bool PlannerThread::goalUpdate()
         return false;
     }
     yInfo("Goal updated");
+    if (subgoals.size() == 0)
+    {
+        yError("Goals not compiled correctly, recompile goals");
+        return false;
+    }
     if (plan_level >= subgoals.size())
     {
         plan_level = subgoals.size()-1;
