@@ -985,7 +985,35 @@ string ActivityInterface::getLabel(const int32_t pos_x, const int32_t pos_y)
                 
                 yInfo("[getLabel] the bounding box list is %s", positionBBox.toString().c_str());
                 
-                Bottle cog = getBlobCOG(positionBBox, 0);
+                
+                Bottle *item=positionBBox.get(0).asList();
+                
+                
+                double a = item->get(0).asDouble();
+                double b = item->get(1).asDouble();
+                double c = item->get(2).asDouble();
+                double d = item->get(3).asDouble();
+               
+                yInfo("a= %lf, b= %lf, c= %lf, d= %lf", a, b, c, d);
+                
+                if (a < pos_x && pos_x < c)
+                {
+                    if (b < pos_y && pos_y < d)
+                    {
+                        yInfo("INSIDE BB");
+                        if (propField->check("name"))
+                        {
+                            label = propField->find("name").asString().c_str();
+                            yInfo("[getLabel] adding label %s",label.c_str());
+                            break;
+                        }
+                    }
+                    
+                }else
+                    yInfo("OUTSIDE bounding box");
+                            
+                
+                /*Bottle cog = getBlobCOG(positionBBox, 0);
                 
                 yInfo("[getLabel] cog  %d %d\n", cog.get(0).asInt(), cog.get(1).asInt());
                 yInfo("[getLabel] pos  %d %d\n", pos_x, pos_y);
@@ -1002,7 +1030,11 @@ string ActivityInterface::getLabel(const int32_t pos_x, const int32_t pos_y)
                         label = propField->find("name").asString().c_str();
                         yInfo("[getLabel] adding label %s",label.c_str());
                     }
-                }
+                }*/
+                
+                
+
+                
             }
         }
     }
