@@ -1156,7 +1156,7 @@ bool WorldStateMgrThread::tellActivityGoHome()
 }
 
 /**********************************************************/
-int WorldStateMgrThread::label2id(const string &label)
+int WorldStateMgrThread::label2id(const string &label, bool useTrackerCheck)
 {
     if (label.empty())
     {
@@ -1182,13 +1182,20 @@ int WorldStateMgrThread::label2id(const string &label)
     {
         if (iter->name == label)
         {
-            if (ensureTrackerHasID(iter->id))
+            if (useTrackerCheck) // extra check used for pause/resume
             {
-                //yDebug("confirmed that tracker has ID %d", iter->id);
+                if (ensureTrackerHasID(iter->id))
+                {
+                    //yDebug("confirmed that tracker has ID %d", iter->id);
+                    return iter->id;
+                }
+                else
+                    yWarning("tracker does not have ID %d but short-term memory has it!", iter->id);
+            }
+            else // other cases
+            {
                 return iter->id;
             }
-            else
-                yWarning("tracker does not have ID %d but short-term memory has it!", iter->id);
         }
     }
 
@@ -2116,7 +2123,7 @@ bool WorldStateMgrThread::pauseTrack(const string &objName)
     }
 
     int id;
-    id = label2id(objName);
+    id = label2id(objName, true); // calls ensureTrackerHasID
     if (id==-1)
     {
         yWarning() << __func__ << "did not find tracker ID corresponding to" << objName.c_str() << " - not able to pause it";
@@ -2171,7 +2178,7 @@ bool WorldStateMgrThread::resumeTrack(const string &objName)
     }
 
     int id;
-    id = label2id(objName);
+    id = label2id(objName, true); // calls ensureTrackerHasID
     if (id==-1)
     {
         yWarning() << __func__ << "did not find tracker ID corresponding to" << objName.c_str() << "- not able to resume it";
