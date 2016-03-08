@@ -209,6 +209,19 @@ service activityInterface_IDLServer
     Bottle getCog(1:i32 tlxpos, 2:i32 tlypos, 3:i32 brxpos, 4:i32 brypos);
     
     /**
+     * Trains the classifier with the associated label
+     * @param label specifies the name of the classified object
+     * @return true/false on success/failure
+     **/
+    bool trainObserve(1:string label);
+    
+    /**
+     * Classifies what is seen in the image
+     * @return Bottle containing the reply
+     **/
+    Bottle classifyObserve();
+    
+    /**
      * Quit the module.
      * @return true/false on success/failure
      */

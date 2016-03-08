@@ -183,6 +183,17 @@ public:
    */
   virtual yarp::os::Bottle getCog(const int32_t tlxpos, const int32_t tlypos, const int32_t brxpos, const int32_t brypos);
   /**
+   * Trains the classifier with the associated label
+   * @param label specifies the name of the classified object
+   * @return true/false on success/failure
+   */
+  virtual bool trainObserve(const std::string& label);
+  /**
+   * Classifies what is seen in the image
+   * @return Bottle containing the reply
+   */
+  virtual yarp::os::Bottle classifyObserve();
+  /**
    * Quit the module.
    * @return true/false on success/failure
    */

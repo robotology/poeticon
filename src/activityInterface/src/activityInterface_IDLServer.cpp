@@ -253,6 +253,23 @@ public:
   virtual bool read(yarp::os::ConnectionReader& connection);
 };
 
+class activityInterface_IDLServer_trainObserve : public yarp::os::Portable {
+public:
+  std::string label;
+  bool _return;
+  void init(const std::string& label);
+  virtual bool write(yarp::os::ConnectionWriter& connection);
+  virtual bool read(yarp::os::ConnectionReader& connection);
+};
+
+class activityInterface_IDLServer_classifyObserve : public yarp::os::Portable {
+public:
+  yarp::os::Bottle _return;
+  void init();
+  virtual bool write(yarp::os::ConnectionWriter& connection);
+  virtual bool read(yarp::os::ConnectionReader& connection);
+};
+
 class activityInterface_IDLServer_quit : public yarp::os::Portable {
 public:
   bool _return;
@@ -879,6 +896,49 @@ void activityInterface_IDLServer_getCog::init(const int32_t tlxpos, const int32_
   this->brypos = brypos;
 }
 
+bool activityInterface_IDLServer_trainObserve::write(yarp::os::ConnectionWriter& connection) {
+  yarp::os::idl::WireWriter writer(connection);
+  if (!writer.writeListHeader(2)) return false;
+  if (!writer.writeTag("trainObserve",1,1)) return false;
+  if (!writer.writeString(label)) return false;
+  return true;
+}
+
+bool activityInterface_IDLServer_trainObserve::read(yarp::os::ConnectionReader& connection) {
+  yarp::os::idl::WireReader reader(connection);
+  if (!reader.readListReturn()) return false;
+  if (!reader.readBool(_return)) {
+    reader.fail();
+    return false;
+  }
+  return true;
+}
+
+void activityInterface_IDLServer_trainObserve::init(const std::string& label) {
+  _return = false;
+  this->label = label;
+}
+
+bool activityInterface_IDLServer_classifyObserve::write(yarp::os::ConnectionWriter& connection) {
+  yarp::os::idl::WireWriter writer(connection);
+  if (!writer.writeListHeader(1)) return false;
+  if (!writer.writeTag("classifyObserve",1,1)) return false;
+  return true;
+}
+
+bool activityInterface_IDLServer_classifyObserve::read(yarp::os::ConnectionReader& connection) {
+  yarp::os::idl::WireReader reader(connection);
+  if (!reader.readListReturn()) return false;
+  if (!reader.read(_return)) {
+    reader.fail();
+    return false;
+  }
+  return true;
+}
+
+void activityInterface_IDLServer_classifyObserve::init() {
+}
+
 bool activityInterface_IDLServer_quit::write(yarp::os::ConnectionWriter& connection) {
   yarp::os::idl::WireWriter writer(connection);
   if (!writer.writeListHeader(1)) return false;
@@ -1169,6 +1229,26 @@ yarp::os::Bottle activityInterface_IDLServer::getCog(const int32_t tlxpos, const
   helper.init(tlxpos,tlypos,brxpos,brypos);
   if (!yarp().canWrite()) {
     yError("Missing server method '%s'?","yarp::os::Bottle activityInterface_IDLServer::getCog(const int32_t tlxpos, const int32_t tlypos, const int32_t brxpos, const int32_t brypos)");
+  }
+  bool ok = yarp().write(helper,helper);
+  return ok?helper._return:_return;
+}
+bool activityInterface_IDLServer::trainObserve(const std::string& label) {
+  bool _return = false;
+  activityInterface_IDLServer_trainObserve helper;
+  helper.init(label);
+  if (!yarp().canWrite()) {
+    yError("Missing server method '%s'?","bool activityInterface_IDLServer::trainObserve(const std::string& label)");
+  }
+  bool ok = yarp().write(helper,helper);
+  return ok?helper._return:_return;
+}
+yarp::os::Bottle activityInterface_IDLServer::classifyObserve() {
+  yarp::os::Bottle _return;
+  activityInterface_IDLServer_classifyObserve helper;
+  helper.init();
+  if (!yarp().canWrite()) {
+    yError("Missing server method '%s'?","yarp::os::Bottle activityInterface_IDLServer::classifyObserve()");
   }
   bool ok = yarp().write(helper,helper);
   return ok?helper._return:_return;
@@ -1645,6 +1725,33 @@ bool activityInterface_IDLServer::read(yarp::os::ConnectionReader& connection) {
       reader.accept();
       return true;
     }
+    if (tag == "trainObserve") {
+      std::string label;
+      if (!reader.readString(label)) {
+        reader.fail();
+        return false;
+      }
+      bool _return;
+      _return = trainObserve(label);
+      yarp::os::idl::WireWriter writer(reader);
+      if (!writer.isNull()) {
+        if (!writer.writeListHeader(1)) return false;
+        if (!writer.writeBool(_return)) return false;
+      }
+      reader.accept();
+      return true;
+    }
+    if (tag == "classifyObserve") {
+      yarp::os::Bottle _return;
+      _return = classifyObserve();
+      yarp::os::idl::WireWriter writer(reader);
+      if (!writer.isNull()) {
+        if (!writer.writeListHeader(1)) return false;
+        if (!writer.write(_return)) return false;
+      }
+      reader.accept();
+      return true;
+    }
     if (tag == "quit") {
       bool _return;
       _return = quit();
@@ -1717,6 +1824,8 @@ std::vector<std::string> activityInterface_IDLServer::help(const std::string& fu
     helpString.push_back("resetObjStack");
     helpString.push_back("testFill");
     helpString.push_back("getCog");
+    helpString.push_back("trainObserve");
+    helpString.push_back("classifyObserve");
     helpString.push_back("quit");
     helpString.push_back("help");
   }
@@ -1884,6 +1993,17 @@ std::vector<std::string> activityInterface_IDLServer::help(const std::string& fu
       helpString.push_back("@param brxpos specifies the 2D position of the object bounding box (bottom right on the X axis) ");
       helpString.push_back("@param brxpos specifies the 2D position of the object bounding box (bottom right on the Y axis) ");
       helpString.push_back("@return string with the name of the object ");
+    }
+    if (functionName=="trainObserve") {
+      helpString.push_back("bool trainObserve(const std::string& label) ");
+      helpString.push_back("Trains the classifier with the associated label ");
+      helpString.push_back("@param label specifies the name of the classified object ");
+      helpString.push_back("@return true/false on success/failure ");
+    }
+    if (functionName=="classifyObserve") {
+      helpString.push_back("yarp::os::Bottle classifyObserve() ");
+      helpString.push_back("Classifies what is seen in the image ");
+      helpString.push_back("@return Bottle containing the reply ");
     }
     if (functionName=="quit") {
       helpString.push_back("bool quit() ");

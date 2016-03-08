@@ -135,6 +135,11 @@ bool ActivityInterface::configure(yarp::os::ResourceFinder &rf)
     
     rpcKarma.open(("/"+moduleName+"/karma:o").c_str());
     
+    imgClassifier.open(("/"+moduleName+"/imgClassifier:o").c_str());
+    dispBlobRoi.open(("/"+moduleName+"/dispBlobRoi:i").c_str());
+    
+    rpcClassifier.open(("/"+moduleName+"/classify:rpc").c_str());
+    
     yarp::os::Network::connect(("/"+moduleName+"/arecmd:rpc").c_str(), "/actionsRenderingEngine/cmd:io");
     yarp::os::Network::connect(("/"+moduleName+"/are:rpc").c_str(), "/actionsRenderingEngine/get:io");
     yarp::os::Network::connect(("/"+moduleName+"/memory:rpc").c_str(), "/memory/rpc");
@@ -151,6 +156,9 @@ bool ActivityInterface::configure(yarp::os::ResourceFinder &rf)
     yarp::os::Network::connect(("/lbpExtract/blobs:o"), ("/"+moduleName+"/blobs:i").c_str());
     
     yarp::os::Network::connect(("/"+moduleName+"/karma:o"), ("/karmaMotor/rpc"));
+    
+    //yarp::os::Network::connect(("/"+moduleName+"/imgClassifier:o"), ("/imgClassifier"));
+    yarp::os::Network::connect("/dispBlobber/roi/left:o", ("/"+moduleName+"/dispBlobRoi:i").c_str());
     
     if (with_robot)
     {
@@ -271,6 +279,9 @@ bool ActivityInterface::interruptModule()
     imagePortIn.interrupt();
     blobsPort.interrupt();
     rpcKarma.interrupt();
+    imgClassifier.interrupt();
+    dispBlobRoi.interrupt();
+    rpcClassifier.interrupt();
     semaphore.post();
     return true;
 }
@@ -297,6 +308,9 @@ bool ActivityInterface::close()
     imagePortIn.close();
     blobsPort.close();
     rpcKarma.close();
+    imgClassifier.close();
+    dispBlobRoi.close();
+    rpcClassifier.close();
     yInfo("[closing] finished shutdown procedure\n");
     semaphore.post();
     return true;
@@ -944,14 +958,13 @@ Bottle ActivityInterface::getBlobCOG(const Bottle &blobs, const int i)
 /**********************************************************/
 Bottle ActivityInterface::getCog(const int32_t tlpos_x, const int32_t tlpos_y, const int32_t brpos_x, const int32_t brpos_y)
 {
-    
     Bottle cmd;
     Bottle &list=cmd.addList();
     list.addInt(tlpos_x);
     list.addInt(tlpos_y);
     list.addInt(brpos_x);
     list.addInt(brpos_y);
-    
+
     Bottle cog = getBlobCOG(cmd, 0);
     
     yInfo("the orig points are %d %d %d %d\n", tlpos_x, tlpos_y, brpos_x, brpos_y);
@@ -1011,30 +1024,7 @@ string ActivityInterface::getLabel(const int32_t pos_x, const int32_t pos_y)
                     
                 }else
                     yInfo("OUTSIDE bounding box");
-                            
-                
-                /*Bottle cog = getBlobCOG(positionBBox, 0);
-                
-                yInfo("[getLabel] cog  %d %d\n", cog.get(0).asInt(), cog.get(1).asInt());
-                yInfo("[getLabel] pos  %d %d\n", pos_x, pos_y);
-                
-                int diffx = abs(cog.get(0).asInt() - pos_x);
-                int diffy = abs(cog.get(1).asInt() - pos_y);
-                
-                yInfo("[getLabel] the dffs are %d %d total %d\n", diffx, diffy, abs (diffx + diffy));
-                
-                if ( abs(diffx + diffy) < 20)
-                {
-                    if (propField->check("name"))
-                    {
-                        label = propField->find("name").asString().c_str();
-                        yInfo("[getLabel] adding label %s",label.c_str());
-                    }
-                }*/
-                
-                
-
-                
+                                
             }
         }
     }
@@ -2133,4 +2123,105 @@ Bottle ActivityInterface::trackStackedObject(const string &objName)
         position.addInt(point.y);
     }
     return position;
+}
+
+/**********************************************************/
+bool ActivityInterface::trainObserve(const string &label)
+{
+    ImageOf<PixelRgb> img= *imagePortIn.read(true);
+    imgClassifier.write(img);
+    
+    Bottle bot = *dispBlobRoi.read(true);
+    yarp::os::Bottle *items=bot.get(0).asList();
+    
+    double tlx = items->get(0).asDouble();
+    double tly = items->get(1).asDouble();
+    double brx = items->get(2).asDouble();
+    double bry = items->get(3).asDouble();
+    yInfo("got bounding Box is %lf %lf %lf %lf", tlx, tly, brx, bry);
+    
+    Bottle cmd,reply;
+    cmd.addVocab(Vocab::encode("train"));
+    Bottle &options=cmd.addList().addList();
+    options.addString(label.c_str());
+    
+    options.add(bot.get(0));
+    
+    printf("Sending training request: %s\n",cmd.toString().c_str());
+    rpcClassifier.write(cmd,reply);
+    printf("Received reply: %s\n",reply.toString().c_str());
+    
+    return true;
+}
+
+/**********************************************************/
+Bottle ActivityInterface::classifyObserve()
+{
+    ImageOf<PixelRgb> img= *imagePortIn.read(true);
+    imgClassifier.write(img);
+    
+    
+    Bottle cmd,reply;
+    cmd.addVocab(Vocab::encode("classify"));
+    Bottle &options=cmd.addList();
+    
+    Bottle bot = *dispBlobRoi.read(true);
+    
+    for (int i=0; i<bot.size(); i++)
+    {
+        ostringstream tag;
+        tag<<"blob_"<<i;
+        Bottle &item=options.addList();
+        item.addString(tag.str().c_str());
+        item.addList()=*bot.get(i).asList();
+    }
+    
+    printf("Sending classification request: %s\n",cmd.toString().c_str());
+    rpcClassifier.write(cmd,reply);
+    printf("Received reply: %s\n",reply.toString().c_str());
+    
+    string handStatus = processScores(reply);
+    
+    yInfo("the hand is %s", handStatus.c_str());
+    
+    return bot;
+}
+
+/**********************************************************/
+string ActivityInterface::processScores(const Bottle &scores)
+{
+    
+    double maxScoreObj=0.0;
+    string label  ="";
+    
+    for (int i=0; i<scores.size(); i++)
+    {
+        ostringstream tag;
+        tag<<"blob_"<<i;
+
+        Bottle *blobScores=scores.find(tag.str().c_str()).asList();
+        if (blobScores==NULL)
+            continue;
+        
+        for (int j=0; j<blobScores->size(); j++)
+        {
+            Bottle *item=blobScores->get(j).asList();
+            if (item==NULL)
+                continue;
+            
+            string name=item->get(0).asString().c_str();
+            double score=item->get(1).asDouble();
+            
+            yInfo("name is %s with score %f", name.c_str(), score);
+            
+            if (score>maxScoreObj)
+            {
+                maxScoreObj = score;
+                label.clear();
+                label = name;
+            }
+            
+        }
+    }
+    return label;
 }
