@@ -145,6 +145,17 @@ bool WorldStateMgrThread::clearAll()
     needInit = false;
     initFinished = false;
 
+    // reset activityInterface's objects stack
+    if (activityPort.getOutputCount()>=1)
+    {
+        Bottle activityCmd, activityReply;
+        activityCmd.addString("resetObjStack");
+        yInfo() << "sending activityInterface instruction:" << activityCmd.toString().c_str();
+        activityPort.write(activityCmd, activityReply); // reply is always "ok"
+    }
+    else
+        yWarning() << __func__ << "not connected to activityInterface, cannot send instruction resetObjStack";
+
     // reset activeParticleTracker
     resetTracker();
 
@@ -2018,7 +2029,7 @@ bool WorldStateMgrThread::initWorldState()
         return false;
     }
 
-    // reset variables, activeParticleTracker and internal short-term memory
+    // reset variables, objects stack, activeParticleTracker, internal short-term memory
     clearAll();
 
     yInfo("initializing world state from robot perception...");
