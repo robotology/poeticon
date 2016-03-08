@@ -221,7 +221,7 @@ bool goalCompiler::receiveInstructions()
                                 return false;
                             }
                             temp1_instructions = temp1_instructions + temp_str + " " ;
-                            cout << temp1_instructions << endl;
+                            //cout << temp1_instructions << endl;
                         }
                         temp_instructions.push_back(temp1_instructions);
                     }
@@ -264,6 +264,7 @@ bool goalCompiler::loadObjs()
     objectQueryPort.write(cmd,reply);
     if (reply.size() > 0 && reply.get(0).isList() && reply.get(0).asList()->size() > 2){
         cout << "Objects updated!" << endl;
+        cout << reply.toString() << endl;
 		for (int i = 0; i < reply.get(0).asList()->size(); ++i)
 		{
 			temp_vect.clear();
@@ -277,6 +278,10 @@ bool goalCompiler::loadObjs()
 			translat.push_back(temp_vect);
 			object_list.push_back(temp_vect[1]);
 		}
+        /*for (int i = 0; i < translat.size(); ++i)
+        {
+            cout << " " << translat[i][0] << " " << translat[i][1] << endl;
+        }*/
 		return true;
     }
     else {
@@ -308,7 +313,7 @@ bool goalCompiler::loadInstructions()
 {
     for (int g = 0; g < instructions.size(); ++g){
         for (int l = 0; l < instructions[g].size(); ++l){
-            cout << instructions[g][l] << endl;
+            //cout << instructions[g][l] << endl;
             if (instructions[g][l].find("hand") != std::string::npos){
                 instructions[g][l].replace(instructions[g][l].find("hand"),4,"left");
             }
@@ -494,14 +499,14 @@ bool goalCompiler::compile()
         prax_action = split(instructions[0][g], ' ');
         prax_action[1].push_back('_');
         if (prax_action[1] != "reach_"){
-            cout << "action detected" << endl;
+            //cout << "action detected" << endl;
             for (int j = 0; j < actions.size(); ++j){
                 if (actions[j].find(prax_action[1]) != std::string::npos){
                     obj = prax_action[2];
 					found_action = actions[j];
-                    cout << "action found" << endl;
+                    //cout << "action found" << endl;
                     if (actions[j+4].find("_ALL") != std::string::npos){
-                        cout << "ALL detected" << endl;
+                        //cout << "ALL detected" << endl;
                         tool = prax_action[0];
                         new_action = actions;
                         aux_subgoal = split(actions[j+4],' ');
@@ -532,14 +537,14 @@ bool goalCompiler::compile()
                                         break;
                                     }
                                 }
-                                cout << "temp rule:" << temp_str << endl;
+                                //cout << "temp rule:" << temp_str << endl;
                                 temp_rule = split(temp_str,' ');
                                 temp_rule.erase(temp_rule.begin(), temp_rule.begin()+1);
                                 temp_rule.erase(temp_rule.begin(), temp_rule.begin()+1);
-								cout << temp_rule[0] << endl;
+								//cout << temp_rule[0] << endl;
                                 for (int k = 0; k< translat.size(); ++k){
                                     temp_str = aux_subgoal[u];
-									cout << temp_str << endl;
+									//cout << temp_str << endl;
                                     while (!isStopping()) {
                                         if (temp_str.find("_obj") != std::string::npos){
                                             temp_str.replace(temp_str.find("_obj"),4,obj);
@@ -597,7 +602,7 @@ bool goalCompiler::compile()
                             }
                         }
                         for (int h = new_temp_rule.size()-1; h>0; --h){
-							cout << new_temp_rule[h] << endl;
+							//cout << new_temp_rule[h] << endl;
                             if (new_temp_rule[h].find("_ALL") != std::string::npos){
                                 new_temp_rule.erase(new_temp_rule.begin()+h);
                             }
@@ -620,7 +625,7 @@ bool goalCompiler::compile()
                         subgoals.push_back(temp_subgoal);
                     }
                     else if (actions[j].find("put_") != std::string::npos){
-                        cout << "put detected" << endl;
+                        //cout << "put detected" << endl;
 						found_action = actions[j];
                         tool = prax_action[2];
                         temp_vect = split(instructions[0][g-1], ' ');
@@ -668,7 +673,7 @@ bool goalCompiler::compile()
                         subgoals.push_back(temp_subgoal);
                     }
             	    else if ((actions[j].find("_obj") != std::string::npos && actions[j].find("_tool") != std::string::npos) || (actions[j].find("_obj") != std::string::npos && actions[j].find("_hand") != std::string::npos)){
-                        cout << "action detected" << endl;
+                        //cout << "action detected" << endl;
 						found_action = actions[j];
                         tool = prax_action[0];
                         obj = prax_action[2];
@@ -697,17 +702,17 @@ bool goalCompiler::compile()
                                 break;
                             }
                         }
-                        cout << temp_str << endl;
+                        //cout << temp_str << endl;
                         aux_subgoal = split(temp_str, ' ');
                         for (int m = 0; m < aux_subgoal.size(); ++m){
                             cout << aux_subgoal[m] << endl;
                         }
                         aux_subgoal.erase(aux_subgoal.begin(),aux_subgoal.begin()+3);
-                        cout << "subgoals total size:" << subgoals.size() << endl;
+                        //cout << "subgoals total size:" << subgoals.size() << endl;
                         for (int m = 0; m < subgoals.size(); ++m){
-                            cout << "subgoals size:" << subgoals[m].size() << endl;
+                            //cout << "subgoals size:" << subgoals[m].size() << endl;
                             for (int n = 0; n < subgoals[m].size(); ++n){
-                                cout << subgoals[m][n] << endl;
+                                //cout << subgoals[m][n] << endl;
                             }
                         }
                         vector<string> temp_subgoal;
@@ -715,11 +720,11 @@ bool goalCompiler::compile()
                             temp_subgoal = subgoals[subgoals.size()-1];
                         }
                         for (int m=0; m<temp_subgoal.size(); ++m){
-                            cout << temp_subgoal[m] << endl;
+                            //cout << temp_subgoal[m] << endl;
                         }
                         cout << "converting" << endl;
                         for (int i=0; i<aux_subgoal.size(); ++i){
-                            cout << aux_subgoal[i] << endl;
+                            //cout << aux_subgoal[i] << endl;
                             temp_subgoal.push_back(aux_subgoal[i]);
                         }
                         cout << "temp_subgoal done" << endl;
@@ -780,6 +785,7 @@ bool goalCompiler::compile()
             obj = prax_action[2];
         }
     }
+    cout << "action sequence: " << endl;
 	for (int i = 0; i < action_sequence.size(); ++i)
 	{
 		cout << action_sequence[i][0] << endl;
@@ -839,6 +845,7 @@ bool goalCompiler::writeFiles()
         goalFile << subgoals[subgoals.size()-1][i] << " ";
     }
     goalFile.close();
+    subgoals.clear();
     return true;
 }
 
@@ -919,8 +926,8 @@ bool goalCompiler::checkConsistency()
                     	}
 					}                
 				}
-				cout << action_sequence[i][0] << endl;
-				cout << requirements << endl;
+				//cout << action_sequence[i][0] << endl;
+				//cout << requirements << endl;
 				required_state_vector = split(requirements, ' ');
 				for (int k = 0; k < required_state_vector.size(); ++k)
 				{
