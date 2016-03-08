@@ -57,6 +57,11 @@
 </module>
 
 <module>
+    <name>karmaMotor</name>
+    <node>console</node>
+</module>
+
+<module>
     <name>yarpview</name>
     <parameters>--name /view/blobdesc --x 320 --y 0</parameters>
     <node>console</node>
