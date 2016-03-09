@@ -149,16 +149,16 @@ bool ActivityInterface::configure(yarp::os::ResourceFinder &rf)
     yarp::os::Network::connect("/icub/camcalib/left/out", inputImagePortName.c_str());
     yarp::os::Network::connect(("/"+moduleName+"/praxicon:rpc").c_str(), "/praxInterface/speech:i");
     
-    //yarp::os::Network::connect("/blobExtractor/binary:o", inputBlobPortName.c_str());
-    //yarp::os::Network::connect(("/blobExtractor/blobs:o"), ("/"+moduleName+"/blobs:i").c_str());
     
     yarp::os::Network::connect("/lbpExtract/extractedlbp:o", ("/" + moduleName + "/blobImg:i").c_str());
     yarp::os::Network::connect(("/lbpExtract/blobs:o"), ("/"+moduleName+"/blobs:i").c_str());
     
     yarp::os::Network::connect(("/"+moduleName+"/karma:o"), ("/karmaMotor/rpc"));
     
-    //yarp::os::Network::connect(("/"+moduleName+"/imgClassifier:o"), ("/imgClassifier"));
     yarp::os::Network::connect("/dispBlobber/roi/left:o", ("/"+moduleName+"/dispBlobRoi:i").c_str());
+    
+    yarp::os::Network::connect("/"+moduleName+"/imgClassifier:o", ("/himrepClassifierRoi/img:i"));
+    yarp::os::Network::connect("/"+moduleName+"/classify:rpc", ("/himrepClassifierRoi/rpc"));
     
     if (with_robot)
     {
@@ -1193,7 +1193,7 @@ bool ActivityInterface::take(const string &objName, const string &handName)
             executeSpeech("ok, I will take the " + objName);
             
             //check that objName ! = tools
-            initObjectTracker(objName);
+            //initObjectTracker(objName);
             
             //do the take actions
             Bottle cmd, reply;
@@ -1201,22 +1201,48 @@ bool ActivityInterface::take(const string &objName, const string &handName)
             cmd.addString("take");
             cmd.addString(objName.c_str());
             cmd.addString(handName.c_str());
+            cmd.addString("still");
             rpcAREcmd.write(cmd, reply);
             
             if (reply.get(0).asVocab()==Vocab::encode("ack"))
             {
-                for (std::map<int, string>::iterator it=onTopElements.begin(); it!=onTopElements.end(); ++it)
-                {
-                    if (strcmp (it->second.c_str(), objName.c_str() ) == 0)
-                    {
-                        int id = it->first;
-                        onTopElements.erase(id);
-                        elements--;
-                    }
-                }
+                //do the take actions
+                Bottle cmd, reply;
+                cmd.clear(), reply.clear();
+                cmd.addString("observe");
+                cmd.addString(handName.c_str());
+                rpcAREcmd.write(cmd, reply);
                 
-                //update inHandStatus map
-                inHandStatus.insert(pair<string, string>(objName.c_str(), handName.c_str()));
+                if (classifyObserve())
+                {
+                    for (std::map<int, string>::iterator it=onTopElements.begin(); it!=onTopElements.end(); ++it)
+                    {
+                        if (strcmp (it->second.c_str(), objName.c_str() ) == 0)
+                        {
+                            int id = it->first;
+                            onTopElements.erase(id);
+                            elements--;
+                        }
+                    }
+
+                    //update inHandStatus map
+                    inHandStatus.insert(pair<string, string>(objName.c_str(), handName.c_str()));
+                    //do the take actions
+                    Bottle cmd, reply;
+                    cmd.clear(), reply.clear();
+                    cmd.addString("home");
+                    cmd.addString("arms");
+                    cmd.addString("head");
+                    rpcAREcmd.write(cmd, reply);
+                }else
+                {
+                    Bottle cmd, reply;
+                    cmd.clear(), reply.clear();
+                    cmd.addString("home");
+                    cmd.addString("all");
+                    rpcAREcmd.write(cmd, reply);
+                }
+                    
             }
             else
             {
@@ -2155,11 +2181,12 @@ bool ActivityInterface::trainObserve(const string &label)
 }
 
 /**********************************************************/
-Bottle ActivityInterface::classifyObserve()
+bool ActivityInterface::classifyObserve()
 {
     ImageOf<PixelRgb> img= *imagePortIn.read(true);
     imgClassifier.write(img);
     
+    bool answer;
     
     Bottle cmd,reply;
     cmd.addVocab(Vocab::encode("classify"));
@@ -2184,7 +2211,12 @@ Bottle ActivityInterface::classifyObserve()
     
     yInfo("the hand is %s", handStatus.c_str());
     
-    return bot;
+    if (strcmp (handStatus.c_str(),"full") == 0)
+        answer = true;
+    else
+        answer = false;
+    
+    return answer;
 }
 
 /**********************************************************/

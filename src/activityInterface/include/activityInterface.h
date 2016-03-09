@@ -225,7 +225,7 @@ public:
     yarp::os::Bottle    getCog(const int32_t tlpos_x, const int32_t tlpos_y, const int32_t brpos_x, const int32_t brpos_y);
     
     bool                trainObserve(const std::string &label);
-    yarp::os::Bottle    classifyObserve();
+    bool                classifyObserve();
 
     std::string         processScores(const yarp::os::Bottle &scores);
     

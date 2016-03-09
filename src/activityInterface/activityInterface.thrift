@@ -217,9 +217,9 @@ service activityInterface_IDLServer
     
     /**
      * Classifies what is seen in the image
-     * @return Bottle containing the reply
+     * @return true/false on object in hand or not
      **/
-    Bottle classifyObserve();
+    bool classifyObserve();
     
     /**
      * Quit the module.

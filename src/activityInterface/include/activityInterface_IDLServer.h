@@ -190,9 +190,9 @@ public:
   virtual bool trainObserve(const std::string& label);
   /**
    * Classifies what is seen in the image
-   * @return Bottle containing the reply
+   * @return true/false on object in hand or not
    */
-  virtual yarp::os::Bottle classifyObserve();
+  virtual bool classifyObserve();
   /**
    * Quit the module.
    * @return true/false on success/failure

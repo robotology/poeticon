@@ -264,7 +264,7 @@ public:
 
 class activityInterface_IDLServer_classifyObserve : public yarp::os::Portable {
 public:
-  yarp::os::Bottle _return;
+  bool _return;
   void init();
   virtual bool write(yarp::os::ConnectionWriter& connection);
   virtual bool read(yarp::os::ConnectionReader& connection);
@@ -929,7 +929,7 @@ bool activityInterface_IDLServer_classifyObserve::write(yarp::os::ConnectionWrit
 bool activityInterface_IDLServer_classifyObserve::read(yarp::os::ConnectionReader& connection) {
   yarp::os::idl::WireReader reader(connection);
   if (!reader.readListReturn()) return false;
-  if (!reader.read(_return)) {
+  if (!reader.readBool(_return)) {
     reader.fail();
     return false;
   }
@@ -937,6 +937,7 @@ bool activityInterface_IDLServer_classifyObserve::read(yarp::os::ConnectionReade
 }
 
 void activityInterface_IDLServer_classifyObserve::init() {
+  _return = false;
 }
 
 bool activityInterface_IDLServer_quit::write(yarp::os::ConnectionWriter& connection) {
@@ -1243,12 +1244,12 @@ bool activityInterface_IDLServer::trainObserve(const std::string& label) {
   bool ok = yarp().write(helper,helper);
   return ok?helper._return:_return;
 }
-yarp::os::Bottle activityInterface_IDLServer::classifyObserve() {
-  yarp::os::Bottle _return;
+bool activityInterface_IDLServer::classifyObserve() {
+  bool _return = false;
   activityInterface_IDLServer_classifyObserve helper;
   helper.init();
   if (!yarp().canWrite()) {
-    yError("Missing server method '%s'?","yarp::os::Bottle activityInterface_IDLServer::classifyObserve()");
+    yError("Missing server method '%s'?","bool activityInterface_IDLServer::classifyObserve()");
   }
   bool ok = yarp().write(helper,helper);
   return ok?helper._return:_return;
@@ -1742,12 +1743,12 @@ bool activityInterface_IDLServer::read(yarp::os::ConnectionReader& connection) {
       return true;
     }
     if (tag == "classifyObserve") {
-      yarp::os::Bottle _return;
+      bool _return;
       _return = classifyObserve();
       yarp::os::idl::WireWriter writer(reader);
       if (!writer.isNull()) {
         if (!writer.writeListHeader(1)) return false;
-        if (!writer.write(_return)) return false;
+        if (!writer.writeBool(_return)) return false;
       }
       reader.accept();
       return true;
@@ -2001,9 +2002,9 @@ std::vector<std::string> activityInterface_IDLServer::help(const std::string& fu
       helpString.push_back("@return true/false on success/failure ");
     }
     if (functionName=="classifyObserve") {
-      helpString.push_back("yarp::os::Bottle classifyObserve() ");
+      helpString.push_back("bool classifyObserve() ");
       helpString.push_back("Classifies what is seen in the image ");
-      helpString.push_back("@return Bottle containing the reply ");
+      helpString.push_back("@return true/false on object in hand or not ");
     }
     if (functionName=="quit") {
       helpString.push_back("bool quit() ");
