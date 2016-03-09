@@ -23,25 +23,11 @@ int main(int argc, char *argv[])
 
     if(! yarp.checkNetwork() )
     {
-        cout << "Error: yarp server does not seem available" << endl;
+        //cout << "Error: yarp server does not seem available" << endl;
+        yError("yarp server does not seem available");
         return 1; // EXIT_FAILURE
     }
 
     affComm module;
     return module.runModule(rf);
-    
-/*    if (!module.configure(rf))
-    {
-        cout << "something went wrong with the module configuration" << endl;
-        return -1;
-    }
-
-    module.openPorts();
-
-    if (!module.affordancesCycle())
-    {
-        cout << "something went wrong with the module execution" << endl;
-        return -1;
-    }
-    return 0;*/
 }

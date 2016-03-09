@@ -68,18 +68,6 @@ void PlannerThread::close()
     world_rpc.close();
     actInt_rpc.close();
     opc2prada_rpc.close();
-/*    cmd.clear();
-    message.clear();
-    reply.clear();
-    toolhandle.clear();
-    state.clear();
-    old_state.clear();
-    rules.clear();
-    old_rules.clear();
-    objects_used.clear();
-    goal.clear();
-    subgoals.clear();
-    object_IDs.clear();*/
     yarp::os::Time::delay(0.1);
 }
 
@@ -1015,7 +1003,6 @@ bool PlannerThread::resetRules()
 bool PlannerThread::loadUsedObjs()
 {
     vector<string> aux_used;
-    /*objects_used.clear();*/
     for (int y = 0; y < object_IDs.size(); ++y){
         if (next_action.find(object_IDs[y][0]) != std::string::npos && object_IDs[y][1] != "stick" && object_IDs[y][1] != "rake" && object_IDs[y][1] != "left" && object_IDs[y][1] != "right"){
             aux_used.push_back(object_IDs[y][0]);
@@ -1024,7 +1011,7 @@ bool PlannerThread::loadUsedObjs()
     yDebug("Objects used in last action:");
     for (int u = 0; u < aux_used.size(); ++u){
         yDebug("%s", aux_used[u].c_str());
-        if (/*find_element(toolhandle,aux_used[u]) == 0 && */find_element(objects_used, aux_used[u]) == 0){
+        if (find_element(objects_used, aux_used[u]) == 0){
             objects_used.push_back(aux_used[u]);
         }
     }
@@ -1493,7 +1480,6 @@ bool PlannerThread::planning_cycle()
             }
             string tmp_str = showCurrentGoal(); 
             yInfo("Current subgoal: %s", tmp_str.c_str());
-            //yarp::os::Time::delay(1);
             int flag_prada = PRADA();
             if (!checkPause())
             {

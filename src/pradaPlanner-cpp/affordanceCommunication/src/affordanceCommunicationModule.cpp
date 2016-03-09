@@ -44,18 +44,21 @@ bool affComm::configure(ResourceFinder &rf)
     // translation = {{"1","grasp"},{"2","drop"},{"3","put"},{"4","pull"},{"5","push"},{"6","reach"}};
 
     if (PathName==""){
-        cout << "path to contexts/"+rf.getContext() << " not found" << endl;
+        //cout << "path to contexts/"+rf.getContext() << " not found" << endl;
+        yError("Path to contexts/"+rf.getContext()+" not found");
         return false;    
     }
     else {
-        cout << "Context FOUND!" << endl;
+        //cout << "Context FOUND!" << endl;
+        yInfo("Context Found!");
     }
 
     openPorts();
 
     if (!affordancesCycle())
     {
-        cout << "something went wrong with the module execution" << endl;
+        //cout << "Something went wrong with the module execution" << endl;
+        yError("Something went wrong with the module execution");
         return false;
     }
     return true;
@@ -97,7 +100,8 @@ void affComm::openPorts()
 
 bool affComm::close()
 {
-    cout << "closing..." << endl;
+    //cout << "closing..." << endl;
+    yInfo("Closing...");
     plannerPort.close();
     geoPort.close();
     affnetPort.close();
@@ -109,7 +113,8 @@ bool affComm::close()
 
 bool affComm::interrupt()
 {
-    cout << "interrupting ports" << endl;
+    //cout << "interrupting ports" << endl;
+    yInfo("Interrupting ports");
     plannerPort.interrupt();
     geoPort.interrupt();
     affnetPort.interrupt();
@@ -123,7 +128,8 @@ bool affComm::plannerCommand()
 {
 	if (plannerPort.getInputCount() == 0)
 	{
-		cout << "planner not connected" << endl;
+		//cout << "planner not connected" << endl;
+        yError("Planner not connected");
 		return false;
 	}
     while (!isStopping()){
@@ -141,7 +147,8 @@ bool affComm::loadObjs()
 {
 	vector<string> temp_vect;
 	if (objectQueryPort.getOutputCount() == 0){
-        cout << "planner not connected!" << endl;
+        //cout << "planner not connected!" << endl;
+        yError("Planner not connected");
         return false;
     }
 	objects.clear();
@@ -150,13 +157,15 @@ bool affComm::loadObjs()
     cmd.addString("printObjects");
     objectQueryPort.write(cmd,reply);
     if (reply.size() > 0 && reply.get(0).isList() && reply.get(0).asList()->size() > 2){
-        cout << "Objects updated!" << endl;
+        //cout << "Objects updated!" << endl;
+        yInfo("Objects updated!");
 		for (int i = 0; i < reply.get(0).asList()->size(); ++i)
 		{
 			temp_vect.clear();
 			temp_vect.push_back( NumbertoString(reply.get(0).asList()->get(i).asList()->get(0).asInt() ) );
 			temp_vect.push_back(reply.get(0).asList()->get(i).asList()->get(1).asString());
-			cout << temp_vect[0] << " " << temp_vect[1] << endl;
+			//cout << temp_vect[0] << " " << temp_vect[1] << endl;
+            yDebug("%d - %s", temp_vect[0].c_str(), temp_vect[1].c_str());
 			objects.push_back(temp_vect);
         	if (temp_vect[1] == "stick" || temp_vect[1] == "rake")
         	{
@@ -166,7 +175,8 @@ bool affComm::loadObjs()
 		return true;
     }
     else {
-        cout << "Objects update failed!" << endl;
+        //cout << "Objects update failed!" << endl;
+        yError("Objects update failed");
 		return false;
     }
 	return false;
@@ -178,7 +188,8 @@ bool affComm::affordancesCycle()
     {
         if (plannerPort.getInputCount() == 0)
         {
-            cout << "planner not connected" << endl;
+            //cout << "planner not connected" << endl;
+            yWarning("Planner not connected, waiting...");
             yarp::os::Time::delay(1);
         }
 		else
@@ -187,7 +198,8 @@ bool affComm::affordancesCycle()
         	{
             	if (command == "update")
             	{
-                	cout << "command received: update" << endl;
+                	//cout << "command received: update" << endl;
+                    yInfo("Command received: update");
                 	Bottle& planner_bottle_out = plannerPort.prepare();
                 	planner_bottle_out.clear();
                 	planner_bottle_out.addString("ready");
@@ -197,10 +209,12 @@ bool affComm::affordancesCycle()
 		}
         if (command == "query")
         {
-            cout << "command received: query" << endl;
+            //cout << "command received: query" << endl;
+            yInfo("Command received: query");
             if (!plannerQuery())
             {
-                cout << "failed to perform query" << endl;
+                //cout << "failed to perform query" << endl;
+                yError("Failed to perform query");
                 return false;
             }
         }
@@ -208,29 +222,35 @@ bool affComm::affordancesCycle()
         {
             if (!switchDisplayOff())
             {
-                cout << "failed to turn graphics display off" << endl;
+                //cout << "failed to turn graphics display off" << endl;
+                yError("Failed to turn graphics display off");
                 return false;
             }
             if (!loadObjs())
             {
-                cout << "failed to initialize objects" << endl;
+                //cout << "failed to initialize objects" << endl;
+                yError("Failed to initialize objects");
                 return false;
             }
-            cout << "objects loaded" << endl;
+            //cout << "objects loaded" << endl;
+            yInfo("Objects loaded");
             if (!queryDescriptors())
             {
-                cout << "failed to obtain object descriptors" << endl;
+                //cout << "failed to obtain object descriptors" << endl;
+                yError("Failed to obtain object descriptors");
                 return false;
             }
             if (!queryToolDescriptors())
             {
-                cout << "failed to obtain tool descriptors" << endl;
+                //cout << "failed to obtain tool descriptors" << endl;
+                yError("Failed to obtain tool descriptors");
                 return false;
             }
             posits.clear();
             if (!updateAffordances())
             {
-                cout << "failed to update affordances" << endl;
+                //cout << "failed to update affordances" << endl;
+                yError("Failed to update affordances");
                 return false;
             }
         }
@@ -243,7 +263,8 @@ bool affComm::switchDisplayOff()
 {
     if (affnetPort.getOutputCount() == 0)
     {
-        cout << "affordance database not connected, using default" << endl;
+        //cout << "affordance database not connected, using default" << endl;
+        yWarning("Affordance database not connected, using default values");
         return true;
     }
     else
@@ -262,7 +283,8 @@ bool affComm::queryDescriptors()
     vector<double> data;
     if (descQueryPort.getOutputCount() == 0)
     {
-        cout << "opc2prada not connected" << endl;
+        //cout << "opc2prada not connected" << endl;
+        yError("opc2prada not connected");
         return false;
     }
 	descriptors.clear();
@@ -274,9 +296,11 @@ bool affComm::queryDescriptors()
             cmd.addString("query2d");
             cmd.addInt(atoi(objects[i][0].c_str()));
             reply.clear();
-            cout << "query:" << cmd.toString() << endl;
+            //cout << "query:" << cmd.toString() << endl;
+            yDebug("Query: %s", cmd.toString().c_str());
             descQueryPort.write(cmd, reply);
-            cout << "reply: " << reply.toString() << endl;
+            //cout << "reply: " << reply.toString() << endl;
+            yDebug("Reply: %s", reply.toString().c_str());
             if (reply.size() == 1){
     	        //if (reply.toString() != "ACK" && reply.toString() != "()" && reply.toString() != "" && reply.toString() != "[fail]")
                 if (reply.get(0).asList()->size() > 0)
@@ -317,22 +341,19 @@ bool affComm::queryToolDescriptors()
     {
         if (objects[i][0] != "11" && objects[i][0] != "12")
         {
-	        cout << "i'm building bottles" << endl;
+	        //cout << "i'm building bottles" << endl;
     	    cmd.clear();
     	    cmd.addString("querytool2d");
     	    cmd.addInt(atoi(objects[i][0].c_str())); // tools
     	    reply.clear();
-    	    cout << "query tools:" << cmd.toString() << endl;
+    	    //cout << "query tools:" << cmd.toString() << endl;
+            yDebug("Query tools: %s", cmd.toString().c_str());
     	    descQueryPort.write(cmd,reply);
-    	    cout << "reply tools:" << reply.toString() << endl;
+    	    //cout << "reply tools:" << reply.toString() << endl;
+            yDebug("Reply tools: %s", reply.toString().c_str());
     	    if (reply.size() == 1){
-    	        //if (reply.toString() != "ACK" && reply.toString() != "()" && reply.toString() != "" && reply.toString() != "[fail]")
-                //cout << reply.get(0).toString() << endl;
-                //cout << reply.get(0).asList()->toString() << endl;
-                //cout << reply.get(0).asList()->get(0).asList()->toString() << endl;
                 if (reply.get(0).asList()->size() > 0 && reply.get(0).asList()->get(0).asList()->size() > 0)
     	        {
-                    //cout << "there are descriptors" << endl;
     	            data.clear();
     	            tool_data.clear();
     	            data.push_back(atof(objects[i][0].c_str())); // tools
@@ -353,7 +374,8 @@ bool affComm::queryToolDescriptors()
     	        }
     	        else
     	        {
-					cout << "default descriptors" << endl;
+					//cout << "default descriptors" << endl;
+                    yWarning("Default descriptors");
     	            tool_data.clear();
     	            temp_vect.push_back(atof(objects[i][0].c_str())); // tools
     	            tool_data.push_back(temp_vect);
@@ -387,7 +409,8 @@ bool affComm::plannerQuery()
 {
     if (plannerPort.getInputCount() == 0)
     {
-        cout << "planner not connected" << endl;
+        //cout << "planner not connected" << endl;
+        yError("Planner not connected");
         return false;
     }
     vector<double> new_posits;
@@ -407,13 +430,11 @@ bool affComm::plannerQuery()
             
             std::ostringstream sin1, sin2, sin3;
             sin1 << int(posits[i][0]);
-			//cout << sin1.str() << endl;
             sin2 << int(posits[i][1]);
-			//cout << sin2.str() << endl;
             sin3 << int(posits[i][2]);
-			//cout << sin3.str() << endl;
             message = message + sin1.str() + " " + sin2.str() + " " + sin3.str() + " ";
-			cout << "coordinates:" << message << endl;
+			//cout << "coordinates:" << message << endl;
+            yDebug("Coordinates: %s", message.c_str());
         }
     }
     Bottle& planner_bottle_out = plannerPort.prepare();
@@ -434,7 +455,8 @@ bool affComm::updateAffordances()
         {
             if (geoPort.getInputCount() == 0)
             {
-                cout << "geometric grounding module not connected." << endl;
+                //cout << "geometric grounding module not connected." << endl;
+                yError("Geometric grounding module not connected");
                 return false;
             }
             Affor_bottle_in = geoPort.read(false);
@@ -445,7 +467,6 @@ bool affComm::updateAffordances()
             }
 			yarp::os::Time::delay(0.1);
         }
-        // cout << "command received from grounding: " << comm << endl;
         if (comm == "done")
         {
             command = "";
@@ -467,14 +488,11 @@ bool affComm::updateAffordances()
                 }
 				yarp::os::Time::delay(0.1);
             }
-            //cout << "rule command received" << endl;
             rule = data[0];
-            //cout << rule << endl;
             context = data[1];
             outcome = data[2];
             outcome2 = data[3];
             outcome3 = data[4];
-            //cout << "initialized" << endl;
             for (int i = 0; i < translation.size(); ++i)
             {
                 act.clear();
@@ -500,7 +518,8 @@ bool affComm::updateAffordances()
                     {
                         if (!getGraspAff())
                         {
-                            cout << "failed to obtain grasping affordances" << endl;
+                            //cout << "failed to obtain grasping affordances" << endl;
+                            yError("Failed to obtain grasping affordances");
                             return false;
                         }
                     }
@@ -508,7 +527,8 @@ bool affComm::updateAffordances()
                     {
                         if (!getPushAff())
                         {
-                            cout << "failed to obtain pushing affordances" << endl;
+                            //cout << "failed to obtain pushing affordances" << endl;
+                            yError("Failed to obtain pushing affordances");
                             return false;
                         }
                     }
@@ -516,7 +536,8 @@ bool affComm::updateAffordances()
                     {
                         if (!getPullAff())
                         {
-                            cout << "failed to obtain pulling affordances" << endl;
+                            //cout << "failed to obtain pulling affordances" << endl;
+                            yError("Failed to obtain pulling affordances");
                             return false;
                         }
                     }
@@ -524,7 +545,8 @@ bool affComm::updateAffordances()
                     {
                         if (!getDropAff())
                         {
-                            cout << "failed to obtain dropping affordances" << endl;
+                            //cout << "failed to obtain dropping affordances" << endl;
+                            yError("Failed to obtain dropping affordances");
                             return false;
                         }
                     }
@@ -532,7 +554,8 @@ bool affComm::updateAffordances()
                     {
                         if (!getPutAff())
                         {
-                            cout << "failed to obtain putting affordances" << endl;
+                            //cout << "failed to obtain putting affordances" << endl;
+                            yError("Failed to obtain putting affordances");
                             return false;
                         }
                     }
@@ -547,7 +570,8 @@ bool affComm::sendOutcomes()
 {
     if (geoPort.getInputCount() == 0)
     {
-        cout << "geometric grounding module not connected" << endl;
+        //cout << "geometric grounding module not connected" << endl;
+        yError("Geometric grounding module not connected");
         return false;
     }
     Bottle& Affor_bottle_out = geoPort.prepare();
@@ -561,10 +585,10 @@ bool affComm::sendOutcomes()
 
 bool affComm::getGraspAff()
 {
-    //cout << "Grasp affordances not implemented yet, going for default" << endl;
     if (!sendOutcomes())
     {
-        cout << "failed to send probabilities to the grounding module" << endl;
+        //cout << "failed to send probabilities to the grounding module" << endl;
+        yError("Failed to send probabilities to the grounding module");
         return false;
     }
     return true;
@@ -572,10 +596,10 @@ bool affComm::getGraspAff()
 
 bool affComm::getDropAff()
 {
-    //cout << "Drop affordances not implemented yet, going for default" << endl;
     if (!sendOutcomes())
     {
-        cout << "failed to send probabilities to the grounding module" << endl;
+        //cout << "failed to send probabilities to the grounding module" << endl;
+        yError("Failed to send probabilities to the grounding modules");
         return false;
     }
     return true;
@@ -583,10 +607,10 @@ bool affComm::getDropAff()
 
 bool affComm::getPutAff()
 {
-    //cout << "Put affordances not implemented yet, going for default" << endl;
     if (!sendOutcomes())
     {
-        cout << "failed to send probabilities to the grounding module" << endl;
+        //cout << "failed to send probabilities to the grounding module" << endl;
+        yError("Failed to send probabilities to the grounding modules");
         return false;
     }
     return true;
@@ -601,10 +625,12 @@ bool affComm::getPushAff()
     int toolnum=0;
     if (affnetPort.getInputCount() == 0)
     {
-        cout << "affordance network not connected, going for default" << endl;
+        //cout << "affordance network not connected, going for default" << endl;
+        yWarning("Affordances network not connected, going for default values");
         if (!sendOutcomes())
         {
-            cout << "failed to send probabilities to the grounding module" << endl;
+            //cout << "failed to send probabilities to the grounding module" << endl;
+            yError("Failed to send probabilities to the grounding modules");
             return false;
         }
         if (act[1] != "11" && act[1] != "12" && act[3] != "11" && act[3] != "12")
@@ -635,7 +661,7 @@ bool affComm::getPushAff()
     {
         if (act[1] != "11" && act[1] != "12" && act[3] != "11" && act[3] != "12")
         {
-            cout << "getting push stuff" << endl;
+            //cout << "getting push stuff" << endl;
             Bottle& affnet_bottle_out = affnetPort.prepare();
             affnet_bottle_out.clear();
             obj = act[1];
@@ -647,28 +673,32 @@ bool affComm::getPushAff()
                     obj_desc = descriptors[o];
                 }
             }
-            cout << "descriptors are: " << endl;
+            //cout << "descriptors are: " << endl;
+            yDebug("Object descriptors:");
             for (int o = 0; o < obj_desc.size(); ++o)
             {
-                cout << obj_desc[o] << endl;
+                //cout << obj_desc[o] << endl;
+                yDebug("%f", obj_desc[o]);
             }
-            cout << "descriptors done, going for tool desc" << endl;
+            //cout << "descriptors done, going for tool desc" << endl;
             for (int o = 0; o < tooldescriptors.size(); ++o)
             {
-                cout << tool << endl;
+                //cout << tool << endl;
                 if (tooldescriptors[o][0][0] == strtof(tool.c_str(),NULL))
                 {
-                    cout << tool << endl;
+                    //cout << tool << endl;
+                    yDebug("Tool descriptors:");
                     tool_desc1 = tooldescriptors[o][1];
                     for (int u =0; u < tool_desc1.size(); ++u)
                     {
-                        cout << tool_desc1[u] << endl;
+                        //cout << tool_desc1[u] << endl;
+                        yDebug("%f", tool_desc1[u]);
                     }
                     tool_desc2 = tooldescriptors[o][2];
                     toolnum = o;
                 }
             }
-            cout << "done" << endl;
+            //cout << "done" << endl;
             if (tooldescriptors[toolnum][1][1] > tooldescriptors[toolnum][2][1])
             {
                 for (int j = 3; j < tool_desc1.size()-1; ++j)
@@ -680,21 +710,24 @@ bool affComm::getPushAff()
                     affnet_bottle_out.addDouble(obj_desc[j]);
                 }
                 affnet_bottle_out.addDouble(2.0);
-                cout << affnet_bottle_out.toString() << endl;
+                //cout << affnet_bottle_out.toString() << endl;
                 affnetPort.write();
-                cout << "query to aff net sent" << endl;
+                //cout << "query to aff net sent" << endl;
+                yInfo("Query to affordance network sent: %s", affnet_bottle_out.toString().c_str());
                 while (!isStopping())
                 {
                     affnet_bottle_in = affnetPort.read(false);
                     if (affnet_bottle_in)
                     {
-                        cout << affnet_bottle_in->toString() << endl;
+                        //cout << affnet_bottle_in->toString() << endl;
                         if (affnet_bottle_in->toString() == "nack")
                         {
-                            cout << "query failed, using default" << endl;
+                            //cout << "query failed, using default" << endl;
+                            yWarning("Query failed, using default values");
                             if (!sendOutcomes())
                             {
-                                cout << "failed to send probabilities to grounding module" << endl;
+                                //cout << "failed to send probabilities to grounding module" << endl;
+                                yError("Failed to send probabilities to the grounding modules");
                                 return false;
                             } 
                             return true;
@@ -705,7 +738,7 @@ bool affComm::getPushAff()
                 }
                 prob_succ1 = 0.0;
                 //prob_not_moving1 = 0.0;
-                cout << "waiting for replies" << endl;
+                //cout << "waiting for replies" << endl;
                 for (int g = 0; g < affnet_bottle_in->get(0).asList()->size(); ++g)
                 {
                     if (g < 2)
@@ -723,8 +756,9 @@ bool affComm::getPushAff()
                         }
                     }*/
                 }
-                cout << "probability obtained" << endl;
-                cout << prob_succ1 << endl;
+                //cout << "probability obtained" << endl;
+                //cout << prob_succ1 << endl;
+                yDebug("Probability was: %f", prob_succ1);
                 if (prob_succ1 >= 0.95)
                 {
                     prob_succ1 = 0.95;
@@ -757,9 +791,10 @@ bool affComm::getPushAff()
                     affnet_bottle_out.addDouble(obj_desc[j]);
                 }
                 affnet_bottle_out.addDouble(2.0);
-                cout << affnet_bottle_out.toString() << endl;
+                //cout << affnet_bottle_out.toString() << endl;
                 affnetPort.write();
-                cout << "done" << endl;
+                //cout << "done" << endl;
+                yInfo("Query to affordance network sent: %s", affnet_bottle_out.toString().c_str());
                 while (!isStopping())
                 {
                     affnet_bottle_in = affnetPort.read(false);
@@ -767,10 +802,12 @@ bool affComm::getPushAff()
                     {
                         if (affnet_bottle_in->toString() == "nack")
                         {
-                            cout << "query failed, using default" << endl;
+                            //cout << "query failed, using default" << endl;
+                            yWarning("Query failed, using default values");
                             if (!sendOutcomes())
                             {
-                                cout << "failed to send probabilities to grounding module" << endl;
+                                //cout << "failed to send probabilities to grounding module" << endl;
+                                yError("Failed to send probabilities to the grounding modules");
                                 return false;
                             } 
                             return true;
@@ -781,7 +818,7 @@ bool affComm::getPushAff()
                 }
                 prob_succ2 = 0.0;
                 //prob_not_moving2 = 0.0;
-                cout << affnet_bottle_in->toString() << endl;
+                //cout << affnet_bottle_in->toString() << endl;
                 for (int g = 0; g < affnet_bottle_in->get(0).asList()->size(); ++g)
                 {
                     if (g < 2)
@@ -799,8 +836,9 @@ bool affComm::getPushAff()
                         }
                     }*/
                 }
-                cout << "probabilities obtained" << endl;
-                cout << prob_succ2 << endl;
+                //cout << "probabilities obtained" << endl;
+                //cout << prob_succ2 << endl;
+                yDebug("Probability was: %f", prob_succ2);
                 if (prob_succ2 >= 0.95)
                 {
                     prob_succ2 = 0.95;
@@ -858,7 +896,8 @@ bool affComm::getPushAff()
             outcome3 = new_outcome3_string;*/
             if (!sendOutcomes())
             {
-                cout << "failed to send probabilities to grounding module" << endl;
+                //cout << "failed to send probabilities to grounding module" << endl;
+                yError("Failed to send probabilities to the grounding module");
                 return false;
             }
         }
@@ -866,7 +905,8 @@ bool affComm::getPushAff()
         {
             if (!sendOutcomes())
             {
-                cout << "failed to send probabilities to grounding module" << endl;
+                //cout << "failed to send probabilities to grounding module" << endl;
+                yError("Failed to send probabilities to the grounding module");
                 return false;
             }
         }
@@ -883,10 +923,12 @@ bool affComm::getPullAff()
     int toolnum=0;
     if (affnetPort.getInputCount() == 0)
     {
-        cout << "affordance network not connected, going for default" << endl;
+        //cout << "affordance network not connected, going for default" << endl;
+        yWarning("Affordances network not connected, going for default");
         if (!sendOutcomes())
         {
-            cout << "failed to send probabilities to the grounding module" << endl;
+            //cout << "failed to send probabilities to the grounding module" << endl;
+            yError("Failed to send probabilities to the grounding module");
             return false;
         }
         if (act[1] != "11" && act[1] != "12" && act[3] != "11" && act[3] != "12")
@@ -948,7 +990,7 @@ bool affComm::getPullAff()
                     affnet_bottle_out.addDouble(obj_desc[j]);
                 }
                 affnet_bottle_out.addDouble(1.0);
-                cout << affnet_bottle_out.toString() << endl;
+                //cout << affnet_bottle_out.toString() << endl;
                 affnetPort.write();
                 while (!isStopping())
                 {
@@ -957,10 +999,12 @@ bool affComm::getPullAff()
                     {
                         if (affnet_bottle_in->toString() == "nack")
                         {
-                            cout << "query failed, using default" << endl;
+                            //cout << "query failed, using default" << endl;
+                            yWarning("Query failed, using default values");
                             if (!sendOutcomes())
                             {
-                                cout << "failed to send probabilities to grounding module" << endl;
+                                //cout << "failed to send probabilities to grounding module" << endl;
+                                yError("Failed to send probabilities to the grounding module");
                                 return false;
                             } 
                             return true;
@@ -988,8 +1032,9 @@ bool affComm::getPullAff()
                         }
                     }*/
                 }
-                cout << "probabilities obtained" << endl;
-                cout << prob_succ1 << endl;
+                //cout << "probabilities obtained" << endl;
+                //cout << prob_succ1 << endl;
+                yDebug("Probability was: %f", prob_succ1);
                 if (prob_succ1 >= 0.95)
                 {
                     prob_succ1 = 0.95;
@@ -1022,7 +1067,7 @@ bool affComm::getPullAff()
                     affnet_bottle_out.addDouble(obj_desc[j]);
                 }
                 affnet_bottle_out.addDouble(1.0);
-                cout << affnet_bottle_out.toString() << endl;
+                //cout << affnet_bottle_out.toString() << endl;
                 affnetPort.write();
                 while (!isStopping())
                 {
@@ -1031,10 +1076,12 @@ bool affComm::getPullAff()
                     {
                         if (affnet_bottle_in->toString() == "nack")
                         {
-                            cout << "query failed, using default" << endl;
+                            //cout << "query failed, using default" << endl;
+                            yWarning("Query failed, using default values");
                             if (!sendOutcomes())
                             {
-                                cout << "failed to send probabilities to grounding module" << endl;
+                                //cout << "failed to send probabilities to grounding module" << endl;
+                                yError("Failed to send probabilities to the grounding module");
                                 return false;
                             } 
                             return true;
@@ -1062,8 +1109,9 @@ bool affComm::getPullAff()
                         }
                     }*/
                 }
-                cout << "probabilities obtained" << endl;
-                cout << prob_succ2 << endl;
+                //cout << "probabilities obtained" << endl;
+                //cout << prob_succ2 << endl;
+                yDebug("Probability was: %f", prob_succ2);
                 if (prob_succ2 >= 0.95)
                 {
                     prob_succ2 = 0.95;
@@ -1121,7 +1169,8 @@ bool affComm::getPullAff()
             outcome3 = new_outcome3_string;*/
             if (!sendOutcomes())
             {
-                cout << "failed to send probabilities to grounding module" << endl;
+                //cout << "failed to send probabilities to grounding module" << endl;
+                yError("Failed to send probabilities to the grounding module");
                 return false;
             }
         }
@@ -1129,7 +1178,8 @@ bool affComm::getPullAff()
         {
             if (!sendOutcomes())
             {
-                cout << "failed to send probabilities to grounding module" << endl;
+                //cout << "failed to send probabilities to grounding module" << endl;
+                yError("Failed to send probabilities to the grounding module");
                 return false;
             }
         }
