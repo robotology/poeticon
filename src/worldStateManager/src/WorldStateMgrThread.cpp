@@ -2038,6 +2038,9 @@ bool WorldStateMgrThread::initWorldState()
     // enter FSM
     fsmState = STATE_PERCEPTION_WAIT_TRACKER;
 
+    while (!initFinished)
+        yarp::os::Time::delay(0.1);
+
     return true;
 }
 
