@@ -19,7 +19,7 @@ bool geoGround::configure(ResourceFinder &rf)
 
 
     if (PathName==""){
-        yError("path to contexts/" + rf.getContext() +" not found");
+        yError("path to contexts/%s not found", rf.getContext().c_str());
         return false;    
     }
     else {
