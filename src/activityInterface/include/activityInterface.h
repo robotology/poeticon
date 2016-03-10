@@ -142,6 +142,7 @@ protected:
     
     /* parameters */
     bool                                closing;
+    bool                                inAction;
     bool                                scheduleLoadMemory;
     
     std::map<std::string, std::string>  inHandStatus;
@@ -226,6 +227,8 @@ public:
     
     bool                trainObserve(const std::string &label);
     bool                classifyObserve();
+    bool                gotSpike(const std::string &handName);
+    std::string         holdIn(const std::string &handName);
 
     std::string         processScores(const yarp::os::Bottle &scores);
     
