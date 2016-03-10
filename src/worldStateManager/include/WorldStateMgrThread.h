@@ -89,7 +89,6 @@ class WorldStateMgrThread : public RateThread
         int countFrom;
         bool withFilter;
         int filterOrder;
-        bool needInit;
         bool initFinished;
         bool needUpdate;
         bool toldUserBlobsConnected;
