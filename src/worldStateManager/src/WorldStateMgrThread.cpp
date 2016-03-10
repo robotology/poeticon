@@ -136,6 +136,7 @@ bool WorldStateMgrThread::initVars()
     inAff = NULL;
     inToolAff = NULL;
     inTargets = NULL;
+    needTrackerInit = false;
     needUpdate = false;
     toldUserBlobsConnected = false;
     toldUserTrackerConnected = false;
@@ -150,6 +151,7 @@ bool WorldStateMgrThread::clearAll()
 {
     // reset variables
     toldUserOPCConnected = false;
+    needTrackerInit = false;
     initFinished = false;
 
     // reset activityInterface's objects stack
@@ -1822,8 +1824,13 @@ void WorldStateMgrThread::fsmPerception()
         {
             if (!checkTrackerStatus())
             {
-                // start tracking blobs provided by segmentation/blobDesc
-                initTracker();
+                if (needTrackerInit)
+                {
+                    // start tracking blobs provided by segmentation/blobDesc
+                    initTracker();
+
+                    needTrackerInit = false;
+                }
             }
             else
             {
@@ -2035,6 +2042,7 @@ bool WorldStateMgrThread::initWorldState()
     clearAll();
 
     yInfo("initializing world state from robot perception...");
+    needTrackerInit = true;
 
     // enter FSM
     fsmState = STATE_PERCEPTION_WAIT_TRACKER;
