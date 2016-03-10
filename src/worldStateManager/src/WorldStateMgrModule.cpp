@@ -20,29 +20,16 @@ bool WorldStateMgrModule::configure(ResourceFinder &rf)
     // module parameters
     moduleName = rf.check("name", Value("wsm")).asString();
     setName(moduleName.c_str());
+
     handlerPortName = "/" + moduleName + "/rpc:i";
     handlerPort.open(handlerPortName.c_str());
     attach(handlerPort);
+
     closing = false;
 
-    // thread stuff
-    threadPeriod = 0.033; // [s]
-    countFrom   = rf.check("countFrom", Value(13)).asInt();
-    withFilter  = rf.check("filter") && rf.find("filter").asString()!="off";
-    if (withFilter)
-    {
-        filterOrder = rf.check("filterOrder", Value(5)).asInt();
-        yInfo("selected temporal filtering with order %d", filterOrder);
-    }
-
-    // create new thread and pass pointers to the module parameters
+    // create new thread, pass parameters with ResourceFinder
     thread = new WorldStateMgrThread(moduleName,
-                                     threadPeriod,
-                                     countFrom,
-                                     withFilter);
-
-    // additional settings for filtering
-    if (withFilter) thread->setFilterOrder(filterOrder);
+                                     rf);
 
     // start the thread to do the work
     if (!thread->start())
