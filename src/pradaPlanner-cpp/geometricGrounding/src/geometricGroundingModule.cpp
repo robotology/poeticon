@@ -19,18 +19,18 @@ bool geoGround::configure(ResourceFinder &rf)
 
 
     if (PathName==""){
-        cout << "path to contexts/"+rf.getContext() << " not found" << endl;
+        yError("path to contexts/" + rf.getContext() +" not found");
         return false;    
     }
     else {
-        cout << "Context FOUND!" << endl;
+        yInfo("Context FOUND!");
     }
 
     openFiles();
     openPorts();
     if (!groundingCycle())
     {
-        cout << "something went wrong with the module execution" << endl;
+        yError("something went wrong with the module execution");
         return false;
     }
     return true;
@@ -43,40 +43,40 @@ bool geoGround::groundingCycle()
 		yarp::os::Time::delay(0.1);
         if (plannerPort.getInputCount() == 0)
         {
-            cout << "planner not connected" << endl;
+            yWarning("planner not connected");
             yarp::os::Time::delay(5);
         }
         if (plannerCommand() == "update")
         {
             if (!loadObjs())
             {
-                cout << "failed to load objects" << endl;
+                yError("failed to load objects");
                 return false;
             }
             if (!loadPreRules())
             {
-                cout << "failed to load pre-rules" << endl;
+                yError("failed to load pre-rules");
                 return false;
             }
             createRulesList();
             if (!getAffordances())
             {
-                cout << "failed to get affordances" << endl;
+                yError("failed to get affordances");
                 return false;
             }
             if (!createSymbolList())
             {
-                cout << "failed to create a symbol list" << endl;
+                yError("failed to create a symbol list");
                 return false;
             }
             if (!writeFiles())
             {
-                cout << "failed to write to files" << endl;
+                yError("failed to write to files");
                 return false;
             }
             if (!plannerReply())
             {
-                cout << "failed to communicate with planner" << endl;
+                yError("failed to communicate with planner");
                 return false;
             }
         }
@@ -455,7 +455,7 @@ void geoGround::openPorts()
 
 bool geoGround::close()
 {
-    cout << "closing..." << endl;
+    yInfo("closing...");
     plannerPort.close();
     affordancePort.close();
     objects.clear();
@@ -464,13 +464,13 @@ bool geoGround::close()
     prerules.clear();
     new_rule.clear();
     new_symbols.clear();
-    cout << "vectors cleared" << endl;
+    yInfo("vectors cleared");
     return true;
 }
 
 bool geoGround::interrupt()
 {
-    cout << "interrupting ports" << endl;
+    yInfo("interrupting ports");
     plannerPort.interrupt();
     affordancePort.interrupt();
     return true;
@@ -481,7 +481,7 @@ bool geoGround::loadObjs()
 
 	vector<string> temp_vect;
 	if (objectQueryPort.getOutputCount() == 0){
-        cout << "planner not connected!" << endl;
+        yError("planner not connected!");
         return false;
     }
 	objects.clear();
@@ -490,7 +490,7 @@ bool geoGround::loadObjs()
     cmd.addString("printObjects");
     objectQueryPort.write(cmd,reply);
     if (reply.size() > 0 && reply.get(0).isList() && reply.get(0).asList()->size() > 2){
-        cout << "Objects updated!" << endl;
+        yInfo("Objects updated!");
 		for (int i = 0; i < reply.get(0).asList()->size(); ++i)
 		{
 			temp_vect.clear();
@@ -505,7 +505,7 @@ bool geoGround::loadObjs()
 		return true;
     }
     else {
-        cout << "Objects update failed!" << endl;
+        yError("Objects update failed!");
 		return false;
     }
 	return false;
@@ -527,10 +527,10 @@ string geoGround::plannerCommand()
 
 bool geoGround::plannerReply()
 {
-    cout << "replying to planner" << endl;
+    yInfo("replying to planner");
     if (plannerPort.getInputCount() == 0)
     {
-        cout << "planner not connected" << endl;
+        yError("planner not connected");
         return false;
     }
     Bottle& plannerBottleOut = plannerPort.prepare();
@@ -542,12 +542,12 @@ bool geoGround::plannerReply()
 
 bool geoGround::loadPreRules()
 {
-    cout << "loading prerules" << endl;
+    yInfo("loading prerules");
     string line, temp_str;
     preruleFile.open(preruleFileName.c_str());
     if (!preruleFile.is_open())
     {
-        cout << "failed to open pre-rules file" << endl;
+        yError("failed to open pre-rules file");
         return false;
     }
     prerules.clear();
@@ -568,14 +568,14 @@ bool geoGround::createRulesList()
 {
     vector<string> temp_vect;
     rules.clear();
-    cout << "creating rules" << endl;
+    yInfo("creating rules");
     for (int i = 0; i < prerules.size(); ++i){
         temp_vect = geoGround::create_rules(prerules[i]);
         for (int g = 0; g < temp_vect.size(); ++g){
             rules.push_back(temp_vect[g]);
         }
     }
-    cout << "rules created" << endl;
+    yInfo("rules created");
     return true;
 }
 
@@ -583,7 +583,7 @@ bool geoGround::getAffordances()
 {
     if (affordancePort.getOutputCount() == 0)
     {
-        cout << "Affordances module not connected" << endl;
+        yError("Affordances module not connected");
         return false;
     }
     string temp_str, bottle_decode_aux;
@@ -623,7 +623,7 @@ bool geoGround::getAffordances()
                 timer_count = timer_count + 1;
                 if (timer_count == 600) // 1 minute timeout
                 {
-                    cout << "connection with affordance module closed: timeout" << endl;
+                    yError("connection with affordance module closed: timeout");
                     return false;
                 }
                 AffBottle = affordancePort.read(false);
@@ -633,7 +633,7 @@ bool geoGround::getAffordances()
                 }
                 if (affordancePort.getOutputCount() == 0)
                 {
-                    cout << "Affordance communication module crashed." << endl;
+                    yError("Affordance communication module crashed.");
                     return false;
                 }
                 Time::delay(0.1);
@@ -672,7 +672,7 @@ bool geoGround::createSymbolList()
     presymbolFile.open(presymbolFileName.c_str());
     if (!presymbolFile.is_open())
     {
-        cout << "failed to open pre symbol file" << endl;
+        yError("failed to open pre symbol file");
         return false;
     }
     while (getline(presymbolFile, line, '\n')){
@@ -695,13 +695,13 @@ bool geoGround::writeFiles()
     ruleFile.open(ruleFileName.c_str());
     if (!ruleFile.is_open())
     {
-        cout << "failed to open rule file" << endl;
+        yError("failed to open rule file");
         return false; 
     }
     symbolFile.open(symbolFileName.c_str());
     if (!symbolFile.is_open())
     {
-        cout << "failed to open symbol file" << endl;
+        yError("failed to open symbol file");
         ruleFile.close();
         return false; 
     }
@@ -713,6 +713,6 @@ bool geoGround::writeFiles()
     }
     ruleFile.close();
     symbolFile.close();
-    cout << "files written" << endl;
+    yInfo("files written");
     return true;
 }

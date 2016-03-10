@@ -165,7 +165,7 @@ bool affComm::loadObjs()
 			temp_vect.push_back( NumbertoString(reply.get(0).asList()->get(i).asList()->get(0).asInt() ) );
 			temp_vect.push_back(reply.get(0).asList()->get(i).asList()->get(1).asString());
 			//cout << temp_vect[0] << " " << temp_vect[1] << endl;
-            yDebug("%d - %s", temp_vect[0].c_str(), temp_vect[1].c_str());
+            yDebug("%s - %s", temp_vect[0].c_str(), temp_vect[1].c_str());
 			objects.push_back(temp_vect);
         	if (temp_vect[1] == "stick" || temp_vect[1] == "rake")
         	{
