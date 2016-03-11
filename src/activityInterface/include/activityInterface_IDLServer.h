@@ -32,6 +32,12 @@ public:
    */
   virtual bool handStat(const std::string& handName);
   /**
+   * Get the object located in handName
+   * @param handName specifies the name of the hand in question
+   * @return string with the name of the object
+   */
+  virtual std::string holdIn(const std::string& handName);
+  /**
    * Get the label of the object located in the vicinity of xpo and ypos
    * @param xpos specifies the 2D position of the object on the X axis
    * @param ypos specifies the 2D position of the object on the Y axis
@@ -182,6 +188,22 @@ public:
    * @return string with the name of the object
    */
   virtual yarp::os::Bottle getCog(const int32_t tlxpos, const int32_t tlypos, const int32_t brxpos, const int32_t brypos);
+  /**
+   * Trains the classifier with the associated label
+   * @param label specifies the name of the classified object
+   * @return true/false on success/failure
+   */
+  virtual bool trainObserve(const std::string& label);
+  /**
+   * Classifies what is seen in the image
+   * @return true/false on object in hand or not
+   */
+  virtual bool classifyObserve();
+  /**
+   * Informs activityInterface that something has changed in the hand
+   * @return true/false on success/failure
+   */
+  virtual bool gotSpike(const std::string& handName);
   /**
    * Quit the module.
    * @return true/false on success/failure

@@ -87,6 +87,7 @@ protected:
     yarp::os::RpcClient                 rpcMemory;
     yarp::os::RpcClient                 rpcWorldState;
     yarp::os::RpcClient                 rpcIolState;
+    yarp::os::RpcClient                 rpcClassifier;
     
     yarp::os::RpcClient                 rpcKarma;
     
@@ -95,10 +96,12 @@ protected:
     yarp::os::Port                      praxiconToPradaPort;
     
     yarp::os::Port                      robotStatus;
-    
+    yarp::os::Port                      imgClassifier;
+
     std::string                         inputBlobPortName;
     std::string                         inputImagePortName;
-    
+
+    yarp::os::BufferedPort<yarp::os::Bottle>                                dispBlobRoi;
     yarp::os::BufferedPort<yarp::os::Bottle>                                blobsPort;
     yarp::os::BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelRgb> >        imagePortIn;
     yarp::os::BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelMono> >       imgeBlobPort;
@@ -139,6 +142,7 @@ protected:
     
     /* parameters */
     bool                                closing;
+    bool                                inAction;
     bool                                scheduleLoadMemory;
     
     std::map<std::string, std::string>  inHandStatus;
@@ -220,6 +224,13 @@ public:
     bool                resetObjStack();
     bool                testFill();
     yarp::os::Bottle    getCog(const int32_t tlpos_x, const int32_t tlpos_y, const int32_t brpos_x, const int32_t brpos_y);
+    
+    bool                trainObserve(const std::string &label);
+    bool                classifyObserve();
+    bool                gotSpike(const std::string &handName);
+    std::string         holdIn(const std::string &handName);
+
+    std::string         processScores(const yarp::os::Bottle &scores);
     
     bool                quit();
 };
