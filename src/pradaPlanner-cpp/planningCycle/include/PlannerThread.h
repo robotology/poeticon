@@ -28,6 +28,7 @@
 #include <yarp/os/Time.h>
 #include <yarp/os/Vocab.h>
 #include <yarp/sig/Vector.h>
+#include <algorithm>
 
 #include "Helpers.h"
 

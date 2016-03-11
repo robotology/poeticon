@@ -167,7 +167,9 @@ bool affComm::loadObjs()
 			//cout << temp_vect[0] << " " << temp_vect[1] << endl;
             yDebug("%s - %s", temp_vect[0].c_str(), temp_vect[1].c_str());
 			objects.push_back(temp_vect);
-        	if (temp_vect[1] == "stick" || temp_vect[1] == "rake")
+            string check_str;
+            transform(temp_vect[1].begin(), temp_vect[1].end(), check_str.begin(), ::tolower);
+        	if (check_str == "stick" || check_str == "rake")
         	{
             	tools.push_back(temp_vect);
         	}

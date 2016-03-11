@@ -844,7 +844,10 @@ bool goalCompiler::clearUnimportantGoals()
                 temp_list.push_back(subgoals[h][l]);
             }
         }
-        temp_subgoals.push_back(temp_list);
+        if (temp_list != temp_subgoals[temp_subgoals.size()-1])
+        {
+            temp_subgoals.push_back(temp_list);
+        }
     }
     subgoals = temp_subgoals;
     return true;

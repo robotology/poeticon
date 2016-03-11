@@ -194,7 +194,8 @@ bool PlannerModule::run1Step()
 
 bool PlannerModule::startPlanner()
 {
-    return thread->startPlanning();
+    
+    return thread->resetPlanVars() && thread->startPlanning();
 }
 
 string PlannerModule::showPlannedAction()

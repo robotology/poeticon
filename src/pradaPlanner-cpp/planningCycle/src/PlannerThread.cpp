@@ -637,6 +637,7 @@ bool PlannerThread::resetPlanVars()
 {
     plan_level = 0;
     objects_used.clear();
+    next_action == "";
     return resetConfig();
 }
 
@@ -783,6 +784,7 @@ bool PlannerThread::adaptRules()
             break;
         }
     }
+    next_action = "";
     rulesFileOut.close();
     return true;
 }
@@ -822,7 +824,9 @@ bool PlannerThread::planCompletion()
         for (int u = 0; u < objects_used.size(); ++u){
             for (int inde = 0; inde < object_IDs.size(); ++inde){
                 if (object_IDs[inde][0] == objects_used[u]){
-                    if (object_IDs[inde][1] != "rake" && object_IDs[inde][1] != "stick" && object_IDs[inde][1] != "left" && object_IDs[inde][1] != "right"){
+                    string check_str;
+                    transform(object_IDs[inde][1].begin(), object_IDs[inde][1].end(), check_str.begin(), ::tolower);
+                    if (check_str != "rake" && check_str != "stick" && check_str != "left" && check_str != "right"){
                         prax_bottle_out.addString(object_IDs[inde][1]);
                     }
                 }
@@ -927,7 +931,9 @@ bool PlannerThread::increaseHorizon()
                     for (int u = 0; u < objects_failed.size(); ++u){
                         for (int inde = 0; inde < object_IDs.size(); ++inde){
                             if (object_IDs[inde][0] == objects_failed[u]){
-                                if (object_IDs[inde][1] != "rake" && object_IDs[inde][1] != "stick" && object_IDs[inde][1] != "left" && object_IDs[inde][1] != "right"){
+                                string check_str;
+                                transform(object_IDs[inde][1].begin(), object_IDs[inde][1].end(), check_str.begin(), ::tolower);
+                                if (check_str != "rake" && check_str != "stick" && check_str != "left" && check_str != "right"){
                                     prax_bottle_out.addString(object_IDs[inde][1]);
                                 }
                             }
@@ -1009,7 +1015,9 @@ bool PlannerThread::loadUsedObjs()
 {
     vector<string> aux_used;
     for (int y = 0; y < object_IDs.size(); ++y){
-        if (next_action.find(object_IDs[y][0]) != std::string::npos && object_IDs[y][1] != "stick" && object_IDs[y][1] != "rake" && object_IDs[y][1] != "left" && object_IDs[y][1] != "right"){
+        string check_str;
+        transform(object_IDs[y][1].begin(), object_IDs[y][1].end(), check_str.begin(), ::tolower);
+        if (next_action.find(object_IDs[y][0]) != std::string::npos && check_str != "stick" && check_str != "rake" && check_str != "left" && check_str != "right"){
             aux_used.push_back(object_IDs[y][0]);
         }
     }
@@ -1066,10 +1074,12 @@ bool PlannerThread::codeAction()
             }
         }
         for (int ID = 0; ID < object_IDs.size();++ID){
-            if (object_IDs[ID][1] == "rake"){
+            string check_str;
+            transform(object_IDs[ID][1].begin(), object_IDs[ID][1].end(), check_str.begin(), ::tolower);
+            if (check_str == "rake"){
                 tool1 = object_IDs[ID][0];
             }
-            if (object_IDs[ID][1] == "stick"){
+            if (check_str == "stick"){
                 tool2 = object_IDs[ID][0];
             }
         }
@@ -1111,14 +1121,16 @@ bool PlannerThread:: execAction()
 {
     string temp_str;
     message.clear();
-    if (act == "grasp" && (obj == "rake" || obj == "stick")){
+    string check_strobj;
+    transform(obj.begin(), obj.end(), check_strobj.begin(), ::tolower);
+    if (act == "grasp" && (check_strobj == "rake" || check_strobj == "stick")){
         act = "askForTool";
         message.addString(act);
         message.addString(hand);
         message.addInt(positx);
         message.addInt(posity);
     }
-    else if (act == "grasp" && (obj != "rake" && obj != "stick")){
+    else if (act == "grasp" && (check_strobj != "rake" && check_strobj != "stick")){
         act = "take";
         message.addString(act);
         message.addString(obj);
@@ -1216,7 +1228,9 @@ bool PlannerThread::checkFailure()
         for (int u = 0; u < aux_fail_obj.size(); ++u){
             for (int inde = 0; inde < object_IDs.size(); ++inde){
                 if (object_IDs[inde][0] == aux_fail_obj[u]){
-                    if (object_IDs[inde][1] != "rake" && object_IDs[inde][1] != "stick" && object_IDs[inde][1] != "left" && object_IDs[inde][1] != "right"){
+                    string check_str;
+                    transform(object_IDs[inde][1].begin(), object_IDs[inde][1].end(), check_str.begin(), ::tolower);
+                    if (check_str != "rake" && check_str != "stick" && check_str != "left" && check_str != "right"){
                         prax_bottle_out.addString(object_IDs[inde][1]);
                     }
                 }

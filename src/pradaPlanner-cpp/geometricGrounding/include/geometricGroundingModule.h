@@ -25,6 +25,7 @@
 #include <string.h>
 #include <vector>
 #include <algorithm>
+#include <string>
 
 #include "Helpers.h"
 
