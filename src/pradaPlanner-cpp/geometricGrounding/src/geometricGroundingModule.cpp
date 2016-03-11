@@ -516,8 +516,8 @@ bool geoGround::loadObjs()
 			temp_vect.push_back( NumbertoString(reply.get(0).asList()->get(i).asList()->get(0).asInt() ) );
 			temp_vect.push_back(reply.get(0).asList()->get(i).asList()->get(1).asString());
 			objects.push_back(temp_vect[0]);
-            string check_str;
-            transform(temp_vect[1].begin(), temp_vect[1].end(), check_str.begin(), ::tolower);
+            string check_str=temp_vect[1];
+            transform(check_str.begin(), check_str.end(), check_str.begin(), ::tolower);
         	if (check_str == "stick" || check_str == "rake")
         	{
             	tools.push_back(temp_vect[0]);
