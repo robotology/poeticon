@@ -31,6 +31,13 @@ service activityInterface_IDLServer
     * @return true/false on holding or not
     **/
     bool handStat(1:string handName)
+    
+    /**
+     * Get the object located in handName
+     * @param handName specifies the name of the hand in question
+     * @return string with the name of the object
+     **/
+    string holdIn(1:string handName)
 
     /**
      * Get the label of the object located in the vicinity of xpo and ypos
@@ -220,6 +227,12 @@ service activityInterface_IDLServer
      * @return true/false on object in hand or not
      **/
     bool classifyObserve();
+    
+    /**
+     * Informs activityInterface that something has changed in the hand
+     * @return true/false on success/failure
+     **/
+    bool gotSpike(1:string handName);
     
     /**
      * Quit the module.

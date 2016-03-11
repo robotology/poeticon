@@ -12,13 +12,10 @@
 /**********************************************************/
 WorldStateMgrThread::WorldStateMgrThread(
     const string &_moduleName,
-    const double _period,
-    const int _countFrom,
-    const bool _withFilter)
-    : moduleName(_moduleName),
-      RateThread(int(_period*1000.0)),
-      countFrom(_countFrom),
-      withFilter(_withFilter)
+    ResourceFinder &_rf)
+    : RateThread(33), // [ms]
+      moduleName(_moduleName),
+      rf(_rf)
 {
 }
 
@@ -80,12 +77,24 @@ bool WorldStateMgrThread::threadInit()
 {
     closing = false;
 
+    // ports
     if ( !openPorts() )
     {
         yError("problem opening ports");
         return false;
     }
 
+    // user-specified parameters
+    countFrom   = rf.check("countFrom", Value(13)).asInt();
+    withFilter  = rf.check("filter") && rf.find("filter").asString()!="off";
+    if (withFilter)
+    {
+        filterOrder = rf.check("filterOrder", Value(5)).asInt();
+        setFilterOrder(filterOrder);
+        yInfo("selected temporal filtering with order %d", filterOrder);
+    }
+
+    // variables
     if (! initVars() )
     {
         yError("problem initializing variables");
@@ -127,7 +136,7 @@ bool WorldStateMgrThread::initVars()
     inAff = NULL;
     inToolAff = NULL;
     inTargets = NULL;
-    needInit = false;
+    needTrackerInit = false;
     needUpdate = false;
     toldUserBlobsConnected = false;
     toldUserTrackerConnected = false;
@@ -142,7 +151,7 @@ bool WorldStateMgrThread::clearAll()
 {
     // reset variables
     toldUserOPCConnected = false;
-    needInit = false;
+    needTrackerInit = false;
     initFinished = false;
 
     // reset activityInterface's objects stack
@@ -1815,12 +1824,12 @@ void WorldStateMgrThread::fsmPerception()
         {
             if (!checkTrackerStatus())
             {
-                if (needInit)
+                if (needTrackerInit)
                 {
                     // start tracking blobs provided by segmentation/blobDesc
                     initTracker();
 
-                    needInit = false;
+                    needTrackerInit = false;
                 }
             }
             else
@@ -2033,7 +2042,7 @@ bool WorldStateMgrThread::initWorldState()
     clearAll();
 
     yInfo("initializing world state from robot perception...");
-    needInit = true;
+    needTrackerInit = true;
 
     // enter FSM
     fsmState = STATE_PERCEPTION_WAIT_TRACKER;

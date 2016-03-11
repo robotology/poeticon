@@ -45,7 +45,7 @@ bool affComm::configure(ResourceFinder &rf)
 
     if (PathName==""){
         //cout << "path to contexts/"+rf.getContext() << " not found" << endl;
-        yError("Path to contexts/"+rf.getContext()+" not found");
+        yError("Path to contexts/%s not found", rf.getContext().c_str());
         return false;    
     }
     else {

@@ -23,6 +23,7 @@
 #include <yarp/os/Port.h>
 #include <yarp/os/Property.h>
 #include <yarp/os/RateThread.h>
+#include <yarp/os/ResourceFinder.h>
 #include <yarp/os/RpcClient.h>
 #include <yarp/os/Time.h>
 #include <yarp/os/Vocab.h>
@@ -64,6 +65,8 @@ class WorldStateMgrThread : public RateThread
 {
     private:
         string moduleName;
+        ResourceFinder rf;
+
         string opcPortName;
         string inTargetsPortName;
         string inAffPortName;
@@ -86,7 +89,7 @@ class WorldStateMgrThread : public RateThread
         int countFrom;
         bool withFilter;
         int filterOrder;
-        bool needInit;
+        bool needTrackerInit;
         bool initFinished;
         bool needUpdate;
         bool toldUserBlobsConnected;
@@ -106,9 +109,7 @@ class WorldStateMgrThread : public RateThread
 
     public:
         WorldStateMgrThread(const string &_moduleName,
-                            const double _period,
-                            const int _countFrom,
-                            const bool _withFilter);
+                            ResourceFinder &_rf);
         bool openPorts();
         void close();
         void interrupt();

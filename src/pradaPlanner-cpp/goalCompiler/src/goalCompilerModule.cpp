@@ -18,7 +18,7 @@ bool goalCompiler::configure(ResourceFinder &rf)
 
 
     if (PathName==""){
-        yError("path to contexts/"+rf.getContext()+" not found");
+        yError("path to contexts/%s not found", rf.getContext().c_str());
         return false;    
     }
     else {
@@ -222,7 +222,7 @@ bool goalCompiler::receiveInstructions()
         }
         praxiconBottle = praxiconPort.read(false);
         if (praxiconBottle != NULL){
-            yInfo("bottle received: " + praxiconBottle->toString());
+            yInfo("bottle received: %s", praxiconBottle->toString().c_str());
             instructions.clear();
             if (praxiconBottle->toString().find("a") != -1){
                 for (int g=0; g < praxiconBottle->size(); ++g){
@@ -237,7 +237,7 @@ bool goalCompiler::receiveInstructions()
                                 plannerBottleOut.clear();
                                 plannerBottleOut.addString("unknown");
                                 plannerPort.write();
-                                yError("failed to compile: unknown object -> " +temp_str);
+                                yError("failed to compile: unknown object -> %s", temp_str.c_str());
                                 return false;
                             }
                             temp1_instructions = temp1_instructions + temp_str + " " ;
@@ -783,7 +783,7 @@ bool goalCompiler::checkConsistency()
 							{
 								failed_action.replace(failed_action.find("_hand"),5,"left");
 							}
-							yWarning("failed step: " +	failed_action);
+							yWarning("failed step: %s",	failed_action.c_str());
 							return false;
 						}
 					}
@@ -806,7 +806,7 @@ bool goalCompiler::checkConsistency()
 							{
 								failed_action.replace(failed_action.find("_hand"),5,"left");
 							}
-							yWarning("failed step: " + failed_action );
+							yWarning("failed step: %s", failed_action.c_str());
 							return false;
 						}
 					}

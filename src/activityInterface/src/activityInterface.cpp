@@ -160,6 +160,8 @@ bool ActivityInterface::configure(yarp::os::ResourceFinder &rf)
     yarp::os::Network::connect("/"+moduleName+"/imgClassifier:o", ("/himrepClassifierRoi/img:i"));
     yarp::os::Network::connect("/"+moduleName+"/classify:rpc", ("/himrepClassifierRoi/rpc"));
     
+    yarp::os::Network::connect("/fingerSpikes/activity:rpc ", ("/"+moduleName+"/rpc:i"));
+    
     if (with_robot)
     {
         Property optionLeft("(device cartesiancontrollerclient)");
@@ -254,6 +256,8 @@ bool ActivityInterface::configure(yarp::os::ResourceFinder &rf)
     allPaused = false;
     
     activeSeg.configure(rf);
+    
+    inAction = false;
     
     yInfo("[configure] done initialization\n");
     
@@ -1169,8 +1173,26 @@ string ActivityInterface::inHand(const string &objName)
 }
 
 /**********************************************************/
+string ActivityInterface::holdIn(const string &handName)
+{
+    string object;
+    
+    for (std::map<string, string>::iterator it=inHandStatus.begin(); it!=inHandStatus.end(); ++it)
+    {
+        if (strcmp (it->second.c_str(), handName.c_str() ) == 0)
+            object = it->first.c_str();
+        
+    }
+    if (object.empty())
+        object = "none";
+    
+    return object;
+}
+
+/**********************************************************/
 bool ActivityInterface::take(const string &objName, const string &handName)
 {
+    inAction = true;
     pauseAllTrackers();
     
     //check for hand status beforehand to make sure that it is empty
@@ -1225,8 +1247,6 @@ bool ActivityInterface::take(const string &objName, const string &handName)
                         }
                     }
 
-                    //update inHandStatus map
-                    inHandStatus.insert(pair<string, string>(objName.c_str(), handName.c_str()));
                     //do the take actions
                     Bottle cmd, reply;
                     cmd.clear(), reply.clear();
@@ -1234,6 +1254,10 @@ bool ActivityInterface::take(const string &objName, const string &handName)
                     cmd.addString("arms");
                     cmd.addString("head");
                     rpcAREcmd.write(cmd, reply);
+
+                    //update inHandStatus map
+                    inHandStatus.insert(pair<string, string>(objName.c_str(), handName.c_str()));
+                    
                 }else
                 {
                     Bottle cmd, reply;
@@ -1242,7 +1266,6 @@ bool ActivityInterface::take(const string &objName, const string &handName)
                     cmd.addString("all");
                     rpcAREcmd.write(cmd, reply);
                 }
-                    
             }
             else
             {
@@ -1263,6 +1286,7 @@ bool ActivityInterface::take(const string &objName, const string &handName)
     }
 
     resumeAllTrackers();
+    inAction = false;
     return true;
 }
 
@@ -1410,8 +1434,6 @@ bool ActivityInterface::askForTool(const std::string &handName, const int32_t po
     cmdHome.addString("head");
     rpcAREcmd.write(cmdHome,cmdReply);
     
-    //label = "rake"; just for testing @iit
-    
     if (!label.empty())
     {
         executeSpeech ("can you give me the " + label + "please?");
@@ -1501,7 +1523,7 @@ bool ActivityInterface::pull(const string &objName, const string &toolName)
 {
     pauseAllTrackers();
     
-    yInfo( "[pull] asked to pull %s with %s\n", objName.c_str(), toolName.c_str());
+    yInfo("[pull] asked to pull %s with %s\n", objName.c_str(), toolName.c_str());
     yInfo("[pull] asking 3D");
     Bottle position = get3D(objName);
     Bottle toolOffset = getOffset(toolName);
@@ -2038,9 +2060,6 @@ bool ActivityInterface::initObjectTracker(const string &objName)
             
             cvCvtColor(tpl,tpl,CV_BGR2RGB);
             
-            //cvSaveImage("foo.png",image_in);
-            //cvSaveImage("seg.png",tpl);
-            
             cv::Mat segmentation(cv::Mat(tpl, true));
             
             //computes mean over seg
@@ -2131,7 +2150,7 @@ Bottle ActivityInterface::trackStackedObject(const string &objName)
                         
                         totalDistance = dist[0] + dist[1] + dist[2];
                         allDistances.insert(pair<int, double>(i, totalDistance));
-                        
+
                     }
                 }
             }
@@ -2256,4 +2275,62 @@ string ActivityInterface::processScores(const Bottle &scores)
         }
     }
     return label;
+}
+
+/**********************************************************/
+bool ActivityInterface::gotSpike(const string &handName)
+{
+    bool report = handStat(handName);
+    if (report && !inAction)
+    {
+        executeSpeech("what was that??");
+        
+        yInfo("something has changed in hand %s", handName.c_str());
+        
+        //do the take actions
+        Bottle cmd, reply;
+        cmd.clear(), reply.clear();
+        cmd.addString("observe");
+        cmd.addString(handName.c_str());
+        rpcAREcmd.write(cmd, reply);
+        
+        string objName = holdIn(handName);
+        
+        if (classifyObserve())
+        {
+            yInfo("[gotSpike] holding a %s in hand %s", objName.c_str(), handName.c_str());
+            
+            string say = "Still have the " + objName + " in my hand";
+            executeSpeech(say);
+            
+            //do the take actions
+            Bottle cmd, reply;
+            cmd.clear(), reply.clear();
+            cmd.addString("home");
+            cmd.addString("arms");
+            cmd.addString("head");
+            rpcAREcmd.write(cmd, reply);
+            
+        }else
+        {
+            string say = "I seem to have lost the " + objName;
+            executeSpeech(say);
+            
+            for (std::map<string, string>::iterator it=inHandStatus.begin(); it!=inHandStatus.end(); ++it)
+            {
+                if (strcmp (it->first.c_str(), objName.c_str() ) == 0)
+                {
+                    inHandStatus.erase(objName.c_str());
+                    break;
+                }
+            }
+            
+            Bottle cmd, reply;
+            cmd.clear(), reply.clear();
+            cmd.addString("home");
+            cmd.addString("all");
+            rpcAREcmd.write(cmd, reply);
+        }
+    }
+    return true;
 }
