@@ -86,6 +86,7 @@ class goalCompiler : public RFModule
         bool translate();
         bool writeFiles();
 		bool checkConsistency();
+        bool clearUnimportantGoals();
 };
 
 #endif

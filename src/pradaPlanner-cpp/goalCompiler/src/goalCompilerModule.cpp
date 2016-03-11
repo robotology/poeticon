@@ -128,6 +128,16 @@ bool goalCompiler::configure(ResourceFinder &rf)
             	}
 				continue;
 			}
+            if (!clearUnimportantGoals())
+			{
+				yWarning("failed clearing unimportant subgoals");
+            	if (!plannerReply("fail"))
+            	{
+                	yError("failed to communicate with planner");
+                	//return false;
+            	}
+				continue;
+			}
             if (!writeFiles())
             {
                 yWarning("failed to write files");
@@ -816,4 +826,26 @@ bool goalCompiler::checkConsistency()
 		}
 	}
 	return true;
+}
+
+bool goalCompiler::clearUnimportantGoals()
+{
+    if (subgoals.size() == 0)
+    {
+        yError("subgoals not compiled yet.");
+        return false;
+    }
+    vector< vector<string> > temp_subgoals;
+    vector<string> temp_list;
+    for (int h = 0; h< subgoals.size(); ++h){
+        temp_list.clear();
+        for (int l = 0; l <subgoals[h].size(); ++l){
+            if (subgoals[h][l].find("11") == std::string::npos && subgoals[h][l].find("12") == std::string::npos){
+                temp_list.push_back(subgoals[h][l]);
+            }
+        }
+        temp_subgoals.push_back(temp_list);
+    }
+    subgoals = temp_subgoals;
+    return true;
 }
