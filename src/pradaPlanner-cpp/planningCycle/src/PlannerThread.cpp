@@ -368,6 +368,11 @@ bool PlannerThread::groundRules()
             yError("Geometric Grounding module crashed");
             return false;
         }
+        if (command == "fail")
+        {
+            yError("Grounding failed, there might be something wrong with the object list.");
+            return false;
+        }
         Time::delay(0.1);
     }
     aff_bottle_out = aff_yarp.prepare();
