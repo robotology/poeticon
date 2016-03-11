@@ -51,33 +51,52 @@ bool geoGround::groundingCycle()
             if (!loadObjs())
             {
                 yError("failed to load objects");
-                return false;
+                if (!plannerReply("fail"))
+                {
+                    yError("failed to communicate with planner");
+                }
+                continue;
             }
             if (!loadPreRules())
             {
                 yError("failed to load pre-rules");
-                return false;
+                if (!plannerReply("fail"))
+                {
+                    yError("failed to communicate with planner");
+                }
+                continue;
             }
             createRulesList();
             if (!getAffordances())
             {
                 yError("failed to get affordances");
-                return false;
+                if (!plannerReply("fail"))
+                {
+                    yError("failed to communicate with planner");
+                }
+                continue;
             }
             if (!createSymbolList())
             {
                 yError("failed to create a symbol list");
-                return false;
+                if (!plannerReply("fail"))
+                {
+                    yError("failed to communicate with planner");
+                }
+                continue;
             }
             if (!writeFiles())
             {
                 yError("failed to write to files");
-                return false;
+                if (!plannerReply("fail"))
+                {
+                    yError("failed to communicate with planner");
+                }
+                continue;
             }
-            if (!plannerReply())
+            if (!plannerReply("ready"))
             {
                 yError("failed to communicate with planner");
-                return false;
             }
         }
     }
@@ -525,7 +544,7 @@ string geoGround::plannerCommand()
     return "stopped";
 }
 
-bool geoGround::plannerReply()
+bool geoGround::plannerReply(string replyString)
 {
     yInfo("replying to planner");
     if (plannerPort.getInputCount() == 0)
@@ -535,7 +554,7 @@ bool geoGround::plannerReply()
     }
     Bottle& plannerBottleOut = plannerPort.prepare();
     plannerBottleOut.clear();
-    plannerBottleOut.addString("ready");
+    plannerBottleOut.addString(replyString);
     plannerPort.write();
     return true;
 }

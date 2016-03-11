@@ -215,7 +215,7 @@ bool affComm::affordancesCycle()
             {
                 //cout << "failed to perform query" << endl;
                 yError("Failed to perform query");
-                return false;
+                continue;
             }
         }
         if (command == "update")
@@ -224,13 +224,13 @@ bool affComm::affordancesCycle()
             {
                 //cout << "failed to turn graphics display off" << endl;
                 yError("Failed to turn graphics display off");
-                return false;
+                continue;
             }
             if (!loadObjs())
             {
                 //cout << "failed to initialize objects" << endl;
                 yError("Failed to initialize objects");
-                return false;
+                continue;
             }
             //cout << "objects loaded" << endl;
             yInfo("Objects loaded");
@@ -238,20 +238,20 @@ bool affComm::affordancesCycle()
             {
                 //cout << "failed to obtain object descriptors" << endl;
                 yError("Failed to obtain object descriptors");
-                return false;
+                continue;
             }
             if (!queryToolDescriptors())
             {
                 //cout << "failed to obtain tool descriptors" << endl;
                 yError("Failed to obtain tool descriptors");
-                return false;
+                continue;
             }
             posits.clear();
             if (!updateAffordances())
             {
                 //cout << "failed to update affordances" << endl;
                 yError("Failed to update affordances");
-                return false;
+                continue;
             }
         }
 		yarp::os::Time::delay(0.1);

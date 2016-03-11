@@ -81,7 +81,7 @@ class geoGround : public RFModule
         void openPorts();
         bool loadObjs();
         string plannerCommand();
-        bool plannerReply();
+        bool plannerReply(string replyString);
         bool loadPreRules();
         bool createRulesList();
         bool getAffordances();

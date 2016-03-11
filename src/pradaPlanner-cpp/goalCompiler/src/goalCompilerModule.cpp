@@ -44,7 +44,7 @@ bool goalCompiler::configure(ResourceFinder &rf)
             if (!plannerReply("fail"))
             {
                 yError("failed to communicate with planner");
-                return false;
+                //return false;
             }
             continue;
         }
@@ -56,7 +56,7 @@ bool goalCompiler::configure(ResourceFinder &rf)
             	if (!plannerReply("fail"))
             	{
                 	yError("failed to communicate with planner");
-                	return false;
+                	//return false;
             	}
                 continue;
             }
@@ -74,28 +74,48 @@ bool goalCompiler::configure(ResourceFinder &rf)
             	if (!plannerReply("fail"))
             	{
                 	yError("failed to communicate with planner");
-                	return false;
+                	//return false;
             	}
                 continue;
             }
             if (!loadRules())
             {
                 yWarning("failed to load rules");
+            	if (!plannerReply("fail"))
+            	{
+                	yError("failed to communicate with planner");
+                	//return false;
+            	}
                 continue;
             }
             if (!loadInstructions())
             {
                 yWarning("failed to load instructions");
+            	if (!plannerReply("fail"))
+            	{
+                	yError("failed to communicate with planner");
+                	//return false;
+            	}
                 continue;
             }
             if (!compile())
             {
                 yWarning("failed to compile goals");
+            	if (!plannerReply("fail"))
+            	{
+                	yError("failed to communicate with planner");
+                	//return false;
+            	}
                 continue;
             }
             if (!translate())
             {
                 yWarning("failed to translate goals");
+            	if (!plannerReply("fail"))
+            	{
+                	yError("failed to communicate with planner");
+                	//return false;
+            	}
                 continue;
             }
 			if (!checkConsistency())
@@ -104,19 +124,24 @@ bool goalCompiler::configure(ResourceFinder &rf)
             	if (!plannerReply("fail"))
             	{
                 	yError("failed to communicate with planner");
-                	return false;
+                	//return false;
             	}
 				continue;
 			}
             if (!writeFiles())
             {
                 yWarning("failed to write files");
+            	if (!plannerReply("fail"))
+            	{
+                	yError("failed to communicate with planner");
+                	//return false;
+            	}
                 continue;
             }
             if (!plannerReply("done"))
             {
                 yError("failed to communicate with planner");
-                return false;
+                //return false;
             }
         }
     }
