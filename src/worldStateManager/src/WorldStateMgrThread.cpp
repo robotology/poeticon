@@ -733,6 +733,7 @@ bool WorldStateMgrThread::computeObjProperties(const int &id, const string &labe
                  << "leaving shape descriptors untouched";
         isVisible = false;
     }
+    yDebug("%s %d/%s: trackerBottleIndex=%d", __func__, id, label.c_str(), tbi);
 
     // find the "affordance Bottle index" within inAff Bottle that matches
     // with the selected tracker blob
@@ -751,6 +752,7 @@ bool WorldStateMgrThread::computeObjProperties(const int &id, const string &labe
             isVisible = false;
         }
     }
+    yDebug("%s %d/%s: affordanceBottleIndex=%d", __func__, id, label.c_str(), abi);
 
     // now we know that object was found in both tracker and shape descriptors
     if (isVisible)
