@@ -450,7 +450,8 @@ bool WorldStateMgrThread::getTrackNames()
         }
 
         bool safetyCheck = false;
-        safetyCheck = inTargets->get(i).isList() &&
+        safetyCheck = inTargets != NULL &&
+            inTargets->get(i).isList() &&
             inTargets->get(i).asList()->size()>0; // expected size 8
         if (!safetyCheck)
         {
@@ -556,11 +557,13 @@ bool WorldStateMgrThread::refreshTracker()
         return false;
     }
 
-    inTargets = inTargetsPort.read();
+    // non-blocking read to handle case of no current tracks (or all tracks paused)
+    inTargets = inTargetsPort.read(false);
 
     if (inTargets==NULL)
     {
         yWarning() << __func__ << "did not receive data from tracker";
+        sizeTargets = 0; // number of tracked objects
         return false;
     }
 
@@ -682,6 +685,10 @@ bool WorldStateMgrThread::getAffBottleIndexFromTrackROI(const int &u, const int 
 /**********************************************************/
 bool WorldStateMgrThread::getTrackerBottleIndexFromID(const int &id, int &tbi)
 {
+    // no current tracks (or all tracks paused)
+    if (inTargets == NULL)
+        return false;
+
     // we assume that activeParticleTrack is streaming a Bottle with ordered IDs:
     // ((13 ...) (14 ...) (15 ...))
     // TODO: verify that this is the case, else reorder
@@ -724,7 +731,7 @@ bool WorldStateMgrThread::computeObjProperties(const int &id, const string &labe
         refreshTracker();
 
     // find the "tracker Bottle index" within inTargets Bottle that matches id
-    int tbi = 0;
+    int tbi = -1;
     if (!getTrackerBottleIndexFromID(id,tbi))
     {
         yDebug() << __func__ << "did not find track id" << id
@@ -733,14 +740,16 @@ bool WorldStateMgrThread::computeObjProperties(const int &id, const string &labe
                  << "leaving shape descriptors untouched";
         isVisible = false;
     }
-    yDebug("%s %d/%s: trackerBottleIndex=%d", __func__, id, label.c_str(), tbi);
 
     // find the "affordance Bottle index" within inAff Bottle that matches
     // with the selected tracker blob
     double u=0.0, v=0.0;
-    u = inTargets->get(tbi).asList()->get(1).asDouble();
-    v = inTargets->get(tbi).asList()->get(2).asDouble();
-    int abi = tbi+1; // affordance blobs Bottle index
+    if (tbi != -1)
+    {
+        u = inTargets->get(tbi).asList()->get(1).asDouble();
+        v = inTargets->get(tbi).asList()->get(2).asDouble();
+    }
+    int abi = -1; // affordance blobs Bottle index
     if (isVisible)
     {
         if (!getAffBottleIndexFromTrackROI(u,v,abi))
@@ -752,7 +761,8 @@ bool WorldStateMgrThread::computeObjProperties(const int &id, const string &labe
             isVisible = false;
         }
     }
-    yDebug("%s %d/%s: affordanceBottleIndex=%d", __func__, id, label.c_str(), abi);
+    yDebug("%s %d/%s: trackerBottleIndex=%d affordanceBottleIndex=%d",
+           __func__, id, label.c_str(), tbi, abi);
 
     // now we know that object was found in both tracker and shape descriptors
     if (isVisible)
