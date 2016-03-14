@@ -71,5 +71,6 @@ public:
     void setManager(ActivityInterface *manager);
 };
 
+
 #endif
 //empty line to make gcc happy

@@ -305,7 +305,7 @@ bool affComm::queryDescriptors()
             //yDebug("Reply: %s", reply.toString().c_str());
             if (reply.size() == 1){
     	        //if (reply.toString() != "ACK" && reply.toString() != "()" && reply.toString() != "" && reply.toString() != "[fail]")
-                if (reply.get(0).asList()->size() > 0)
+                if (reply.get(0).asList()->size() > 0 && reply.get(0).asList()->get(0).asList()->size() > 0)
                 {
                     data.clear();
                     data.push_back(atof(objects[i][0].c_str()));
@@ -384,6 +384,7 @@ bool affComm::queryToolDescriptors()
 					//cout << "default descriptors" << endl;
                     yWarning("Default descriptors");
     	            tool_data.clear();
+    	            temp_vect.clear();
     	            temp_vect.push_back(atof(objects[i][0].c_str())); // tools
     	            tool_data.push_back(temp_vect);
     	            temp_vect.clear();
@@ -673,6 +674,7 @@ bool affComm::getPushAff()
     {
         if (act[1] != "11" && act[1] != "12" && act[3] != "11" && act[3] != "12")
         {
+            yDebug("Objects are: %s, %s", act[1].c_str(), act[3].c_str());
             //cout << "getting push stuff" << endl;
             Bottle& affnet_bottle_out = affnetPort.prepare();
             affnet_bottle_out.clear();
@@ -680,18 +682,20 @@ bool affComm::getPushAff()
             tool = act[3];
             for (int o = 0; o < descriptors.size(); ++o)
             {
+                //yDebug("descriptor: %f, %f", descriptors[o][0], strtof(obj.c_str(), NULL));
                 if (descriptors[o][0] == strtof(obj.c_str(), NULL))
                 {
                     obj_desc = descriptors[o];
+                    yDebug() << obj_desc;
                 }
             }
             //cout << "descriptors are: " << endl;
             //yDebug("Object descriptors:");
-            for (int o = 0; o < obj_desc.size(); ++o)
+            /*for (int o = 0; o < obj_desc.size(); ++o)
             {
                 //cout << obj_desc[o] << endl;
-                //yDebug("%f", obj_desc[o]);
-            }
+                yDebug("%f", obj_desc[o]);
+            }*/
             //cout << "descriptors done, going for tool desc" << endl;
             for (int o = 0; o < tooldescriptors.size(); ++o)
             {
@@ -701,11 +705,11 @@ bool affComm::getPushAff()
                     //cout << tool << endl;
                     //yDebug("Tool descriptors:");
                     tool_desc1 = tooldescriptors[o][1];
-                    for (int u =0; u < tool_desc1.size(); ++u)
+                    /*for (int u =0; u < tool_desc1.size(); ++u)
                     {
                         //cout << tool_desc1[u] << endl;
-                        //yDebug("%f", tool_desc1[u]);
-                    }
+                        yDebug("%f", tool_desc1[u]);
+                    }*/
                     tool_desc2 = tooldescriptors[o][2];
                     toolnum = o;
                 }
@@ -725,7 +729,7 @@ bool affComm::getPushAff()
                 //cout << affnet_bottle_out.toString() << endl;
                 affnetPort.write();
                 //cout << "query to aff net sent" << endl;
-                //yInfo("Query to affordance network sent: %s", affnet_bottle_out.toString().c_str());
+                yInfo("Query to affordance network sent: %s", affnet_bottle_out.toString().c_str());
                 while (!isStopping())
                 {
                     affnet_bottle_in = affnetPort.read(false);
@@ -770,7 +774,7 @@ bool affComm::getPushAff()
                 }
                 //cout << "probability obtained" << endl;
                 //cout << prob_succ1 << endl;
-                //yDebug("Probability was: %f", prob_succ1);
+                yDebug("Probability was: %f", prob_succ1);
                 if (prob_succ1 >= 0.95)
                 {
                     prob_succ1 = 0.95;
@@ -806,7 +810,7 @@ bool affComm::getPushAff()
                 //cout << affnet_bottle_out.toString() << endl;
                 affnetPort.write();
                 //cout << "done" << endl;
-                //yInfo("Query to affordance network sent: %s", affnet_bottle_out.toString().c_str());
+                yInfo("Query to affordance network sent: %s", affnet_bottle_out.toString().c_str());
                 while (!isStopping())
                 {
                     affnet_bottle_in = affnetPort.read(false);
@@ -850,7 +854,7 @@ bool affComm::getPushAff()
                 }
                 //cout << "probabilities obtained" << endl;
                 //cout << prob_succ2 << endl;
-                //yDebug("Probability was: %f", prob_succ2);
+                yDebug("Probability was: %f", prob_succ2);
                 if (prob_succ2 >= 0.95)
                 {
                     prob_succ2 = 0.95;
@@ -1046,7 +1050,7 @@ bool affComm::getPullAff()
                 }
                 //cout << "probabilities obtained" << endl;
                 //cout << prob_succ1 << endl;
-                //yDebug("Probability was: %f", prob_succ1);
+                yDebug("Probability was: %f", prob_succ1);
                 if (prob_succ1 >= 0.95)
                 {
                     prob_succ1 = 0.95;
@@ -1123,7 +1127,7 @@ bool affComm::getPullAff()
                 }
                 //cout << "probabilities obtained" << endl;
                 //cout << prob_succ2 << endl;
-                //yDebug("Probability was: %f", prob_succ2);
+                yDebug("Probability was: %f", prob_succ2);
                 if (prob_succ2 >= 0.95)
                 {
                     prob_succ2 = 0.95;
