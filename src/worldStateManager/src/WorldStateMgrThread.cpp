@@ -761,8 +761,8 @@ bool WorldStateMgrThread::computeObjProperties(const int &id, const string &labe
             isVisible = false;
         }
     }
-    yDebug("%s %d/%s: trackerBottleIndex=%d affordanceBottleIndex=%d",
-           __func__, id, label.c_str(), tbi, abi);
+    yDebug("%s %d/%s: trackerBottleIndex=%d affordanceBottleIndex=%d isVisible=%s",
+           __func__, id, label.c_str(), tbi, abi, BoolToString(isVisible));
 
     // now we know that object was found in both tracker and shape descriptors
     if (isVisible)
@@ -1600,17 +1600,18 @@ bool WorldStateMgrThread::doPopulateDB()
         iter != objs.end();
         ++iter)
     {
-        // compute updated properties
-        Bottle pos2d;
-        Bottle desc2d;
-        Bottle tooldesc2d;
+        // get current properties
+        Bottle pos2d = iter->pos2d; // value to keep if obj not visible
+        Bottle desc2d = iter->desc2d; // value to keep if obj not visible
+        Bottle tooldesc2d = iter->tooldesc2d; // value to keep if obj not visible
         string inHand;
         Bottle onTopOf;
         Bottle reachW;
         Bottle pullW;
+        // compute updated properties
         computeObjProperties(iter->id,iter->name,
-                             pos2d,
-                             desc2d,tooldesc2d,
+                             pos2d,             // if not visible, keep current
+                             desc2d,tooldesc2d, // if not visible, keep current
                              inHand,
                              onTopOf,
                              reachW,pullW);
