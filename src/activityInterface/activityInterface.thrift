@@ -31,6 +31,13 @@ service activityInterface_IDLServer
     * @return true/false on holding or not
     **/
     bool handStat(1:string handName)
+    
+    /**
+     * Get the object located in handName
+     * @param handName specifies the name of the hand in question
+     * @return string with the name of the object
+     **/
+    string holdIn(1:string handName)
 
     /**
      * Get the label of the object located in the vicinity of xpo and ypos
@@ -207,6 +214,25 @@ service activityInterface_IDLServer
      * @return string with the name of the object
      **/
     Bottle getCog(1:i32 tlxpos, 2:i32 tlypos, 3:i32 brxpos, 4:i32 brypos);
+    
+    /**
+     * Trains the classifier with the associated label
+     * @param label specifies the name of the classified object
+     * @return true/false on success/failure
+     **/
+    bool trainObserve(1:string label);
+    
+    /**
+     * Classifies what is seen in the image
+     * @return true/false on object in hand or not
+     **/
+    bool classifyObserve();
+    
+    /**
+     * Informs activityInterface that something has changed in the hand
+     * @return true/false on success/failure
+     **/
+    bool gotSpike(1:string handName);
     
     /**
      * Quit the module.
