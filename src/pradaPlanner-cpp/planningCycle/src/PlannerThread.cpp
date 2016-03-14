@@ -870,7 +870,7 @@ bool PlannerThread::planCompletion()
                     string check_str=object_IDs[inde][1];
                     transform(check_str.begin(), check_str.end(), check_str.begin(), ::tolower);
                     //yDebug("After conversion: %s", check_str.c_str());
-                    if (check_str != "rake" && check_str != "stick" && check_str != "left" && check_str != "right"){
+                    if (check_str != "rake" && check_str != "stick" && check_str != "left" && check_str != "right" /*&& find_element(tool_list,check_str) == 0 */){
                         prax_bottle_out.addString(object_IDs[inde][1]);
                     }
                 }
@@ -977,7 +977,7 @@ bool PlannerThread::increaseHorizon()
                             if (object_IDs[inde][0] == objects_failed[u]){
                                 string check_str=object_IDs[inde][1];
                                 transform(check_str.begin(), check_str.end(), check_str.begin(), ::tolower);
-                                if (check_str != "rake" && check_str != "stick" && check_str != "left" && check_str != "right"){
+                                if (check_str != "rake" && check_str != "stick" && check_str != "left" && check_str != "right" /*&& find_element(tool_list,check_str) == 0 */){
                                     prax_bottle_out.addString(object_IDs[inde][1]);
                                 }
                             }
@@ -1061,7 +1061,7 @@ bool PlannerThread::loadUsedObjs()
     for (int y = 0; y < object_IDs.size(); ++y){
         string check_str=object_IDs[y][1];
         transform(check_str.begin(), check_str.end(), check_str.begin(), ::tolower);
-        if (next_action.find(object_IDs[y][0]) != std::string::npos && check_str != "stick" && check_str != "rake" && check_str != "left" && check_str != "right"){
+        if (next_action.find(object_IDs[y][0]) != std::string::npos && check_str != "stick" && check_str != "rake" && check_str != "left" && check_str != "right" /*&& find_element(tool_list,check_str) == 0 */){
             aux_used.push_back(object_IDs[y][0]);
         }
     }
@@ -1131,8 +1131,12 @@ bool PlannerThread::codeAction()
             if (check_str == "stick"){
                 tool2 = object_IDs[ID][0];
             }
+            /*if (find_element(tool_list,check_str) == 1)
+            {
+                tool_obj = object_IDs[ID][0];
+            }*/
         }
-        if (act == "grasp" && (obj == tool1 || obj == tool2)){
+        if (act == "grasp" && (obj == tool1 || obj == tool2) /*&& obj == tool_obj*/){
             for (int i = 0; i < toolhandle.size(); ++i){
                 if (toolhandle[i] == obj){
                     temp_float = strtof(toolhandle[i+1].c_str(), NULL);
@@ -1172,14 +1176,14 @@ bool PlannerThread:: execAction()
     message.clear();
     string check_strobj = obj;
     transform(check_strobj.begin(), check_strobj.end(), check_strobj.begin(), ::tolower);
-    if (act == "grasp" && (check_strobj == "rake" || check_strobj == "stick")){
+    if (act == "grasp" && (check_strobj == "rake" || check_strobj == "stick") /*&& find_element(tool_list,check_strobj) == 1 */){
         act = "askForTool";
         message.addString(act);
         message.addString(hand);
         message.addInt(positx);
         message.addInt(posity);
     }
-    else if (act == "grasp" && (check_strobj != "rake" && check_strobj != "stick")){
+    else if (act == "grasp" && (check_strobj != "rake" && check_strobj != "stick" /*&& find_element(tool_list,check_strobj) == 0 */)){
         act = "take";
         message.addString(act);
         message.addString(obj);
@@ -1279,7 +1283,7 @@ bool PlannerThread::checkFailure()
                 if (object_IDs[inde][0] == aux_fail_obj[u]){
                     string check_str = object_IDs[inde][1];
                     transform(check_str.begin(), check_str.end(), check_str.begin(), ::tolower);
-                    if (check_str != "rake" && check_str != "stick" && check_str != "left" && check_str != "right"){
+                    if (check_str != "rake" && check_str != "stick" && check_str != "left" && check_str != "right" /*&& find_element(tool_list,check_str) == 0 */){
                         prax_bottle_out.addString(object_IDs[inde][1]);
                     }
                 }
@@ -1776,3 +1780,25 @@ string PlannerThread::printSymbol(string symbol)
     }
     return "fail";
 }
+/*
+Bottle PlannerThread::getToolList()
+{
+    tool_list.clear();
+    message.clear();
+    reply.clear();
+    message.addString("getToolNames");
+    actInt_rpc.write(message, reply);
+    if (reply.size() != 0);
+    {
+        for (int i = 0; i < reply.size(); ++i)
+        {
+            tool_list.push_back(reply.get(i).asString());
+        }
+    }
+    else
+    {
+        yWarning("no tools found: either there are no tools present, or there was an error with the message");
+    }
+    return reply;
+}
+*/

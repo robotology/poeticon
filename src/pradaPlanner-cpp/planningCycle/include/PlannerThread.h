@@ -106,6 +106,7 @@ class PlannerThread : public RateThread
         vector<string> objects_used;
         vector<string> goal;
         vector<string> failed_goal;
+        //vector<string> tool_list;
 
         vector<vector<string> > subgoals;
         vector<vector<string> > object_IDs;
@@ -168,6 +169,7 @@ class PlannerThread : public RateThread
         string showCurrentState();
         string showCurrentGoal();
         string printSymbol(string symbol);
+        //Bottle getToolList();
 };
 
 #endif

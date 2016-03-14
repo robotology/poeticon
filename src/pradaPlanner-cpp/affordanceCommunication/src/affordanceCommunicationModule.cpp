@@ -299,10 +299,10 @@ bool affComm::queryDescriptors()
             cmd.addInt(atoi(objects[i][0].c_str()));
             reply.clear();
             //cout << "query:" << cmd.toString() << endl;
-            yDebug("Query: %s", cmd.toString().c_str());
+            //yDebug("Query: %s", cmd.toString().c_str());
             descQueryPort.write(cmd, reply);
             //cout << "reply: " << reply.toString() << endl;
-            yDebug("Reply: %s", reply.toString().c_str());
+            //yDebug("Reply: %s", reply.toString().c_str());
             if (reply.size() == 1){
     	        //if (reply.toString() != "ACK" && reply.toString() != "()" && reply.toString() != "" && reply.toString() != "[fail]")
                 if (reply.get(0).asList()->size() > 0)
@@ -328,6 +328,11 @@ bool affComm::queryDescriptors()
                     data.push_back(0.0);
                     descriptors.push_back(data);
                 }
+                yDebug("Object descriptors:");
+                for (int d = 0; d < descriptors.size(); ++d)
+                {
+                    yDebug() << descriptors[d];
+                }
             }
         }
     }
@@ -349,10 +354,10 @@ bool affComm::queryToolDescriptors()
     	    cmd.addInt(atoi(objects[i][0].c_str())); // tools
     	    reply.clear();
     	    //cout << "query tools:" << cmd.toString() << endl;
-            yDebug("Query tools: %s", cmd.toString().c_str());
+            //yDebug("Query tools: %s", cmd.toString().c_str());
     	    descQueryPort.write(cmd,reply);
     	    //cout << "reply tools:" << reply.toString() << endl;
-            yDebug("Reply tools: %s", reply.toString().c_str());
+            //yDebug("Reply tools: %s", reply.toString().c_str());
     	    if (reply.size() == 1){
                 if (reply.get(0).asList()->size() > 0 && reply.get(0).asList()->get(0).asList()->size() > 0)
     	        {
@@ -401,6 +406,11 @@ bool affComm::queryToolDescriptors()
     	            tool_data.push_back(temp_vect);
     	            tooldescriptors.push_back(tool_data);
     	        }
+                yDebug("Tool descriptors:");
+                for (int d = 0; d < tooldescriptors.size(); ++d)
+                {
+                    yDebug() << tooldescriptors[d];
+                }
     	    }
     	}
 	}
@@ -676,11 +686,11 @@ bool affComm::getPushAff()
                 }
             }
             //cout << "descriptors are: " << endl;
-            yDebug("Object descriptors:");
+            //yDebug("Object descriptors:");
             for (int o = 0; o < obj_desc.size(); ++o)
             {
                 //cout << obj_desc[o] << endl;
-                yDebug("%f", obj_desc[o]);
+                //yDebug("%f", obj_desc[o]);
             }
             //cout << "descriptors done, going for tool desc" << endl;
             for (int o = 0; o < tooldescriptors.size(); ++o)
@@ -689,12 +699,12 @@ bool affComm::getPushAff()
                 if (tooldescriptors[o][0][0] == strtof(tool.c_str(),NULL))
                 {
                     //cout << tool << endl;
-                    yDebug("Tool descriptors:");
+                    //yDebug("Tool descriptors:");
                     tool_desc1 = tooldescriptors[o][1];
                     for (int u =0; u < tool_desc1.size(); ++u)
                     {
                         //cout << tool_desc1[u] << endl;
-                        yDebug("%f", tool_desc1[u]);
+                        //yDebug("%f", tool_desc1[u]);
                     }
                     tool_desc2 = tooldescriptors[o][2];
                     toolnum = o;
@@ -715,7 +725,7 @@ bool affComm::getPushAff()
                 //cout << affnet_bottle_out.toString() << endl;
                 affnetPort.write();
                 //cout << "query to aff net sent" << endl;
-                yInfo("Query to affordance network sent: %s", affnet_bottle_out.toString().c_str());
+                //yInfo("Query to affordance network sent: %s", affnet_bottle_out.toString().c_str());
                 while (!isStopping())
                 {
                     affnet_bottle_in = affnetPort.read(false);
@@ -760,7 +770,7 @@ bool affComm::getPushAff()
                 }
                 //cout << "probability obtained" << endl;
                 //cout << prob_succ1 << endl;
-                yDebug("Probability was: %f", prob_succ1);
+                //yDebug("Probability was: %f", prob_succ1);
                 if (prob_succ1 >= 0.95)
                 {
                     prob_succ1 = 0.95;
@@ -796,7 +806,7 @@ bool affComm::getPushAff()
                 //cout << affnet_bottle_out.toString() << endl;
                 affnetPort.write();
                 //cout << "done" << endl;
-                yInfo("Query to affordance network sent: %s", affnet_bottle_out.toString().c_str());
+                //yInfo("Query to affordance network sent: %s", affnet_bottle_out.toString().c_str());
                 while (!isStopping())
                 {
                     affnet_bottle_in = affnetPort.read(false);
@@ -840,7 +850,7 @@ bool affComm::getPushAff()
                 }
                 //cout << "probabilities obtained" << endl;
                 //cout << prob_succ2 << endl;
-                yDebug("Probability was: %f", prob_succ2);
+                //yDebug("Probability was: %f", prob_succ2);
                 if (prob_succ2 >= 0.95)
                 {
                     prob_succ2 = 0.95;
@@ -1036,7 +1046,7 @@ bool affComm::getPullAff()
                 }
                 //cout << "probabilities obtained" << endl;
                 //cout << prob_succ1 << endl;
-                yDebug("Probability was: %f", prob_succ1);
+                //yDebug("Probability was: %f", prob_succ1);
                 if (prob_succ1 >= 0.95)
                 {
                     prob_succ1 = 0.95;
@@ -1113,7 +1123,7 @@ bool affComm::getPullAff()
                 }
                 //cout << "probabilities obtained" << endl;
                 //cout << prob_succ2 << endl;
-                yDebug("Probability was: %f", prob_succ2);
+                //yDebug("Probability was: %f", prob_succ2);
                 if (prob_succ2 >= 0.95)
                 {
                     prob_succ2 = 0.95;

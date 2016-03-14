@@ -20,6 +20,7 @@
 #include <yarp/os/Time.h>
 #include <yarp/os/Vocab.h>
 #include <yarp/os/Log.h>
+#include <yarp/os/LogStream.h>
 #include <fstream>
 #include <sstream>
 #include <string.h>
