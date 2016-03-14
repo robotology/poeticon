@@ -289,6 +289,7 @@ bool goalCompiler::loadObjs()
 	translat.clear();
     action_sequence.clear();
     cmd.clear();
+    subgoals.clear();
     cmd.addString("printObjects");
     objectQueryPort.write(cmd,reply);
     if (reply.size() > 0 && reply.get(0).isList() && reply.get(0).asList()->size() > 2){
@@ -632,7 +633,7 @@ bool goalCompiler::compile()
     yInfo("action sequence: ");
 	for (int i = 0; i < action_sequence.size(); ++i)
 	{
-		yInfo("%s", action_sequence[i][0].c_str());
+		yInfo("%s %s %s", action_sequence[i][0].c_str(), action_sequence[i][1].c_str(), action_sequence[i][2].c_str() );
 	}
     return true;
 }
@@ -658,6 +659,15 @@ bool goalCompiler::translate()
             }
         }
     }
+    string temp_str="";
+    for (int i = 0; i < subgoals.size(); ++i){
+        for (int j=0; j < subgoals[i].size(); ++j){
+            //debugging message
+            temp_str = temp_str + " " + subgoals[i][j];
+        }
+        yDebug("subgoal list: %s", temp_str.c_str());
+        temp_str = "";
+    }
     return true;
 }
 
@@ -675,13 +685,18 @@ bool goalCompiler::writeFiles()
         yError("unable to open subgoal file.");
         return false;
     }
+    string temp_str="";
     for (int i = 0; i < subgoals.size(); ++i){
         for (int j=0; j < subgoals[i].size(); ++j){
             subgoalFile << subgoals[i][j] ;
+            //debugging message
+            //temp_str = temp_str + " " + subgoals[i][j];
             if ( j != subgoals[i].size()-1){
-                subgoalFile << " ";
+                subgoalFile << " ";                
             }
         }
+        //yDebug("subgoal list: %s", temp_str.c_str());
+        //temp_str = "";
         subgoalFile << endl;
     }
     subgoalFile.close();
@@ -738,6 +753,7 @@ bool goalCompiler::checkConsistency()
                         break;
                     }
 				}
+                yDebug("requirements: %s", requirements.c_str());
 				requirement_vector = split(requirements, ' ');
 				requirements = "";
 				for (int k = 0; k < requirement_vector.size(); ++k)
@@ -759,6 +775,7 @@ bool goalCompiler::checkConsistency()
 						requirements = requirements + requirement_vector[k] + " ";
 					}
 				}
+                yDebug("requirements: %s", requirements.c_str());
 				for (int k = 0; k < translat.size(); ++k)
 				{
 					while (!isStopping()) {
@@ -770,6 +787,7 @@ bool goalCompiler::checkConsistency()
                     	}
 					}                
 				}
+                yDebug("requirements: %s", requirements.c_str());
 				required_state_vector = split(requirements, ' ');
 				for (int k = 0; k < required_state_vector.size(); ++k)
 				{
@@ -794,6 +812,8 @@ bool goalCompiler::checkConsistency()
 								failed_action.replace(failed_action.find("_hand"),5,"left");
 							}
 							yWarning("failed step: %s",	failed_action.c_str());
+                            yDebug("failing symbol: %s", negated_symbol.c_str());
+                            subgoals.clear();
 							return false;
 						}
 					}
@@ -817,6 +837,8 @@ bool goalCompiler::checkConsistency()
 								failed_action.replace(failed_action.find("_hand"),5,"left");
 							}
 							yWarning("failed step: %s", failed_action.c_str());
+                            yDebug("failing symbol: %s", negated_symbol.c_str());
+                            subgoals.clear();
 							return false;
 						}
 					}

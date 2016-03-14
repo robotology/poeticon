@@ -470,7 +470,7 @@ bool PlannerThread::compileGoal()
             }
             else if (goal_bottle_in->toString() == "fail")
             {
-                yWarning("Something failed while loading the objects on the Goal Compiler module");
+                yWarning("Something failed while compiling: consistency check failed or failure to load objects");
                 return false;
             }
             else
@@ -733,6 +733,7 @@ bool PlannerThread::adaptRules()
         yError("unable to open rules file!");
         return false;
     }
+    yDebug("before for: %s", next_action.c_str());
     for (int t = 0; t < rules.size(); ++t){
         temp_str = rules[t];
         while (!closing){
@@ -749,6 +750,7 @@ bool PlannerThread::adaptRules()
                 break;
             }
         }
+        yDebug("action to be adapted: %s", next_action.c_str());
         if (temp_str == next_action && next_action != ""){
             int p = 0;
             while (!closing){
