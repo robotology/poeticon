@@ -41,7 +41,7 @@ bool goalCompiler::configure(ResourceFinder &rf)
         if (!loadObjs())
         {
             yWarning("failed to load objects");
-            if (!plannerReply("fail"))
+            if (!plannerReply("failed objects"))
             {
                 yError("failed to communicate with planner");
                 //return false;
@@ -53,7 +53,7 @@ bool goalCompiler::configure(ResourceFinder &rf)
             if (!loadObjs())
             {
                 yWarning("failed to load objects");
-            	if (!plannerReply("fail"))
+            	if (!plannerReply("failed objects"))
             	{
                 	yError("failed to communicate with planner");
                 	//return false;
@@ -71,7 +71,7 @@ bool goalCompiler::configure(ResourceFinder &rf)
             if (!loadObjs())
             {
                 yWarning("failed to load objects");
-            	if (!plannerReply("fail"))
+            	if (!plannerReply("failed objects"))
             	{
                 	yError("failed to communicate with planner");
                 	//return false;
@@ -81,7 +81,7 @@ bool goalCompiler::configure(ResourceFinder &rf)
             if (!loadRules())
             {
                 yWarning("failed to load rules");
-            	if (!plannerReply("fail"))
+            	if (!plannerReply("failed rules"))
             	{
                 	yError("failed to communicate with planner");
                 	//return false;
@@ -91,7 +91,7 @@ bool goalCompiler::configure(ResourceFinder &rf)
             if (!loadInstructions())
             {
                 yWarning("failed to load instructions");
-            	if (!plannerReply("fail"))
+            	if (!plannerReply("failed instructions"))
             	{
                 	yError("failed to communicate with planner");
                 	//return false;
@@ -101,7 +101,7 @@ bool goalCompiler::configure(ResourceFinder &rf)
             if (!compile())
             {
                 yWarning("failed to compile goals");
-            	if (!plannerReply("fail"))
+            	if (!plannerReply("failed compiling"))
             	{
                 	yError("failed to communicate with planner");
                 	//return false;
@@ -111,7 +111,7 @@ bool goalCompiler::configure(ResourceFinder &rf)
             if (!translate())
             {
                 yWarning("failed to translate goals");
-            	if (!plannerReply("fail"))
+            	if (!plannerReply("failed translation"))
             	{
                 	yError("failed to communicate with planner");
                 	//return false;
@@ -121,7 +121,7 @@ bool goalCompiler::configure(ResourceFinder &rf)
 			if (!checkConsistency())
 			{
 				yWarning("failed consistency test");
-            	if (!plannerReply("fail"))
+            	if (!plannerReply("failed consistency"))
             	{
                 	yError("failed to communicate with planner");
                 	//return false;
@@ -131,7 +131,7 @@ bool goalCompiler::configure(ResourceFinder &rf)
             if (!clearUnimportantGoals())
 			{
 				yWarning("failed clearing unimportant subgoals");
-            	if (!plannerReply("fail"))
+            	if (!plannerReply("failed pruning"))
             	{
                 	yError("failed to communicate with planner");
                 	//return false;
@@ -141,7 +141,7 @@ bool goalCompiler::configure(ResourceFinder &rf)
             if (!writeFiles())
             {
                 yWarning("failed to write files");
-            	if (!plannerReply("fail"))
+            	if (!plannerReply("failed writing"))
             	{
                 	yError("failed to communicate with planner");
                 	//return false;
@@ -226,7 +226,7 @@ bool goalCompiler::receiveInstructions()
             yError("timeout: no instructions received before 5 minutes time");
             Bottle &plannerBottleOut = plannerPort.prepare();
             plannerBottleOut.clear();
-            plannerBottleOut.addString("failed");
+            plannerBottleOut.addString("failed Praxicon");
             plannerPort.write();
             return false;
         }
@@ -269,7 +269,7 @@ bool goalCompiler::receiveInstructions()
             yError("praxicon crashed or disconnected");
             Bottle &plannerBottleOut = plannerPort.prepare();
             plannerBottleOut.clear();
-            plannerBottleOut.addString("failed");
+            plannerBottleOut.addString("failed Praxicon");
             plannerPort.write();
             return false;
         }

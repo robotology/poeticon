@@ -431,9 +431,14 @@ bool PlannerThread::compileGoal()
                 yInfo("Praxicon instruction received, compiling...");
                 break;
             }
-            else if (goal_bottle_in->toString() == "failed")
+            else if (goal_bottle_in->toString() == "failed objects")
             {
-                yError("Praxicon disconnected or crashed, compiling failed.");
+                yError("goalCompiler failed to load object list.");
+                return false;
+            }
+            else if (goal_bottle_in->toString() == "failed Praxicon")
+            {
+                yError("Praxicon crashed or took too long to reply (5 minutes timeout).");
                 return false;
             }
             else if (goal_bottle_in->toString() == "unknown")
@@ -443,7 +448,7 @@ bool PlannerThread::compileGoal()
             }
             else
             {
-                yError("non-standard message received, something failed with the Goal Compiler module.");
+                yError("non-standard message received, something failed with the goalCompiler module.");
                 return false;
             }
         }
@@ -468,9 +473,45 @@ bool PlannerThread::compileGoal()
                 yInfo("Goal Compiling is complete!");
                 break;
             }
-            else if (goal_bottle_in->toString() == "fail")
+            else if (goal_bottle_in->toString() == "failed objects")
             {
-                yWarning("Something failed while compiling: consistency check failed or failure to load objects");
+                yWarning("goalCompiler failed to load object list.");
+                return false;
+            }
+            else if (goal_bottle_in->toString() == "failed rules")
+            {
+                yWarning("goalCompiler failed to load rules list.");
+                return false;
+            }
+            else if (goal_bottle_in->toString() == "failed instructions")
+            {
+                yWarning("goalCompiler failed to load instructions list.");
+                return false;
+            }
+            else if (goal_bottle_in->toString() == "failed compiling")
+            {
+                yWarning("goalCompiler failed to compile the subgoals.");
+                return false;
+            }
+            else if (goal_bottle_in->toString() == "failed translation")
+            {
+                yWarning("goalCompiler failed to translate the subgoals.");
+                return false;
+            }
+            else if (goal_bottle_in->toString() == "failed consistency")
+            {
+                yWarning("Consistency Check failed; the instructions provided by the Praxicon cannot be achieved.");
+                // send message to paxicon
+                return false;
+            }
+            else if (goal_bottle_in->toString() == "failed pruning")
+            {
+                yWarning("goalCompiler failed to prune the subgoal list.");
+                return false;
+            }
+            else if (goal_bottle_in->toString() == "failed writing")
+            {
+                yWarning("goalCompiler failed to write subgoals to the subgoal file.");
                 return false;
             }
             else
