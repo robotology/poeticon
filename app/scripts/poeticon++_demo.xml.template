@@ -32,7 +32,7 @@
 </module>
 <module>
     <name>objectsPropertiesCollector</name>
-    <parameters>--name wsopc --context poeticon --db dbhands.ini --nosave --async_bc</parameters>
+    <parameters>--name wsopc --context poeticon --db dbhands.ini --no-save-db --async-bc</parameters>
     <node>console</node>
 </module>
 <module>
