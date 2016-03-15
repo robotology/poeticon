@@ -83,6 +83,7 @@ class PlannerThread : public RateThread
         bool restartPlan;
         bool resumePlan;
         bool startPlan;
+        bool stopping;
         
         int plan_level;
 
