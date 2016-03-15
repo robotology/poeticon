@@ -791,7 +791,7 @@ bool PlannerThread::adaptRules()
                 break;
             }
         }
-        yDebug("action to be adapted: %s", next_action.c_str());
+        //yDebug("action to be adapted: %s", next_action.c_str());
         if (temp_str == next_action && next_action != ""){
             int p = 0;
             while (!closing){

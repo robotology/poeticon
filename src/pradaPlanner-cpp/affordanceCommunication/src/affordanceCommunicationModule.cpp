@@ -637,6 +637,7 @@ bool affComm::getPushAff()
     string obj, tool, new_outcome_string, new_outcome2_string;
     double prob_succ1, prob_succ2, prob_fail, prob_succ;
     int toolnum=0;
+    yDebug("Push: %s %s %s %s", act[0].c_str(), act[1].c_str(), act[2].c_str(), act[3].c_str());
     if (affnetPort.getInputCount() == 0)
     {
         //cout << "affordance network not connected, going for default" << endl;
@@ -675,7 +676,7 @@ bool affComm::getPushAff()
     {
         if (act[1] != "11" && act[1] != "12" && act[3] != "11" && act[3] != "12")
         {
-            yDebug("Objects are: %s, %s", act[1].c_str(), act[3].c_str());
+            //yDebug("Objects are: %s, %s", act[1].c_str(), act[3].c_str());
             //cout << "getting push stuff" << endl;
             Bottle& affnet_bottle_out = affnetPort.prepare();
             affnet_bottle_out.clear();
@@ -687,7 +688,7 @@ bool affComm::getPushAff()
                 if (descriptors[o][0] == strtof(obj.c_str(), NULL))
                 {
                     obj_desc = descriptors[o];
-                    yDebug() << obj_desc;
+                    //yDebug() << obj_desc;
                 }
             }
             //cout << "descriptors are: " << endl;
@@ -716,7 +717,8 @@ bool affComm::getPushAff()
                 }
             }
             //cout << "done" << endl;
-            if (tooldescriptors[toolnum][1][1] > tooldescriptors[toolnum][2][1])
+            // select the half with lower y coord (further from the robot i.e. top of the screen)
+            if (tooldescriptors[toolnum][1][1] < tooldescriptors[toolnum][2][1])
             {
                 for (int j = 3; j < tool_desc1.size()-1; ++j)
                 {
@@ -730,13 +732,14 @@ bool affComm::getPushAff()
                 //cout << affnet_bottle_out.toString() << endl;
                 affnetPort.write();
                 //cout << "query to aff net sent" << endl;
-                yInfo("Query to affordance network sent: %s", affnet_bottle_out.toString().c_str());
+                //yInfo("Query to affordance network sent: %s", affnet_bottle_out.toString().c_str());
                 while (!isStopping())
                 {
                     affnet_bottle_in = affnetPort.read(false);
                     if (affnet_bottle_in)
                     {
                         //cout << affnet_bottle_in->toString() << endl;
+                        yDebug() << affnet_bottle_in->toString();
                         if (affnet_bottle_in->toString() == "nack")
                         {
                             //cout << "query failed, using default" << endl;
@@ -775,7 +778,7 @@ bool affComm::getPushAff()
                 }
                 //cout << "probability obtained" << endl;
                 //cout << prob_succ1 << endl;
-                yDebug("Probability was: %f", prob_succ1);
+                yDebug("Success probability was: %f", prob_succ1);
                 if (prob_succ1 >= 0.95)
                 {
                     prob_succ1 = 0.95;
@@ -811,12 +814,13 @@ bool affComm::getPushAff()
                 //cout << affnet_bottle_out.toString() << endl;
                 affnetPort.write();
                 //cout << "done" << endl;
-                yInfo("Query to affordance network sent: %s", affnet_bottle_out.toString().c_str());
+                //yInfo("Query to affordance network sent: %s", affnet_bottle_out.toString().c_str());
                 while (!isStopping())
                 {
                     affnet_bottle_in = affnetPort.read(false);
                     if (affnet_bottle_in)
                     {
+                        yDebug() << affnet_bottle_in->toString();
                         if (affnet_bottle_in->toString() == "nack")
                         {
                             //cout << "query failed, using default" << endl;
@@ -855,7 +859,7 @@ bool affComm::getPushAff()
                 }
                 //cout << "probabilities obtained" << endl;
                 //cout << prob_succ2 << endl;
-                yDebug("Probability was: %f", prob_succ2);
+                yDebug("Success probability was: %f", prob_succ2);
                 if (prob_succ2 >= 0.95)
                 {
                     prob_succ2 = 0.95;
@@ -938,6 +942,8 @@ bool affComm::getPullAff()
     string obj, tool, new_outcome_string, new_outcome2_string;
     double prob_succ1, prob_succ2, prob_fail, prob_succ;
     int toolnum=0;
+
+    yDebug("Pull: %s %s %s %s", act[0].c_str(), act[1].c_str(), act[2].c_str(), act[3].c_str());
     if (affnetPort.getInputCount() == 0)
     {
         //cout << "affordance network not connected, going for default" << endl;
@@ -996,7 +1002,8 @@ bool affComm::getPullAff()
                     toolnum = o;
                 }
             }
-            if (tooldescriptors[toolnum][1][1] > tooldescriptors[toolnum][2][1])
+            // select the half with lower y coord (further from the robot i.e. top of the screen)
+            if (tooldescriptors[toolnum][1][1] < tooldescriptors[toolnum][2][1])
             {
                 for (int j = 3; j < tool_desc1.size()-1; ++j)
                 {
@@ -1014,6 +1021,7 @@ bool affComm::getPullAff()
                     affnet_bottle_in = affnetPort.read(false);
                     if (affnet_bottle_in)
                     {
+                        yDebug() << affnet_bottle_in->toString();
                         if (affnet_bottle_in->toString() == "nack")
                         {
                             //cout << "query failed, using default" << endl;
@@ -1051,7 +1059,7 @@ bool affComm::getPullAff()
                 }
                 //cout << "probabilities obtained" << endl;
                 //cout << prob_succ1 << endl;
-                yDebug("Probability was: %f", prob_succ1);
+                yDebug("Success probability was: %f", prob_succ1);
                 if (prob_succ1 >= 0.95)
                 {
                     prob_succ1 = 0.95;
@@ -1091,6 +1099,7 @@ bool affComm::getPullAff()
                     affnet_bottle_in = affnetPort.read(false);
                     if (affnet_bottle_in)
                     {
+                        yDebug() << affnet_bottle_in->toString();
                         if (affnet_bottle_in->toString() == "nack")
                         {
                             //cout << "query failed, using default" << endl;
@@ -1128,7 +1137,7 @@ bool affComm::getPullAff()
                 }
                 //cout << "probabilities obtained" << endl;
                 //cout << prob_succ2 << endl;
-                yDebug("Probability was: %f", prob_succ2);
+                yDebug("Success probability was: %f", prob_succ2);
                 if (prob_succ2 >= 0.95)
                 {
                     prob_succ2 = 0.95;
