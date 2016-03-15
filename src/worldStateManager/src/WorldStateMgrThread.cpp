@@ -557,8 +557,16 @@ bool WorldStateMgrThread::refreshTracker()
         return false;
     }
 
-    // non-blocking read to handle case of no current tracks (or all tracks paused)
-    inTargets = inTargetsPort.read(false);
+    if (sizeTargets > 0)
+    {
+        // default case: blocking read, there are visible tracks
+        inTargets = inTargetsPort.read(true);
+    }
+    else
+    {
+        // non-blocking read to handle case of no current tracks (or all tracks paused)
+        inTargets = inTargetsPort.read(false);
+    }
 
     if (inTargets==NULL)
     {
