@@ -20,10 +20,8 @@ int main(int argc, char *argv[])
     rf.setDefaultConfigFile("affordanceCommunication.ini");  // overridden by --from
     rf.configure(argc, argv);
 
-
     if(! yarp.checkNetwork() )
     {
-        //cout << "Error: yarp server does not seem available" << endl;
         yError("yarp server does not seem available");
         return 1; // EXIT_FAILURE
     }
