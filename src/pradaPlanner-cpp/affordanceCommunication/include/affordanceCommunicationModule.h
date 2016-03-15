@@ -40,6 +40,7 @@ class affComm : public RFModule
  
         string moduleName;
         string PathName;
+        bool display;
 
         vector<vector<string> > translation;
         vector<vector<string> > objects;
@@ -82,7 +83,7 @@ class affComm : public RFModule
         virtual double getPeriod();
 
         void openPorts();
-        bool switchDisplayOff();
+        bool switchDisplay();
         bool loadObjs();
         bool plannerCommand();
         bool affordancesCycle();

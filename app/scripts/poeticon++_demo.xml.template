@@ -53,6 +53,7 @@
 </module>
 <module>
     <name>affordanceCommunication</name>
+    <parameters>--display off</parameters> <!-- set to on to show MATLAB windows -->
     <node>console</node>
 </module>
 

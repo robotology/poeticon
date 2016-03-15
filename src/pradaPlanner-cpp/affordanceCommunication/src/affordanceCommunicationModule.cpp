@@ -16,6 +16,8 @@ bool affComm::configure(ResourceFinder &rf)
     moduleName = rf.check("name", Value("affordanceCommunication")).asString();
     PathName = rf.findPath("contexts/"+rf.getContext());
     setName(moduleName.c_str());
+    display = rf.check("display",Value("off")).asString()=="on"?true:false;
+    yInfo("MATLAB display is %s", (display ? "on" : "off"));
 
     temp_vect.clear();
     temp_vect.push_back("1");
@@ -222,10 +224,9 @@ bool affComm::affordancesCycle()
         }
         if (command == "update")
         {
-            if (!switchDisplayOff())
+            if (!switchDisplay())
             {
-                //cout << "failed to turn graphics display off" << endl;
-                yError("Failed to turn graphics display off");
+                yError("Failed to set graphics display %s", (display ? "on" : "off"));
                 continue;
             }
             if (!loadObjs())
@@ -261,7 +262,7 @@ bool affComm::affordancesCycle()
     return true;
 }
 
-bool affComm::switchDisplayOff()
+bool affComm::switchDisplay()
 {
     if (affnetPort.getOutputCount() == 0)
     {
@@ -273,7 +274,7 @@ bool affComm::switchDisplayOff()
     {
         Bottle& displayBottle = affnetPort.prepare();
         displayBottle.clear();
-        string displayMessage = "displayOFF";
+        string displayMessage = (display ? "displayON" : "displayOFF");
         displayBottle.addString(displayMessage.c_str());
         affnetPort.write();
     }
