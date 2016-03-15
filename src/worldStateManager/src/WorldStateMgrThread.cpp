@@ -800,11 +800,29 @@ bool WorldStateMgrThread::computeObjProperties(const int &id, const string &labe
         if (validToolDesc)
         {
             tooldesc2d.clear();
-            // add top half info:    x y ar con ecc com cir sq el
-            tooldesc2d.add( inToolAff->get(abi).asList()->get(0) );
+            // add top half info
+            Bottle &topBot = tooldesc2d.addList();
+            topBot.clear();
+            topBot.addDouble(inToolAff->get(abi).asList()->get(0).asList()->get(0).asDouble()); // x
+            topBot.addDouble(inToolAff->get(abi).asList()->get(0).asList()->get(1).asDouble()); // y
+            topBot.addDouble(inToolAff->get(abi).asList()->get(0).asList()->get(2).asDouble()); // ar
+            topBot.addDouble(inToolAff->get(abi).asList()->get(0).asList()->get(3).asDouble()); // con
+            topBot.addDouble(inToolAff->get(abi).asList()->get(0).asList()->get(4).asDouble()); // ecc
+            topBot.addDouble(inToolAff->get(abi).asList()->get(0).asList()->get(5).asDouble()); // com
+            topBot.addDouble(inToolAff->get(abi).asList()->get(0).asList()->get(6).asDouble()); // cir
+            topBot.addDouble(inToolAff->get(abi).asList()->get(0).asList()->get(7).asDouble()); // sq
 
-            // add bottom half info: x y ar con ecc com cir sq el
-            tooldesc2d.add( inToolAff->get(abi).asList()->get(1) );
+            // add bottom half info
+            Bottle &botBot = tooldesc2d.addList();
+            botBot.clear();
+            botBot.addDouble(inToolAff->get(abi).asList()->get(1).asList()->get(0).asDouble()); // x
+            botBot.addDouble(inToolAff->get(abi).asList()->get(1).asList()->get(1).asDouble()); // y
+            botBot.addDouble(inToolAff->get(abi).asList()->get(1).asList()->get(2).asDouble()); // ar
+            botBot.addDouble(inToolAff->get(abi).asList()->get(1).asList()->get(3).asDouble()); // con
+            botBot.addDouble(inToolAff->get(abi).asList()->get(1).asList()->get(4).asDouble()); // ecc
+            botBot.addDouble(inToolAff->get(abi).asList()->get(1).asList()->get(5).asDouble()); // com
+            botBot.addDouble(inToolAff->get(abi).asList()->get(1).asList()->get(6).asDouble()); // cir
+            botBot.addDouble(inToolAff->get(abi).asList()->get(1).asList()->get(7).asDouble()); // sq
         }
         else
             yWarning("problem reading descriptors of object parts");

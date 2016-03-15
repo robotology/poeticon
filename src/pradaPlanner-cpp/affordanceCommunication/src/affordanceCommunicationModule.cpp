@@ -720,7 +720,7 @@ bool affComm::getPushAff()
             // select the half with lower y coord (further from the robot i.e. top of the screen)
             if (tooldescriptors[toolnum][1][1] < tooldescriptors[toolnum][2][1])
             {
-                for (int j = 3; j < tool_desc1.size()-1; ++j)
+                for (int j = 3; j < tool_desc1.size(); ++j)
                 {
                     affnet_bottle_out.addDouble(tool_desc1[j]);
                 }
@@ -802,7 +802,7 @@ bool affComm::getPushAff()
             }
             else
             {
-                for (int j = 3; j < tool_desc2.size()-1; ++j)
+                for (int j = 3; j < tool_desc2.size(); ++j)
                 {
                     affnet_bottle_out.addDouble(tool_desc2[j]);
                 }
@@ -1005,7 +1005,7 @@ bool affComm::getPullAff()
             // select the half with lower y coord (further from the robot i.e. top of the screen)
             if (tooldescriptors[toolnum][1][1] < tooldescriptors[toolnum][2][1])
             {
-                for (int j = 3; j < tool_desc1.size()-1; ++j)
+                for (int j = 3; j < tool_desc1.size(); ++j)
                 {
                     affnet_bottle_out.addDouble(tool_desc1[j]);
                 }
@@ -1083,7 +1083,7 @@ bool affComm::getPullAff()
             }
             else
             {
-                for (int j = 3; j < tool_desc2.size()-1; ++j)
+                for (int j = 3; j < tool_desc2.size(); ++j)
                 {
                     affnet_bottle_out.addDouble(tool_desc2[j]);
                 }
