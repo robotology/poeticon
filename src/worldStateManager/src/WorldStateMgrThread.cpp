@@ -557,26 +557,45 @@ bool WorldStateMgrThread::refreshTracker()
         return false;
     }
 
+    // compute pausedIDs Bottle with "getPausedIDs" rpc
+    Bottle pausedIDs;
+    Bottle trackerCmd, trackerReply;
+    trackerCmd.addString("getPausedIDs");
+    //yDebug() << __func__ <<  "sending query to tracker:" << trackerCmd.toString().c_str();
+    trackerPort.write(trackerCmd, trackerReply);
+    //yDebug() << __func__ <<  "obtained response:" << trackerReply.toString().c_str();
+    bool validReply = trackerReply.size()>0 &&
+                      trackerReply.get(0).isList();
+    if (validReply)
+        pausedIDs = * trackerReply.get(0).asList();
+
+    // update number of currently visible tracks: num. all tracks minus num. paused
+    sizeTargets = trackIDs.size() - pausedIDs.size();
+    //yDebug("sizeTargets=%d", sizeTargets);
+
     if (sizeTargets > 0)
     {
-        // default case: blocking read, there are visible tracks
+        // default case: there are visible tracks -> blocking read
         inTargets = inTargetsPort.read(true);
     }
     else
     {
-        // non-blocking read to handle case of no current tracks (or all tracks paused)
-        inTargets = inTargetsPort.read(false);
+        // no visible tracks (all tracks paused) -> a few non-blocking reads
+        const int numTries = 5;
+        for (int t=0; t<numTries; ++t)
+        {
+            inTargets = inTargetsPort.read(false);
+            yarp::os::Time::delay(0.1);
+            if (inTargets != NULL)
+                break;
+        }
+        if (inTargets == NULL)
+        {
+            yWarning("%s did not receive data from tracker after %d tries",
+                     __func__, numTries);
+            return false;
+        }
     }
-
-    if (inTargets==NULL)
-    {
-        yWarning() << __func__ << "did not receive data from tracker";
-        sizeTargets = 0; // number of tracked objects
-        return false;
-    }
-
-    // number of tracked objects
-    sizeTargets = inTargets->size();
 
     return true;
 }
