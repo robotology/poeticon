@@ -49,6 +49,8 @@ Instructions to install libPRADA, required by the probabilistic planner:
     make
     cp test/relational_plan/x.exe ../app/conf/planner.exe
 
+Note: the modules belonging to the probabilistic planner part (planningCycle, affordanceCommunication, geometricGrounding, goalCompiler) must have access to the same "contexts/poeticon" directory. One way to accomplish this is to run them on the same machine.
+
 ## Documentation
 
 Please refer to the documentation inside each module, and to the help commands available via RPC interfaces.
