@@ -44,8 +44,11 @@ service WorldStateMgr_IDL
 
   /**
   * Reset the world state database, initializing it from scratch.
-  * NOTE: you still have to manually restart this module:
-  * objectsPropertiesCollector --name wsopc --context poeticon --db dbhands.ini --nosave --async_bc
+  * In the WSOPC database, with respect to the previous experiment hand entries
+  * will get their fields cleared (but their IDs preserved), whereas object
+  * entries will be deleted and new ones will be created with new IDs.
+  * NOTE: before launching this command, make sure that segmentation and
+  *       object recognition are stable.
   * @return true/false on success/failure
   */
   bool reset();

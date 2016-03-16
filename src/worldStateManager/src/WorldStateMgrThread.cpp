@@ -324,6 +324,55 @@ bool WorldStateMgrThread::checkOPCStatus(const int &minEntries, Bottle &ids)
 }
 
 /**********************************************************/
+bool WorldStateMgrThread::resetOPCHandFields(const int &handID)
+{
+    // reset the field is_free in the WSOPC database entry corresponding to
+    // handID. the other field is_hand is already correct and static.
+
+    if (opcPort.getOutputCount()<1)
+        return false;
+
+    Bottle opcCmd;
+    Bottle opcCmdContent;
+    Bottle opcReply;
+
+    // query: [set] (("id" <num>) ("is_free" "true"))
+    opcCmd.clear();
+    opcCmdContent.clear();
+    opcReply.clear();
+    opcCmd.addVocab(Vocab::encode("set"));
+
+    Bottle bID;
+    bID.clear();
+    bID.addString("id");
+    bID.addInt(handID);
+    opcCmdContent.addList() = bID;
+
+    Bottle bIsFree;
+    bIsFree.addString("is_free");
+    bool newIsFreeValue = true; // TODO: better ask it to activityIF?
+    bIsFree.addString( BoolToString(newIsFreeValue) );
+    opcCmdContent.addList() = bIsFree;
+    opcCmd.addList() = opcCmdContent;
+
+    //yDebug() << __func__ << "sending command to WSOPC:" << opcCmd.toString().c_str();
+    opcPort.write(opcCmd, opcReply);
+    //yDebug() << __func__ << "received response:" << opcReply.toString().c_str();
+
+    // process WSOPC response
+    bool validResponse = opcReply.size()>0 &&
+                         opcReply.get(0).asVocab()==Vocab::encode("ack");
+    if (!validResponse)
+    {
+        yWarning("%s when resetting field %s of %d did not receive valid response from WSOPC",
+                 __func__, "is_free", handID);
+        return false;
+    }
+
+    return true;
+}
+
+/**********************************************************/
 bool WorldStateMgrThread::refreshBlobs()
 {
     if (inAffPort.getInputCount()<1 || inToolAffPort.getInputCount()<1)
@@ -1868,7 +1917,7 @@ void WorldStateMgrThread::fsmPerception()
 
             if (inTargetsPort.getInputCount()>0)
             {
-                // pre-initialize tracker (countFrom 13)
+                // pre-initialize tracker (initial experiment: countFrom 13)
                 configureTracker();
 
                 // proceed
@@ -2141,32 +2190,76 @@ bool WorldStateMgrThread::updateWorldState()
 /**********************************************************/
 bool WorldStateMgrThread::resetWorldState()
 {
-    // if WSOPC is running and connected, disconnect it
-    string wsopcInPortName = "/wsopc/rpc";
-    if (opcPort.getOutputCount()>0)
+    // reset WSOPC:
+    // 1. get current IDs in the database
+    Bottle opcIDs;
+    const int numHandEntries = 2;
+    if (!checkOPCStatus(numHandEntries,opcIDs))
     {
-        // disconnect /wsm/opc:io /wsopc/rpc
-        if (!yarp::os::NetworkBase::disconnect(opcPortName.c_str(), wsopcInPortName.c_str()))
-        {
-            yWarning() << __func__ << "problem attempting to disconnect" << opcPortName.c_str() << wsopcInPortName.c_str();
-            return false;
-        }
+        yWarning("%s problem verifying that WSOPC has at least %d entries",
+                 __func__, numHandEntries);
+        return false;
     }
 
-    // blocking part - tell user to restart WSOPC process and reconnect /wsm/opc:io /wsopc/rpc
-    do
-    {
-        yarp::os::Time::delay(0.01);
-        double t0 = yarp::os::Time::now();
-        if ((t0 - t) > 10.0)
-        {
-            yInfo("1. manually restart this module: objectsPropertiesCollector --name wsopc --context poeticon --db dbhands.ini --nosave --async_bc\t 2. reconnect %s %s", opcPortName.c_str(), wsopcInPortName.c_str());
-            t = t0;
-        }
-    } while (opcPort.getOutputCount()<1);
+    const int numObjEntries = opcIDs.size() - numHandEntries;
 
-    if (opcPort.getOutputCount()>0)
-        yInfo("detected WSOPC module restart - proceeding with reset routine");
+    // increase countFrom (activeParticleTracker start index) to account for
+    // the fact that some IDs will be deleted from WSOPC (never to be used again)
+    // and the tracker will need to start counting from a fresh ID in order to
+    // make the world state and planner happy
+    countFrom += numObjEntries;
+    yInfo("reset routine: increased countFrom to %d",
+          countFrom);
+
+    const int LeftHandID = 11;
+    const int RightHandID = 12;
+
+    // cycle over opcIDs entries (hands and objects)
+    for (int entryIdx=0; entryIdx<opcIDs.size(); ++entryIdx)
+    {
+        // 2. hand entries: keep them (need to preserve IDs), just reset the fields
+        if ((opcIDs.get(entryIdx).asInt() == LeftHandID) ||
+            (opcIDs.get(entryIdx).asInt() == RightHandID))
+        {
+            yDebug("resetting fields of hand entry %d", opcIDs.get(entryIdx).asInt());
+            if (!resetOPCHandFields(opcIDs.get(entryIdx).asInt()))
+            {
+                yError("%s problem resetting fields of hand entry %d",
+                         __func__, opcIDs.get(entryIdx).asInt());
+                return false;
+            }
+        }
+        else
+        // 3. object entries: delete them (it is ok to change their IDs from one
+        //    experiment to the other -- the only restriction is that an <object,ID>
+        //    pair is fixed within the same experiment
+        {
+            yDebug("deleting object entry %d", opcIDs.get(entryIdx).asInt());
+            // query: [del] (("id" <num>))
+            Bottle opcCmd, opcCmdContent, opcReply;
+            opcCmd.addVocab(Vocab::encode("del"));
+            opcCmdContent.addString("id");
+            opcCmdContent.addInt(opcIDs.get(entryIdx).asInt());
+            opcCmd.addList() = opcCmdContent;
+
+            //yDebug() << __func__ << "sending query:" << opcCmd.toString().c_str();
+            opcPort.write(opcCmd, opcReply);
+            //yDebug() << __func__ << "obtained response:" << opcReply.toString().c_str();
+
+            bool validResponse = opcReply.size()>0 &&
+                                 opcReply.get(0).asVocab()==Vocab::encode("ack");
+
+            if (!validResponse)
+            {
+                yError("%s problem deleting object entry %d",
+                         __func__, opcIDs.get(entryIdx).asInt());
+                return false;
+            }
+        }
+    }
+    yInfo() << "reset routine: successfully reset WSOPC - "
+            << "hand entries had their fields reset (with IDs kept), "
+            << "objects entries were deleted";
 
     // this needs to be reset before the call to initWorldState()
     initFinished = false;

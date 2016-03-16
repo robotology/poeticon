@@ -691,8 +691,11 @@ std::vector<std::string> WorldStateMgr_IDL::help(const std::string& functionName
     if (functionName=="reset") {
       helpString.push_back("bool reset() ");
       helpString.push_back("Reset the world state database, initializing it from scratch. ");
-      helpString.push_back("NOTE: you still have to manually restart this module: ");
-      helpString.push_back("objectsPropertiesCollector --name wsopc --context poeticon --db dbhands.ini --nosave --async_bc ");
+      helpString.push_back("In the WSOPC database, with respect to the previous experiment hand entries ");
+      helpString.push_back("will get their fields cleared (but their IDs preserved), whereas object ");
+      helpString.push_back("entries will be deleted and new ones will be created with new IDs. ");
+      helpString.push_back("NOTE: before launching this command, make sure that segmentation and ");
+      helpString.push_back("      object recognition are stable. ");
       helpString.push_back("@return true/false on success/failure ");
     }
     if (functionName=="pause") {
