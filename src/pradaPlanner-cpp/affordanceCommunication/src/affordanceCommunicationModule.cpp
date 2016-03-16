@@ -334,25 +334,60 @@ bool affComm::queryToolDescriptors()
             reply.clear();
             descQueryPort.write(cmd,reply);
             if (reply.size() == 1){
-                if (reply.get(0).asList()->size() > 0 && reply.get(0).asList()->get(0).asList()->size() > 0)
+                if (reply.get(0).asList()->size() > 0 && reply.get(0).asList()->get(0).asList()->size() > 1)
                 {
+                    //yDebug("reply: %s", reply.toString().c_str());
                     data.clear();
                     tool_data.clear();
                     data.push_back(atof(objects[i][0].c_str())); // tools
                     tool_data.push_back(data);
                     data.clear();
-                    for (int j = 0; j < reply.get(0).asList()->get(0).asList()->get(0).asList()->size(); ++j)
+                    //yDebug("storing tool descriptors");
+                    //yDebug("size %d", reply.get(0).asList()->size());
+                    //yDebug("size %d", reply.get(0).asList()->get(0).asList()->size());
+                    //yDebug("size %d", reply.get(0).asList()->get(0).asList()->get(0).asList()->size());
+                    if (reply.get(0).asList()->get(0).asList()->get(0).isList())
                     {
-                        data.push_back(reply.get(0).asList()->get(0).asList()->get(0).asList()->get(j).asDouble());
+                        for (int j = 0; j < reply.get(0).asList()->get(0).asList()->get(0).asList()->size(); ++j)
+                        {
+                            data.push_back(reply.get(0).asList()->get(0).asList()->get(0).asList()->get(j).asDouble());
+                        }
+                        tool_data.push_back(data);
+                        //yDebug("got first batch");
+                        data.clear();
+                        for (int j = 0; j < reply.get(0).asList()->get(0).asList()->get(1).asList()->size(); ++j)
+                        {
+                            data.push_back(reply.get(0).asList()->get(0).asList()->get(1).asList()->get(j).asDouble());
+                        }
+                        //yDebug("got second batch");
+                        tool_data.push_back(data);
+                        tooldescriptors.push_back(tool_data);
                     }
-                    tool_data.push_back(data);
-                    data.clear();
-                    for (int j = 0; j < reply.get(0).asList()->get(0).asList()->get(1).asList()->size(); ++j)
+                    else
                     {
-                        data.push_back(reply.get(0).asList()->get(0).asList()->get(1).asList()->get(j).asDouble());
+                        yWarning("failed obtaining descriptors, using default descriptors");
+                        tool_data.clear();
+                        temp_vect.clear();
+                        temp_vect.push_back(atof(objects[i][0].c_str())); // tools
+                        tool_data.push_back(temp_vect);
+                        temp_vect.clear();
+                        temp_vect.push_back(0.0);
+                        temp_vect.push_back(0.0);
+                        temp_vect.push_back(0.0);
+                        temp_vect.push_back(0.0);
+                        temp_vect.push_back(0.0);
+                        temp_vect.push_back(0.0);
+                        tool_data.push_back(temp_vect);
+                        temp_vect.clear();
+                        temp_vect.push_back(0.0);
+                        temp_vect.push_back(0.0);
+                        temp_vect.push_back(0.0);
+                        temp_vect.push_back(0.0);
+                        temp_vect.push_back(0.0);
+                        temp_vect.push_back(0.0);
+                        tool_data.push_back(temp_vect);
+                        tooldescriptors.push_back(tool_data);
                     }
-                    tool_data.push_back(data);
-                    tooldescriptors.push_back(tool_data);
                 }
                 else
                 {

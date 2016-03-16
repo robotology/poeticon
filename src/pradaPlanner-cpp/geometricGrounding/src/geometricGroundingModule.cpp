@@ -121,110 +121,57 @@ vector<string> geoGround::create_rules(string pre_rule)
     if (find_element(objects,"12") != 0){
         hands.push_back("12");
     }
+    
     if (temp_vect.size() >= 2){
         k = 0;
-        if ((temp_vect[2].find("_tool") != std::string::npos) || (temp_vect[2].find("_obj") != std::string::npos)){
-            if (temp_vect[2].find("_hand") != std::string::npos){
-                if (temp_vect[2].find("_tool") != std::string::npos){
-                    for (int t = 0; t < hands.size(); ++t){
-                        for (int j= 0; j < objects.size(); ++j){
-                            for (int c = 0; c < objects.size(); ++c){
-                                if ((c != j) && (find_element(hands, objects[c]) == 0) && (find_element(hands, objects[j]) == 0)){
-                                    for (int o = 0; o < temp_vect.size(); ++o){
-                                        new_rule.push_back(temp_vect[o]);
-                                    }
-                                    new_rule.push_back("");
-                                    new_rule.push_back("");
-                                    for (int o = 0; o < temp_vect.size(); ++o){
-                                        while (!isStopping()){
-                                            if (new_rule[k].find("_obj") != std::string::npos){
-                                                new_rule[k].replace(new_rule[k].find("_obj"),4,objects[c]);
-                                            }
-                                            else {
-                                                break;
-                                            }
-                                        }
-                                        while (!isStopping()){
-                                            if (new_rule[k].find("_tool") != std::string::npos){
-                                                new_rule[k].replace(new_rule[k].find("_tool"),5,objects[j]);
-                                            }
-                                            else {
-                                                break;
-                                            }
-                                        }
-                                        while (!isStopping()){
-                                            if (new_rule[k].find("_hand") != std::string::npos){
-                                                new_rule[k].replace(new_rule[k].find("_hand"),5,hands[t]);
-                                            }
-                                            else {
-                                                break;
-                                            }
-                                        }
-                                        k++;
-                                    }
-                                    k=k+2;
-                                }
-                            }
-                        }
-                    }
-                }
-                else {
-                    for (int t = 0; t < hands.size(); ++t){
-                        for (int c = 0; c < objects.size(); ++c){
-                            if (find_element(hands,objects[c]) == 0){
-                                for (int o = 0; o < temp_vect.size(); ++o){
-                                    new_rule.push_back(temp_vect[o]);
-                                }
-                                new_rule.push_back("");
-                                new_rule.push_back("");
-                                for (int o = 0; o < temp_vect.size(); ++o){
-                                    while (!isStopping()){
-                                        if (new_rule[k].find("_obj") != std::string::npos){
-                                            new_rule[k].replace(new_rule[k].find("_obj"),4,objects[c]);
-                                        }
-                                        else {
-                                            break;
-                                        }
-                                    }
-                                    while (!isStopping()){
-                                        if (new_rule[k].find("_hand") != std::string::npos){
-                                            new_rule[k].replace(new_rule[k].find("_hand"),5,hands[t]);
-                                        }
-                                        else {
-                                            break;
-                                        }
-                                    }
-                                    k++;
-                                }
-                                k=k+2;
-                            }
-                        }
-                    }
-                }
-            }
-            else {
-                for (int j = 0; j < objects.size(); ++j){
-                    for (int c = 0; c < objects.size(); ++c){
-                        if ((c != j) && ( (find_element(hands,objects[c]) == 0) || (find_element(hands,objects[j]) == 0))){
-                            for (int o = 0; o < temp_vect.size(); ++o){
+        if ((temp_vect[2].find("push") != std::string::npos) || (temp_vect[2].find("pull") != std::string::npos))
+        {
+            for (int t = 0; t < hands.size(); ++t)
+            {
+                for (int j = 0; j < tools.size(); ++j)
+                {
+                    for (int c = 0; c < objects.size(); ++c)
+                    {
+                        if ((tools[j] != objects[c]) && (find_element(hands, objects[c]) == 0) && (find_element(hands, tools[j]) == 0))
+                        {
+                            for (int o = 0; o < temp_vect.size(); ++o)
+                            {
                                 new_rule.push_back(temp_vect[o]);
                             }
                             new_rule.push_back("");
                             new_rule.push_back("");
-                            for (int o = 0; o < temp_vect.size(); ++o){
-                                while (!isStopping()){
-                                    if (new_rule[k].find("_obj") != std::string::npos){
+                            for (int o = 0; o < temp_vect.size(); ++o)
+                            {
+                                while (!isStopping())
+                                {
+                                    if (new_rule[k].find("_obj") != std::string::npos)
+                                    {
                                         new_rule[k].replace(new_rule[k].find("_obj"),4,objects[c]);
                                     }
-                                    else {
+                                    else 
+                                    {
                                         break;
                                     }
                                 }
-                                while (!isStopping()){
-                                    if (new_rule[k].find("_tool") != std::string::npos){
-                                        new_rule[k].replace(new_rule[k].find("_tool"),5,objects[j]);
+                                while (!isStopping())
+                                {
+                                    if (new_rule[k].find("_tool") != std::string::npos)
+                                    {
+                                        new_rule[k].replace(new_rule[k].find("_tool"),5,tools[j]);
                                     }
-                                    else {
+                                    else 
+                                    {
+                                        break;
+                                    }
+                                }
+                                while (!isStopping())
+                                {
+                                    if (new_rule[k].find("_hand") != std::string::npos)
+                                    {
+                                        new_rule[k].replace(new_rule[k].find("_hand"),5,hands[t]);
+                                    }
+                                    else 
+                                    {
                                         break;
                                     }
                                 }
@@ -236,8 +183,164 @@ vector<string> geoGround::create_rules(string pre_rule)
                 }
             }
         }
-        else {
-            for (int o = 0; o < temp_vect.size(); ++o){
+        else if ((temp_vect[2].find("_tool") != std::string::npos) || (temp_vect[2].find("_obj") != std::string::npos))
+        {
+            if (temp_vect[2].find("_hand") != std::string::npos)
+            {
+                if (temp_vect[2].find("_tool") != std::string::npos)
+                {
+                    for (int t = 0; t < hands.size(); ++t)
+                    {
+                        for (int j= 0; j < objects.size(); ++j)
+                        {
+                            for (int c = 0; c < objects.size(); ++c)
+                            {
+                                if ((c != j) && (find_element(hands, objects[c]) == 0) && (find_element(hands, objects[j]) == 0))
+                                {
+                                    for (int o = 0; o < temp_vect.size(); ++o)
+                                    {
+                                        new_rule.push_back(temp_vect[o]);
+                                    }
+                                    new_rule.push_back("");
+                                    new_rule.push_back("");
+                                    for (int o = 0; o < temp_vect.size(); ++o)
+                                    {
+                                        while (!isStopping())
+                                        {
+                                            if (new_rule[k].find("_obj") != std::string::npos)
+                                            {
+                                                new_rule[k].replace(new_rule[k].find("_obj"),4,objects[c]);
+                                            }
+                                            else 
+                                            {
+                                                break;
+                                            }
+                                        }
+                                        while (!isStopping())
+                                        {
+                                            if (new_rule[k].find("_tool") != std::string::npos)
+                                            {
+                                                new_rule[k].replace(new_rule[k].find("_tool"),5,objects[j]);
+                                            }
+                                            else 
+                                            {
+                                                break;
+                                            }
+                                        }
+                                        while (!isStopping())
+                                        {
+                                            if (new_rule[k].find("_hand") != std::string::npos){
+                                                new_rule[k].replace(new_rule[k].find("_hand"),5,hands[t]);
+                                            }
+                                            else 
+                                            {
+                                                break;
+                                            }
+                                        }
+                                        k++;
+                                    }
+                                    k=k+2;
+                                }
+                            }
+                        }
+                    }
+                }
+                else 
+                {
+                    for (int t = 0; t < hands.size(); ++t)
+                    {
+                        for (int c = 0; c < objects.size(); ++c)
+                        {
+                            if (find_element(hands,objects[c]) == 0)
+                            {
+                                for (int o = 0; o < temp_vect.size(); ++o)
+                                {
+                                    new_rule.push_back(temp_vect[o]);
+                                }
+                                new_rule.push_back("");
+                                new_rule.push_back("");
+                                for (int o = 0; o < temp_vect.size(); ++o)
+                                {
+                                    while (!isStopping())
+                                    {
+                                        if (new_rule[k].find("_obj") != std::string::npos)
+                                        {
+                                            new_rule[k].replace(new_rule[k].find("_obj"),4,objects[c]);
+                                        }
+                                        else 
+                                        {
+                                            break;
+                                        }
+                                    }
+                                    while (!isStopping())
+                                    {
+                                        if (new_rule[k].find("_hand") != std::string::npos)
+                                        {
+                                            new_rule[k].replace(new_rule[k].find("_hand"),5,hands[t]);
+                                        }
+                                        else 
+                                        {
+                                            break;
+                                        }
+                                    }
+                                    k++;
+                                }
+                                k=k+2;
+                            }
+                        }
+                    }
+                }
+            }
+            else 
+            {
+                for (int j = 0; j < objects.size(); ++j)
+                {
+                    for (int c = 0; c < objects.size(); ++c)
+                    {
+                        if ((c != j) && ( (find_element(hands,objects[c]) == 0) || (find_element(hands,objects[j]) == 0)))
+                        {
+                            for (int o = 0; o < temp_vect.size(); ++o)
+                            {
+                                new_rule.push_back(temp_vect[o]);
+                            }
+                            new_rule.push_back("");
+                            new_rule.push_back("");
+                            for (int o = 0; o < temp_vect.size(); ++o)
+                            {
+                                while (!isStopping())
+                                {
+                                    if (new_rule[k].find("_obj") != std::string::npos)
+                                    {
+                                        new_rule[k].replace(new_rule[k].find("_obj"),4,objects[c]);
+                                    }
+                                    else 
+                                    {
+                                        break;
+                                    }
+                                }
+                                while (!isStopping())
+                                {
+                                    if (new_rule[k].find("_tool") != std::string::npos)
+                                    {
+                                        new_rule[k].replace(new_rule[k].find("_tool"),5,objects[j]);
+                                    }
+                                    else 
+                                    {
+                                        break;
+                                    }
+                                }
+                                k++;
+                            }
+                            k=k+2;
+                        }
+                    }
+                }
+            }
+        }
+        else 
+        {
+            for (int o = 0; o < temp_vect.size(); ++o)
+            {
                 new_rule.push_back(temp_vect[o]);
             }
             new_rule.push_back("");
@@ -247,74 +350,93 @@ vector<string> geoGround::create_rules(string pre_rule)
     vector<string> aux_rule, temp_rule, aux_temp_rule;
     string temp_str, var_find;
     int flag_not_add;
-    for (int j = 0; j < new_rule.size(); ++j){
-        if (new_rule[j].find("_ALL") != std::string::npos){
+    for (int j = 0; j < new_rule.size(); ++j)
+    {
+        if (new_rule[j].find("_ALL") != std::string::npos)
+        {
             aux_rule = split(new_rule[j],' ');
-            for (int u = 0; u < aux_rule.size(); ++u){
-                if (aux_rule[u].find("_ALL") != std::string::npos){
+            for (int u = 0; u < aux_rule.size(); ++u)
+            {
+                if (aux_rule[u].find("_ALL") != std::string::npos)
+                {
                     temp_rule.push_back(" ");
-                    for (int k = 0; k < aux_rule.size(); ++k){
+                    for (int k = 0; k < aux_rule.size(); ++k)
+                    {
                         temp_rule.push_back(aux_rule[k]);
                     }
-                    for (int k = 0; k < objects.size(); ++k){
-                        if (aux_rule[u].find(objects[k]) == std::string::npos){
+                    for (int k = 0; k < objects.size(); ++k)
+                    {
+                        if (aux_rule[u].find(objects[k]) == std::string::npos)
+                        {
                             temp_str = " " + aux_rule[u];
-                            while (!isStopping()){
-                                if (temp_str.find("_ALL") != std::string::npos){
+                            while (!isStopping())
+                            {
+                                if (temp_str.find("_ALL") != std::string::npos)
+                                {
                                     temp_str.replace(temp_str.find("_ALL"),4,objects[k]);
                                 }
-                                else {
+                                else 
+                                {
                                     break;
                                 }
                             }
                             temp_rule.push_back(temp_str);
                         }
                     }
-                    for (int w = 0; w < temp_rule.size(); ++w){
+                    for (int w = 0; w < temp_rule.size(); ++w)
+                    {
                         flag_not_add = 0;
-                        if (temp_rule[w].find('-') == std::string::npos){
+                        if (temp_rule[w].find('-') == std::string::npos)
+                        {
                             var_find = temp_rule[w];
                         }
-                        if (temp_rule[w].find('-') != std::string::npos){
+                        if (temp_rule[w].find('-') != std::string::npos)
+                        {
                             var_find = temp_rule[w];
                             var_find.replace(var_find.find("-"),1,"");
                         }
-                        if (aux_temp_rule.size() > 0){
-                            for (int v = 0; v < aux_temp_rule.size(); ++v){
-                                if (aux_temp_rule[v].find(var_find) != std::string::npos){
+                        if (aux_temp_rule.size() > 0)
+                        {
+                            for (int v = 0; v < aux_temp_rule.size(); ++v)
+                            {
+                                if (aux_temp_rule[v].find(var_find) != std::string::npos)
+                                {
                                     flag_not_add = 1;
                                     break;
                                 }
                             }
                         }
-                        if (flag_not_add != 1){
+                        if (flag_not_add != 1)
+                        {
                             aux_temp_rule.push_back(temp_rule[w]);
                             
                         }
                     }
                     temp_rule.clear();
                     temp_str = "";
-                    for (int w = 0; w < aux_temp_rule.size(); ++w){
+                    for (int w = 0; w < aux_temp_rule.size(); ++w)
+                    {
                         temp_str = temp_str + aux_temp_rule[w];
                     }
                      
                     new_rule[j] = temp_str;
                 }
             }
-            for (int h = aux_temp_rule.size()-1; h >= 0; --h){
-                if (aux_temp_rule[h].find("_ALL") != std::string::npos){
+            for (int h = aux_temp_rule.size()-1; h >= 0; --h)
+            {
+                if (aux_temp_rule[h].find("_ALL") != std::string::npos)
+                {
                     aux_temp_rule.erase(aux_temp_rule.begin()+h);
                 }
             }
             temp_str = " ";
-            for (int h = 0; h < aux_temp_rule.size(); ++h){
+            for (int h = 0; h < aux_temp_rule.size(); ++h)
+            {
                 temp_str = temp_str + aux_temp_rule[h];
             }
             aux_temp_rule.clear();
             new_rule[j] = temp_str;
         }
-    }
-    for (int k = 0; k < new_rule.size(); ++k){
     }
     return new_rule;
 }
