@@ -715,8 +715,8 @@ bool WorldStateMgrThread::getTrackerBottleIndexFromID(const int &id, int &tbi)
         }
     }
 
-    yDebug() << __func__ << "did not find track id" << id <<
-             "in Bottle: likely this object stopped being tracked";
+    //yDebug() << __func__ << "did not find track id" << id <<
+    //         "in Bottle: likely this object stopped being tracked";
     return false;
 }
 
@@ -742,10 +742,10 @@ bool WorldStateMgrThread::computeObjProperties(const int &id, const string &labe
     int tbi = -1;
     if (!getTrackerBottleIndexFromID(id,tbi))
     {
-        yDebug() << __func__ << "did not find track id" << id
-                 << "in tracker Bottle: object not visible ->"
-                 << "going to update activityInterface symbols only,"
-                 << "leaving shape descriptors untouched";
+        //yDebug() << __func__ << "did not find track id" << id
+        //         << "in tracker Bottle: object not visible ->"
+        //         << "going to update activityInterface symbols only,"
+        //         << "leaving shape descriptors untouched";
         isVisible = false;
     }
 
