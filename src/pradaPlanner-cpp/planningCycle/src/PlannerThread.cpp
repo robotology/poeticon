@@ -28,24 +28,32 @@ void PlannerThread::openFiles()
 bool PlannerThread::openPorts()
 {
     string portName;
+    //Port to issue commands to goalCompiler module
     portName = "/" + moduleName + "/goal_cmd:io";
     goal_yarp.open(portName);
 
+    //Port to issue commands to geometricGrounding module
     portName = "/" + moduleName + "/ground_cmd:io";
     geo_yarp.open(portName);
 
+    //Port to reply the plan status to the activityInterface/Praxicon: either FAIL or OK
     portName = "/" + moduleName + "/prax_inst:o";
     prax_yarp.open(portName);
 
+    //Port to issue commands to affordanceCommunication module
+    //Also receives the position for the tool-handles (after a query)
     portName = "/" + moduleName + "/affordances_cmd:io";
     aff_yarp.open(portName);
 
+    //Port to issue commands to worldStateManager module (update)
     portName = "/" + moduleName + "/wsm_rpc:o";
     world_rpc.open(portName);
 
+    //Port to issue commands to activityInterface module (issue actions, etc)
     portName = "/" + moduleName + "/actInt_rpc:o";
     actInt_rpc.open(portName);
 
+    //Port to issue commands to OPC2PRADA module (writing state files, getting object IDs - Labels)
     portName = "/" + moduleName + "/opc2prada_rpc:o";
     opc2prada_rpc.open(portName);
 
@@ -86,14 +94,16 @@ void PlannerThread::interrupt()
 
 bool PlannerThread::threadInit()
 {
-    closing = false;
-    startPlan = false;
-    stopping = false;
-    resumePlan = true;
-    plan_level = 0;
+    closing = false; //If the module is closing, either by crt+C or "quit"
+    startPlan = false; //When the module is issued the startPlanner command by rpc, this becomes true
+    stopping = false; //When the module is issued the stopPlanner command by rpc, this becomes true
+    resumePlan = true; //Variable responsible for pausing/resuming the plan, changed by pausePlanner/resumePlanner on rpc.
+    plan_level = 0; //Variable that stores the current steps made by the planner
+
+
     // initialize file names
     openFiles();
-    process_string = "cd && cd .. && cd .. && cd " + PathName + " && ./planner.exe > " + pipeFileName; // TODO: cd PathName
+    process_string = "cd && cd .. && cd .. && cd " + PathName + " && ./planner.exe > " + pipeFileName; // TODO: cd PathName, location of the PRADA executable
     if ( !openPorts() )
     {
         yError("problem opening ports");
@@ -105,9 +115,9 @@ bool PlannerThread::threadInit()
 
 void PlannerThread::run()
 {
-    while (!closing)
+    while (!closing) //while running
     {
-        while (!startPlan)
+        while (!startPlan) //while plan doesn't start
         {
             yarp::os::Time::delay(0.05);
             if (closing)
@@ -115,25 +125,25 @@ void PlannerThread::run()
                 return;
             }
         }
-        if (!plan_init())
+        if (!plan_init()) //If planner is not initialized, don't start planningCycle
         {
             startPlan = false;
         }
-        restartPlan = false;
-        while (!restartPlan)
+        restartPlan = false; //plan should not be restarted until success/failure
+        while (!restartPlan) //While the planner doesn't need to restart:
         {
             yarp::os::Time::delay(0.1);
             if (closing)
             {
                 return;
             }
-            if (!planning_cycle())
+            if (!planning_cycle()) //run planning cycle
             {
-                startPlan = false;
+                startPlan = false; //If plan fails, wait for new startPlanner command
                 break;
             }
         }
-        startPlan = false;
+        startPlan = false; //wait for new startPlanner command
         yarp::os::Time::delay(0.05);
     }
     return;
@@ -145,6 +155,8 @@ bool PlannerThread::startPlanning()
         yError("WorldStateManager not connected!");
         return false;
     }
+
+    // Initialize worldStateManager, wait until it is done
     cmd.clear();
     cmd.addString("init");
     world_rpc.write(cmd, reply);
@@ -152,25 +164,26 @@ bool PlannerThread::startPlanning()
     if ((reply.size() == 1) && (reply.get(0).asVocab() == yarp::os::Vocab::encode("ok")))
     {
         yInfo("World State initialized");
-        startPlan = true;
-        stopping = false;
+        startPlan = true; //When and if worldStateManager is initialized, we can start the plan
+        stopping = false; //The plan is not stopped unless ordered
     }
     else 
     {
         yError("Failed to initialize World State.");
-        startPlan = false;
+        startPlan = false; //If the worldStateManager fails to initialize, the plan should not continue
     }
     return startPlan;
 }
 
+//Function responsible for pausing/resuming planning
 bool PlannerThread::checkPause()
 {
-    if (!startPlan)
+    if (!startPlan) //If there is no plan running
     {
-        return false;
+        return false; //Then it shouldn't pause
     }
     int timer = 0;
-    while (!resumePlan)
+    while (!resumePlan && !stopping && !closing) //While the plan is not resumed, wait for command resumePlanner
     {
         yarp::os::Time::delay(0.1);
         timer = timer + 1;
@@ -180,24 +193,27 @@ bool PlannerThread::checkPause()
             timer = 0;
         }
     }
-    if (!startPlan)
+    if (!startPlan) //If plan was stopped while paused, pause should stop current planning
     {
         return false;
     }
     return true;
 }
 
+// command to pause Planner
 bool PlannerThread::pausePlanner()
 {
     resumePlan = false;
     return resumePlan;
 }
 
+// command to resume Planner
 bool PlannerThread::resumePlanner()
 {
     resumePlan = true;
     return resumePlan;
 }
+
 
 bool PlannerThread::updateState()
 {
@@ -209,11 +225,13 @@ bool PlannerThread::updateState()
         yError("WorldStateManager not connected!");
         return false;
     }
+    // Update worldStateManager
     cmd.clear();
     cmd.addString("update");
     world_rpc.write(cmd, reply);
     if ((reply.size() == 1) && (reply.get(0).asVocab() == yarp::os::Vocab::encode("ok"))){
         yarp::os::Time::delay(0.5);
+        // If the worldStateManager updates successfully, then update OPC2PRADA
         cmd.clear();
         cmd.addString("update");
         opc2prada_rpc.write(cmd,reply);
@@ -221,24 +239,25 @@ bool PlannerThread::updateState()
             yInfo("Planner state updated!");
             return true;
         }
-        else {
+        else { //If opc2prada update fails:
             yError("Planner state update failed: something wrong with the opc2prada module");
             return false;
         }
     }
-    else {
+    else { //If WSM update fails
         yError("Planner state update failed: something wrong with the World State Manager");
     }
     return false;
 }
 
+// function responsible for completing the state.dat file. It negates all symbols not present on opc2prada update, due to the closed world assumption (if it is not true, it must be false)
 bool PlannerThread::completePlannerState()
 {
     string line, state_str, temp_str;
     vector<string> data, temp_vect, temp_vect2, avail_symb, temp_state;
     vector<vector<string> >  symbols;
-    symbolFile.open(symbolFileName.c_str());
-    stateFile.open(stateFileName.c_str());
+    symbolFile.open(symbolFileName.c_str()); //symbols.dat
+    stateFile.open(stateFileName.c_str()); //state.dat
     if (!stateFile.is_open())
     {
         yError("unable to open state file!");
@@ -249,18 +268,18 @@ bool PlannerThread::completePlannerState()
         yError("unable to open symbols file!");
         return false;
     }
-    while (getline(symbolFile, line)){
+    while (getline(symbolFile, line)){ // get symbols
         data.push_back(line);
     }
     symbolFile.close();
-    for (int i = 0; i < data.size(); ++i){
+    for (int i = 0; i < data.size(); ++i){ // process symbols from the symbol file
         temp_vect = split(data[i],' ');
         temp_vect2.clear();
-        temp_vect2.push_back(temp_vect[0]);
-        temp_vect2.push_back(temp_vect[2]);
+        temp_vect2.push_back(temp_vect[0]); // get symbol
+        temp_vect2.push_back(temp_vect[2]); // get if it is primitive or action
         symbols.push_back(temp_vect2);
     }
-    if (stateFile.is_open()){
+    if (stateFile.is_open()){ // get state symbols
         getline(stateFile, line);
         while (!closing && !stopping){
             if (line.find('-') != std::string::npos){
@@ -279,18 +298,18 @@ bool PlannerThread::completePlannerState()
         temp_state = split(line,' ');
     }
     stateFile.close();
-    for (int i = 0; i < symbols.size(); ++i){
+    for (int i = 0; i < symbols.size(); ++i){ // add "negated" symbols to the possible symbol list
         temp_str = "-" + symbols[i][0];
         avail_symb.push_back(symbols[i][0]);
         avail_symb.push_back(temp_str);
     }
     data.clear();
-    for (int i = 0; i < temp_state.size(); ++i){
+    for (int i = 0; i < temp_state.size(); ++i){ // sanity check on world state symbols: symbols that are present on the world state, but not on the symbol file, will be deleted.
         if (find_element(avail_symb, temp_state[i]) == 1){
             data.push_back(temp_state[i]);
         }
     }
-    for (int i = 0; i < data.size(); ++i){
+    for (int i = 0; i < data.size(); ++i){ // creates new "checked" world state
         temp_str = data[i]+"()";
         if (i == 0){
             state_str = temp_str;
@@ -300,7 +319,7 @@ bool PlannerThread::completePlannerState()
         }
     }
     state_str = state_str + " ";
-    for (int i = 0; i < symbols.size(); ++i){
+    for (int i = 0; i < symbols.size(); ++i){ // adds symbols that were not present on the world state with value "false"
         if ((find_element(data, symbols[i][0]) == 0) && (symbols[i][1] == "primitive")){
             state_str = state_str + "-" + symbols[i][0] + "() ";
         }
@@ -329,16 +348,18 @@ bool PlannerThread::groundRules()
         yError("Affordances communication module not connected, unable to ground rules!");
         return false;
     }
+    // instructs affordanceCommunication module to init
     Bottle& aff_bottle_out = aff_yarp.prepare();
     aff_bottle_out.clear();
     aff_bottle_out.addString("start");
     aff_yarp.write();
     Time::delay(0.3);
+    // instructs affordanceCommunication module to await commands from geometricGrounding
     aff_bottle_out = aff_yarp.prepare();
     aff_bottle_out.clear();
     aff_bottle_out.addString("update");
     aff_yarp.write();
-    while (!closing && !stopping) {
+    while (!closing && !stopping) { // await confirmation from affordanceCommunication
         aff_bottle_in = aff_yarp.read(false);
         if (aff_bottle_in){
             break;
@@ -350,33 +371,35 @@ bool PlannerThread::groundRules()
         }
         Time::delay(0.1);
     }
+    // instructs geometricGrounding module to start grounding
     Bottle& geo_bottle_out = geo_yarp.prepare();
     geo_bottle_out.clear();
     geo_bottle_out.addString("update");
     geo_yarp.write();
     yInfo("Grounding...");
-    while (!closing && !stopping) {
+    while (!closing && !stopping) { // awaits confirmation that grounding is complete
         geo_bottle_in = geo_yarp.read(false);
         if (geo_bottle_in != NULL){
             command = geo_bottle_in->toString();
             cout << command << endl;
         }
-        if (command == "ready"){
+        if (command == "ready"){ // success!
             yInfo("Grounding Complete!");
             break;
         }
-        if (geo_yarp.getOutputCount() == 0)
+        if (geo_yarp.getOutputCount() == 0) // module crashed
         {
             yError("Geometric Grounding module crashed");
             return false;
         }
-        if (command == "fail")
+        if (command == "fail") // something failed on grounding (not crash)
         {
             yError("Grounding failed, there might be something wrong with the object list.");
             return false;
         }
         Time::delay(0.1);
     }
+    // Query affordanceCommunication to get the position of the tool-handles (to point when asking for them)
     aff_bottle_out = aff_yarp.prepare();
     aff_bottle_out.clear();
     aff_bottle_out.addString("query");
@@ -386,7 +409,7 @@ bool PlannerThread::groundRules()
         aff_bottle_in = aff_yarp.read(false);
         if (aff_bottle_in){
             data = aff_bottle_in->toString();
-            if (data == "()" || data == "")
+            if (data == "()" || data == "") // If message is corrupted/non-standard
             {
                 yError("empty bottle received, something might be wrong with the affordances module.");
                 return false;
@@ -400,7 +423,7 @@ bool PlannerThread::groundRules()
                     break;
                 }
             }
-            toolhandle = split(data,' ');
+            toolhandle = split(data,' '); // store the position of the tool handles: (ID pos.x pos.y ID pos.x pos.y etc...)
             break;
         }
         if (aff_yarp.getOutputCount() == 0)
@@ -419,36 +442,37 @@ bool PlannerThread::compileGoal()
         yError("Goal Compiler module not connected, unable to compile goals");
         return false;
     }
+    // Instructs goalCompiler module to await an instruction from praxiconInterface. Message might be sent before this, but it will only compile after this command
     Bottle& goal_bottle_out = goal_yarp.prepare();
     goal_bottle_out.clear();
     goal_bottle_out.addString("praxicon");
     goal_yarp.write();
-    yInfo("Waiting for praxicon...");
+    yInfo("Waiting for praxicon..."); // waits for message, timeout at 5 minutes
     while (!closing && !stopping) {
         yarp::os::Time::delay(0.1);
         goal_bottle_in = goal_yarp.read(false);
         if (goal_bottle_in){
-            if (goal_bottle_in->toString() == "done")
+            if (goal_bottle_in->toString() == "done") // message arrived
             {
                 yInfo("Praxicon instruction received, compiling...");
                 break;
             }
-            else if (goal_bottle_in->toString() == "failed objects")
+            else if (goal_bottle_in->toString() == "failed objects") // failed to obtain objects from planningCycle
             {
                 yError("goalCompiler failed to load object list.");
                 return false;
             }
-            else if (goal_bottle_in->toString() == "failed Praxicon")
+            else if (goal_bottle_in->toString() == "failed Praxicon") // timeout
             {
                 yError("Praxicon crashed or took too long to reply (5 minutes timeout).");
                 return false;
             }
-            else if (goal_bottle_in->toString() == "unknown")
+            else if (goal_bottle_in->toString() == "unknown") // unknown object in the instructions provided by Praxicon
             {
                 yWarning("Unknown object in Praxicon message, unable to compile.");
                 return false;
             }
-            else
+            else // any other message:
             {
                 yError("non-standard message received, something failed with the goalCompiler module.");
                 return false;
@@ -461,6 +485,7 @@ bool PlannerThread::compileGoal()
         }
         Time::delay(0.5);
     }
+    // Instructs the goalCompiler module to compile the set of subgoals
     goal_bottle_out = goal_yarp.prepare();
     goal_bottle_out.clear();
     goal_bottle_out.addString("update");
@@ -470,53 +495,53 @@ bool PlannerThread::compileGoal()
         goal_bottle_in = goal_yarp.read(false);
         if (goal_bottle_in)
         {
-            if (goal_bottle_in->toString() == "done")
+            if (goal_bottle_in->toString() == "done") // success!
             {
                 yInfo("Goal Compiling is complete!");
                 break;
             }
-            else if (goal_bottle_in->toString() == "failed objects")
+            else if (goal_bottle_in->toString() == "failed objects") // failed to obtain the objects from the planningCycle
             {
                 yWarning("goalCompiler failed to load object list.");
                 return false;
             }
-            else if (goal_bottle_in->toString() == "failed rules")
+            else if (goal_bottle_in->toString() == "failed rules") // failed to obtain the rules from the rules file (rules.dat)
             {
                 yWarning("goalCompiler failed to load rules list.");
                 return false;
             }
-            else if (goal_bottle_in->toString() == "failed instructions")
+            else if (goal_bottle_in->toString() == "failed instructions") // failed to obtain instructions from the Praxicon message (probably won't ever happen, given previous messages)
             {
                 yWarning("goalCompiler failed to load instructions list.");
                 return false;
             }
-            else if (goal_bottle_in->toString() == "failed compiling")
+            else if (goal_bottle_in->toString() == "failed compiling") // failed during the compilation of the subgoals
             {
                 yWarning("goalCompiler failed to compile the subgoals.");
                 return false;
             }
-            else if (goal_bottle_in->toString() == "failed translation")
+            else if (goal_bottle_in->toString() == "failed translation") // failed during the translation of the subgoals (labels->IDs)
             {
                 yWarning("goalCompiler failed to translate the subgoals.");
                 return false;
             }
-            else if (goal_bottle_in->toString() == "failed consistency")
+            else if (goal_bottle_in->toString() == "failed consistency") // failed the consistency check performed by the module (undoable plan)
             {
                 yWarning("Consistency Check failed; the instructions provided by the Praxicon cannot be achieved.");
-                // send message to paxicon
+                // send message to praxicon
                 return false;
             }
-            else if (goal_bottle_in->toString() == "failed pruning")
+            else if (goal_bottle_in->toString() == "failed pruning") // failed in eliminating undesirable subgoals
             {
                 yWarning("goalCompiler failed to prune the subgoal list.");
                 return false;
             }
-            else if (goal_bottle_in->toString() == "failed writing")
+            else if (goal_bottle_in->toString() == "failed writing") // failed in writing to the subgoal.dat file
             {
                 yWarning("goalCompiler failed to write subgoals to the subgoal file.");
                 return false;
             }
-            else
+            else // any other error:
             {
                 yError("non-standard message received, something might be wrong with the Goal Compiler module.");
                 return false;
@@ -532,6 +557,7 @@ bool PlannerThread::compileGoal()
     return true;
 }
 
+// function that loads the subgoals from the subgoal.dat file to a vector (internal memory of the planningCycle)
 bool PlannerThread::loadSubgoals()
 {
     string line;
@@ -551,6 +577,7 @@ bool PlannerThread::loadSubgoals()
     return true;
 }
 
+// function that loads the goal from the goal.dat file to a vector (internal memory of the planningCycle)
 bool PlannerThread::loadGoal()
 {
     string line;
@@ -568,6 +595,7 @@ bool PlannerThread::loadGoal()
     return true;
 }
 
+// resets the Config file (used by PRADA), to the default values (horizon = 5)
 bool PlannerThread::resetConfig()
 {
     string line;
@@ -605,10 +633,46 @@ bool PlannerThread::resetConfig()
     return true;
 }
 
+// rpc function that prints the list of object IDs and labels
 Bottle PlannerThread::printObjs()
 {
     return object_bottle;
 }
+
+/* - For future use (tool names propagation)
+Bottle PlannerThread::printObjs()
+{
+    return tool_bottle;
+}
+
+bool PlannerThread::loadTools()
+{
+    vector<string> temp_vect;
+    vector<string> labels;
+
+    if (actInt_rpc.getOutputCount() == 0)
+    {
+        yError("activityInterface not connected!");
+        return false;
+    }
+
+    Bottle actIntCmd, actIntReply;
+    wsmCmd.addString("getToolNames"); // command might be different
+    actInt_rpc.write(actIntCmd, actIntReply);
+    if (actIntReply.size() > 0)
+    {
+        tool_bottle.clear();
+        tool_bottle = *actIntReply.get(0).asList();
+        return true;
+    }
+    else
+    {
+        yError("Failed to obtain tool-like names");
+        return false;
+    }
+    return false;
+}
+*/
 
 bool PlannerThread::loadObjs()
 {
@@ -643,7 +707,7 @@ bool PlannerThread::loadObjs()
     cmd.addString("loadObjects");
     opc2prada_rpc.write(cmd,reply);
     if (reply.size() > 0 && reply.get(0).isList() && reply.get(0).asList()->size() > 2){
-        object_bottle.clear();
+        object_bottle.clear(); // creates a bottle for the "printObjects" command
         object_bottle = *reply.get(0).asList();
         for (int i = 0; i < reply.get(0).asList()->size(); ++i)
         {
@@ -651,7 +715,7 @@ bool PlannerThread::loadObjs()
             temp_vect.push_back( NumbertoString(reply.get(0).asList()->get(i).asList()->get(0).asInt() ) );
             temp_vect.push_back(reply.get(0).asList()->get(i).asList()->get(1).asString());
             object_IDs.push_back(temp_vect);
-               if (find_element(labels,temp_vect[1]) == 1)
+               if (find_element(labels,temp_vect[1]) == 1) // If one of the labels is already present on the list, that is, is a duplicate
                {
                    yWarning("There are objects that share labels: %s", temp_vect[1].c_str());
                }
@@ -666,6 +730,7 @@ bool PlannerThread::loadObjs()
     return false;
 }
 
+// stops all planning and functions, resets planning variables
 void PlannerThread::stopPlanning()
 {
     startPlan = false;
@@ -677,6 +742,7 @@ void PlannerThread::stopPlanning()
     return;
 }
 
+// resets planning variables at init
 bool PlannerThread::resetPlanVars()
 {
     plan_level = 0;
@@ -685,6 +751,7 @@ bool PlannerThread::resetPlanVars()
     return resetConfig();
 }
 
+// loads state symbols from the state.dat file to a vector (internal memory)
 bool PlannerThread::loadState()
 {
     string line;
@@ -702,12 +769,14 @@ bool PlannerThread::loadState()
     return true;
 }
 
+// stores the state into a vector that is only changed once an action is successful (to check for failure/success)
 bool PlannerThread::preserveState()
 {
     old_state = state;
     return true;
 }
 
+// compares the current world state with the previous one, to detect action failure/success
 bool PlannerThread::compareState()
 {
     vector<string> temp_vect;
@@ -744,12 +813,14 @@ bool PlannerThread::compareState()
     return false;
 }
 
+// preserves rules after grounding, in order to revert after adapting them 
 bool PlannerThread::preserveRules()
 {
     old_rules = rules;
     return true;
 }
 
+// loads rules from the file rules.dat into a vector (internal memory)
 bool PlannerThread::loadRules()
 {
     string line;
@@ -767,6 +838,7 @@ bool PlannerThread::loadRules()
     return true;
 }
 
+// function that lowers the probability of success of actions that fail
 bool PlannerThread::adaptRules()
 {
     string temp_str;
@@ -777,8 +849,8 @@ bool PlannerThread::adaptRules()
         yError("unable to open rules file!");
         return false;
     }
-    yDebug("before for: %s", next_action.c_str());
-    for (int t = 0; t < rules.size(); ++t){
+    //yDebug("before for: %s", next_action.c_str());
+    for (int t = 0; t < rules.size(); ++t){ // clears the action vector to be able to compare it with "next_action"
         temp_str = rules[t];
         while (!closing && !stopping){
             if (temp_str.find(' ') != std::string::npos){
@@ -795,12 +867,12 @@ bool PlannerThread::adaptRules()
             }
         }
         //yDebug("action to be adapted: %s", next_action.c_str());
-        if (temp_str == next_action && next_action != ""){
+        if (temp_str == next_action && next_action != ""){ // if there was a planned next action:
             int p = 0;
             while (!closing && !stopping){
                 if (rules[t+p] == ""){
                     adapt_rules = split(rules[t+4], ' ');
-                    adapt_rules[2] = static_cast<ostringstream*>( &(ostringstream() << (atof(adapt_rules[2].c_str())/5) ))->str();
+                    adapt_rules[2] = static_cast<ostringstream*>( &(ostringstream() << (atof(adapt_rules[2].c_str())/5) ))->str(); // probability = probability/5
                     temp_str = "";
                     for (int h = 0; h < adapt_rules.size(); ++h){
                         if (adapt_rules[h] != "0")
@@ -810,7 +882,7 @@ bool PlannerThread::adaptRules()
                     }
                     rules[t+4] = temp_str;
                     adapt_noise = split(rules[t+p-1], ' ');
-                    adapt_noise[2] = static_cast<ostringstream*>( &(ostringstream() << (atof(adapt_noise[2].c_str()) + 4*atof(adapt_rules[2].c_str())) ))->str();
+                    adapt_noise[2] = static_cast<ostringstream*>( &(ostringstream() << (atof(adapt_noise[2].c_str()) + 4*atof(adapt_rules[2].c_str())) ))->str(); // adds the remaining probability to noise so that all adds up to 1
                     temp_str = "";
                     for (int h = 0; h < adapt_noise.size(); ++h){
                         if (adapt_noise[h] != "0")
@@ -825,6 +897,7 @@ bool PlannerThread::adaptRules()
             }
             for (int y = 0; y < rules.size(); ++y){
                 rulesFileOut << rules[y] << endl;
+                yDebug("%s", rules[y].c_str());
             }
             yInfo("Rules adapted, probability of %s reduced", next_action.c_str());
             break;
@@ -835,6 +908,7 @@ bool PlannerThread::adaptRules()
     return true;
 }
 
+// updates the goal according to the plan-level (indicating where in the plan we are)
 bool PlannerThread::goalUpdate()
 {
     goalFileOut.open(goalFileName.c_str());
@@ -849,32 +923,32 @@ bool PlannerThread::goalUpdate()
         yError("Goals not compiled correctly, recompile goals");
         return false;
     }
-    if (plan_level >= subgoals.size())
+    if (plan_level >= subgoals.size()) // if plan-level is bigger than the maximum size of the subgoals:
     {
-        plan_level = subgoals.size()-1;
+        plan_level = subgoals.size()-1; // point to the last sub-goal
     }
-    for (int y = 0; y < subgoals[plan_level].size(); ++y){
+    for (int y = 0; y < subgoals[plan_level].size(); ++y){ // writes the new goal to the file
         goalFileOut << subgoals[plan_level][y] << " ";
     }
     goalFileOut.close();
     return true;
 }
 
+// function that checks if the plan was completed, and warns activity Interface
 bool PlannerThread::planCompletion()
 {
     if (plan_level >= subgoals.size()){
         yInfo("Plan completed!!");
         Bottle& prax_bottle_out = prax_yarp.prepare();
         prax_bottle_out.clear();
-        prax_bottle_out.addString("OK");
+        prax_bottle_out.addString("OK"); // adds "OK" to the bottle to activityInterface
         for (int u = 0; u < objects_used.size(); ++u){
             for (int inde = 0; inde < object_IDs.size(); ++inde){
                 if (object_IDs[inde][0] == objects_used[u]){
                     string check_str=object_IDs[inde][1];
                     transform(check_str.begin(), check_str.end(), check_str.begin(), ::tolower);
-                    //yDebug("After conversion: %s", check_str.c_str());
                     if (check_str != "rake" && check_str != "stick" && check_str != "left" && check_str != "right" /*&& find_element(tool_list,check_str) == 0 */){
-                        prax_bottle_out.addString(object_IDs[inde][1]);
+                        prax_bottle_out.addString(object_IDs[inde][1]); // adds objects used in completing the goal to the activityInterface bottle
                     }
                 }
             }
@@ -887,17 +961,19 @@ bool PlannerThread::planCompletion()
     return true;
 }
 
+// function that directly calls planner.exe
 int PlannerThread::PRADA()
 {
     string line;
     vector<string> pipe_vect;
     string next_sequence;
     int retrn_flag = 2;
+    // prepare a pipe file
     FILE * pFile;
     pFile = fopen(pipeFileName.c_str(),"w");
     fclose(pFile);
     int sys_flag = system(process_string.c_str());
-    if (sys_flag == 34304)
+    if (sys_flag == 34304) // code for executable failure
     {
         yError("Error with PRADA files, load failed");
         return 0;
@@ -912,14 +988,14 @@ int PlannerThread::PRADA()
         pipe_vect.push_back(line);
     }
     pipeFile.close();
-    for (int t = 0; t < pipe_vect.size(); ++t){
+    for (int t = 0; t < pipe_vect.size(); ++t){ // searches for the "recomended action" line
         if (pipe_vect[t] == "The planner would like to kindly recommend the following action to you:" && t+1 < pipe_vect.size()){
             next_action = pipe_vect[t+1];
             cout << endl;
             yInfo("Action found: %s", next_action.c_str());
             retrn_flag = 1;
         }
-        if (pipe_vect[t] == "*** Planning for a complete plan." && t+3 < pipe_vect.size()){
+        if (pipe_vect[t] == "*** Planning for a complete plan." && t+3 < pipe_vect.size()){ // gets full action sequence planned
             next_sequence = pipe_vect[t+3];
             cout << endl;
             yDebug("Sequence found: %s", next_sequence.c_str());
@@ -929,6 +1005,7 @@ int PlannerThread::PRADA()
     return retrn_flag;
 }
 
+// increases planning horizon by 1 (config file must be changed for PRADA to noticed this)
 bool PlannerThread::increaseHorizon()
 {
     int horizon;
@@ -949,10 +1026,10 @@ bool PlannerThread::increaseHorizon()
             temp_vect = split(configData[w+2], ' ');
             horizon = atoi(temp_vect[1].c_str());
             horizon = horizon + 1;
-            if (horizon > 10)
+            if (horizon > 10) // if horizon is too large already
             {
                 yWarning("horizon too large, jumping to next goal");
-                jumpForward();
+                jumpForward(); // jumps to next plan-level
                 horizon = 5;
                 if (failed_goal.size() == 0)
                 {
@@ -964,7 +1041,7 @@ bool PlannerThread::increaseHorizon()
                         }
                     }
                 }
-                if ((plan_level >= subgoals.size() && !checkGoalCompletion()) || !checkHoldingSymbols())
+                if ((plan_level >= subgoals.size() && !checkGoalCompletion()) || !checkHoldingSymbols()) // if plan-level already exceeds maximum subgoal size, and the goal was not completed
                 {
                     for (int t = 0; t < failed_goal.size(); ++t)
                     {
@@ -972,6 +1049,7 @@ bool PlannerThread::increaseHorizon()
                         objects_failed.push_back(temp_vect[0]);
                     }
                     yInfo("Plan failed");
+                    // plan fails, add FAIL to activityInterface bottle
                     Bottle& prax_bottle_out = prax_yarp.prepare();
                     prax_bottle_out.clear();
                     prax_bottle_out.addString("FAIL");
@@ -981,7 +1059,7 @@ bool PlannerThread::increaseHorizon()
                                 string check_str=object_IDs[inde][1];
                                 transform(check_str.begin(), check_str.end(), check_str.begin(), ::tolower);
                                 if (check_str != "rake" && check_str != "stick" && check_str != "left" && check_str != "right" /*&& find_element(tool_list,check_str) == 0 */){
-                                    prax_bottle_out.addString(object_IDs[inde][1]);
+                                    prax_bottle_out.addString(object_IDs[inde][1]); // add objects that were involved in the failure
                                 }
                             }
                         }
@@ -989,10 +1067,10 @@ bool PlannerThread::increaseHorizon()
                     yDebug("Sending to Praxicon: %s", prax_bottle_out.toString().c_str());
                     prax_yarp.write(); 
                     restartPlan = true;
-                    return false;
+                    return false; // leaves function
                 }
             }
-            configData[w+2] = "PRADA_horizon " + static_cast<ostringstream*>( &(ostringstream() << horizon) )->str();
+            configData[w+2] = "PRADA_horizon " + static_cast<ostringstream*>( &(ostringstream() << horizon) )->str(); // if it didn't fail, update horizon + 1
             break;
         }
     }
