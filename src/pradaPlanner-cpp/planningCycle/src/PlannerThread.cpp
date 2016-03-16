@@ -738,6 +738,7 @@ void PlannerThread::stopPlanning()
     restartPlan = true;
     plan_level = 0;
     resetConfig();
+    resumePlan = true;
     yInfo("Planning stopped");
     return;
 }
@@ -843,6 +844,11 @@ bool PlannerThread::adaptRules()
 {
     string temp_str;
     vector<string> adapt_rules, adapt_noise;
+    if (next_action == "")
+    {
+        yDebug("no action to adapt");
+        return true;
+    }
     rulesFileOut.open(rulesFileName.c_str());
     if (!rulesFileOut.is_open())
     {
@@ -897,6 +903,9 @@ bool PlannerThread::adaptRules()
             }
             for (int y = 0; y < rules.size(); ++y){
                 rulesFileOut << rules[y] << endl;
+            }
+            for (int y = t; y < t+p; ++y)
+            {
                 yDebug("%s", rules[y].c_str());
             }
             yInfo("Rules adapted, probability of %s reduced", next_action.c_str());
