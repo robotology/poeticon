@@ -23,7 +23,7 @@ OUTCOMES:
 ACTION:
   grasp__obj_with__hand()
 CONTEXT:
-  -_obj_ishand() _hand_clearhand() _hand_ishand() _obj_isreachable_with__hand() -_ALL_on__obj()
+  -_obj_ishand() _hand_clearhand() _hand_ishand() _obj_isreachable_with__hand() -_ALL_on__obj() -_obj_inhand__OTHERHAND()
 OUTCOMES:
   0.95 _obj_inhand__hand() -_hand_clearhand()
   0.05 <noise>

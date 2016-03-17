@@ -156,21 +156,48 @@ bool PlannerThread::startPlanning()
         return false;
     }
 
-    // Initialize worldStateManager, wait until it is done
+    // Asks the worldStateManager if it is already initialized
     cmd.clear();
-    cmd.addString("init");
+    cmd.addString("isInitialized");
+    yInfo("Checking World State....");
     world_rpc.write(cmd, reply);
-    yInfo("Initializing World State....");
     if ((reply.size() == 1) && (reply.get(0).asVocab() == yarp::os::Vocab::encode("ok")))
     {
-        yInfo("World State initialized");
-        startPlan = true; //When and if worldStateManager is initialized, we can start the plan
-        stopping = false; //The plan is not stopped unless ordered
+        yInfo("World State already initialized");
+        cmd.clear();
+        cmd.addString("reset"); //if it was initialized, reset it
+        yInfo("Resetting World State....");
+        world_rpc.write(cmd, reply);
+        if ((reply.size() == 1) && (reply.get(0).asVocab() == yarp::os::Vocab::encode("ok")))
+        {
+            yInfo("World State reset");
+            startPlan = true; //When and if worldStateManager is initialized, we can start the plan
+            stopping = false; //The plan is not stopped unless ordered
+        }
+        else 
+        {
+            yError("Failed to reset World State.");
+            startPlan = false; //If the worldStateManager fails to reset, the plan should not continue
+        }
     }
-    else 
+    else
     {
-        yError("Failed to initialize World State.");
-        startPlan = false; //If the worldStateManager fails to initialize, the plan should not continue
+    // Initialize worldStateManager, wait until it is done
+        cmd.clear();
+        cmd.addString("init");
+        yInfo("Initializing World State....");
+        world_rpc.write(cmd, reply);
+        if ((reply.size() == 1) && (reply.get(0).asVocab() == yarp::os::Vocab::encode("ok")))
+        {
+            yInfo("World State initialized");
+            startPlan = true; //When and if worldStateManager is initialized, we can start the plan
+            stopping = false; //The plan is not stopped unless ordered
+        }
+        else 
+        {
+            yError("Failed to initialize World State.");
+            startPlan = false; //If the worldStateManager fails to initialize, the plan should not continue
+        }
     }
     return startPlan;
 }

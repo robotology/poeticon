@@ -352,6 +352,65 @@ vector<string> geoGround::create_rules(string pre_rule)
     int flag_not_add;
     for (int j = 0; j < new_rule.size(); ++j)
     {
+        if (new_rule[j].find("_OTHERHAND") != std::string::npos)
+        {
+            yDebug("rule: %s", new_rule[j].c_str());
+            aux_rule = split(new_rule[j],' ');
+            for (int u = 0; u < aux_rule.size(); ++u)
+            {
+                if (aux_rule[u].find("_OTHERHAND") != std::string::npos)
+                {
+                    temp_rule.push_back(" ");
+                    for (int k = 0; k < aux_rule.size(); ++k)
+                    {
+                        temp_rule.push_back(aux_rule[k]);
+                    }
+                    for (int k = 0; k < hands.size(); ++k)
+                    {
+                        yDebug("i'm searching for %s in %s", hands[k].c_str(), new_rule[j].c_str());
+                        if (!(new_rule[j].find(hands[k]) != std::string::npos))
+                        {
+                            temp_str = aux_rule[u];
+                            yDebug("Before replacing: %s", temp_str.c_str());
+                            while (!isStopping())
+                            {
+                                if (temp_str.find("_OTHERHAND") != std::string::npos)
+                                {
+                                    temp_str.replace(temp_str.find("_OTHERHAND"),10,hands[k]);
+                                }
+                                else 
+                                {
+                                    break;
+                                }
+                            }
+                            yDebug("After replacing: %s", temp_str.c_str());
+                            temp_rule.push_back(temp_str);
+                        }
+                    }
+                }
+            }
+            for (int h = temp_rule.size()-1; h >= 0; --h)
+            {
+                if (temp_rule[h].find("_OTHERHAND") != std::string::npos)
+                {
+                    temp_rule.erase(temp_rule.begin()+h);
+                }
+            }
+            temp_str = " ";
+            for (int h = 0; h < temp_rule.size(); ++h)
+            {
+                temp_str = temp_str + " " + temp_rule[h];
+            }
+            temp_rule.clear();
+            new_rule[j] = temp_str;
+            yDebug("after change: %s", temp_str.c_str());
+        }
+    }
+    aux_rule.clear();
+    temp_rule.clear();
+    temp_str = "";
+    for (int j = 0; j < new_rule.size(); ++j)
+    {
         if (new_rule[j].find("_ALL") != std::string::npos)
         {
             aux_rule = split(new_rule[j],' ');
@@ -368,7 +427,7 @@ vector<string> geoGround::create_rules(string pre_rule)
                     {
                         if (aux_rule[u].find(objects[k]) == std::string::npos)
                         {
-                            temp_str = " " + aux_rule[u];
+                            temp_str = aux_rule[u];
                             while (!isStopping())
                             {
                                 if (temp_str.find("_ALL") != std::string::npos)
@@ -432,7 +491,7 @@ vector<string> geoGround::create_rules(string pre_rule)
             temp_str = " ";
             for (int h = 0; h < aux_temp_rule.size(); ++h)
             {
-                temp_str = temp_str + aux_temp_rule[h];
+                temp_str = temp_str + " " + aux_temp_rule[h];
             }
             aux_temp_rule.clear();
             new_rule[j] = temp_str;
