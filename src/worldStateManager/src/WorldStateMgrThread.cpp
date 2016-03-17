@@ -154,16 +154,20 @@ bool WorldStateMgrThread::clearAll()
     needTrackerInit = false;
     initFinished = false;
 
-    // reset activityInterface's objects stack
-    if (activityPort.getOutputCount()>=1)
-    {
-        Bottle activityCmd, activityReply;
-        activityCmd.addString("resetObjStack");
-        yInfo() << "sending activityInterface instruction:" << activityCmd.toString().c_str();
-        activityPort.write(activityCmd, activityReply); // reply is always "ok"
-    }
-    else
-        yWarning() << __func__ << "not connected to activityInterface, cannot send instruction resetObjStack";
+    // activityInterface automatically detects unstacking events for the
+    // "sabotage" scenario - no need to manually reset the whole stack
+    // in memory. it's better not to do it at all and leave it to activityIF,
+    // so that one can transition from an experiment to the next one (with
+    // possibly a partial stack inherited from the first experiment).
+    //
+    // reset activityInterface's objects stack (full stack memory)
+    //if (activityPort.getOutputCount()>=1)
+    //{
+    //    Bottle activityCmd, activityReply;
+    //    activityCmd.addString("resetObjStack");
+    //    yInfo() << "sending activityInterface instruction:" << activityCmd.toString().c_str();
+    //    activityPort.write(activityCmd, activityReply); // reply is always "ok"
+    //}
 
     // reset activeParticleTracker
     resetTracker();
