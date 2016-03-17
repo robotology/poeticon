@@ -149,7 +149,6 @@ bool ActivityInterface::configure(yarp::os::ResourceFinder &rf)
     yarp::os::Network::connect("/icub/camcalib/left/out", inputImagePortName.c_str());
     yarp::os::Network::connect(("/"+moduleName+"/praxicon:rpc").c_str(), "/praxInterface/speech:i");
     
-    
     yarp::os::Network::connect("/lbpExtract/extractedlbp:o", ("/" + moduleName + "/blobImg:i").c_str());
     yarp::os::Network::connect(("/lbpExtract/blobs:o"), ("/"+moduleName+"/blobs:i").c_str());
     
@@ -492,8 +491,8 @@ bool ActivityInterface::processPradaStatus(const Bottle &status)
 {
     Bottle objectsUsed;
     Bottle buns;
-    buns.addString("bun-bottom");
-    buns.addString("bun-top");
+    buns.addString("Bun-bottom");
+    buns.addString("Bun-top");
     int passed[buns.size()];
     
     if ( status.size() > 0 )
@@ -792,7 +791,7 @@ Bottle ActivityInterface::get3D(const string &objName)
 {
     Bottle Memory = getMemoryBottle();
     
-    //yError("[get3D] getMemoryBottle %s",Memory.toString().c_str() );
+    //yInfo("[get3D] getMemoryBottle %s",Memory.toString().c_str() );
     Bottle position3D;
     
     for (int i=0; i<Memory.size(); i++)
@@ -837,9 +836,9 @@ Bottle ActivityInterface::get2D(const string &objName)
                     {
                         Bottle *propFieldPos = propField->find("position_2d_left").asList();
                         
-                        for (int i=0; i < propFieldPos->size(); i++)
+                        for (int ii=0; ii< propFieldPos->size(); ii++)
                         {
-                            position2D.addDouble(propFieldPos->get(i).asDouble());
+                            position2D.addDouble(propFieldPos->get(ii).asDouble());
                         }
                     }
                 }
@@ -1195,6 +1194,8 @@ bool ActivityInterface::take(const string &objName, const string &handName)
     inAction = true;
     pauseAllTrackers();
     
+    yInfo("the obj name is %s and hand %s", objName.c_str(), handName.c_str());
+    
     //check for hand status beforehand to make sure that it is empty
     string handStatus = inHand(objName);
     
@@ -1203,26 +1204,33 @@ bool ActivityInterface::take(const string &objName, const string &handName)
         //talk to iolStateMachineHandler
         yInfo("[take] asking 3D");
         Bottle position = get3D(objName);
-    
+        yInfo("[take] done asking 3D %s ",position.toString().c_str());
+        
         if (position.size()>0)
         {
             yInfo("[take] object is visible at %s will do the take action \n", position.toString().c_str());
             
             yInfo("[take] will initialise obj \n");
-            initObjectTracker(objName);
+            //initObjectTracker(objName);
             yInfo("[take] done initialising obj \n");
             
             executeSpeech("ok, I will take the " + objName);
             
             //check that objName ! = tools
             //initObjectTracker(objName);
+            string whichHand;
+            
+            if (position.get(1).asDouble() <= - 0.005)
+                whichHand = "left";
+            else
+                whichHand = "right";
             
             //do the take actions
             Bottle cmd, reply;
             cmd.clear(), reply.clear();
             cmd.addString("take");
             cmd.addString(objName.c_str());
-            cmd.addString(handName.c_str());
+            cmd.addString(whichHand.c_str());
             cmd.addString("still");
             rpcAREcmd.write(cmd, reply);
             
@@ -1345,12 +1353,19 @@ bool ActivityInterface::put(const string &objName, const string &targetName)
             }
         }
         Bottle cmd, reply;
+        
+        /*
+        * setting use stacked object tracking esplicitally to false
+        * to avoid unecessary processing due to the efficiency of Caffe
+        */
+        useStackedObjs = false;
+        
         if(useStackedObjs)
         {
             Bottle position = trackStackedObject(targetName);
             executeSpeech("ok, I will place the " + objName + " on the " + targetName );
             
-            yInfo("I will place %s on the %s with position %d %d ", objName.c_str(), targetName.c_str(), position.get(0).asInt(), position.get(1).asInt() );
+            //yInfo("I will place %s on the %s with position %d %d ", objName.c_str(), targetName.c_str(), position.get(0).asInt(), position.get(1).asInt() );
             
             //do the take actions
             
@@ -1360,6 +1375,7 @@ bool ActivityInterface::put(const string &objName, const string &targetName)
             Bottle &tmp=cmd.addList();
             tmp.addInt (position.get(0).asInt());
             tmp.addInt (position.get(1).asInt());
+            tmp.addString(targetName.c_str());
             cmd.addString("gently");
             cmd.addString(handName.c_str());
             rpcAREcmd.write(cmd, reply);
@@ -1622,12 +1638,11 @@ bool ActivityInterface::pull(const string &objName, const string &toolName)
 }
 
 /**********************************************************/
-Bottle ActivityInterface::underOf(const std::string &objName)
+Bottle ActivityInterface::queryUnderOf(const std::string &objName)
 {
     Bottle replyList;
     
     replyList.clear();
-    //Bottle &list=replyList.addList();
     
     int id = -1;
     
@@ -1644,19 +1659,52 @@ Bottle ActivityInterface::underOf(const std::string &objName)
 }
 
 /**********************************************************/
+Bottle ActivityInterface::underOf(const std::string &objName)
+{
+    Bottle replyList;
+    
+    Bottle visibleObjects = getNames();
+    Bottle underOfObjects = queryUnderOf(objName);
+    
+    for (int i=0; i<underOfObjects.size(); i++)
+    {
+        for (int ii = 0; ii<visibleObjects.size(); ii++)
+        {
+            if (strcmp (underOfObjects.get(i).asString().c_str(), visibleObjects.get(ii).asString().c_str() ) == 0)
+            {
+                yWarning("Object %s should be under %s, but it IS visible ",  visibleObjects.get(ii).asString().c_str(), objName.c_str());
+                yWarning("%s should will be removed from stack", objName.c_str());
+                
+                for (std::map<int, string>::iterator it=onTopElements.begin(); it!=onTopElements.end(); ++it)
+                {
+                    if (strcmp (it->second.c_str(), objName.c_str() ) == 0)
+                    {
+                        onTopElements.erase(it->first);
+                        break;
+                    }
+                }
+            }
+        }
+    }
+    
+    underOfObjects.clear();
+    underOfObjects = queryUnderOf(objName);
+    
+    return underOfObjects;
+}
+
+/**********************************************************/
 bool ActivityInterface::testFill()
 {
     int elements = 0;
     
-    onTopElements.insert(pair<int, string>(elements, "bun-bottom"));
+    onTopElements.insert(pair<int, string>(elements, "Bun-bottom"));
     elements ++;
-    onTopElements.insert(pair<int, string>(elements, "meat"));
+    onTopElements.insert(pair<int, string>(elements, "Ham"));
     elements ++;
-    onTopElements.insert(pair<int, string>(elements, "cheese"));
+    onTopElements.insert(pair<int, string>(elements, "Tomato"));
     elements ++;
-    onTopElements.insert(pair<int, string>(elements, "pickles"));
-    elements ++;
-    onTopElements.insert(pair<int, string>(elements, "bun-top"));
+    onTopElements.insert(pair<int, string>(elements, "Bun-top"));
     
     return true;
 }
@@ -1794,14 +1842,14 @@ Bottle ActivityInterface::reachableWith(const string &objName)
         yInfo("after all: %s", replyList.toString().c_str());
         
         //using 3D instead of manip for testing
-        if(position.get(1).asDouble() < - 0.2 )
+       /* if(position.get(1).asDouble() < - 0.3 )
             replyList.addString("left");
-        else if (position.get(1).asDouble() >  0.2 )
+        else if (position.get(1).asDouble() >  0.3 )
             replyList.addString("right");
-        else{
-            replyList.addString("left");
-            replyList.addString("right");
-        }
+        else{*/
+        replyList.addString("left");
+        replyList.addString("right");
+        //}
         yInfo("will now send: %s", replyList.toString().c_str());
     }
     
@@ -1903,7 +1951,7 @@ Bottle ActivityInterface::getToolLikeNames()
         
         //yDebug("[getToolLikeNames] area %lf \n", area);
         
-        if (lenght > 200 ) //first screaning - only accept something big enough
+        if (lenght > 250 ) //first screaning - only accept something big enough
         {
             double axes = getAxes(contours[i], dst);
             allLengths.insert(pair<int, double>(i, axes));

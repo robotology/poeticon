@@ -210,6 +210,7 @@ public:
     bool                take(const std::string &objName, const std::string &handName);
     bool                put(const std::string &objName, const std::string &targetName);
     yarp::os::Bottle    underOf(const std::string &objName);
+    yarp::os::Bottle    queryUnderOf(const std::string &objName);
     yarp::os::Bottle    getOffset(const std::string &objName);
     bool                askForTool(const std::string &handName, const int32_t pos_x, const int32_t pos_y);
     yarp::os::Bottle    reachableWith(const std::string &objName);
