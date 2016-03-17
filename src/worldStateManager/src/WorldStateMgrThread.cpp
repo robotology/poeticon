@@ -659,6 +659,37 @@ bool WorldStateMgrThread::resetTracker()
     }
 
     Bottle trackerCmd, trackerReply;
+
+    // resume all paused tracks first (all paused tracks that are valid i.e.
+    // that are currently in "getIDs") before doing activeParticleTrack "reset"
+    Bottle pausedIDs;
+    trackerCmd.addString("getPausedIDs");
+    yDebug() << __func__ <<  "sending instruction to activeParticleTracker:" << trackerCmd.toString().c_str();
+    trackerPort.write(trackerCmd, trackerReply);
+    //yDebug() << __func__ <<  "obtained response:" << trackerReply.toString().c_str();
+    bool gotPausedTracks = trackerReply.size()>0 &&
+                           trackerReply.get(0).isList() &&
+                           trackerReply.get(0).asList()->size()>0;
+    if (gotPausedTracks)
+    {
+        Bottle pausedIDs = *trackerReply.get(0).asList();
+        yDebug("pausedIDs: %s", pausedIDs.toString().c_str());
+        for (int p=0; p<pausedIDs.size(); ++p)
+        {
+            const int id = pausedIDs.get(p).asInt();
+            // validity test for this paused ID (check if it is present in "getIDs")
+            if (ensureTrackerHasID(id))
+            {
+                yDebug("%s resuming valid track %d before tracker reset", __func__, id);
+                resumeTrackID(id);
+            }
+            else
+                yDebug("%s not resuming invalid track %d before tracker reset", __func__, id);
+        }
+    }
+
+    trackerCmd.clear();
+    trackerReply.clear();
     trackerCmd.addString("reset");
     trackerPort.write(trackerCmd, trackerReply);
     yInfo() << __func__ <<  "sending instruction to activeParticleTracker:" << trackerCmd.toString().c_str();
@@ -666,7 +697,10 @@ bool WorldStateMgrThread::resetTracker()
     validResponse = trackerReply.size()>0 &&
                     trackerReply.get(0).asVocab()==Vocab::encode("ok");
     if (!validResponse)
+    {
         yWarning() << __func__ <<  "obtained invalid response:" << trackerReply.toString().c_str();
+        return false;
+    }
 
     return true;
 }
