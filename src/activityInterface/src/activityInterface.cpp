@@ -1216,9 +1216,9 @@ bool ActivityInterface::take(const string &objName, const string &handName)
         {
             yInfo("[take] object is visible at %s will do the take action \n", position.toString().c_str());
             
-            yInfo("[take] will initialise obj \n");
+            //yInfo("[take] will initialise obj \n");
             //initObjectTracker(objName);
-            yInfo("[take] done initialising obj \n");
+            //yInfo("[take] done initialising obj \n");
             
             executeSpeech("ok, I will take the " + objName);
             
@@ -1246,6 +1246,8 @@ bool ActivityInterface::take(const string &objName, const string &handName)
                 tmp.addDouble (refinedPos.get(3).asDouble());
                 cmd.addString (whichHand.c_str());
                 cmd.addString ("still");
+                
+                yInfo("[take] will send the following to ARE: %s", cmd.toString().c_str());
                 rpcAREcmd.write(cmd, reply);
             
                 if (reply.get(0).asVocab()==Vocab::encode("ack"))
@@ -1255,6 +1257,8 @@ bool ActivityInterface::take(const string &objName, const string &handName)
                     cmd.clear(), reply.clear();
                     cmd.addString("observe");
                     cmd.addString(whichHand.c_str());
+                    
+                    yInfo("[take] will send the following to ARE: %s", cmd.toString().c_str());
                     rpcAREcmd.write(cmd, reply);
                     
                     if (classifyObserve())
@@ -1275,6 +1279,7 @@ bool ActivityInterface::take(const string &objName, const string &handName)
                         cmd.addString("home");
                         cmd.addString("arms");
                         cmd.addString("head");
+                        yInfo("[take] will send the following to ARE: %s", cmd.toString().c_str());
                         rpcAREcmd.write(cmd, reply);
 
                         //update inHandStatus map
@@ -1286,6 +1291,7 @@ bool ActivityInterface::take(const string &objName, const string &handName)
                         cmd.clear(), reply.clear();
                         cmd.addString("home");
                         cmd.addString("all");
+                        yInfo("[take] will send the following to ARE: %s", cmd.toString().c_str());
                         rpcAREcmd.write(cmd, reply);
                     }
                 }
@@ -1397,9 +1403,8 @@ bool ActivityInterface::put(const string &objName, const string &targetName)
         }
         else
         {
-            //talk to iolStateMachineHandler
-            yInfo("[put] asking 3D");
             Bottle position = get3D(targetName);
+            yInfo("[put] 3D position is %s", position.toString().c_str());
             
             if (position.size()>0)
             {
