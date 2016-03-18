@@ -629,7 +629,7 @@ std::vector<std::string> activeParticleTrack_IDLServer::help(const std::string& 
     }
     if (functionName=="getIDs") {
       helpString.push_back("yarp::os::Bottle getIDs() ");
-      helpString.push_back("Gets the list of ID being tracked ");
+      helpString.push_back("Gets the list of ID being currently tracked ");
       helpString.push_back("@return true/false on success/failure ");
     }
     if (functionName=="getPausedIDs") {

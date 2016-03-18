@@ -22,7 +22,7 @@ public:
    */
   virtual bool display(const std::string& value);
   /**
-   * Gets the list of ID being tracked
+   * Gets the list of ID being currently tracked
    * @return true/false on success/failure
    */
   virtual yarp::os::Bottle getIDs();

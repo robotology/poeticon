@@ -408,6 +408,14 @@ Bottle TRACKERManager::getPausedIDs()
 /**********************************************************/
 bool TRACKERManager::stopTrackers()
 {
+    Bottle ids = getPausedIDs();
+    
+    for (int i = 0; i <ids.size(); i++)
+    {
+        int id = ids.get(i).asInt();
+        pausedThreads.erase(std::remove(pausedThreads.begin(), pausedThreads.end(), id), pausedThreads.end());
+    }
+    
     yarp::sig::Vector listID;
     std::map< unsigned int, ParticleThread* >::iterator itr;
     for (itr = workerThreads.begin(); itr!=workerThreads.end(); itr++)
@@ -415,7 +423,8 @@ bool TRACKERManager::stopTrackers()
 
     for (int i = 0; i<listID.size(); i++)
         stopTracker(listID[i]);
-
+    
+    
     return true;
 }
 /**********************************************************/
