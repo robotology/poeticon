@@ -1405,14 +1405,24 @@ bool ActivityInterface::put(const string &objName, const string &targetName)
             {
                 executeSpeech("ok, I will place the " + objName + " on the " + targetName);
                 
-                //do the take actions
-                cmd.clear(), reply.clear();
-                cmd.addString("drop");
-                cmd.addString("over");
-                cmd.addString(targetName.c_str());
-                cmd.addString("gently");
-                cmd.addString(handName.c_str());
-                rpcAREcmd.write(cmd, reply);
+                Bottle refinedPos = getCalibratedLocation(targetName, handName);
+                
+                if (strcmp (refinedPos.get(0).asString().c_str(), "fail" ) != 0)
+                {
+                
+                    //do the take actions
+                    cmd.clear(), reply.clear();
+                    cmd.addString("drop");
+                    cmd.addString("over");
+                    //cmd.addString(targetName.c_str());
+                    Bottle &tmp=cmd.addList();
+                    tmp.addDouble (refinedPos.get(1).asDouble());
+                    tmp.addDouble (refinedPos.get(2).asDouble());
+                    tmp.addDouble (refinedPos.get(3).asDouble());
+                    cmd.addString("gently");
+                    cmd.addString(handName.c_str());
+                    rpcAREcmd.write(cmd, reply);
+                }
             }
             else
             {
