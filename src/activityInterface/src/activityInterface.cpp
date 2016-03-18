@@ -1254,7 +1254,7 @@ bool ActivityInterface::take(const string &objName, const string &handName)
                     Bottle cmd, reply;
                     cmd.clear(), reply.clear();
                     cmd.addString("observe");
-                    cmd.addString(handName.c_str());
+                    cmd.addString(whichHand.c_str());
                     rpcAREcmd.write(cmd, reply);
                     
                     if (classifyObserve())
