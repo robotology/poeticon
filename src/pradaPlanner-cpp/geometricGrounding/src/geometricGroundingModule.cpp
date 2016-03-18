@@ -360,7 +360,7 @@ vector<string> geoGround::create_rules(string pre_rule)
             {
                 if (aux_rule[u].find("_OTHERHAND") != std::string::npos)
                 {
-                    temp_rule.push_back(" ");
+                    //temp_rule.push_back(" ");
                     for (int k = 0; k < aux_rule.size(); ++k)
                     {
                         temp_rule.push_back(aux_rule[k]);
@@ -396,7 +396,7 @@ vector<string> geoGround::create_rules(string pre_rule)
                     temp_rule.erase(temp_rule.begin()+h);
                 }
             }
-            temp_str = " ";
+            temp_str = "";
             for (int h = 0; h < temp_rule.size(); ++h)
             {
                 temp_str = temp_str + " " + temp_rule[h];
@@ -418,7 +418,7 @@ vector<string> geoGround::create_rules(string pre_rule)
             {
                 if (aux_rule[u].find("_ALL") != std::string::npos)
                 {
-                    temp_rule.push_back(" ");
+                    //temp_rule.push_back(" ");
                     for (int k = 0; k < aux_rule.size(); ++k)
                     {
                         temp_rule.push_back(aux_rule[k]);
@@ -488,7 +488,7 @@ vector<string> geoGround::create_rules(string pre_rule)
                     aux_temp_rule.erase(aux_temp_rule.begin()+h);
                 }
             }
-            temp_str = " ";
+            temp_str = "";
             for (int h = 0; h < aux_temp_rule.size(); ++h)
             {
                 temp_str = temp_str + " " + aux_temp_rule[h];
