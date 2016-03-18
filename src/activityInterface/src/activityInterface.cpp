@@ -1244,8 +1244,8 @@ bool ActivityInterface::take(const string &objName, const string &handName)
                 tmp.addDouble (refinedPos.get(1).asDouble());
                 tmp.addDouble (refinedPos.get(2).asDouble());
                 tmp.addDouble (refinedPos.get(3).asDouble());
-                cmd.addString(whichHand.c_str());
-                cmd.addString("still");
+                cmd.addString (whichHand.c_str());
+                cmd.addString ("still");
                 rpcAREcmd.write(cmd, reply);
             
                 if (reply.get(0).asVocab()==Vocab::encode("ack"))
@@ -1278,7 +1278,7 @@ bool ActivityInterface::take(const string &objName, const string &handName)
                         rpcAREcmd.write(cmd, reply);
 
                         //update inHandStatus map
-                        inHandStatus.insert(pair<string, string>(objName.c_str(), handName.c_str()));
+                        inHandStatus.insert(pair<string, string>(objName.c_str(), whichHand.c_str()));
                         
                     }else
                     {
