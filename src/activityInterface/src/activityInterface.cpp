@@ -140,6 +140,8 @@ bool ActivityInterface::configure(yarp::os::ResourceFinder &rf)
     
     rpcClassifier.open(("/"+moduleName+"/classify:rpc").c_str());
     
+    rpcReachCalib.open(("/"+moduleName+"/reachCalib:rpc").c_str());
+    
     yarp::os::Network::connect(("/"+moduleName+"/arecmd:rpc").c_str(), "/actionsRenderingEngine/cmd:io");
     yarp::os::Network::connect(("/"+moduleName+"/are:rpc").c_str(), "/actionsRenderingEngine/get:io");
     yarp::os::Network::connect(("/"+moduleName+"/memory:rpc").c_str(), "/memory/rpc");
@@ -160,6 +162,8 @@ bool ActivityInterface::configure(yarp::os::ResourceFinder &rf)
     yarp::os::Network::connect("/"+moduleName+"/classify:rpc", ("/himrepClassifierRoi/rpc"));
     
     yarp::os::Network::connect("/fingerSpikes/activity:rpc ", ("/"+moduleName+"/rpc:i"));
+    
+    yarp::os::Network::connect("/"+moduleName+"/reachCalib:rpc", "/iolReachingCalibration/rpc");
     
     if (with_robot)
     {
@@ -285,6 +289,7 @@ bool ActivityInterface::interruptModule()
     imgClassifier.interrupt();
     dispBlobRoi.interrupt();
     rpcClassifier.interrupt();
+    rpcReachCalib.interrupt();
     semaphore.post();
     return true;
 }
@@ -314,6 +319,7 @@ bool ActivityInterface::close()
     imgClassifier.close();
     dispBlobRoi.close();
     rpcClassifier.close();
+    rpcReachCalib.close();
     yInfo("[closing] finished shutdown procedure\n");
     semaphore.post();
     return true;
@@ -1225,60 +1231,69 @@ bool ActivityInterface::take(const string &objName, const string &handName)
             else
                 whichHand = "right";
             
-            //do the take actions
-            Bottle cmd, reply;
-            cmd.clear(), reply.clear();
-            cmd.addString("take");
-            cmd.addString(objName.c_str());
-            cmd.addString(whichHand.c_str());
-            cmd.addString("still");
-            rpcAREcmd.write(cmd, reply);
+            Bottle refinedPos = getCalibratedLocation(objName, whichHand);
             
-            if (reply.get(0).asVocab()==Vocab::encode("ack"))
+            if (strcmp (refinedPos.get(0).asString().c_str(), "fail" ) != 0)
             {
                 //do the take actions
                 Bottle cmd, reply;
                 cmd.clear(), reply.clear();
-                cmd.addString("observe");
-                cmd.addString(handName.c_str());
+                cmd.addString("take");
+                //cmd.addString(objName.c_str());
+                Bottle &tmp=cmd.addList();
+                tmp.addDouble (refinedPos.get(1).asDouble());
+                tmp.addDouble (refinedPos.get(2).asDouble());
+                tmp.addDouble (refinedPos.get(3).asDouble());
+                cmd.addString(whichHand.c_str());
+                cmd.addString("still");
                 rpcAREcmd.write(cmd, reply);
-                
-                if (classifyObserve())
+            
+                if (reply.get(0).asVocab()==Vocab::encode("ack"))
                 {
-                    for (std::map<int, string>::iterator it=onTopElements.begin(); it!=onTopElements.end(); ++it)
-                    {
-                        if (strcmp (it->second.c_str(), objName.c_str() ) == 0)
-                        {
-                            int id = it->first;
-                            onTopElements.erase(id);
-                            elements--;
-                        }
-                    }
-
                     //do the take actions
                     Bottle cmd, reply;
                     cmd.clear(), reply.clear();
-                    cmd.addString("home");
-                    cmd.addString("arms");
-                    cmd.addString("head");
+                    cmd.addString("observe");
+                    cmd.addString(handName.c_str());
                     rpcAREcmd.write(cmd, reply);
-
-                    //update inHandStatus map
-                    inHandStatus.insert(pair<string, string>(objName.c_str(), handName.c_str()));
                     
-                }else
-                {
-                    Bottle cmd, reply;
-                    cmd.clear(), reply.clear();
-                    cmd.addString("home");
-                    cmd.addString("all");
-                    rpcAREcmd.write(cmd, reply);
+                    if (classifyObserve())
+                    {
+                        for (std::map<int, string>::iterator it=onTopElements.begin(); it!=onTopElements.end(); ++it)
+                        {
+                            if (strcmp (it->second.c_str(), objName.c_str() ) == 0)
+                            {
+                                int id = it->first;
+                                onTopElements.erase(id);
+                                elements--;
+                            }
+                        }
+
+                        //do the take actions
+                        Bottle cmd, reply;
+                        cmd.clear(), reply.clear();
+                        cmd.addString("home");
+                        cmd.addString("arms");
+                        cmd.addString("head");
+                        rpcAREcmd.write(cmd, reply);
+
+                        //update inHandStatus map
+                        inHandStatus.insert(pair<string, string>(objName.c_str(), handName.c_str()));
+                        
+                    }else
+                    {
+                        Bottle cmd, reply;
+                        cmd.clear(), reply.clear();
+                        cmd.addString("home");
+                        cmd.addString("all");
+                        rpcAREcmd.write(cmd, reply);
+                    }
                 }
-            }
-            else
-            {
-                executeSpeech("I have failed to take the" + objName);
-                yError("[take] I have failed to take the %s\n" , objName.c_str());
+                else
+                {
+                    executeSpeech("I have failed to take the" + objName);
+                    yError("[take] I have failed to take the %s\n" , objName.c_str());
+                }
             }
         }
         else
@@ -1435,6 +1450,25 @@ bool ActivityInterface::put(const string &objName, const string &targetName)
     }
     resumeAllTrackers();
     return true;
+}
+
+/**********************************************************/
+Bottle ActivityInterface::getCalibratedLocation(const std::string &objName, const std::string &handName)
+{
+    Bottle position;
+    
+    if (rpcReachCalib.getOutputCount()>0)
+    {
+        Bottle cmd;
+        cmd.addString("get_location");
+        cmd.addString(handName.c_str());
+        cmd.addString(objName.c_str());
+        rpcReachCalib.write(cmd,position);
+        
+        yInfo("[getCalibratedLocation] reply position is %s", position.toString().c_str());
+    }
+    
+    return position;
 }
 
 /**********************************************************/

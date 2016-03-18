@@ -205,6 +205,13 @@ public:
    */
   virtual bool gotSpike(const std::string& handName);
   /**
+   * Returns a yarp Bottle containing the calibrated position of requested object and hand
+   * @param objName string containing the name of the required object
+   * @param handName string containing the name of the required object
+   * @return true/false on success/failure
+   */
+  virtual yarp::os::Bottle getCalibratedLocation(const std::string& objName, const std::string& handName);
+  /**
    * Quit the module.
    * @return true/false on success/failure
    */

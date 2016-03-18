@@ -235,6 +235,14 @@ service activityInterface_IDLServer
     bool gotSpike(1:string handName);
     
     /**
+     * Returns a yarp Bottle containing the calibrated position of requested object and hand
+     * @param objName string containing the name of the required object
+     * @param handName string containing the name of the required object
+     * @return true/false on success/failure
+     **/
+    Bottle getCalibratedLocation(1:string objName, 2:string handName);
+    
+    /**
      * Quit the module.
      * @return true/false on success/failure
      */

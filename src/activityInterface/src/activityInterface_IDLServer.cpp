@@ -288,6 +288,16 @@ public:
   virtual bool read(yarp::os::ConnectionReader& connection);
 };
 
+class activityInterface_IDLServer_getCalibratedLocation : public yarp::os::Portable {
+public:
+  std::string objName;
+  std::string handName;
+  yarp::os::Bottle _return;
+  void init(const std::string& objName, const std::string& handName);
+  virtual bool write(yarp::os::ConnectionWriter& connection);
+  virtual bool read(yarp::os::ConnectionReader& connection);
+};
+
 class activityInterface_IDLServer_quit : public yarp::os::Portable {
 public:
   bool _return;
@@ -1004,6 +1014,30 @@ void activityInterface_IDLServer_gotSpike::init(const std::string& handName) {
   this->handName = handName;
 }
 
+bool activityInterface_IDLServer_getCalibratedLocation::write(yarp::os::ConnectionWriter& connection) {
+  yarp::os::idl::WireWriter writer(connection);
+  if (!writer.writeListHeader(3)) return false;
+  if (!writer.writeTag("getCalibratedLocation",1,1)) return false;
+  if (!writer.writeString(objName)) return false;
+  if (!writer.writeString(handName)) return false;
+  return true;
+}
+
+bool activityInterface_IDLServer_getCalibratedLocation::read(yarp::os::ConnectionReader& connection) {
+  yarp::os::idl::WireReader reader(connection);
+  if (!reader.readListReturn()) return false;
+  if (!reader.read(_return)) {
+    reader.fail();
+    return false;
+  }
+  return true;
+}
+
+void activityInterface_IDLServer_getCalibratedLocation::init(const std::string& objName, const std::string& handName) {
+  this->objName = objName;
+  this->handName = handName;
+}
+
 bool activityInterface_IDLServer_quit::write(yarp::os::ConnectionWriter& connection) {
   yarp::os::idl::WireWriter writer(connection);
   if (!writer.writeListHeader(1)) return false;
@@ -1334,6 +1368,16 @@ bool activityInterface_IDLServer::gotSpike(const std::string& handName) {
   helper.init(handName);
   if (!yarp().canWrite()) {
     yError("Missing server method '%s'?","bool activityInterface_IDLServer::gotSpike(const std::string& handName)");
+  }
+  bool ok = yarp().write(helper,helper);
+  return ok?helper._return:_return;
+}
+yarp::os::Bottle activityInterface_IDLServer::getCalibratedLocation(const std::string& objName, const std::string& handName) {
+  yarp::os::Bottle _return;
+  activityInterface_IDLServer_getCalibratedLocation helper;
+  helper.init(objName,handName);
+  if (!yarp().canWrite()) {
+    yError("Missing server method '%s'?","yarp::os::Bottle activityInterface_IDLServer::getCalibratedLocation(const std::string& objName, const std::string& handName)");
   }
   bool ok = yarp().write(helper,helper);
   return ok?helper._return:_return;
@@ -1869,6 +1913,27 @@ bool activityInterface_IDLServer::read(yarp::os::ConnectionReader& connection) {
       reader.accept();
       return true;
     }
+    if (tag == "getCalibratedLocation") {
+      std::string objName;
+      std::string handName;
+      if (!reader.readString(objName)) {
+        reader.fail();
+        return false;
+      }
+      if (!reader.readString(handName)) {
+        reader.fail();
+        return false;
+      }
+      yarp::os::Bottle _return;
+      _return = getCalibratedLocation(objName,handName);
+      yarp::os::idl::WireWriter writer(reader);
+      if (!writer.isNull()) {
+        if (!writer.writeListHeader(1)) return false;
+        if (!writer.write(_return)) return false;
+      }
+      reader.accept();
+      return true;
+    }
     if (tag == "quit") {
       bool _return;
       _return = quit();
@@ -1945,6 +2010,7 @@ std::vector<std::string> activityInterface_IDLServer::help(const std::string& fu
     helpString.push_back("trainObserve");
     helpString.push_back("classifyObserve");
     helpString.push_back("gotSpike");
+    helpString.push_back("getCalibratedLocation");
     helpString.push_back("quit");
     helpString.push_back("help");
   }
@@ -2133,6 +2199,13 @@ std::vector<std::string> activityInterface_IDLServer::help(const std::string& fu
     if (functionName=="gotSpike") {
       helpString.push_back("bool gotSpike(const std::string& handName) ");
       helpString.push_back("Informs activityInterface that something has changed in the hand ");
+      helpString.push_back("@return true/false on success/failure ");
+    }
+    if (functionName=="getCalibratedLocation") {
+      helpString.push_back("yarp::os::Bottle getCalibratedLocation(const std::string& objName, const std::string& handName) ");
+      helpString.push_back("Returns a yarp Bottle containing the calibrated position of requested object and hand ");
+      helpString.push_back("@param objName string containing the name of the required object ");
+      helpString.push_back("@param handName string containing the name of the required object ");
       helpString.push_back("@return true/false on success/failure ");
     }
     if (functionName=="quit") {

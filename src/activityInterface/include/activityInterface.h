@@ -88,6 +88,7 @@ protected:
     yarp::os::RpcClient                 rpcWorldState;
     yarp::os::RpcClient                 rpcIolState;
     yarp::os::RpcClient                 rpcClassifier;
+    yarp::os::RpcClient                 rpcReachCalib;
     
     yarp::os::RpcClient                 rpcKarma;
     
@@ -192,6 +193,7 @@ public:
     bool                resumeAllTrackers();
     bool                initObjectTracker(const std::string &objName);
     yarp::os::Bottle    trackStackedObject(const std::string &objName);
+    std::string         processScores(const yarp::os::Bottle &scores);
     
     bool                with_robot;
     bool                shouldUpdate;
@@ -230,8 +232,9 @@ public:
     bool                classifyObserve();
     bool                gotSpike(const std::string &handName);
     std::string         holdIn(const std::string &handName);
+    yarp::os::Bottle    getCalibratedLocation(const std::string &objectName, const std::string &handName);
 
-    std::string         processScores(const yarp::os::Bottle &scores);
+    
     
     bool                quit();
 };
