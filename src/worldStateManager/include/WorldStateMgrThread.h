@@ -169,6 +169,8 @@ class WorldStateMgrThread : public RateThread
         bool isPullableWith(const string &objName, Bottle &objPullable);
         bool isHandFree(const string &handName);
         string inWhichHand(const string &objName);
+        bool getVisibilityByActivityIF(const string &objName, bool &result, int extraTries=4);
+        bool belongsToStack(const string &objName, bool &result);
 
         bool setFilterOrder(const int &n);
 

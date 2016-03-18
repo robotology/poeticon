@@ -837,8 +837,35 @@ bool WorldStateMgrThread::computeObjProperties(const int &id, const string &labe
     if (activityPort.getOutputCount()<1)
         return false;
 
+    bool visibleByActivityIF;
+    if (!getVisibilityByActivityIF(label, visibleByActivityIF))
+        yWarning("%s problem with getVisibilityByActivityIF", __func__);
+
+    yDebug("%s %d/%s: visibleByActivityIF=%s",
+           __func__, id, label.c_str(), BoolToString(visibleByActivityIF));
+
+    bool isStacked;
+    if (!belongsToStack(label, isStacked))
+        yWarning("%s problem with belongsToStack", __func__);
+
+    // distinguish between geometric changes (invisible but stacked/occluded)
+    // and semantic changes (invisible and disappeared from scene)
+    if (!visibleByActivityIF)
+    {
+        if (isStacked)
+        {
+            yInfo("detected a GEOMETRIC change in the world: %d/%s is not visible because it is below something else",
+                  id, label.c_str());
+        }
+        else
+        {
+            yInfo("detected a SEMANTIC change in the world: %d/%s disappeared from the scene",
+                  id, label.c_str());
+        }
+    }
+
     // by default the object is tracked and we can compute all symbols
-    bool isVisible = true;
+    bool visibleByTracker = true;
 
     // if possible, refresh inTargets Bottle
     if (trackerPort.getOutputCount()>0)
@@ -852,7 +879,7 @@ bool WorldStateMgrThread::computeObjProperties(const int &id, const string &labe
         //         << "in tracker Bottle: object not visible ->"
         //         << "going to update activityInterface symbols only,"
         //         << "leaving shape descriptors untouched";
-        isVisible = false;
+        visibleByTracker = false;
     }
 
     // find the "affordance Bottle index" within inAff Bottle that matches
@@ -864,7 +891,7 @@ bool WorldStateMgrThread::computeObjProperties(const int &id, const string &labe
         v = inTargets->get(tbi).asList()->get(2).asDouble();
     }
     int abi = -1; // affordance blobs Bottle index
-    if (isVisible)
+    if (visibleByTracker)
     {
         if (!getAffBottleIndexFromTrackROI(u,v,abi))
         {
@@ -872,14 +899,14 @@ bool WorldStateMgrThread::computeObjProperties(const int &id, const string &labe
                 << "did not find affordance blob index from coordinates"
                 << u << v << "-> going to update activityInterface symbols only,"
                 << "leaving shape descriptors untouched";
-            isVisible = false;
+            visibleByTracker = false;
         }
     }
-    yDebug("%s %d/%s: trackerBottleIndex=%d affordanceBottleIndex=%d isVisible=%s",
-           __func__, id, label.c_str(), tbi, abi, BoolToString(isVisible));
+    yDebug("%s %d/%s: trackerBottleIndex=%d affordanceBottleIndex=%d visibleByTracker=%s",
+           __func__, id, label.c_str(), tbi, abi, BoolToString(visibleByTracker));
 
     // now we know that object was found in both tracker and shape descriptors
-    if (isVisible)
+    if (visibleByTracker)
     {
         // begin symbols that depend on tracker and shape descriptors
 
@@ -1473,6 +1500,8 @@ bool WorldStateMgrThread::getLabelMajorityVote(const int &u, const int &v,
 /**********************************************************/
 bool WorldStateMgrThread::isOnTopOf(const string &objName, Bottle &objBelow)
 {
+    // ask "underOf objName" to activityInterface, put result in objBelow
+
     if (activityPort.getOutputCount()<1)
     {
         yWarning() << __func__ << "not connected to ActivityIF";
@@ -1652,6 +1681,122 @@ string WorldStateMgrThread::inWhichHand(const string &objName)
         yWarning() << __func__ << "obtained invalid response:" << activityReply.toString().c_str();
 
     return ret;
+}
+
+/**********************************************************/
+bool WorldStateMgrThread::getVisibilityByActivityIF(const string &objName,
+                                                    bool &result,
+                                                    int extraTries)
+{
+    // result=true if the 2D position of objName is not null. function always
+    // tries a first time, and if that fails it tries another extraTries times.
+
+    if (activityPort.getOutputCount()<1)
+    {
+        yWarning() << __func__ << "not connected to ActivityIF";
+        return false;
+    }
+
+    Bottle activityCmd, activityReply;
+    activityCmd.addString("get2D");
+    activityCmd.addString(objName.c_str());
+    //yDebug() << __func__ << "sending query:" << activityCmd.toString().c_str();
+    activityPort.write(activityCmd, activityReply);
+
+    result = activityReply.size()>0 &&
+             activityReply.get(0).isList() &&
+             activityReply.get(0).asList()->size()>0; // valid ROI coordinates
+
+    // if first try returned empty ROI (not visible object), try more times
+    if (!result && extraTries>0)
+    {
+        for (int t=0; t<extraTries; ++t)
+        {
+            extraTries--;
+            yDebug("%s: %d remaining get2D tries until I give up and consider object not visible",
+                   __func__, extraTries);
+            getVisibilityByActivityIF(objName, result, extraTries);
+        }
+    }
+
+    return result;
+}
+
+/**********************************************************/
+bool WorldStateMgrThread::belongsToStack(const string &objName, bool &result)
+{
+    // result=true iff objName is present in the stack of any other object
+
+    result = false; // by default, objName is not in any stack
+
+    if (activityPort.getOutputCount()<1)
+    {
+        yWarning() << __func__ << "not connected to ActivityIF";
+        return false;
+    }
+
+    // list of objects other than objName
+    Bottle otherObjs;
+    Bottle activityCmd;
+    Bottle activityReply;
+    activityCmd.addString("getNames");
+    //yDebug() << __func__ << "sending query:" << activityCmd.toString().c_str();
+    activityPort.write(activityCmd, activityReply);
+
+    bool validResponse = activityReply.size()>0 &&
+                         activityReply.get(0).isList();
+
+    if (!validResponse)
+    {
+        yError("%s: obtained invalid response from activityInterface",
+              __func__);
+        return false;
+    }
+
+    bool somethingVisible = validResponse &&
+                            activityReply.get(0).asList()->size()>0;
+
+    if (!somethingVisible)
+    {
+        yDebug("%s: getNames is empty -> %s does not belong to any stack",
+               __func__, objName.c_str());
+        return false;
+    }
+
+    yDebug("%s: checking if %s is below any of these: %s",
+           __func__, objName.c_str(), activityReply.get(0).asList()->toString().c_str());
+
+    // cycle over objects returned by getNames
+    for (int o=0; o<activityReply.get(0).asList()->size(); ++o)
+    {
+        // skip checking if objName is below itself
+        if (activityReply.get(0).asList()->get(o).asString()==objName)
+            continue;
+
+        // list of objects below o
+        Bottle bLabelsBelow; // strings
+        isOnTopOf(activityReply.get(0).asList()->get(o).asString(), bLabelsBelow);
+
+        // cycle over the objects below o
+        for (int b=0; b<bLabelsBelow.size(); ++b)
+        {
+            // if one of them is objName, set result to true and exit inner cycle
+            if (bLabelsBelow.get(b).asString()==objName)
+            {
+                yDebug("%s: %s is below %s -> isStacked=true",
+                       __func__, objName.c_str(),
+                       activityReply.get(0).asList()->get(o).asString().c_str());
+                result = true;
+                break;
+            }
+        }
+
+        // if we determined a true result already, exit outer loop
+        if (result)
+            break;
+    }
+
+    return true;
 }
 
 /**********************************************************/
