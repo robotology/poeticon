@@ -531,7 +531,7 @@ bool WorldStateMgrThread::getTrackNames()
              mapContainsKey(candidateTrackMap,id) ||
              mapContainsValue(candidateTrackMap,label) )
         {
-            yWarning("winning label --> %s <--, but not going to add it to memory because it seems to be a duplicate",
+            yWarning("winning label --> %s <--, however not going to add it to memory because it seems to be a duplicate",
                      label.c_str());
             allCandidateNamesUnique = false;
             continue;
@@ -839,14 +839,20 @@ bool WorldStateMgrThread::computeObjProperties(const int &id, const string &labe
 
     bool visibleByActivityIF;
     if (!getVisibilityByActivityIF(label, visibleByActivityIF))
-        yWarning("%s problem with getVisibilityByActivityIF", __func__);
+    {
+        yWarning("%s %d/%s: problem with getVisibilityByActivityIF",
+                 __func__, id, label.c_str());
+    }
 
     yDebug("%s %d/%s: visibleByActivityIF=%s",
            __func__, id, label.c_str(), BoolToString(visibleByActivityIF));
 
     bool isStacked;
     if (!belongsToStack(label, isStacked))
-        yWarning("%s problem with belongsToStack", __func__);
+    {
+        yWarning("%s %d/%s: problem with belongsToStack",
+                 __func__, id, label.c_str());
+    }
 
     // distinguish between geometric changes (invisible but stacked/occluded)
     // and semantic changes (invisible and disappeared from scene)
@@ -1117,7 +1123,7 @@ bool WorldStateMgrThread::constructMemoryFromOPCID(const int &opcID)
     if (memoryContainsID(opcID))
     {
         // note: this happens e.g. when WSOPC is started & initialized before WSM
-        yDebug() << __func__ << "cannot construct memory item"
+        yWarning() << __func__ << "cannot construct memory item"
                  << opcID << "because this ID is already present in internal short-term memory";
         return false;
     }
@@ -1713,8 +1719,8 @@ bool WorldStateMgrThread::getVisibilityByActivityIF(const string &objName,
         for (int t=0; t<extraTries; ++t)
         {
             extraTries--;
-            yDebug("%s: %d remaining get2D tries until I give up and consider object not visible",
-                   __func__, extraTries);
+            yDebug("%s: %d remaining tries of query: get2D %s",
+                   __func__, extraTries, objName.c_str());
             getVisibilityByActivityIF(objName, result, extraTries);
         }
     }
@@ -2200,8 +2206,7 @@ void WorldStateMgrThread::fsmPerception()
                               "at least one of the candidate names was" <<
                               "a duplicate or was skipped. trying again." <<
                               "if this goes on forever, check the status of" <<
-                              "1) object recognition, 2) activityInterface and "
-                              "3) WSOPC database.";
+                              "object recognition and WSOPC database.";
                 candidateTrackMap.clear();
             }
 
