@@ -664,11 +664,13 @@ bool WorldStateMgrThread::resetTracker()
 
     Bottle trackerCmd, trackerReply;
 
+    // due to https://github.com/robotology/poeticon/issues/186
     // resume all paused tracks first (all paused tracks that are valid i.e.
-    // that are currently in "getIDs") before doing activeParticleTrack "reset"
+    // that are currently in "getIDs") before doing activeParticleTrack "reset".
+    // now the issue has been solved, but this workaround is harmless, leaving it for now.
     Bottle pausedIDs;
     trackerCmd.addString("getPausedIDs");
-    yDebug() << __func__ <<  "sending instruction to activeParticleTracker:" << trackerCmd.toString().c_str();
+    //yDebug() << __func__ <<  "sending instruction to activeParticleTracker:" << trackerCmd.toString().c_str();
     trackerPort.write(trackerCmd, trackerReply);
     //yDebug() << __func__ <<  "obtained response:" << trackerReply.toString().c_str();
     bool gotPausedTracks = trackerReply.size()>0 &&
@@ -844,9 +846,6 @@ bool WorldStateMgrThread::computeObjProperties(const int &id, const string &labe
                  __func__, id, label.c_str());
     }
 
-    yDebug("%s %d/%s: visibleByActivityIF=%s",
-           __func__, id, label.c_str(), BoolToString(visibleByActivityIF));
-
     bool isStacked;
     if (!belongsToStack(label, isStacked))
     {
@@ -908,8 +907,9 @@ bool WorldStateMgrThread::computeObjProperties(const int &id, const string &labe
             visibleByTracker = false;
         }
     }
-    yDebug("%s %d/%s: trackerBottleIndex=%d affordanceBottleIndex=%d visibleByTracker=%s",
-           __func__, id, label.c_str(), tbi, abi, BoolToString(visibleByTracker));
+
+    yDebug("%s %d/%s: visibleByActivityIF=%s; trackerBottleIndex=%d affordanceBottleIndex=%d visibleByTracker=%s",
+           __func__, id, label.c_str(), BoolToString(visibleByActivityIF), tbi, abi, BoolToString(visibleByTracker));
 
     // now we know that object was found in both tracker and shape descriptors
     if (visibleByTracker)
@@ -1718,9 +1718,9 @@ bool WorldStateMgrThread::getVisibilityByActivityIF(const string &objName,
     {
         for (int t=0; t<extraTries; ++t)
         {
-            extraTries--;
             yDebug("%s: %d remaining tries of query: get2D %s",
                    __func__, extraTries, objName.c_str());
+            extraTries--;
             getVisibilityByActivityIF(objName, result, extraTries);
         }
     }
@@ -1769,9 +1769,6 @@ bool WorldStateMgrThread::belongsToStack(const string &objName, bool &result)
         return false;
     }
 
-    yDebug("%s: checking if %s is below any of these: %s",
-           __func__, objName.c_str(), activityReply.get(0).asList()->toString().c_str());
-
     // cycle over objects returned by getNames
     for (int o=0; o<activityReply.get(0).asList()->size(); ++o)
     {
@@ -1789,9 +1786,9 @@ bool WorldStateMgrThread::belongsToStack(const string &objName, bool &result)
             // if one of them is objName, set result to true and exit inner cycle
             if (bLabelsBelow.get(b).asString()==objName)
             {
-                yDebug("%s: %s is below %s -> isStacked=true",
-                       __func__, objName.c_str(),
-                       activityReply.get(0).asList()->get(o).asString().c_str());
+                //yDebug("%s: %s is below %s -> isStacked=true",
+                //       __func__, objName.c_str(),
+                //       activityReply.get(0).asList()->get(o).asString().c_str());
                 result = true;
                 break;
             }
@@ -1801,6 +1798,9 @@ bool WorldStateMgrThread::belongsToStack(const string &objName, bool &result)
         if (result)
             break;
     }
+
+    yDebug("%s: determining if %s is below any of these: (%s)... %s",
+           __func__, objName.c_str(), activityReply.get(0).asList()->toString().c_str(), BoolToString(result));
 
     return true;
 }
