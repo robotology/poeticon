@@ -1716,13 +1716,10 @@ bool WorldStateMgrThread::getVisibilityByActivityIF(const string &objName,
     // if first try returned empty ROI (not visible object), try more times
     if (!result && extraTries>0)
     {
-        for (int t=0; t<extraTries; ++t)
-        {
-            yDebug("%s: %d remaining tries of query: get2D %s",
-                   __func__, extraTries, objName.c_str());
-            extraTries--;
-            getVisibilityByActivityIF(objName, result, extraTries);
-        }
+        yDebug("%s: %d remaining tries of query: get2D %s",
+               __func__, extraTries, objName.c_str());
+        extraTries--;
+        getVisibilityByActivityIF(objName, result, extraTries);
     }
 
     return result;
