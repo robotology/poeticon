@@ -127,6 +127,7 @@ class WorldStateMgrThread : public RateThread
 
         bool opcContainsID(const int &id);
         bool checkOPCStatus(const int &minEntries, Bottle &ids);
+        bool resetOPC();
         bool resetOPCHandFields(const int &handID);
 
         bool refreshBlobs();
