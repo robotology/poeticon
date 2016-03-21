@@ -568,12 +568,12 @@ bool BlobDescriptorModule::updateModule()
             // next we will compute the two halves of the i'th encl. rectangle,
             // corresponding to object top and object bottom
 
-            //cout << "blob " << i << endl;
+            //yDebug("blob %d", i);
 
             // force width to be the smaller dimension, height to be the larger one
             if (_objDescTable[i].enclosing_rect.size.width > _objDescTable[i].enclosing_rect.size.height)
             {
-                //cout << "WARNING: rotating rectangle by 90 deg" << endl;
+                //yWarning("rotating rectangle by 90 deg");
                 swap(_objDescTable[i].enclosing_rect.size.width, _objDescTable[i].enclosing_rect.size.height);
                 _objDescTable[i].enclosing_rect.angle += 90.;
             }
@@ -588,9 +588,9 @@ bool BlobDescriptorModule::updateModule()
             float ca = cos(an / 180.0 * CV_PI),
                   sa = sin(an / 180.0 * CV_PI);
 
-            //cout << "\n center = [" << cx << " " << cy << "]";
-            //cout << ", wi=" << wi << ", he=" << he;
-            //cout << ", an=" << an << ", ca=" << ca << ", sa=" << sa << endl;
+            //yDebug() << "center = [" << cx << cy << "]"
+            //         << "wi =" << wi << "he =" << he
+            //         << "an =" << an << "ca =" << ca << "sa =" << sa;
 
             // draw whole object encl. rectangle (bounding box) and tools if high elongatedness
             //drawBox(opencvViewImg, _objDescTable[i].enclosing_rect, CV_RGB(255,255,255)); // filled
@@ -610,7 +610,7 @@ bool BlobDescriptorModule::updateModule()
             if (wi < he)
             {
                 half_size.height = half_size.height/2.;
-                //cout << "OK: height>width, thus I made splitting of height for cropping obj parts" << endl;
+                //yDebug("OK: height>width, thus I made splitting of height for cropping obj parts");
             }
             else
             {
@@ -634,7 +634,7 @@ bool BlobDescriptorModule::updateModule()
             //bot_tr2 = cv::Point2f( cvRound(cx+half_size.width/2.), cvRound(cy) );
 
             // prints value then memory address?! fixed
-            //cout << "top_center.x = " << top_center.x << endl;
+            //yDebug() << "top_center.x =" << top_center.x;
 
             // get transformation matrix provided by rotation "an" and no scaling factor
             cv::Mat M = cv::getRotationMatrix2D(_objDescTable[i].enclosing_rect.center, an, 1.0);
@@ -697,13 +697,13 @@ bool BlobDescriptorModule::updateModule()
                 matBothParts = cv::Mat(2*botRectCropped.rows, botRectCropped.cols, CV_8UC3);
 
                 matBothParts.adjustROI(0, -topRectCropped.rows, 0, 0); // adapt ROI to receive topRect
-                //cout << "1. row size " << matBothParts.rows << endl;
+                //yDebug() << "1. row size" << matBothParts.rows;
                 topRectCropped.copyTo(matBothParts);
                 matBothParts.adjustROI(-topRectCropped.rows, topRectCropped.rows, 0, 0); // restore; adapt ROI to receive botRect
-                //cout << "2. row size " << matBothParts.rows << endl;
+                //yDebug() << "2. row size" << matBothParts.rows;
                 botRectCropped.copyTo(matBothParts);
                 matBothParts.adjustROI(topRectCropped.rows, 0, 0, 0); // restore
-                //cout << "3. row size " << matBothParts.rows << endl;
+                //yDebug() << "3. row size" << matBothParts.rows;
                 if (matBothParts.rows>0 && matBothParts.rows>0)
                 {
                     cv::imshow("matBothParts", matBothParts);
@@ -738,7 +738,7 @@ bool BlobDescriptorModule::updateModule()
 
             if (top_cnt.size()==0)
             {
-                cout << "WARNING: blob "<< i << ", tool top has zero contours" << endl;
+                yWarning("blob %d, tool top has zero contours", i);
                 continue;
             }
 
@@ -749,7 +749,7 @@ bool BlobDescriptorModule::updateModule()
             for( int c = 0; c < top_cnt.size(); c++ )
             {
                 double curr_area = cv::contourArea(top_cnt[c], false);
-                //cout << "\tcontour #" << c << ": area=" << curr_area << endl;
+                //yDebug()  "contour" << c << "area =" << curr_area;
 
                 if (curr_area > top_largest_area)
                 {
@@ -840,7 +840,7 @@ bool BlobDescriptorModule::updateModule()
             for( int c = 0; c < bot_cnt.size(); c++ )
             {
                 double curr_area = cv::contourArea(bot_cnt[c], false);
-                //cout << "\tcontour #" << c << ": area=" << curr_area << endl;
+                //yDebug() << "contour" << c << "area =" << curr_area;
 
                 if (curr_area > bot_largest_area)
                 {
@@ -859,7 +859,7 @@ bool BlobDescriptorModule::updateModule()
             double bot_minor_axis = (bot_enclosing_rect.size.width > bot_enclosing_rect.size.height ? bot_enclosing_rect.size.height : bot_enclosing_rect.size.width);
             double bot_rect_area = bot_major_axis*bot_minor_axis;
             cv::Rect bot_bounding_rect = cv::boundingRect(bot_cnt[bot_largest_cnt_index]);
-            //cout << "blob " << i << " rect corners: " << bot_bounding_rect.tl() << ", " << bot_bounding_rect.br() << endl;
+            //yDebug() << "blob" << i << "rect corners tl br =" << bot_bounding_rect.tl() << bot_bounding_rect.br();
             cv::Point2f bot_circle_center;
             float bot_circle_radius;
             cv::minEnclosingCircle(bot_cnt[bot_largest_cnt_index], bot_circle_center, bot_circle_radius);
