@@ -2,7 +2,7 @@
 % CopyPolicy: Released under the terms of the GNU GPL v2.0.
 % Copyright: (C) 2015 VisLab, Institute for Systems and Robotics,
 %                Instituto Superior Técnico, Universidade de Lisboa, Lisbon, Portugal
-% Author: Afonso Gonçalves, João Abrantes, Pedro Vicente, Giovanni Saponaro
+% Author: Pedro Vicente, Atabak Dehban, Afonso Gonçalves, João Abrantes,  Giovanni Saponaro
 % CopyPolicy: Released under the terms of the GNU GPL v2.0
 
 function [score] = pca_score2
@@ -10,7 +10,7 @@ function [score] = pca_score2
 %PCA - Bayesian Network with 5 nodes
 %      pca with continuous values
 %      save function (at line 100) saves the network to a file (check file name)
-data = load('../Data+combinator/affData_03_2015_descEffNoise_25series_good.txt'); 
+data = load('../Data+combinator/affData_03_22_16.txt'); 
 train_rows=size(data,1); % 100% of the data
 training_data=data(1:train_rows,:);
 
@@ -97,7 +97,7 @@ ranges2{2,1} = [-.06 -0.025 0.025 0.06 1];
 effects = discretize(effects, ranges2);
 training_data_5nodes = [score training_data(:,11) effects];
 BN = dgmTrainFullyObs(BN, training_data_5nodes);
-save('pca_2n_2C_noise_2b.mat','BN','ranges','pcT','pcO','components');
+save('../Networks+listener/pca_2n_2C.mat','BN','ranges','pcT','pcO','components');
 
 %%
 %test data
