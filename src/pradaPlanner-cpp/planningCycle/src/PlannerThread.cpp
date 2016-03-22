@@ -151,6 +151,7 @@ void PlannerThread::run()
 
 bool PlannerThread::startPlanning()
 {
+    stopPlanning();
     if (world_rpc.getOutputCount() == 0){
         yError("WorldStateManager not connected!");
         return false;
@@ -1110,7 +1111,8 @@ bool PlannerThread::increaseHorizon()
             break;
         }
     }
-    configFileOut.open(configFileName.c_str());
+    configFileOut.open(configFileName.c_str()); // re-writes the config file with the new horizon
+
     if (!configFileOut.is_open())
     {
         yError("unable to open PRADA config file!");
@@ -1123,6 +1125,7 @@ bool PlannerThread::increaseHorizon()
     return true;
 }
 
+// function that checks which symbols are present across subgoals
 bool PlannerThread::checkHoldingSymbols()
 {
     vector<string> holding_symbols;
@@ -1136,27 +1139,30 @@ bool PlannerThread::checkHoldingSymbols()
             holding_symbols.erase(holding_symbols.end());
         }
         for (int t = 0; t < holding_symbols.size(); ++t){
-            if (find_element(state, holding_symbols[t])== 0){
+            if (find_element(state, holding_symbols[t])== 0){ // If one of the symbols present in an already-achieved subgoal is not present on the current state:
                 yInfo("Situation changed, receding in plan");
-                return false;
+                return false; 
             }
         }
     }
     return true;
 }
 
+// jumps one step forward on the subgoal list (needs goalUpdate to load the new subgoal)
 bool PlannerThread::jumpForward()
 {
     plan_level = plan_level + 1;
     return true;
 }
 
+// jumps one step back on the subgoal list (needs goalUpdate to load new subgoal)
 bool PlannerThread::jumpBack()
 {
     plan_level = plan_level - 1;
     return true;
 }
 
+// Resets the rules to after-grounding levels (resets any adaptation during the plan)
 bool PlannerThread::resetRules()
 {
     rulesFileOut.open(rulesFileName.c_str());
@@ -1172,13 +1178,14 @@ bool PlannerThread::resetRules()
     return true;
 }
 
+// function that stores the list of objects used to complete the goal
 bool PlannerThread::loadUsedObjs()
 {
     vector<string> aux_used;
     for (int y = 0; y < object_IDs.size(); ++y){
         string check_str=object_IDs[y][1];
         transform(check_str.begin(), check_str.end(), check_str.begin(), ::tolower);
-        if (next_action.find(object_IDs[y][0]) != std::string::npos && check_str != "stick" && check_str != "rake" && check_str != "left" && check_str != "right" /*&& find_element(tool_list,check_str) == 0 */){
+        if (next_action.find(object_IDs[y][0]) != std::string::npos && check_str != "stick" && check_str != "rake" && check_str != "left" && check_str != "right" /*&& find_element(tool_list,check_str) == 0 */){ // If the object is not a tool or hand (commented segment for when tool names are propagated)
             aux_used.push_back(object_IDs[y][0]);
         }
     }
@@ -1197,16 +1204,17 @@ bool PlannerThread::loadUsedObjs()
     return true;
 }
 
+// Function that encodes the action to send to the motor executor (IDs for labels, correct action name, , object positions, etc)
 bool PlannerThread::codeAction()
 {
     vector<string> temp_vect;
     float temp_float;
     string tool1, tool2;
     temp_vect = split(next_action, '_');
-    if (find_element(temp_vect, "on") == 1){
-        obj = temp_vect[1];
-        hand = temp_vect[3];
-        while (!closing && !stopping){
+    if (find_element(temp_vect, "on") == 1){ // planned action is "put_tool_on_obj_with_hand()" so must parse the message to remove these elements
+        obj = temp_vect[1]; // "tool"
+        hand = temp_vect[3]; // "obj"
+        while (!closing && !stopping){ // remove the final ()
             if (hand.find("(") != std::string::npos){
                 hand.replace(hand.find("("),1,"");
             }
@@ -1217,13 +1225,13 @@ bool PlannerThread::codeAction()
                 break;
             }
         }
-        act = temp_vect[0];
+        act = temp_vect[0]; // "put"
     }
-    else {
-        act = temp_vect[0];
-        obj = temp_vect[1];
-        hand = temp_vect[3];
-        while (!closing && !stopping){
+    else { // for actions like "drop/grasp_obj_with_hand, or pull/push_obj_with_tool_in_hand"
+        act = temp_vect[0]; // "pull, push, grasp or drop"
+        obj = temp_vect[1]; // obj
+        hand = temp_vect[3]; // tool (or hand, in case of grasp)
+        while (!closing && !stopping){ // remove the final ()
             if (hand.find("(") != std::string::npos){
                 hand.replace(hand.find("("),1,"");
             }
@@ -1234,17 +1242,12 @@ bool PlannerThread::codeAction()
                 break;
             }
         }
-        for (int ID = 0; ID < object_IDs.size();++ID){
+        for (int ID = 0; ID < object_IDs.size();++ID){ // checks the object list for tools, and isolates them (this can be improved by a "tool list", propagated through the whole pipeline)
             string check_str = object_IDs[ID][1];
             transform(check_str.begin(), check_str.end(), check_str.begin(), ::tolower);
-            //yDebug("After conversion: %s", check_str.c_str());
             if (check_str == "rake"){
-                //yDebug("string was equal to rake");
                 tool1 = object_IDs[ID][0];
             }
-            //else
-                //yDebug("string was not equal to rake");
-
             if (check_str == "stick"){
                 tool2 = object_IDs[ID][0];
             }
@@ -1253,18 +1256,18 @@ bool PlannerThread::codeAction()
                 tool_obj = object_IDs[ID][0];
             }*/
         }
-        if (act == "grasp" && (obj == tool1 || obj == tool2) /*&& obj == tool_obj*/){
+        if (act == "grasp" && (obj == tool1 || obj == tool2) /*&& obj == tool_obj*/){ // If one of the objects used in the action is a tool, and the action is grasp, then it should request "askForTool", with position X and Y
             for (int i = 0; i < toolhandle.size(); ++i){
                 if (toolhandle[i] == obj){
                     temp_float = strtof(toolhandle[i+1].c_str(), NULL);
-                    positx = (int) (temp_float);
+                    positx = (int) (temp_float); // position on X axis
                     temp_float = strtof(toolhandle[i+2].c_str(), NULL);
-                    posity = (int) (temp_float);
+                    posity = (int) (temp_float); // position on Y axis
                 }
             }
         }
     }
-    for (int k = 0; k < object_IDs.size(); ++k){
+    for (int k = 0; k < object_IDs.size(); ++k){ // translation from IDs to labels
         if (act == object_IDs[k][0]){
             act = object_IDs[k][1];
         }
@@ -1273,7 +1276,7 @@ bool PlannerThread::codeAction()
         }
         if (hand == object_IDs[k][0]){
             hand = object_IDs[k][1];
-            while (!closing && !stopping){
+            while (!closing && !stopping){ // eliminates the "hand" string, since only "left/right" should be sent
                 if (hand.find("hand") != std::string::npos){
                     hand.replace(hand.find("hand"),4,"");
                 }
@@ -1287,45 +1290,46 @@ bool PlannerThread::codeAction()
     return true;
 }
 
+// Function that creates the message and sends it to the motor executor
 bool PlannerThread:: execAction()
 {
     string temp_str;
     message.clear();
     string check_strobj = obj;
     transform(check_strobj.begin(), check_strobj.end(), check_strobj.begin(), ::tolower);
-    if (act == "grasp" && (check_strobj == "rake" || check_strobj == "stick") /*&& find_element(tool_list,check_strobj) == 1 */){
+    if (act == "grasp" && (check_strobj == "rake" || check_strobj == "stick") /*&& find_element(tool_list,check_strobj) == 1 */){ // in case the action is an "askForTool hand X Y"
         act = "askForTool";
-        message.addString(act);
-        message.addString(hand);
-        message.addInt(positx);
-        message.addInt(posity);
+        message.addString(act); // askForTool
+        message.addString(hand); // hand (left/right)
+        message.addInt(positx); // position on X axis of the tool
+        message.addInt(posity); // position on Y axis of the tool
     }
-    else if (act == "grasp" && (check_strobj != "rake" && check_strobj != "stick" /*&& find_element(tool_list,check_strobj) == 0 */)){
+    else if (act == "grasp" && (check_strobj != "rake" && check_strobj != "stick" /*&& find_element(tool_list,check_strobj) == 0 */)){ // If it is not an "askForTool"
         act = "take";
-        message.addString(act);
-        message.addString(obj);
-        message.addString(hand);
+        message.addString(act); // take
+        message.addString(obj); // object label
+        message.addString(hand); // hand for grasping (left/right)
     }
-    else {
-        message.addString(act);
+    else { // for drop, pull, push, and put
+        message.addString(act); 
         message.addString(obj);
         message.addString(hand);
     }
     yInfo("Request execution of action: %s" , message.toString().c_str());
-    while (!closing && !stopping){
+    while (!closing && !stopping){ // send message to activityInterface, looped in case empty message is returned, action should be repeated
         yarp::os::Time::delay(0.1);
         actInt_rpc.write(message, reply);
         yInfo("Received reply: %s", reply.toString().c_str());
-        if (reply.size() == 1 && reply.get(0).asVocab() == 27503){
+        if (reply.size() == 1 && reply.get(0).asVocab() == 27503){ // In case action was well received
             prev_action = message.get(1).toString();
             return true;
         }
-        if (reply.size() == 1 && reply.get(0).asVocab() != 27503){
+        if (reply.size() == 1 && reply.get(0).asVocab() != 27503){ // In case the message failed to be received
             yWarning("Nack received, there might be something wrong with the message.");
             yWarning(" %s",message.toString().c_str());
             return false;
         }
-        if (reply.size() != 1){
+        if (reply.size() != 1){ // In case something happens with activityInterface, reply is empty
             yError("activityInterface is not connected, verify if the module is running, and all connections are established.");
             return false;
         }
@@ -1333,6 +1337,7 @@ bool PlannerThread:: execAction()
     return false;
 }
 
+// Function that checks the current world state to see if all the current goals have been completed
 bool PlannerThread::checkGoalCompletion()
 {
     for (int t = 0; t < goal.size(); ++t){
@@ -1343,6 +1348,7 @@ bool PlannerThread::checkGoalCompletion()
     return true;
 }
 
+// Function that detects and reports the failure of a plan
 bool PlannerThread::checkFailure()
 {
     string line;
@@ -1366,10 +1372,10 @@ bool PlannerThread::checkFailure()
     configFile.close();
     vector<string> not_comp_goals, fail_obj, aux_fail_obj;
     string temp_str;
-    if (horizon > 10){
+    if (horizon > 10){ // if the Horizon is already too large
         not_comp_goals.clear();
         for (int t = 0; t < goal.size(); ++t){
-            if (find_element(state, goal[t]) == 0){
+            if (find_element(state, goal[t]) == 0){ // adds all subgoals not present on the world state to the "failed goals" list
                 not_comp_goals.push_back(goal[t]);
             }
         }
@@ -1377,12 +1383,12 @@ bool PlannerThread::checkFailure()
         for (int i = 0; i < not_comp_goals.size(); ++i){
             temp_str = temp_str + not_comp_goals[i] + " ";
         }
-        for (int i = 0; i < object_IDs.size(); ++i){
+        for (int i = 0; i < object_IDs.size(); ++i){ // adds all objects belonging to failed goals to the list of objects that resulted in the failure of the plan
             if (temp_str.find(object_IDs[i][0]) != std::string::npos){
                 fail_obj.push_back(object_IDs[i][0]);
             }
         }
-        for (int u = 0; u < fail_obj.size(); ++u){
+        for (int u = 0; u < fail_obj.size(); ++u){ // If an object from the failed list is not a tool or a hand, add it to the list to be reported
             if (fail_obj[u] != "11" && fail_obj[u] != "12" && find_element(toolhandle,fail_obj[u]) == 0){
                 for (int t = 0; t < object_IDs.size(); ++t){
                     if (find_element(object_IDs[t], fail_obj[u]) == 1){
@@ -1394,7 +1400,8 @@ bool PlannerThread::checkFailure()
         }
         Bottle& prax_bottle_out = prax_yarp.prepare();
         prax_bottle_out.clear();
-        prax_bottle_out.addString("FAIL");
+        prax_bottle_out.addString("FAIL"); // Reports "FAIL" back to activityInterface
+        // and adds the bottle of objects responsible for the failure
         for (int u = 0; u < aux_fail_obj.size(); ++u){
             for (int inde = 0; inde < object_IDs.size(); ++inde){
                 if (object_IDs[inde][0] == aux_fail_obj[u]){
@@ -1414,13 +1421,14 @@ bool PlannerThread::checkFailure()
     return true;
 }
 
+// Planning initialization state machine
 bool PlannerThread::plan_init()
 {
     if (!checkPause())
     {
         return false;
     }
-    if (!resetPlanVars())
+    if (!resetPlanVars()) // resets planning variables and initializes world state
     {
         return false;
     }
@@ -1428,7 +1436,7 @@ bool PlannerThread::plan_init()
     {
         return false;
     }
-    if (!updateState())
+    if (!updateState()) // first world state update
     {
         return false;
     }
@@ -1436,19 +1444,11 @@ bool PlannerThread::plan_init()
     {
         return false;
     }
-    if (!loadObjs())
+    if (!loadObjs()) // request object list
     {
         return false;
     }
-    if (!loadState())
-    {
-        return false;
-    }
-    if (!checkPause())
-    {
-        return false;
-    }
-    if (!groundRules())
+    if (!loadState()) // loads world state
     {
         return false;
     }
@@ -1456,7 +1456,7 @@ bool PlannerThread::plan_init()
     {
         return false;
     }
-    if (!completePlannerState())
+    if (!groundRules()) // instructs geometricGrounding to ground rules
     {
         return false;
     }
@@ -1464,7 +1464,7 @@ bool PlannerThread::plan_init()
     {
         return false;
     }
-    if (!preserveState())
+    if (!completePlannerState()) // completes the world state with the negated symbols that are not present on the world state
     {
         return false;
     }
@@ -1472,7 +1472,7 @@ bool PlannerThread::plan_init()
     {
         return false;
     }
-    if (!compileGoal())
+    if (!preserveState()) // stores current state
     {
         return false;
     }
@@ -1480,7 +1480,15 @@ bool PlannerThread::plan_init()
     {
         return false;
     }
-    if (!loadSubgoals())
+    if (!compileGoal()) // instructs goalCompiler module to compile the set of instructions from Praxicon
+    {
+        return false;
+    }
+    if (!checkPause())
+    {
+        return false;
+    }
+    if (!loadSubgoals()) // loads subgoals compiled by the goalCompiler
     {
         return false;
     }
@@ -1488,7 +1496,7 @@ bool PlannerThread::plan_init()
     {
         return false;
     } 
-    if (!loadRules())
+    if (!loadRules()) // loads rules grounded by the geometricGrounding
     {
         return false;
     }
@@ -1496,7 +1504,7 @@ bool PlannerThread::plan_init()
     {
         return false;
     }
-    if (!preserveRules())
+    if (!preserveRules()) // stores grounded rules for future resets
     {
         return false;
     }
@@ -1504,7 +1512,7 @@ bool PlannerThread::plan_init()
     {
         return false;
     }
-    if (!goalUpdate())
+    if (!goalUpdate()) // updates the current goal from the subgoals list
     {
         return false;
     }
@@ -1512,7 +1520,7 @@ bool PlannerThread::plan_init()
     {
         return false;
     }
-    if (!loadGoal())
+    if (!loadGoal()) // loads the current goal
     {
         return false;
     }
@@ -1523,13 +1531,14 @@ bool PlannerThread::plan_init()
     return true;
 }
 
+// main planning cycle state machine
 bool PlannerThread::planning_cycle()
 {
     if (!checkPause())
     {
         return false;
     }
-    if (!updateState())
+    if (!updateState()) // updates the world state at the beginning of each cycle
     {
         return false;
     }
@@ -1537,7 +1546,7 @@ bool PlannerThread::planning_cycle()
     {
         return false;
     }
-    if (!completePlannerState())
+    if (!completePlannerState()) // completes the world state with the negated symbols that are not present on the world state
     {
         return false;
     }
@@ -1545,7 +1554,7 @@ bool PlannerThread::planning_cycle()
     {
         return false;
     }
-    if (!loadState())
+    if (!loadState()) // loads current state into memory
     {
         return false;
     }
@@ -1553,53 +1562,13 @@ bool PlannerThread::planning_cycle()
     {
         return false;
     }
-    if (compareState())
+    if (compareState()) // compares the current world state to the previous world state (from preserve state)
     {
         if (!checkPause())
         {
             return false;
         }
-        if (!adaptRules())
-        {
-            return false;
-        }
-        if (!checkPause())
-        {
-            return false;
-        }
-    }
-    if (!checkPause())
-    {
-        return false;
-    }
-    if (!goalUpdate())
-    {
-        return false;
-    }
-    if (!checkPause())
-    {
-        return false;
-    }
-    if (!loadGoal())
-    {
-        return false;
-    }
-    if (!checkPause())
-    {
-        return false;
-    }
-    if (!checkHoldingSymbols())
-    {
-        if (!checkPause())
-        {
-            return false;
-        }
-        jumpBack();
-        if (!checkPause())
-        {
-            return false;
-        }
-        if (!resetConfig())
+        if (!adaptRules()) // If the state hasn't changed, adapt the last action (it failed)
         {
             return false;
         }
@@ -1608,27 +1577,59 @@ bool PlannerThread::planning_cycle()
             return false;
         }
     }
-    else 
+    if (!checkPause())
+    {
+        return false;
+    }
+    if (!goalUpdate()) // update current goal with the corresponding subgoal (depending on plan-level)
+    {
+        return false;
+    }
+    if (!checkPause())
+    {
+        return false;
+    }
+    if (!loadGoal()) // loads current goal into memory
+    {
+        return false;
+    }
+    if (!checkPause())
+    {
+        return false;
+    }
+    if (!checkHoldingSymbols()) // check if symbols belonging to previous goals are still true on the current goal
     {
         if (!checkPause())
         {
             return false;
         }
-        if (checkGoalCompletion())
+        jumpBack(); // If there are symbols that disappeared, jump back one plan-level
+        if (!checkPause())
+        {
+            return false;
+        }
+        if (!resetConfig()) // reset Horizon
+        {
+            return false;
+        }
+        if (!checkPause())
+        {
+            return false;
+        }
+    }
+    else // If the previous goal is still verified
+    {
+        if (!checkPause())
+        {
+            return false;
+        }
+        if (checkGoalCompletion()) // check if the current goal has been completed
         {
             if (!checkPause())
             {
                 return false;
             }
-            if (!resetRules())
-            {
-                return false;
-            }
-            if (!checkPause())
-            {
-                return false;
-            }
-            if (!resetConfig())
+            if (!resetRules()) // If the goal was completed, reset the rules to after-grounding probability values
             {
                 return false;
             }
@@ -1636,7 +1637,7 @@ bool PlannerThread::planning_cycle()
             {
                 return false;
             }
-            if (!loadRules())
+            if (!resetConfig()) // reset planning horizon back to 5
             {
                 return false;
             }
@@ -1644,7 +1645,7 @@ bool PlannerThread::planning_cycle()
             {
                 return false;
             }
-            if (!jumpForward())
+            if (!loadRules()) // load reset rules
             {
                 return false;
             }
@@ -1652,9 +1653,17 @@ bool PlannerThread::planning_cycle()
             {
                 return false;
             }
-            if (!planCompletion())
+            if (!jumpForward()) // jump one plan-level forward
             {
-                return true;
+                return false;
+            }
+            if (!checkPause())
+            {
+                return false;
+            }
+            if (!planCompletion()) // check if all the subgoals have been met (plan completed)
+            {
+                return true; // if there are still goals to be completed, planning should be resumed
             }
             if (!checkPause())
             {
@@ -1662,25 +1671,25 @@ bool PlannerThread::planning_cycle()
             }
             return true;
         }
-        else {
+        else { // if the current goal has yet to be completed
             if (!checkPause())
             {
                 return false;
             }
             string tmp_str = showCurrentGoal(); 
             yInfo("Current subgoal: %s", tmp_str.c_str());
-            int flag_prada = PRADA();
+            int flag_prada = PRADA(); // run PRADA planner (planner.exe)
             if (!checkPause())
             {
                 return false;
             }
-            if (flag_prada == 0)
+            if (flag_prada == 0) // if PRADA fails for any reason, terminate plan
             {
                 return false;
             }
-            else if (flag_prada == 2)
+            else if (flag_prada == 2) // If PRADA finds no valid action:
             {
-                if (!increaseHorizon())
+                if (!increaseHorizon()) // increase planning horizon by 1
                 {
                     return false;
                 }
@@ -1688,9 +1697,9 @@ bool PlannerThread::planning_cycle()
                 {
                     return false;
                 }
-                return true;
+                return true; // resume plan
             }
-            if (!loadUsedObjs())
+            if (!loadUsedObjs()) // loads the objects used by the current action into memory
             {
                 return false;
             }
@@ -1698,7 +1707,7 @@ bool PlannerThread::planning_cycle()
             {
                 return false;
             }
-            if (!codeAction())
+            if (!codeAction()) // encodes the action to be sent to activityInterface
             {
                 return false;
             }
@@ -1706,7 +1715,7 @@ bool PlannerThread::planning_cycle()
             {
                 return false;
             }
-            if (!execAction())
+            if (!execAction()) // instructs execution of action
             {
                 return false;
             }
@@ -1714,7 +1723,7 @@ bool PlannerThread::planning_cycle()
             {
                 return false;
             }
-            if (!preserveState())
+            if (!preserveState()) // stores the current world state to compare later
             {
                 return false;
             }
@@ -1722,7 +1731,7 @@ bool PlannerThread::planning_cycle()
             {
                 return false;
             }
-            if (!checkFailure())
+            if (!checkFailure()) // checks if plan has failed before continuing
             {
                 return false;
             }
@@ -1739,11 +1748,13 @@ bool PlannerThread::planning_cycle()
     return true;
 }
 
+// RPC function to show the human the current planned action
 string PlannerThread::showPlannedAction()
 {
     return next_action;
 }
 
+// RPC function to show the human the current world state
 string PlannerThread::showCurrentState()
 {
     string temp_str = "";
@@ -1754,6 +1765,7 @@ string PlannerThread::showCurrentState()
     return temp_str; 
 }
 
+// RPC function to show the current goal
 string PlannerThread::showCurrentGoal()
 {
     if (!loadGoal())
@@ -1768,6 +1780,7 @@ string PlannerThread::showCurrentGoal()
     return temp_str; 
 }
 
+// RPC Function that prints all instances of specified "symbol"
 string PlannerThread::printSymbol(string symbol)
 {
     loadObjs();
