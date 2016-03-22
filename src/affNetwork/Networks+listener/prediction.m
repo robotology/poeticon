@@ -22,7 +22,7 @@ clear;
 % initPmtk3;
 
 %% Choice of network:
-bn = 'pca4sep';
+bn = 'pca2n_2c';
 
 switch bn
     case 'pca4merge'
@@ -34,6 +34,10 @@ switch bn
         %load('pca_2n_2C_noise_2b.mat');
     case 'pca6sep'
         load('pca_2n_3C.mat');
+    case 'pca2n_3c'
+        load('pca_2n_3C.mat');
+    case 'pca2n_2c'
+        load('pca_2n_2C.mat');
     otherwise
         error([bn ' is not a known Network']);
         

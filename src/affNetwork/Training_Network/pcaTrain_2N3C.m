@@ -2,7 +2,7 @@
 % CopyPolicy: Released under the terms of the GNU GPL v2.0.
 % Copyright: (C) 2015 VisLab, Institute for Systems and Robotics,
 %                Instituto Superior Técnico, Universidade de Lisboa, Lisbon, Portugal
-% Author: Afonso Gonçalves, João Abrantes, Pedro Vicente, Giovanni Saponaro
+% Author: Pedro Vicente, Atabak Dehban, Afonso Gonçalves, João Abrantes, Giovanni Saponaro
 % CopyPolicy: Released under the terms of the GNU GPL v2.0
 
 
@@ -10,7 +10,7 @@ function [score] = pcaTrain2N3C
 %%
 %PCA - Rede bayesiana com 5 nos
 %faz o pca com os valores continuos
-data = load('affData_final_good.txt'); 
+data = load('../Data+combinator/affData_03_22_16.txt'); 
 train_rows=size(data,1); % 100% of the data
 training_data=data(1:train_rows,:);
 
@@ -97,7 +97,7 @@ ranges2{2,1} = [-.05 -0.02 0.02 0.05 1];
 effects = discretize(effects, ranges2);
 training_data_9nodes = [score training_data(:,11) effects];
 BN = dgmTrainFullyObs(BN, training_data_9nodes);
-save('pca_2n_3C.mat','BN','ranges','pcT','pcO','components');
+save('../Networks+listener/pca_2n_3C.mat','BN','ranges','pcT','pcO','components');
 %%
 %test data
 %discretize features
