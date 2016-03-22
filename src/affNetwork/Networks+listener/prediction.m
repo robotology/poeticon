@@ -22,22 +22,20 @@ clear;
 % initPmtk3;
 
 %% Choice of network:
-bn = 'pca2n_2c';
+bn = 'pca2n_2C';
 
 switch bn
-    case 'pca4merge'
+    case 'pca4merge' % 2015
         load('pcaNet-4mergeComp.mat');
-    case 'pca6merge'
+    case 'pca6merge' % 2015
         load('pca6mergecomp.mat');
-    case 'pca4sep'
+    case 'pca4sep' % 2015
         load('pca_2n_2C_noise_25b.mat');
         %load('pca_2n_2C_noise_2b.mat');
-    case 'pca6sep'
-        load('pca_2n_3C.mat');
-    case 'pca2n_3c'
-        load('pca_2n_3C.mat');
-    case 'pca2n_2c'
-        load('pca_2n_2C.mat');
+    case 'pca2n_3C'
+        load('pca_2n_3C.mat'); % 2016
+    case 'pca2n_2C'
+        load('pca_2n_2C.mat'); % 2016
     otherwise
         error([bn ' is not a known Network']);
         
@@ -156,7 +154,7 @@ while(~done)
                                     % to pca - pc 10x10 matrix, discretize values
                     prior_values = [score action]; % and add the action to prior
                     posterior_nodes = [8 9]; % X and Y effect   
-                case 'pca4sep'
+                case 'pca4sep' % <-- FIXME: handle 2016 2C network case here
                     prior_nodes  = [1 2 3 4 5]; % pca1_T pca2_T pca3_O pca4_O action
                     %prior_values = zeros(1, size(prior_nodes,2));
                     for n = 1:10 % features of the tool and object
@@ -170,7 +168,7 @@ while(~done)
                     score = discretize(score,ranges);
                     prior_values = [score action]; % and add the action to prior
                     posterior_nodes = [6 7]; % X and Y effect 
-                case 'pca6sep'
+                case 'pca6sep' % <-- FIXME: handle 2016 3C network case here
                     prior_nodes  = [1 2 3 4 5 6 7]; % pca1_T pca2_T pca3_O pca4_O action
                     %prior_values = zeros(1, size(prior_nodes,2));
                     for n = 1:10 % features of the tool and object
