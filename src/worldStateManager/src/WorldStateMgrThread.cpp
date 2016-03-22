@@ -2308,11 +2308,36 @@ void WorldStateMgrThread::fsmPerception()
             else
             {
                 // failure -> stay in same state, clear candidates & try again
+
+                // acquire getNames list to print it below for debug
+                Bottle activityCmd;
+                Bottle activityReply;
+                activityCmd.clear();
+                activityReply.clear();
+                activityCmd.addString("getNames");
+                activityPort.write(activityCmd, activityReply);
+                bool validResponse = activityReply.size()>0 &&
+                                     activityReply.get(0).isList();
+                if (!validResponse)
+                    yError("STATE_PERCEPTION_SET_MEMORY: obtained invalid response from activityInterface");
+                bool somethingVisible = validResponse &&
+                                        activityReply.get(0).asList()->size()>0;
+                if (!somethingVisible)
+                    yWarning("STATE_PERCEPTION_SET_MEMORY: getNames is empty");
+
+                // acquire opcIDs to print it below for debug
+                Bottle opcIDs;
+                const int numHandEntries = 2;
+                if (!checkOPCStatus(numHandEntries,opcIDs))
+                    yWarning("STATE_PERCEPTION_SET_MEMORY: problem verifying that WSOPC has at least %d entries", numHandEntries);
+
                 yWarning() << "failure in initializing IDs and names:" <<
                               "at least one of the candidate names was" <<
                               "a duplicate or was skipped. trying again." <<
                               "if this goes on forever, check the status of" <<
-                              "object recognition and WSOPC database.";
+                              "object recognition and WSOPC database. getNames() =" <<
+                              activityReply.get(0).asList()->toString().c_str() <<
+                              "; opcIDs =" << opcIDs.toString().c_str();
                 candidateTrackMap.clear();
             }
 
