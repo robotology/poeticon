@@ -800,7 +800,34 @@ bool geoGround::getAffordances()
             AffBottleOut.clear();
             AffBottleOut.addString("update");
             affordancePort.write();
-            Time::delay(0.1);
+            timer_count = 0;
+            while (!isStopping()) {
+                timer_count = timer_count + 1;
+                if (timer_count == 600) // 1 minute timeout
+                {
+                    yWarning("connection is taking too long..."); // will send a second update
+                    Bottle& AffBottleOut = affordancePort.prepare();
+                    AffBottleOut.clear();
+                    AffBottleOut.addString("update");
+                    affordancePort.write();
+                    if (timer_count == 1200) // 2 minute timeout
+                    {
+                        yError("connection with affordance module closed: timeout");
+                        return false;
+                    }
+                }
+                AffBottle = affordancePort.read(false);
+                if (AffBottle){
+                    // yDebug("affordances ready: %s", AffBottle->toString().c_str());
+                    break;
+                }
+                if (affordancePort.getOutputCount() == 0)
+                {
+                    yError("Affordance communication module crashed.");
+                    return false;
+                }
+                Time::delay(0.1);
+            }
             AffBottleOut.clear();
             temp_str = "Rule #" + static_cast<ostringstream*>( &(ostringstream() << l) )->str() + "  (" + static_cast<ostringstream*>( &(ostringstream() << l+1) )->str() + " out of " + static_cast<ostringstream*>( &(ostringstream() << num_act) )->str() + ")";
             rules[i].replace(rules[i].find("Rule"),21,temp_str);

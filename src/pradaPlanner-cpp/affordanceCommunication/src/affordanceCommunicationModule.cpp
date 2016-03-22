@@ -480,6 +480,7 @@ bool affComm::updateAffordances()
             if (Affor_bottle_in)
             {
                 comm = Affor_bottle_in->toString();
+                yDebug("geometricGrounding command: %s", comm.c_str());
                 break;
             }
             yarp::os::Time::delay(0.1);
@@ -491,6 +492,15 @@ bool affComm::updateAffordances()
         }
         if (comm == "update")
         {
+            if (geoPort.getInputCount() == 0)
+            {
+                yError("Geometric grounding module not connected");
+                return false;
+            }
+            Bottle& Affor_bottle_out = geoPort.prepare();
+            Affor_bottle_out.clear();
+            Affor_bottle_out.addString("ready");
+            geoPort.write();
             while (!isStopping())
             {
                 Affor_bottle_in = geoPort.read(false);
@@ -506,6 +516,7 @@ bool affComm::updateAffordances()
                 yarp::os::Time::delay(0.1);
             }
             rule = data[0];
+            yDebug("ground rule: %s", rule.c_str());
             context = data[1];
             outcome = data[2];
             outcome2 = data[3];
