@@ -2,7 +2,7 @@
 % CopyPolicy: Released under the terms of the GNU GPL v2.0.
 % Copyright: (C) 2015 VisLab, Institute for Systems and Robotics,
 %                Instituto Superior Técnico, Universidade de Lisboa, Lisbon, Portugal
-% Author: Afonso Gonçalves, Pedro Vicente, Giovanni Saponaro
+% Author: Pedro Vicente, Atabak Dehban, Afonso Gonçalves, João Abrantes
 % CopyPolicy: Released under the terms of the GNU GPL v2.0
 
 %% Effect prediction, queries server
@@ -28,12 +28,12 @@ switch bn
     case 'pca4merge'
         load('pcaNet-4mergeComp.mat');
     case 'pca6merge'
-		load('pca6mergecomp.mat');
-	case 'pca4sep'
-		load('pca_2n_2C_noise_25b.mat');
+        load('pca6mergecomp.mat');
+    case 'pca4sep'
+        load('pca_2n_2C_noise_25b.mat');
         %load('pca_2n_2C_noise_2b.mat');
     case 'pca6sep'
-		load('pca_2n_3C.mat');
+        load('pca_2n_3C.mat');
     otherwise
         error([bn ' is not a known Network']);
         
