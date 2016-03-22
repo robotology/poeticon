@@ -1522,7 +1522,7 @@ bool WorldStateMgrThread::getLabel(const int &u, const int &v, string &label)
 {
     if (activityPort.getOutputCount()<1)
     {
-        yWarning() << __func__ << "not connected to ActivityIF";
+        yWarning() << __func__ << "not connected to activityInterface";
         return false;
     }
 
@@ -1617,7 +1617,7 @@ bool WorldStateMgrThread::isOnTopOf(const string &objName, Bottle &objBelow)
 
     if (activityPort.getOutputCount()<1)
     {
-        yWarning() << __func__ << "not connected to ActivityIF";
+        yWarning() << __func__ << "not connected to activityInterface";
         return false;
     }
 
@@ -1650,7 +1650,7 @@ bool WorldStateMgrThread::isReachableWith(const string &objName,
 {
     if (activityPort.getOutputCount()<1)
     {
-        yWarning() << __func__ << "not connected to ActivityIF";
+        yWarning() << __func__ << "not connected to activityInterface";
         return false;
     }
 
@@ -1683,7 +1683,7 @@ bool WorldStateMgrThread::isPullableWith(const string &objName,
 {
     if (activityPort.getOutputCount()<1)
     {
-        yWarning() << __func__ << "not connected to ActivityIF";
+        yWarning() << __func__ << "not connected to activityInterface";
         return false;
     }
 
@@ -1715,7 +1715,7 @@ bool WorldStateMgrThread::isHandFree(const string &handName)
 {
     if (activityPort.getOutputCount()<1)
     {
-        yWarning() << __func__ << "not connected to ActivityIF";
+        yWarning() << __func__ << "not connected to activityInterface";
         return true; // hand free
     }
 
@@ -1757,7 +1757,7 @@ string WorldStateMgrThread::inWhichHand(const string &objName)
 
     if (activityPort.getOutputCount()<1)
     {
-        yWarning() << __func__ << "not connected to ActivityIF";
+        yWarning() << __func__ << "not connected to activityInterface";
         return ret;
     }
 
@@ -1806,7 +1806,7 @@ bool WorldStateMgrThread::getVisibilityByActivityIF(const string &objName,
 
     if (activityPort.getOutputCount()<1)
     {
-        yWarning() << __func__ << "not connected to ActivityIF";
+        yWarning() << __func__ << "not connected to activityInterface";
         return false;
     }
 
@@ -1841,7 +1841,7 @@ bool WorldStateMgrThread::belongsToStack(const string &objName, bool &result)
 
     if (activityPort.getOutputCount()<1)
     {
-        yWarning() << __func__ << "not connected to ActivityIF";
+        yWarning() << __func__ << "not connected to activityInterface";
         return false;
     }
 
@@ -1977,7 +1977,7 @@ bool WorldStateMgrThread::doPopulateDB()
         }
         else
         {
-            yWarning("WSOPC does not contain hand entry %d %s -> something's fishy!",
+            yWarning("WSOPC does not contain hand entry %d/%s -> something's fishy!",
                     iter->id, iter->name.c_str());
         }
     }
@@ -2022,7 +2022,7 @@ bool WorldStateMgrThread::doPopulateDB()
         // make sure that is_hand==false i.e. this is an object
         if (isHandValueBool)
         {
-            yWarning("object %d %s: was expecting is_hand=false, got is_hand=true! skipping...",
+            yWarning("object %d/%s: was expecting is_hand=false, got is_hand=true! skipping...",
                 iter->id, iter->name.c_str());
             continue;
         }
@@ -2057,7 +2057,7 @@ bool WorldStateMgrThread::doPopulateDB()
             // -> update it with command
             // [set] (("id" <num>) ("prop0" <val0>) ...)
 
-            yDebug("modifying existing entry in database: %d %s",
+            yDebug("modifying existing entry in database: %d/%s",
                    iter->id, iter->name.c_str());
             Bottle opcCmd;
             Bottle opcCmdContent;
@@ -2097,7 +2097,7 @@ bool WorldStateMgrThread::doPopulateDB()
             // [add] (("prop0" <val0>) ("prop1" <val1>) ...)
             // including name, is_hand
 
-            yInfo("adding new entry to database: %d %s",
+            yInfo("adding new entry to database: %d/%s",
                    iter->id, iter->name.c_str());
             Bottle opcCmd;
             Bottle opcCmdContent;
