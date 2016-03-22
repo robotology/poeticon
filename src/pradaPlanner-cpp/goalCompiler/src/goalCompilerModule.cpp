@@ -38,6 +38,7 @@ bool goalCompiler::configure(ResourceFinder &rf)
         }
         command = "";
         command = plannerCommand();
+        yDebug("Command received: %s", command.c_str());
         if (!loadObjs())
         {
             yWarning("failed to load objects");
@@ -700,8 +701,18 @@ bool goalCompiler::writeFiles()
         subgoalFile << endl;
     }
     subgoalFile.close();
-    for (int i = 0; i<subgoals[subgoals.size()-1].size(); ++i){
-        goalFile << subgoals[subgoals.size()-1][i] << " ";
+    if (subgoals.size() > 0)
+    {
+        for (int i = 0; i<subgoals[subgoals.size()-1].size(); ++i){
+            goalFile << subgoals[subgoals.size()-1][i] << " ";
+        }
+    }
+    else
+    {
+        yError("No goals were compiled: the goal list is empty");
+        goalFile.close();
+        subgoals.clear();
+        return false;
     }
     goalFile.close();
     subgoals.clear();
