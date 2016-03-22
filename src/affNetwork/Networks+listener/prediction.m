@@ -22,15 +22,16 @@ clear;
 % initPmtk3;
 
 %% Choice of network:
-bn = 'pca2n_2C';
+%bn = 'pca2n_2C'; % 2016
+bn = 'pca4sep'; % 2015
 
 switch bn
     case 'pca4merge' % 2015
-        load('pcaNet-4mergeComp.mat');
+        load('../oldStuff/pcaNet-4mergeComp.mat');
     case 'pca6merge' % 2015
-        load('pca6mergecomp.mat');
+        load('../oldStuff/pca6mergecomp.mat');
     case 'pca4sep' % 2015
-        load('pca_2n_2C_noise_25b.mat');
+        load('../oldStuff/pca_2n_2C_noise_25b.mat');
         %load('pca_2n_2C_noise_2b.mat');
     case 'pca2n_3C'
         load('pca_2n_3C.mat'); % 2016
