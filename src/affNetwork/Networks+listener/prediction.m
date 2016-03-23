@@ -22,10 +22,17 @@ clear;
 % initPmtk3;
 
 %% Choice of network:
-%bn = 'pca2n_2C'; % 2016
-bn = 'pca4sep'; % 2015
+%bn = 'pca4sep'; % 2015
+
+bn = 'pca_2016_2n_2c_2v'; % 2016
+% bn = 'pca_2016_2n_2c_4v'; % 2016
+
+%pca_2016_2n_2c_2v
 
 switch bn
+    
+    %% 2015
+    %%
     case 'pca4merge' % 2015
         load('../oldStuff/pcaNet-4mergeComp.mat');
     case 'pca6merge' % 2015
@@ -33,10 +40,12 @@ switch bn
     case 'pca4sep' % 2015
         load('../oldStuff/pca_2n_2C_noise_25b.mat');
         %load('pca_2n_2C_noise_2b.mat');
-    case 'pca2n_3C'
-        load('pca_2n_3C.mat'); % 2016
-    case 'pca2n_2C'
-        load('pca_2n_2C.mat'); % 2016
+        
+    %% 2016    
+    case 'pca_2016_2n_2c_2v'
+        load('pca_2016_2n_3c_1v.mat'); % 2016
+    case 'pca_2016_2n_2c_4v'
+        load('pca_2016_2n_2C_4v.mat'); % 2016
     otherwise
         error([bn ' is not a known Network']);
         
@@ -90,6 +99,7 @@ pause(0.5);
 disp('Done opening ports');
 i=1;
 display=true;
+sameFig = false;
 %% Run until you get the quit signal:
 while(~done)
     
@@ -108,6 +118,16 @@ while(~done)
         if(strcmp(query.toString, 'displayOFF'))
             display=false;
             disp('Display is now OFF');
+            continue;      
+        end
+        if(strcmp(query.toString, 'sameOFF'))
+            sameFig=false;
+            disp('Same Figure Display is now OFF');
+            continue;      
+        end
+        if(strcmp(query.toString, 'sameON'))
+            sameFig=true;
+            disp('Same Figure Display is now OFF');
             continue;      
         end
         if (strcmp(query.toString, 'quit'))
@@ -155,7 +175,7 @@ while(~done)
                                     % to pca - pc 10x10 matrix, discretize values
                     prior_values = [score action]; % and add the action to prior
                     posterior_nodes = [8 9]; % X and Y effect   
-                case 'pca4sep' % <-- FIXME: handle 2016 2C network case here
+                case {'pca_2016_2n_2c_2v', 'pca_2016_2n_2c_4v', 'pca4sep'} 
                     prior_nodes  = [1 2 3 4 5]; % pca1_T pca2_T pca3_O pca4_O action
                     %prior_values = zeros(1, size(prior_nodes,2));
                     for n = 1:10 % features of the tool and object
@@ -169,7 +189,7 @@ while(~done)
                     score = discretize(score,ranges);
                     prior_values = [score action]; % and add the action to prior
                     posterior_nodes = [6 7]; % X and Y effect 
-                case 'pca6sep' % <-- FIXME: handle 2016 3C network case here
+                case {'pca2n_3C', 'pca6sep'} 
                     prior_nodes  = [1 2 3 4 5 6 7]; % pca1_T pca2_T pca3_O pca4_O action
                     %prior_values = zeros(1, size(prior_nodes,2));
                     for n = 1:10 % features of the tool and object
@@ -229,7 +249,11 @@ while(~done)
                 queryActionName = 'push';
             end
             if(display)
-                hFig(i) = figure(i);
+                if(sameFig)
+                    hFig(i)=figure(1);
+                else
+                    hFig(i) = figure(i);
+                end
                 str = sprintf('%s prediction %d',queryActionName, i); % maybe change the title :p
                 title(str);
                 set(hFig(i), 'Position', [figLeft figBottom figWidth figHeight]) % maybe change the position of the window

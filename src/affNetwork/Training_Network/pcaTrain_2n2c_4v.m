@@ -2,14 +2,14 @@
 % CopyPolicy: Released under the terms of the GNU GPL v2.0.
 % Copyright: (C) 2015 VisLab, Institute for Systems and Robotics,
 %                Instituto Superior Técnico, Universidade de Lisboa, Lisbon, Portugal
-% Author: Pedro Vicente, Atabak Dehban, Afonso Gonçalves, João Abrantes, Giovanni Saponaro
+% Author: Pedro Vicente, Atabak Dehban, Afonso Gonçalves, João Abrantes,  Giovanni Saponaro
 % CopyPolicy: Released under the terms of the GNU GPL v2.0
 
-
-function [score] = pcaTrain2N3C
+function [score] = pca_score2
 %%
-%PCA - Rede bayesiana com 5 nos
-%faz o pca com os valores continuos
+%PCA - Bayesian Network with 7 nodes: 2 for tools, 2 for objects, 1 action, 2 effects
+%      pca with continuous values
+%      save function (at line 100) saves the network to a file (check file name)
 data = load('../Data+combinator/affData_03_23_16.txt'); 
 train_rows=size(data,1); % 100% of the data
 training_data=data(1:train_rows,:);
@@ -27,8 +27,8 @@ featuresO = training_data(:,6:10);
 % ylabel('Variance Explained (%)');
 % xlabel('Number of components');
 
-components = 3;
-values = [3,3,3]; %discretize in how many values?
+components = 2;
+values = [4,4]; %discretize in how many values?
 SCORE = featuresT*pinv(pcT(:,1:components)');
 SCORE2 = featuresO*pinv(pcO(:,1:components)');
 
@@ -36,6 +36,10 @@ SCORE2 = featuresO*pinv(pcO(:,1:components)');
 %compute bin ranges to discretize
 ranges = getRanges([values values],[SCORE(:,1:components) SCORE2(:,1:components)]);
 
+% 
+for i=1:length(ranges)
+    ranges{i,1}(4) = inf;
+end
 % % original_cpd_size = 3^12*4*5;
 % % cpd_size = 4*5;
 % % for c = 1:components
@@ -52,13 +56,13 @@ comp1   =  1; %tool
 comp2   =  2; %tool
 comp3   =  3; %obj
 comp4   =  4; %obj
-comp5   =  5;
-comp6   =  6;
-action  =  7;%3;
-effectX =  8;%4;
-effectY =  9;%5;
+% comp5   =  5;
+% comp6   =  6;
+action  =  5;%3;
+effectX =  6;%4;
+effectY =  7;%5;
 % Number of nodes:
-nnodes  =   9;%5
+nnodes  =   7;%5
 % Number of states per node:
 nstates = [values values 2 5 5];
 
@@ -68,11 +72,11 @@ dag(comp1,   [effectX effectY]) = 1;
 dag(comp2,   [effectX effectY]) = 1;
 dag(comp3,   [effectX effectY]) = 1;
 dag(comp4,   [effectX effectY]) = 1;
-dag(comp5,   [effectX effectY]) = 1;
-dag(comp6,   [effectX effectY]) = 1;
+%dag(comp5,   [effectX effectY]) = 1;
+%dag(comp6,   [effectX effectY]) = 1;
 dag(action,  [effectX effectY]) = 1;
 
-names=  {'Component1', 'Component2', 'Component3','Component4','Component5','Component6', 'Action','EffectX', 'EffectY'};
+names=  {'Component1', 'Component2', 'Component3','Component4','Action','EffectX', 'EffectY'};
 BN = dgmCreate(dag, mkRndTabularCpds(dag, nstates(1:nnodes)),...
     'nodeNames', names,'infEngine', 'varelim');
 % drawNetwork('-adjMatrix', BN.G);
@@ -89,15 +93,20 @@ effects = training_data(:,12:end);
 % values2 = [5 5];
 %ranges2 = getRanges(values2,effects);
 ranges2 = cell(2,1);
-ranges2{1,1} = [-.05 -0.02 0.02 0.05 1];
-ranges2{2,1} = [-.05 -0.02 0.02 0.05 1];
+% ranges2{1,1} = [-.06 -0.025 0.025 0.06 1];
+% ranges2{2,1} = [-.06 -0.025 0.025 0.06 1];
+
+ranges2{1,1} = [-.10 -0.03 0.03 0.10 1]; % new effects discretization
+ranges2{2,1} = [-.10 -0.03 0.03 0.10 1];
+
 % ranges2{1,1} = [.05 0.02 -0.02 -0.05 -1];
 % ranges2{2,1} = [.05 0.02 -0.02 -0.05 -1];
 
 effects = discretize(effects, ranges2);
-training_data_9nodes = [score training_data(:,11) effects];
-BN = dgmTrainFullyObs(BN, training_data_9nodes);
-save('../Networks+listener/pca_2n_3C.mat','BN','ranges','pcT','pcO','components');
+training_data_5nodes = [score training_data(:,11) effects];
+BN = dgmTrainFullyObs(BN, training_data_5nodes);
+save('../Networks+listener/pca_2n_2C_4V.mat','BN','ranges','pcT','pcO','components');
+
 %%
 %test data
 %discretize features
@@ -109,6 +118,7 @@ save('../Networks+listener/pca_2n_3C.mat','BN','ranges','pcT','pcO','components'
 % test_data=[score test_data(:,13:end)];
 
 % Descomentar o score a ser utilizado.
+
 %%
 % % %Gambling Score
 % prior_nodes=1:3;
