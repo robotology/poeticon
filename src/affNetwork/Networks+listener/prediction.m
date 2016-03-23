@@ -27,7 +27,13 @@ clear;
 bn = 'pca_2016_2n_2c_2v'; % 2016
 % bn = 'pca_2016_2n_2c_4v'; % 2016
 
-%pca_2016_2n_2c_2v
+%% Training with Gaussian noise sigma = 0.02
+% bn = 'pca_2016_2n_2c_2v_wGaussian002'; % 2016
+% bn = 'pca_2016_2n_2c_4v_wGaussian002'; % 2016
+
+%% Training with Uniform noise [-0.02,0.02]
+% bn = 'pca_2016_2n_2c_2v_wUniform002'; % 2016
+% bn = 'pca_2016_2n_2c_4v_wUniform002'; % 2016
 
 switch bn
     
@@ -46,6 +52,16 @@ switch bn
         load('pca_2016_2n_2c_2v.mat'); % 2016
     case 'pca_2016_2n_2c_4v'
         load('pca_2016_2n_2c_4v.mat'); % 2016
+        % Gaussian Noise
+    case 'pca_2016_2n_2c_2v_wGaussian002' 
+        load('pca_2016_2n_2c_2v_wGaussian002.mat'); % 2016
+    case 'pca_2016_2n_2c_4v_wGaussian002'
+        load('pca_2016_2n_2c_4v_wGaussian002.mat'); % 2016
+        %Uniform noise
+    case 'pca_2016_2n_2c_2v_wUniform002'
+        load('pca_2016_2n_2c_2v_wUniform002.mat'); % 2016
+    case 'pca_2016_2n_2c_4v_wUniform002'
+        load('pca_2016_2n_2c_4v_wUniform002.mat'); % 2016
     otherwise
         error([bn ' is not a known Network']);
         
@@ -175,7 +191,7 @@ while(~done)
                                     % to pca - pc 10x10 matrix, discretize values
                     prior_values = [score action]; % and add the action to prior
                     posterior_nodes = [8 9]; % X and Y effect   
-                case {'pca_2016_2n_2c_2v', 'pca_2016_2n_2c_4v', 'pca4sep'} 
+                case {'pca_2016_2n_2c_2v', 'pca_2016_2n_2c_4v', 'pca4sep','pca_2016_2n_2c_2v_wGaussian002', 'pca_2016_2n_2c_4v_wGaussian002', 'pca_2016_2n_2c_2v_wUniform002', 'pca_2016_2n_2c_4v_wUniform002'} 
                     prior_nodes  = [1 2 3 4 5]; % pca1_T pca2_T pca3_O pca4_O action
                     %prior_values = zeros(1, size(prior_nodes,2));
                     for n = 1:10 % features of the tool and object
