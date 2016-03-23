@@ -10,7 +10,16 @@ function [score] = pca_score2
 %PCA - Bayesian Network with 7 nodes: 2 for tools, 2 for objects, 1 action, 2 effects
 %      pca with continuous values
 %      save function (at line 100) saves the network to a file (check file name)
-data = load('../Data+combinator/affData_03_23_16.txt'); %% Change for train with different data
+
+%% Raw Data - please change the file name (line 117)
+data = load('../Data+combinator/affData_03_23_16.txt'); 
+
+%% Train with Gaussian noise sigma=0.02 - please change the file name (line 117)
+%data = load('../Data+combinator/affData_03_23_16_gaussian_noise.txt'); 
+
+%% Train with uniform noise [-0.02,0.02] - please change the file name (line 117)
+%data = load('../Data+combinator/affData_03_23_16_uniform_noise.txt'); 
+
 train_rows=size(data,1); % 100% of the data
 training_data=data(1:train_rows,:);
 
@@ -105,7 +114,7 @@ ranges2{2,1} = [-.10 -0.03 0.03 0.10 1];
 effects = discretize(effects, ranges2);
 training_data_5nodes = [score training_data(:,11) effects];
 BN = dgmTrainFullyObs(BN, training_data_5nodes);
-save('../Networks+listener/pca_2n_2C_4V.mat','BN','ranges','pcT','pcO','components');
+save('../Networks+listener/pca_2016_2n_2c_2v.mat','BN','ranges','pcT','pcO','components');
 
 %%
 %test data
