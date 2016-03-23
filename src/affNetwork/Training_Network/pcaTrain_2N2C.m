@@ -10,7 +10,7 @@ function [score] = pca_score2
 %PCA - Bayesian Network with 5 nodes
 %      pca with continuous values
 %      save function (at line 100) saves the network to a file (check file name)
-data = load('../Data+combinator/affData_03_22_16.txt'); 
+data = load('../Data+combinator/affData_03_23_16.txt'); 
 train_rows=size(data,1); % 100% of the data
 training_data=data(1:train_rows,:);
 
