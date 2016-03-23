@@ -298,6 +298,15 @@ public:
   virtual bool read(yarp::os::ConnectionReader& connection);
 };
 
+class activityInterface_IDLServer_getAverageVisibleObject : public yarp::os::Portable {
+public:
+  int32_t iterations;
+  yarp::os::Bottle _return;
+  void init(const int32_t iterations);
+  virtual bool write(yarp::os::ConnectionWriter& connection);
+  virtual bool read(yarp::os::ConnectionReader& connection);
+};
+
 class activityInterface_IDLServer_quit : public yarp::os::Portable {
 public:
   bool _return;
@@ -1038,6 +1047,28 @@ void activityInterface_IDLServer_getCalibratedLocation::init(const std::string& 
   this->handName = handName;
 }
 
+bool activityInterface_IDLServer_getAverageVisibleObject::write(yarp::os::ConnectionWriter& connection) {
+  yarp::os::idl::WireWriter writer(connection);
+  if (!writer.writeListHeader(2)) return false;
+  if (!writer.writeTag("getAverageVisibleObject",1,1)) return false;
+  if (!writer.writeI32(iterations)) return false;
+  return true;
+}
+
+bool activityInterface_IDLServer_getAverageVisibleObject::read(yarp::os::ConnectionReader& connection) {
+  yarp::os::idl::WireReader reader(connection);
+  if (!reader.readListReturn()) return false;
+  if (!reader.read(_return)) {
+    reader.fail();
+    return false;
+  }
+  return true;
+}
+
+void activityInterface_IDLServer_getAverageVisibleObject::init(const int32_t iterations) {
+  this->iterations = iterations;
+}
+
 bool activityInterface_IDLServer_quit::write(yarp::os::ConnectionWriter& connection) {
   yarp::os::idl::WireWriter writer(connection);
   if (!writer.writeListHeader(1)) return false;
@@ -1378,6 +1409,16 @@ yarp::os::Bottle activityInterface_IDLServer::getCalibratedLocation(const std::s
   helper.init(objName,handName);
   if (!yarp().canWrite()) {
     yError("Missing server method '%s'?","yarp::os::Bottle activityInterface_IDLServer::getCalibratedLocation(const std::string& objName, const std::string& handName)");
+  }
+  bool ok = yarp().write(helper,helper);
+  return ok?helper._return:_return;
+}
+yarp::os::Bottle activityInterface_IDLServer::getAverageVisibleObject(const int32_t iterations) {
+  yarp::os::Bottle _return;
+  activityInterface_IDLServer_getAverageVisibleObject helper;
+  helper.init(iterations);
+  if (!yarp().canWrite()) {
+    yError("Missing server method '%s'?","yarp::os::Bottle activityInterface_IDLServer::getAverageVisibleObject(const int32_t iterations)");
   }
   bool ok = yarp().write(helper,helper);
   return ok?helper._return:_return;
@@ -1934,6 +1975,22 @@ bool activityInterface_IDLServer::read(yarp::os::ConnectionReader& connection) {
       reader.accept();
       return true;
     }
+    if (tag == "getAverageVisibleObject") {
+      int32_t iterations;
+      if (!reader.readI32(iterations)) {
+        reader.fail();
+        return false;
+      }
+      yarp::os::Bottle _return;
+      _return = getAverageVisibleObject(iterations);
+      yarp::os::idl::WireWriter writer(reader);
+      if (!writer.isNull()) {
+        if (!writer.writeListHeader(1)) return false;
+        if (!writer.write(_return)) return false;
+      }
+      reader.accept();
+      return true;
+    }
     if (tag == "quit") {
       bool _return;
       _return = quit();
@@ -2011,6 +2068,7 @@ std::vector<std::string> activityInterface_IDLServer::help(const std::string& fu
     helpString.push_back("classifyObserve");
     helpString.push_back("gotSpike");
     helpString.push_back("getCalibratedLocation");
+    helpString.push_back("getAverageVisibleObject");
     helpString.push_back("quit");
     helpString.push_back("help");
   }
@@ -2203,6 +2261,13 @@ std::vector<std::string> activityInterface_IDLServer::help(const std::string& fu
     }
     if (functionName=="getCalibratedLocation") {
       helpString.push_back("yarp::os::Bottle getCalibratedLocation(const std::string& objName, const std::string& handName) ");
+      helpString.push_back("Returns a yarp Bottle containing the calibrated position of requested object and hand ");
+      helpString.push_back("@param objName string containing the name of the required object ");
+      helpString.push_back("@param handName string containing the name of the required object ");
+      helpString.push_back("@return true/false on success/failure ");
+    }
+    if (functionName=="getAverageVisibleObject") {
+      helpString.push_back("yarp::os::Bottle getAverageVisibleObject(const int32_t iterations) ");
       helpString.push_back("Returns a yarp Bottle containing the calibrated position of requested object and hand ");
       helpString.push_back("@param objName string containing the name of the required object ");
       helpString.push_back("@param handName string containing the name of the required object ");

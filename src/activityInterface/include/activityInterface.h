@@ -194,11 +194,15 @@ public:
     bool                initObjectTracker(const std::string &objName);
     yarp::os::Bottle    trackStackedObject(const std::string &objName);
     std::string         processScores(const yarp::os::Bottle &scores);
+    std::vector<std::size_t> locate_all( const std::vector<std::string>& seq, const std::string& what );
     
     bool                with_robot;
     bool                shouldUpdate;
     bool                allPaused;
     
+    bool                previousAction;
+    bool                recheckUnder;
+
     int                 incrementSize[10];
 
     /* rpc interface functions */
@@ -232,8 +236,10 @@ public:
     bool                classifyObserve();
     bool                gotSpike(const std::string &handName);
     std::string         holdIn(const std::string &handName);
+    yarp::os::Bottle    askCalibratedLocation(const std::string &objectName, const std::string &handName);
     yarp::os::Bottle    getCalibratedLocation(const std::string &objectName, const std::string &handName);
-
+    yarp::os::Bottle    getAverageVisibleObject(const int32_t iterations);
+    
     
     
     bool                quit();
