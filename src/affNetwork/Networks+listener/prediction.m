@@ -43,9 +43,9 @@ switch bn
         
     %% 2016    
     case 'pca_2016_2n_2c_2v'
-        load('pca_2016_2n_3c_1v.mat'); % 2016
+        load('pca_2016_2n_2c_2v.mat'); % 2016
     case 'pca_2016_2n_2c_4v'
-        load('pca_2016_2n_2C_4v.mat'); % 2016
+        load('pca_2016_2n_2c_4v.mat'); % 2016
     otherwise
         error([bn ' is not a known Network']);
         
