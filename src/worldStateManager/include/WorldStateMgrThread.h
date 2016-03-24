@@ -162,6 +162,7 @@ class WorldStateMgrThread : public RateThread
                                  Bottle &reachW, Bottle &pullW);
 
         bool tellActivityGoHome();
+        string id2label(const int &id);
         int label2id(const string &label, bool useTrackerCheck=false);
         bool getLabel(const int &u, const int &v, string &label);
         bool getLabelMajorityVote(const int &u, const int &v, string &winnerLabel, const int &rounds=5);

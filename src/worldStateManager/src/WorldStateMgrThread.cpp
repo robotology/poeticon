@@ -368,46 +368,73 @@ bool WorldStateMgrThread::resetOPC()
         if ((opcIDs.get(entryIdx).asInt() == LeftHandID) ||
             (opcIDs.get(entryIdx).asInt() == RightHandID))
         {
-            yDebug("resetting fields of hand entry %d", opcIDs.get(entryIdx).asInt());
+            std::string handName = id2label(opcIDs.get(entryIdx).asInt());
+            yInfo("resetting fields of hand entry %d/%s",
+                  opcIDs.get(entryIdx).asInt(), handName.c_str());
             if (!resetOPCHandFields(opcIDs.get(entryIdx).asInt()))
             {
-                yError("%s problem resetting fields of hand entry %d",
-                         __func__, opcIDs.get(entryIdx).asInt());
+                yError("%s problem resetting fields of hand entry %d/%s",
+                         __func__, opcIDs.get(entryIdx).asInt(), handName.c_str());
                 return false;
             }
         }
         else
-        // 3. object entries: delete them (it is ok to change their IDs from one
-        //    experiment to the other -- the only restriction is that an <object,ID>
-        //    pair is fixed within the same experiment
+        // 3. object entries: two cases depending whether object is under a stack
         {
-            yDebug("deleting object entry %d", opcIDs.get(entryIdx).asInt());
-            // query: [del] (("id" <num>))
-            Bottle opcCmd, opcCmdContent, opcReply;
-            opcCmd.addVocab(Vocab::encode("del"));
-            opcCmdContent.addString("id");
-            opcCmdContent.addInt(opcIDs.get(entryIdx).asInt());
-            opcCmd.addList() = opcCmdContent;
-
-            //yDebug() << __func__ << "sending query:" << opcCmd.toString().c_str();
-            opcPort.write(opcCmd, opcReply);
-            //yDebug() << __func__ << "obtained response:" << opcReply.toString().c_str();
-
-            bool validResponse = opcReply.size()>0 &&
-                                 opcReply.get(0).asVocab()==Vocab::encode("ack");
-
-            if (!validResponse)
+            std::string label = id2label(opcIDs.get(entryIdx).asInt());
+            bool isStacked;
+            if (!belongsToStack(label, isStacked))
             {
-                yError("%s problem deleting object entry %d",
-                         __func__, opcIDs.get(entryIdx).asInt());
-                return false;
+                yWarning("%s %d/%s: problem with belongsToStack",
+                         __func__, opcIDs.get(entryIdx).asInt(), label.c_str());
             }
+
+            if (!isStacked)
+            {
+                // 3a. if entries are not in any stack, delete them
+                // (it is ok to change their IDs from one
+                // experiment to the other -- the only restriction is that an <object,ID>
+                // pair is fixed within the same experiment )
+
+                yInfo("deleting object entry %d/%s",
+                      opcIDs.get(entryIdx).asInt(), label.c_str());
+                // query: [del] (("id" <num>))
+                Bottle opcCmd, opcCmdContent, opcReply;
+                opcCmd.clear();
+                opcCmdContent.clear();
+                opcReply.clear();
+                opcCmd.addVocab(Vocab::encode("del"));
+                opcCmdContent.addString("id");
+                opcCmdContent.addInt(opcIDs.get(entryIdx).asInt());
+                opcCmd.addList() = opcCmdContent;
+
+                //yDebug() << __func__ << "sending query:" << opcCmd.toString().c_str();
+                opcPort.write(opcCmd, opcReply);
+                //yDebug() << __func__ << "obtained response:" << opcReply.toString().c_str();
+
+                bool validResponse = opcReply.size()>0 &&
+                                     opcReply.get(0).asVocab()==Vocab::encode("ack");
+
+                if (!validResponse)
+                {
+                    yError("%s problem deleting object entry %d/%s",
+                             __func__, opcIDs.get(entryIdx).asInt(), label.c_str());
+                    return false;
+                }
+
+            } else
+            {
+                // 3b. if
+                yInfo("not deleting object entry %d/%s because it is under a stack",
+                      opcIDs.get(entryIdx).asInt(), label.c_str());
+            }
+
         }
     }
 
     yInfo() << "successfully reset WSOPC -"
             << "hand entries had their fields reset (with IDs kept),"
-            << "objects entries were deleted";
+            << "objects entries were deleted (except those that were under a stack)";
 
     return true;
 }
@@ -1457,6 +1484,45 @@ bool WorldStateMgrThread::tellActivityGoHome()
     }
 
     return true;
+}
+
+/**********************************************************/
+string WorldStateMgrThread::id2label(const int &id)
+{
+    //yDebug() << __func__ << "looking for id" << id;
+
+    // search in hands memory
+    for(std::vector<MemoryItemHand>::const_iterator iter = hands.begin();
+        iter != hands.end();
+        ++iter)
+    {
+        if (iter->id == id)
+            return iter->name;
+    }
+
+    // search in objects memory
+    for(std::vector<MemoryItemObj>::const_iterator iter = objs.begin();
+        iter != objs.end();
+        ++iter)
+    {
+        if (iter->id == id)
+        {
+            return iter->name;
+        }
+    }
+
+    // search in candidateTrackMap (not yet saved to objects memory)
+    for(idLabelMap::const_iterator iter = candidateTrackMap.begin();
+        iter != candidateTrackMap.end();
+        ++iter)
+    {
+        if (iter->first == id)
+            return iter->second;
+    }
+
+    // id not found anywhere
+    yWarning("did not find label corresponding to id %d", id);
+    return "NOTFOUND";
 }
 
 /**********************************************************/
