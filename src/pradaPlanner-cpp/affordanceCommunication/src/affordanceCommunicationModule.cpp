@@ -734,6 +734,9 @@ bool affComm::getPushAff()
                     affnet_bottle_out.addDouble(obj_desc[j]);
                 }
                 affnet_bottle_out.addDouble(2.0);
+                affnet_bottle_out.addString(obj_label.c_str());
+                affnet_bottle_out.addString(tool_label.c_str());
+                affnet_bottle_out.addString(hand_label.c_str());
                 affnetPort.write();
                 int timer_count = 0;
                 while (!isStopping())
@@ -863,6 +866,9 @@ bool affComm::getPushAff()
                     affnet_bottle_out.addDouble(obj_desc[j]);
                 }
                 affnet_bottle_out.addDouble(2.0);
+                affnet_bottle_out.addString(obj_label.c_str());
+                affnet_bottle_out.addString(tool_label.c_str());
+                affnet_bottle_out.addString(hand_label.c_str());
                 affnetPort.write();
                 int timer_count = 0;
                 while (!isStopping())
@@ -1133,6 +1139,9 @@ bool affComm::getPullAff()
                     affnet_bottle_out.addDouble(obj_desc[j]);
                 }
                 affnet_bottle_out.addDouble(1.0);
+                affnet_bottle_out.addString(obj_label.c_str());
+                affnet_bottle_out.addString(tool_label.c_str());
+                affnet_bottle_out.addString(hand_label.c_str());
                 affnetPort.write();
                 int timer_count = 0;
                 while (!isStopping())
@@ -1262,6 +1271,9 @@ bool affComm::getPullAff()
                     affnet_bottle_out.addDouble(obj_desc[j]);
                 }
                 affnet_bottle_out.addDouble(1.0);
+                affnet_bottle_out.addString(obj_label.c_str());
+                affnet_bottle_out.addString(tool_label.c_str());
+                affnet_bottle_out.addString(hand_label.c_str());
                 affnetPort.write();
                 int timer_count = 0;
                 while (!isStopping())
