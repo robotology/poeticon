@@ -1,8 +1,8 @@
 % Copyright: (C) 2012-2016 POETICON++, European Commission FP7 project ICT-288382
 % CopyPolicy: Released under the terms of the GNU GPL v2.0.
 % Copyright: (C) 2015 VisLab, Institute for Systems and Robotics,
-%                Instituto Superior Técnico, Universidade de Lisboa, Lisbon, Portugal
-% Author: Pedro Vicente, Atabak Dehban, Afonso Gonçalves, João Abrantes
+%                Instituto Superior T??cnico, Universidade de Lisboa, Lisbon, Portugal
+% Author: Pedro Vicente, Atabak Dehban, Afonso Gon??alves, Jo??o Abrantes
 % CopyPolicy: Released under the terms of the GNU GPL v2.0
 %% Effect prediction, queries server
 % Inputs (standard yarp port):
@@ -35,7 +35,7 @@ clear;
 %% Choice of network:
 %bn = 'pca4sep'; % 2015
 
-bn = 'pca_2016_2n_2c_2v'; % 2016
+%bn = 'pca_2016_2n_2c_2v'; % 2016
 % bn = 'pca_2016_2n_2c_4v'; % 2016
 
 %% Training with Gaussian noise sigma = 0.02
@@ -43,7 +43,7 @@ bn = 'pca_2016_2n_2c_2v'; % 2016
 % bn = 'pca_2016_2n_2c_4v_wGaussian002'; % 2016
 
 %% Training with Uniform noise [-0.02,0.02]
-% bn = 'pca_2016_2n_2c_2v_wUniform002'; % 2016
+ bn = 'pca_2016_2n_2c_2v_wUniform002'; % 2016
 % bn = 'pca_2016_2n_2c_4v_wUniform002'; % 2016
 
 switch bn
@@ -258,6 +258,7 @@ while(~done)
             answer.fromString(answer_string);
                     
             x = [0.5,1.5,2.5,3.5,4.5];
+            
             
             
             figIndexX = mod ((i-1),figIndexX_MAX);

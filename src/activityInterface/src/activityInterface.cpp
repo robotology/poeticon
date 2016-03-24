@@ -567,7 +567,8 @@ bool ActivityInterface::processPradaStatus(const Bottle &status)
             
             
             yInfo( "[processPradaStatus] asking praxicon for help: %s", praxiconRequest.c_str());
-            askPraxicon(praxiconRequest);
+            Bottle listOfGoals = askPraxicon(praxiconRequest);
+            praxiconToPradaPort.write(listOfGoals);
         }
         else
         {
@@ -1268,9 +1269,9 @@ bool ActivityInterface::take(const string &objName, const string &handName)
                 cmd.addString("take");
                 //cmd.addString(objName.c_str());
                 Bottle &tmp=cmd.addList();
+                tmp.addDouble (refinedPos.get(0).asDouble());
                 tmp.addDouble (refinedPos.get(1).asDouble());
                 tmp.addDouble (refinedPos.get(2).asDouble());
-                tmp.addDouble (refinedPos.get(3).asDouble());
                 cmd.addString (whichHand.c_str());
                 cmd.addString ("still");
                 
@@ -1563,15 +1564,33 @@ Bottle ActivityInterface::askCalibratedLocation(const std::string &objName, cons
 Bottle ActivityInterface::getCalibratedLocation(const std::string &objName, const std::string &handName)
 {
     //Bottle position = askCalibratedLocation(objName, handName);
-    Bottle position;
     
+    /*
     int attempts = 5;
     
     for (int i=0; i<attempts; i++)
     {
         position.clear();
         position = askCalibratedLocation(objName, handName);
+    }*/
+    
+    Bottle position;
+    int P = 6;           // Total number of points
+    int N = 4;           // #Points to select the center from
+    std::vector <double> center(3);
+    std::vector<std::vector<double> > points(P, std::vector<double>(3));
+    
+    for (int i=0; i<P; i++)
+    {
+        Bottle tmp = askCalibratedLocation(objName, handName);
+        
+        for (int ii=1; ii<tmp.size(); ii++)
+            points[i][ii-1] = tmp.get(ii).asDouble();
+        
+        yError("points are %lf %lf %lf", points[i][0], points[i][1], points[i][2]);
     }
+    
+    closestPoints(points, center, N);
     
     /*
     std::vector<double> values[10];
@@ -1605,6 +1624,10 @@ Bottle ActivityInterface::getCalibratedLocation(const std::string &objName, cons
             }
         }
     }*/
+    
+    position.addDouble(center[0]);
+    position.addDouble(center[1]);
+    position.addDouble(center[2]);
     
     return position;
 }
@@ -1801,6 +1824,137 @@ bool ActivityInterface::pull(const string &objName, const string &toolName)
     //do the pushing action
     yInfo( "[push] done");
     resumeAllTrackers();
+    return true;
+}
+
+/**********************************************************/
+bool ActivityInterface::pwDist(const std::vector<std::vector<double> >  &points, std::vector<std::vector<double> >  &pwd)
+{
+    for (int p = 0; p < points.size(); p++ ){
+        for (int l = p + 1; l < points.size(); l++ ){
+            double p1x = points[p][1];
+            double p1y = points[p][2];
+            double p1z = points[p][3];
+            double p2x = points[l][1];
+            double p2y = points[l][2];
+            double p2z = points[l][3];
+            pwd[p][l] = sqrt(pow(p1x-p2x,2)+pow(p1y-p2y,2)+pow(p1z*-p2z,2));
+        }
+    }
+    /*
+     cout << "Pairwise distance Matrix: " << endl;
+     for(int x=0; x < points.size(); ++x){
+     for(int y=0; y < points.size(); ++y){
+     cout << pwd[x][y] <<",  ";
+     }
+     cout << endl;
+     }
+     */
+    return true;
+}
+
+/**********************************************************/
+bool ActivityInterface::minMatrix(const std::vector<std::vector<double> > &M, int &minX, int &minY, double &minimum)
+{
+    minimum = 1e6;
+    minX = 0;
+    minY = 0;
+    int rows = M.size();
+    int cols = M[0].size();
+    for(int x=0; x < rows; ++x){
+        for(int y=0; y < cols; ++y){
+            if (M[x][y] < minimum){
+                minimum = M[x][y];
+                minX = x;
+                minY = y;
+            }
+        }
+    }
+    
+    cout << "Closest vector pair: " << minX << " and " << minY << " at euclidean distance " << minimum << endl;
+    return true;
+}
+
+/**********************************************************/
+bool ActivityInterface::avgMatrix(const std::vector<std::vector<double> > &M, std::vector<double> &avgVec)
+{
+    int R = M.size();     // Number of rows
+    int C = M[0].size();  // Number of columns /length of row
+    vector<double> accumVec(C, 0.0);
+    for(int r=0; r < R; ++r)
+    {
+        for(int c=0; c < C; ++c)
+        {
+            accumVec[c] += M[r][c];
+        }
+    }
+    
+    for(int c=0; c < C; ++c)
+    {
+        avgVec[c] = accumVec[c]/R;
+    }
+    
+    return true;
+}
+
+/**********************************************************/
+bool ActivityInterface::closestPoints(std::vector<std::vector<double> > &points, std::vector<double> &center, int N )
+{
+    
+    if (points.size()<N)  {
+        cout << "Selected group size S > #available points N. Making  S = N" <<endl;
+        N = points.size();
+    }
+    
+    vector<vector<double> > closestP;
+    
+    for (int n = 0; n < N ; ++n)
+    {
+        int S = points.size();
+        
+        cout << "Points left :"  << endl;
+        for(int p=0; p < S; ++p){
+            cout << "(" << points[p][0] << ", " << points[p][1] << ", "  << points[p][2] << ") "  << endl;
+        }
+        
+        
+        
+        // Find pairwise distances
+        cout << "Finding Pairwise distances" << endl;
+        vector<vector<double> > distances(S, vector<double>(S, 100.0));
+        pwDist(points, distances);
+        
+        // Find closest vectors
+        cout << "Finding closest vector pair" << endl;
+        int p1 , p2;
+        double m;
+        minMatrix(distances, p1, p2, m);
+        
+        cout << "Picking out points "<< p1 << " and " << p2 << endl;
+        closestP.push_back(points[p1]);
+        closestP.push_back(points[p2]);
+        
+        // Average them
+        cout << "Avg selected vectors" << endl;
+        avgMatrix(closestP, center);
+        cout << "Center point so far (" << center[0] << ", " << center[1] << ", "  << center[2] << ") "  << endl;
+        
+        // Generate new matrix list of points subsituting the closest ones by their average
+        cout << "Resizing Point Matrix" << endl;
+        if (p1>p2){                                 // Remove lowest index last so that larger index does not change
+            points.erase(points.begin() + p1);
+            points.erase(points.begin() + p2);
+        }else{
+            points.erase(points.begin() + p2);
+            points.erase(points.begin() + p1);
+        }
+        
+        
+        points.push_back(center);
+        //repeat
+    }
+    
+    
     return true;
 }
 

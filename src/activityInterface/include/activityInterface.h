@@ -196,6 +196,11 @@ public:
     std::string         processScores(const yarp::os::Bottle &scores);
     std::vector<std::size_t> locate_all( const std::vector<std::string>& seq, const std::string& what );
     
+    bool                avgMatrix(const std::vector<std::vector<double> > &M, std::vector<double> &avgVec);
+    bool                closestPoints(std::vector<std::vector<double> > &points, std::vector<double> &center, int N = 5);
+    bool                minMatrix(const std::vector<std::vector<double> > &M, int &minX, int &minY, double &minimum);
+    bool                pwDist(const std::vector<std::vector<double> >  &points, std::vector<std::vector<double> >  &pwd);
+    
     bool                with_robot;
     bool                shouldUpdate;
     bool                allPaused;
