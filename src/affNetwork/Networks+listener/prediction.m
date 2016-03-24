@@ -6,10 +6,11 @@
 % CopyPolicy: Released under the terms of the GNU GPL v2.0
 %% Effect prediction, queries server
 % Inputs (standard yarp port):
-%    . Bottle1x11 vector with prior - Just doubles
+%    . Bottle1x11 (or 14) vector with prior - Just doubles
 %        5 desc for the tool   (toolEffector)
 %        5 desc for the object (whole object descriptors)
 %        1 action
+%        optional: 3 strings ( object, tool, hand)
 %    . displayON, displayOFF - Turn ON/OFF the display figure
 %
 %    . sameON, sameOFF       - reutilize figure 1 (ON) or create a figure
@@ -169,12 +170,14 @@ while(~done)
             prior = query;
             %posterior = query.get(1);
             %% Test if yarp bottle is with a good structure/size
-            if(query.size()~=11)
+            
+            if( query.size()~=11 && query.size()~=14)
                 answer.fromString('nack')
                 portOutput.write(answer);
                 disp('Warning: Wrong Input size')
                 continue;
             end
+            
             %%
             switch bn
                case 'pca4merge'
@@ -280,7 +283,10 @@ while(~done)
                 else
                     hFig(i) = figure(i);
                 end
-                str = sprintf('%s prediction %d',queryActionName, i); % maybe change the title :p
+                str = sprintf('%s action (Query #%d)',queryActionName, i); 
+                if(query.size()==14)
+                    str = sprintf('%s %s with %s on %s (Query #%d)',queryActionName, char(query.get(11).asString), char(query.get(12).asString),char(query.get(13).asString),i); 
+                end
                 title(str);
                 set(hFig(i), 'Position', [figLeft figBottom figWidth figHeight]) % maybe change the position of the window
                 axis([0 5 0 5.5])
