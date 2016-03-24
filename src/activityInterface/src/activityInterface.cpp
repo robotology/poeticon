@@ -569,8 +569,10 @@ bool ActivityInterface::processPradaStatus(const Bottle &status)
             yInfo( "[processPradaStatus] asking praxicon for help: %s", praxiconRequest.c_str());
             Bottle listOfGoals = askPraxicon(praxiconRequest);
             
-            yInfo("the new list of goals are: %s ",listOfGoals.toString().c_str());
+            yInfo("[processPradaStatus] the new list of goals are: %s ",listOfGoals.toString().c_str());
+            yInfo("[processPradaStatus] sending to prada");
             praxiconToPradaPort.write(listOfGoals);
+            yInfo("[processPradaStatus] sent to prada");
         }
         else
         {
@@ -1998,18 +2000,18 @@ Bottle ActivityInterface::getAverageVisibleObject(const int32_t iterations)
             vec.push_back(tmpVisibleObjects.get(ii).asString());
     }
     
-    yDebug("[getAverageVisibleObject] Vec now contains %lu objects", vec.size());
+    //yDebug("[getAverageVisibleObject] Vec now contains %lu objects", vec.size());
     
     for (int i = 0; i<objInMemory.size(); i++)
     {
         std::vector<std::size_t> locate = locate_all( vec, objInMemory.get(i).asString() );
         
-        yDebug("[getAverageVisibleObject] word %s was found %lu times ", objInMemory.get(i).asString().c_str(), locate.size());
+        //yDebug("[getAverageVisibleObject] word %s was found %lu times ", objInMemory.get(i).asString().c_str(), locate.size());
         //for( auto pos : locate_all( vec, objInMemory.get(i).asString() ) ) yDebug("pos: %lu", pos ) ;
         
         if (locate.size() > iterations * 0.80)
         {
-            yDebug("[getAverageVisibleObject] adding %s to the list of objects ", objInMemory.get(i).asString().c_str());
+            //yDebug("[getAverageVisibleObject] adding %s to the list of objects ", objInMemory.get(i).asString().c_str());
             visibleObjects.addString(objInMemory.get(i).asString());
         }
     }
