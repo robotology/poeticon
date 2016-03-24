@@ -735,8 +735,42 @@ bool affComm::getPushAff()
                 }
                 affnet_bottle_out.addDouble(2.0);
                 affnetPort.write();
+                int timer_count = 0;
                 while (!isStopping())
                 {
+                    timer_count = timer_count + 1;
+                    if (timer_count == 200) // 20 seconds for timeout
+                    {
+                        yWarning("Affordances Network took too long to reply, using default values");
+                        if (!sendOutcomes())
+                        {
+                            yError("Failed to send probabilities to the grounding modules");
+                            return false;
+                        }
+                        if (act[1] != "11" && act[1] != "12" && act[3] != "11" && act[3] != "12")
+                        {
+                            for (int j = 0; j < tooldescriptors.size(); ++j)
+                            {
+                                if (strtof(act[3].c_str(), NULL) == tooldescriptors[j][0][0])
+                                {
+                                    data.clear();
+                                    data.push_back(strtof(act[3].c_str(), NULL));
+                                    if (tooldescriptors[j][1][1] > tooldescriptors[j][2][1])
+                                    {
+                                        data.push_back(tooldescriptors[j][1][0]);
+                                        data.push_back(tooldescriptors[j][1][1]);
+                                    }
+                                    else
+                                    {
+                                        data.push_back(tooldescriptors[j][2][0]);
+                                        data.push_back(tooldescriptors[j][2][1]);
+                                    }
+                                    posits.push_back(data);
+                                }
+                            }
+                        }
+                        return true;
+                    }
                     affnet_bottle_in = affnetPort.read(false);
                     if (affnet_bottle_in)
                     {
@@ -748,7 +782,29 @@ bool affComm::getPushAff()
                             {
                                 yError("Failed to send probabilities to the grounding modules");
                                 return false;
-                            } 
+                            }
+                            if (act[1] != "11" && act[1] != "12" && act[3] != "11" && act[3] != "12")
+                            {
+                                for (int j = 0; j < tooldescriptors.size(); ++j)
+                                {
+                                    if (strtof(act[3].c_str(), NULL) == tooldescriptors[j][0][0])
+                                    {
+                                        data.clear();
+                                        data.push_back(strtof(act[3].c_str(), NULL));
+                                        if (tooldescriptors[j][1][1] > tooldescriptors[j][2][1])
+                                        {
+                                            data.push_back(tooldescriptors[j][1][0]);
+                                            data.push_back(tooldescriptors[j][1][1]);
+                                        }
+                                        else
+                                        {
+                                            data.push_back(tooldescriptors[j][2][0]);
+                                            data.push_back(tooldescriptors[j][2][1]);
+                                        }
+                                        posits.push_back(data);
+                                    }
+                                }
+                            }
                             return true;
                         }
                         break;
@@ -808,8 +864,42 @@ bool affComm::getPushAff()
                 }
                 affnet_bottle_out.addDouble(2.0);
                 affnetPort.write();
+                int timer_count = 0;
                 while (!isStopping())
                 {
+                    timer_count = timer_count + 1;
+                    if (timer_count == 200) // 20 seconds for timeout
+                    {
+                        yWarning("Affordances Network took too long to reply, using default values");
+                        if (!sendOutcomes())
+                        {
+                            yError("Failed to send probabilities to the grounding modules");
+                            return false;
+                        }
+                        if (act[1] != "11" && act[1] != "12" && act[3] != "11" && act[3] != "12")
+                        {
+                            for (int j = 0; j < tooldescriptors.size(); ++j)
+                            {
+                                if (strtof(act[3].c_str(), NULL) == tooldescriptors[j][0][0])
+                                {
+                                    data.clear();
+                                    data.push_back(strtof(act[3].c_str(), NULL));
+                                    if (tooldescriptors[j][1][1] > tooldescriptors[j][2][1])
+                                    {
+                                        data.push_back(tooldescriptors[j][1][0]);
+                                        data.push_back(tooldescriptors[j][1][1]);
+                                    }
+                                    else
+                                    {
+                                        data.push_back(tooldescriptors[j][2][0]);
+                                        data.push_back(tooldescriptors[j][2][1]);
+                                    }
+                                    posits.push_back(data);
+                                }
+                            }
+                        }
+                        return true;
+                    }
                     affnet_bottle_in = affnetPort.read(false);
                     if (affnet_bottle_in)
                     {
@@ -821,7 +911,29 @@ bool affComm::getPushAff()
                             {
                                 yError("Failed to send probabilities to the grounding modules");
                                 return false;
-                            } 
+                            }
+                            if (act[1] != "11" && act[1] != "12" && act[3] != "11" && act[3] != "12")
+                            {
+                                for (int j = 0; j < tooldescriptors.size(); ++j)
+                                {
+                                    if (strtof(act[3].c_str(), NULL) == tooldescriptors[j][0][0])
+                                    {
+                                        data.clear();
+                                        data.push_back(strtof(act[3].c_str(), NULL));
+                                        if (tooldescriptors[j][1][1] > tooldescriptors[j][2][1])
+                                        {
+                                            data.push_back(tooldescriptors[j][1][0]);
+                                            data.push_back(tooldescriptors[j][1][1]);
+                                        }
+                                        else
+                                        {
+                                            data.push_back(tooldescriptors[j][2][0]);
+                                            data.push_back(tooldescriptors[j][2][1]);
+                                        }
+                                        posits.push_back(data);
+                                    }
+                                }
+                            }
                             return true;
                         }
                         break;
@@ -1022,8 +1134,42 @@ bool affComm::getPullAff()
                 }
                 affnet_bottle_out.addDouble(1.0);
                 affnetPort.write();
+                int timer_count = 0;
                 while (!isStopping())
                 {
+                    timer_count = timer_count + 1;
+                    if (timer_count == 200) // 20 seconds for timeout
+                    {
+                        yWarning("Affordances Network took too long to reply, using default values");
+                        if (!sendOutcomes())
+                        {
+                            yError("Failed to send probabilities to the grounding modules");
+                            return false;
+                        }
+                        if (act[1] != "11" && act[1] != "12" && act[3] != "11" && act[3] != "12")
+                        {
+                            for (int j = 0; j < tooldescriptors.size(); ++j)
+                            {
+                                if (strtof(act[3].c_str(), NULL) == tooldescriptors[j][0][0])
+                                {
+                                    data.clear();
+                                    data.push_back(strtof(act[3].c_str(), NULL));
+                                    if (tooldescriptors[j][1][1] > tooldescriptors[j][2][1])
+                                    {
+                                        data.push_back(tooldescriptors[j][1][0]);
+                                        data.push_back(tooldescriptors[j][1][1]);
+                                    }
+                                    else
+                                    {
+                                        data.push_back(tooldescriptors[j][2][0]);
+                                        data.push_back(tooldescriptors[j][2][1]);
+                                    }
+                                    posits.push_back(data);
+                                }
+                            }
+                        }
+                        return true;
+                    }
                     affnet_bottle_in = affnetPort.read(false);
                     if (affnet_bottle_in)
                     {
@@ -1033,9 +1179,31 @@ bool affComm::getPullAff()
                             yWarning("Query failed, using default values");
                             if (!sendOutcomes())
                             {
-                                yError("Failed to send probabilities to the grounding module");
+                                yError("Failed to send probabilities to the grounding modules");
                                 return false;
-                            } 
+                            }
+                            if (act[1] != "11" && act[1] != "12" && act[3] != "11" && act[3] != "12")
+                            {
+                                for (int j = 0; j < tooldescriptors.size(); ++j)
+                                {
+                                    if (strtof(act[3].c_str(), NULL) == tooldescriptors[j][0][0])
+                                    {
+                                        data.clear();
+                                        data.push_back(strtof(act[3].c_str(), NULL));
+                                        if (tooldescriptors[j][1][1] > tooldescriptors[j][2][1])
+                                        {
+                                            data.push_back(tooldescriptors[j][1][0]);
+                                            data.push_back(tooldescriptors[j][1][1]);
+                                        }
+                                        else
+                                        {
+                                            data.push_back(tooldescriptors[j][2][0]);
+                                            data.push_back(tooldescriptors[j][2][1]);
+                                        }
+                                        posits.push_back(data);
+                                    }
+                                }
+                            }
                             return true;
                         }
                         break;
@@ -1095,8 +1263,42 @@ bool affComm::getPullAff()
                 }
                 affnet_bottle_out.addDouble(1.0);
                 affnetPort.write();
+                int timer_count = 0;
                 while (!isStopping())
                 {
+                    timer_count = timer_count + 1;
+                    if (timer_count == 200) // 20 seconds for timeout
+                    {
+                        yWarning("Affordances Network took too long to reply, using default values");
+                        if (!sendOutcomes())
+                        {
+                            yError("Failed to send probabilities to the grounding modules");
+                            return false;
+                        }
+                        if (act[1] != "11" && act[1] != "12" && act[3] != "11" && act[3] != "12")
+                        {
+                            for (int j = 0; j < tooldescriptors.size(); ++j)
+                            {
+                                if (strtof(act[3].c_str(), NULL) == tooldescriptors[j][0][0])
+                                {
+                                    data.clear();
+                                    data.push_back(strtof(act[3].c_str(), NULL));
+                                    if (tooldescriptors[j][1][1] > tooldescriptors[j][2][1])
+                                    {
+                                        data.push_back(tooldescriptors[j][1][0]);
+                                        data.push_back(tooldescriptors[j][1][1]);
+                                    }
+                                    else
+                                    {
+                                        data.push_back(tooldescriptors[j][2][0]);
+                                        data.push_back(tooldescriptors[j][2][1]);
+                                    }
+                                    posits.push_back(data);
+                                }
+                            }
+                        }
+                        return true;
+                    }
                     affnet_bottle_in = affnetPort.read(false);
                     if (affnet_bottle_in)
                     {
@@ -1106,9 +1308,31 @@ bool affComm::getPullAff()
                             yWarning("Query failed, using default values");
                             if (!sendOutcomes())
                             {
-                                yError("Failed to send probabilities to the grounding module");
+                                yError("Failed to send probabilities to the grounding modules");
                                 return false;
-                            } 
+                            }
+                            if (act[1] != "11" && act[1] != "12" && act[3] != "11" && act[3] != "12")
+                            {
+                                for (int j = 0; j < tooldescriptors.size(); ++j)
+                                {
+                                    if (strtof(act[3].c_str(), NULL) == tooldescriptors[j][0][0])
+                                    {
+                                        data.clear();
+                                        data.push_back(strtof(act[3].c_str(), NULL));
+                                        if (tooldescriptors[j][1][1] > tooldescriptors[j][2][1])
+                                        {
+                                            data.push_back(tooldescriptors[j][1][0]);
+                                            data.push_back(tooldescriptors[j][1][1]);
+                                        }
+                                        else
+                                        {
+                                            data.push_back(tooldescriptors[j][2][0]);
+                                            data.push_back(tooldescriptors[j][2][1]);
+                                        }
+                                        posits.push_back(data);
+                                    }
+                                }
+                            }
                             return true;
                         }
                         break;
