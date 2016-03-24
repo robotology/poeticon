@@ -568,6 +568,8 @@ bool ActivityInterface::processPradaStatus(const Bottle &status)
             
             yInfo( "[processPradaStatus] asking praxicon for help: %s", praxiconRequest.c_str());
             Bottle listOfGoals = askPraxicon(praxiconRequest);
+            
+            yInfo("the new list of goals are: %s ",listOfGoals.toString().c_str());
             praxiconToPradaPort.write(listOfGoals);
         }
         else
@@ -1261,7 +1263,12 @@ bool ActivityInterface::take(const string &objName, const string &handName)
             
             Bottle refinedPos = getCalibratedLocation(objName, whichHand);
             
-            if (strcmp (refinedPos.get(0).asString().c_str(), "fail" ) != 0)
+            if (refinedPos.get(0).asDouble() == 0)
+            {
+                yError("[take] AVOIDING TAKE as position is %lf %lf %lf \n", refinedPos.get(0).asDouble(), refinedPos.get(1).asDouble(), refinedPos.get(2).asDouble());
+                executeSpeech("I m having issues locating the " + objName );
+            }
+            else
             {
                 //do the take actions
                 Bottle cmd, reply;
@@ -1465,32 +1472,22 @@ bool ActivityInterface::put(const string &objName, const string &targetName)
                 
                 //bool retry = true;
                 
-                int attempts = 5;
-                if (strcmp (refinedPos.get(0).asString().c_str(), "fail" ) == 0)
+                if (refinedPos.get(0).asDouble() == 0)
                 {
-                    yInfo("[put] recieved fail will retry");
-                    while( attempts !=0 )
-                    {
-                        yInfo("[put] retrying location attempt %d", attempts);
-                        refinedPos = getCalibratedLocation(targetName, handName);
-                        if (strcmp (refinedPos.get(0).asString().c_str(), "fail" ) != 0)
-                            break;
-                        attempts--;
-                    }
+                    yError("[put] AVOIDING PUT as position is %lf %lf %lf \n", refinedPos.get(0).asDouble(), refinedPos.get(1).asDouble(), refinedPos.get(2).asDouble());
+                    executeSpeech("I m having issues locating the " + targetName );
                 }
-                
-                if (strcmp (refinedPos.get(0).asString().c_str(), "fail" ) != 0)
+                else
                 {
-                
                     //do the take actions
                     cmd.clear(), reply.clear();
                     cmd.addString("drop");
                     cmd.addString("over");
                     //cmd.addString(targetName.c_str());
                     Bottle &tmp=cmd.addList();
+                    tmp.addDouble (refinedPos.get(0).asDouble());
                     tmp.addDouble (refinedPos.get(1).asDouble());
                     tmp.addDouble (refinedPos.get(2).asDouble());
-                    tmp.addDouble (refinedPos.get(3).asDouble());
                     cmd.addString("gently");
                     cmd.addString(handName.c_str());
                     rpcAREcmd.write(cmd, reply);
@@ -1583,6 +1580,20 @@ Bottle ActivityInterface::getCalibratedLocation(const std::string &objName, cons
     for (int i=0; i<P; i++)
     {
         Bottle tmp = askCalibratedLocation(objName, handName);
+        
+        int attempts = 5;
+        if (strcmp (tmp.get(0).asString().c_str(), "fail" ) == 0)
+        {
+            yInfo("[put] recieved fail will retry");
+            while( attempts !=0 )
+            {
+                yInfo("[put] retrying location attempt %d", attempts);
+                tmp = askCalibratedLocation(objName, handName);
+                if (strcmp (tmp.get(0).asString().c_str(), "fail" ) != 0)
+                    break;
+                attempts--;
+            }
+        }
         
         for (int ii=1; ii<tmp.size(); ii++)
             points[i][ii-1] = tmp.get(ii).asDouble();
