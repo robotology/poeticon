@@ -347,21 +347,11 @@ bool WorldStateMgrThread::resetOPC()
     // the fact that some IDs will be deleted from WSOPC (never to be used again)
     // and the tracker will need to start counting from a fresh ID in order to
     // make the world state and planner happy.
-
-    // assumption: querying OPC with: ask (all)
-    // we obtain a list of IDs in ascending order, like this:
-    // >>ask (all)
-    // Response: [ack] (id (11 12 23 24 25 26 27))
-    // therefore to obtain the maximum we can just get the last value
-    const int maxOldID = opcIDs.get(opcIDs.size()-1).asInt();
-
-    countFrom = maxOldID+1;
-    yInfo("reset routine: increased countFrom to %d", countFrom);
-
-    const int LeftHandID = 11;
-    const int RightHandID = 12;
+    increaseCountFrom();
 
     // cycle over opcIDs entries (hands and objects)
+    const int LeftHandID = 11;
+    const int RightHandID = 12;
     for (int entryIdx=0; entryIdx<opcIDs.size(); ++entryIdx)
     {
         // 2. hand entries: keep them (need to preserve IDs), just reset the fields
@@ -424,7 +414,7 @@ bool WorldStateMgrThread::resetOPC()
 
             } else
             {
-                // 3b. if
+                // 3b. if an entry is in a stack, keep it
                 yInfo("not deleting object entry %d/%s because it is under a stack",
                       opcIDs.get(entryIdx).asInt(), label.c_str());
             }
@@ -484,6 +474,32 @@ bool WorldStateMgrThread::resetOPCHandFields(const int &handID)
                  __func__, "is_free", handID);
         return false;
     }
+
+    return true;
+}
+
+/**********************************************************/
+bool WorldStateMgrThread::increaseCountFrom()
+{
+    if (opcPort.getOutputCount()<1)
+        return false;
+
+    Bottle opcIDs;
+    if (!checkOPCStatus(2,opcIDs))
+    {
+        yWarning("problem verifying that WSOPC has at least 2 entries");
+        return false;
+    }
+
+    // assumption: querying OPC with: ask (all)
+    // we obtain a list of IDs in ascending order, like this:
+    // >>ask (all)
+    // Response: [ack] (id (11 12 23 24 25 26 27))
+    // therefore to obtain the maximum we can just get the last value
+    const int maxOldID = opcIDs.get(opcIDs.size()-1).asInt();
+
+    countFrom = maxOldID+1;
+    yInfo("reset routine: increased countFrom to %d", countFrom);
 
     return true;
 }
@@ -607,7 +623,7 @@ bool WorldStateMgrThread::getTrackNames()
     {
         int id = trackIDs.get(i).asInt();
 
-        if (i==0) yInfo("asking for object labels");
+        if (i==0) yInfo("asking for object labels of visible objects");
 
         // get fresh blob coordinates
         if (!refreshTracker())
@@ -655,7 +671,7 @@ bool WorldStateMgrThread::getTrackNames()
         // http://stackoverflow.com/questions/326062/in-stl-maps-is-it-better-to-use-mapinsert-than
         candidateTrackMap.insert(make_pair(id,label));
 
-        if (i==trackIDs.size()-1) yInfo("done asking for object labels");
+        if (i==trackIDs.size()-1) yInfo("done asking for visible object labels");
     }
 
     if (allCandidateNamesUnique)
@@ -953,6 +969,7 @@ bool WorldStateMgrThread::computeObjProperties(const int &id, const string &labe
     if (activityPort.getOutputCount()<1)
         return false;
 
+    /*
     bool visibleByActivityIF;
     if (!getVisibilityByActivityIF(label, visibleByActivityIF))
     {
@@ -982,6 +999,7 @@ bool WorldStateMgrThread::computeObjProperties(const int &id, const string &labe
                   id, label.c_str());
         }
     }
+    */
 
     // by default the object is tracked and we can compute all symbols
     bool visibleByTracker = true;
@@ -1022,8 +1040,11 @@ bool WorldStateMgrThread::computeObjProperties(const int &id, const string &labe
         }
     }
 
-    yDebug("%s %d/%s: visibleByActivityIF=%s; trackerBottleIndex=%d affordanceBottleIndex=%d visibleByTracker=%s",
-           __func__, id, label.c_str(), BoolToString(visibleByActivityIF), tbi, abi, BoolToString(visibleByTracker));
+    //yDebug("%s %d/%s: visibleByActivityIF=%s; trackerBottleIndex=%d affordanceBottleIndex=%d visibleByTracker=%s",
+    //       __func__, id, label.c_str(), BoolToString(visibleByActivityIF), tbi, abi, BoolToString(visibleByTracker));
+
+    yDebug("%s %d/%s: trackerBottleIndex=%d affordanceBottleIndex=%d visibleByTracker=%s",
+           __func__, id, label.c_str(), tbi, abi, BoolToString(visibleByTracker));
 
     // now we know that object was found in both tracker and shape descriptors
     if (visibleByTracker)
@@ -1238,7 +1259,7 @@ bool WorldStateMgrThread::constructMemoryFromOPCID(const int &opcID)
     {
         // note: this happens e.g. when WSOPC is started & initialized before WSM
         yWarning() << __func__ << "cannot construct memory item"
-                 << opcID << "because this ID is already present in internal short-term memory";
+                   << opcID << "because this ID is already present in internal short-term memory";
         return false;
     }
 
@@ -1299,6 +1320,15 @@ bool WorldStateMgrThread::initMemoryFromOPC()
     }
 
     // if WSOPC contained more than 2 entries (hands), it means it has data from
+    // a previous experiment -> increase countFrom index for tracker
+    if (checkOPCStatus(3,opcIDs))
+    {
+        yDebug() << __func__ << "increasing countFrom...";
+        increaseCountFrom();
+    }
+
+    /*
+    // if WSOPC contained more than 2 entries (hands), it means it has data from
     // a previous experiment -> reset it
     if (opcIDs.size() >= 3)
     {
@@ -1317,8 +1347,9 @@ bool WorldStateMgrThread::initMemoryFromOPC()
                __func__);
         return false;
     }
+    */
 
-    // construct memory item from each ID
+    // try constructing memory item from each ID (will not construct those whose IDs already exist)
     for (int o=0; o<opcIDs.size(); o++)
     {
         if (!constructMemoryFromOPCID(opcIDs.get(o).asInt()))
@@ -1490,6 +1521,46 @@ bool WorldStateMgrThread::tellActivityGoHome()
 string WorldStateMgrThread::id2label(const int &id)
 {
     //yDebug() << __func__ << "looking for id" << id;
+
+    // search in WSOPC
+    if(opcPort.getOutputCount()>0)
+    {
+        // query: [get] (("id" <num>) ("propSet" ("name")))
+        Bottle opcCmd;
+        Bottle opcCmdContent;
+        Bottle opcReply;
+        opcCmd.addVocab(Vocab::encode("get"));
+
+        Bottle bID;
+        bID.addString("id");
+        bID.addInt(id);
+        opcCmdContent.addList() = bID;
+
+        Bottle bProp;
+        Bottle bPropContent;
+        bProp.addString("propSet");
+        bPropContent.addString("name");
+        bProp.addList() = bPropContent;
+        opcCmdContent.addList() = bProp;
+
+        opcCmd.addList() = opcCmdContent;
+
+        //yDebug() << __func__ << "sending command to WSOPC:" << opcCmd.toString().c_str();
+        opcPort.write(opcCmd, opcReply);
+
+        //reply: [ack] ((name blah))
+        bool found = opcReply.size()==2 &&
+                     opcReply.get(0).asVocab()==Vocab::encode("ack");
+
+        if (found)
+        {
+            Bottle *fields = opcReply.get(1).asList();
+
+            string name = fields->find("name").asString();
+            if (name!="")
+                return name;
+        }
+    }
 
     // search in hands memory
     for(std::vector<MemoryItemHand>::const_iterator iter = hands.begin();
@@ -2575,7 +2646,7 @@ bool WorldStateMgrThread::updateWorldState()
 /**********************************************************/
 bool WorldStateMgrThread::resetWorldState()
 {
-    // clean WSOPC so that it has only hand entries
+    // clean WSOPC so that it has only hand entries (and objects currently hidden under a stack)
     if (!resetOPC())
     {
         yWarning("%s problem resetting WSOPC", __func__);
