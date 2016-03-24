@@ -21,7 +21,7 @@ pcaTrain_2n2c_2v loads the data from Data+combinator folder (change the path if 
 
 The script outputs the trained Network (with the default name: line 117) to the Networks+ĺistener folder
 
-## Networks+ĺistener
+## Networks+Listener
 
 This folder contains the trained Networks and the listener matlab script.
 
