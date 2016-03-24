@@ -695,13 +695,13 @@ bool affComm::getPushAff()
                     tool_label = objects[i][1];
                 }
             }
-            if (act.size() > 6)
+            if (act.size() > 7)
             {
-                if (act[5] == "11")
+                if (act[6] == "11")
                 {
                     hand_label = "left";
                 }
-                if (act[5] == "12")
+                if (act[6] == "12")
                 {
                     hand_label = "right";
                 }
@@ -1099,13 +1099,13 @@ bool affComm::getPullAff()
                     tool_label = objects[i][1];
                 }
             }
-            if (act.size() > 6)
+            if (act.size() > 7)
             {
-                if (act[5] == "11")
+                if (act[6] == "11")
                 {
                     hand_label = "left";
                 }
-                if (act[5] == "12")
+                if (act[6] == "12")
                 {
                     hand_label = "right";
                 }
