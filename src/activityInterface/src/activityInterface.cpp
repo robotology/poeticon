@@ -1218,9 +1218,9 @@ bool ActivityInterface::take(const string &objName, const string &handName)
     
     goHome();
     
-    yError("");
+    yError(" ");
     yError("TAKING %s with %s", objName.c_str(), handName.c_str());
-    yError("");
+    yError(" ");
     
     inAction = true;
     pauseAllTrackers();
@@ -2501,10 +2501,6 @@ bool ActivityInterface::classifyObserve()
     yInfo("[classifyObserve] Received reply: %s\n",reply.toString().c_str());
     
     string handStatus = processScores(reply);
-    
-    
-    handStatus.clear();
-    handStatus = "full";
     
     yInfo("[classifyObserve] the hand is %s", handStatus.c_str());
     
