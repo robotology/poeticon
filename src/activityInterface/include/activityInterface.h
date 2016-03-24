@@ -89,6 +89,7 @@ protected:
     yarp::os::RpcClient                 rpcIolState;
     yarp::os::RpcClient                 rpcClassifier;
     yarp::os::RpcClient                 rpcReachCalib;
+    yarp::os::RpcClient                 rpcPrada;
     
     yarp::os::RpcClient                 rpcKarma;
     

@@ -106,6 +106,8 @@ bool ActivityInterface::configure(yarp::os::ResourceFinder &rf)
     rpcAREcmd.setReporter(memoryReporter);
     rpcAREcmd.open(("/"+moduleName+"/arecmd:rpc").c_str());
     
+    rpcPrada.open(("/"+moduleName+"/prada:rpc").c_str());
+    
     rpcWorldState.setReporter(memoryReporter);
     rpcWorldState.open(("/"+moduleName+"/worldState:rpc").c_str());
     
@@ -146,7 +148,8 @@ bool ActivityInterface::configure(yarp::os::ResourceFinder &rf)
     yarp::os::Network::connect(("/"+moduleName+"/are:rpc").c_str(), "/actionsRenderingEngine/get:io");
     yarp::os::Network::connect(("/"+moduleName+"/memory:rpc").c_str(), "/memory/rpc");
     yarp::os::Network::connect(("/"+moduleName+"/iolState:rpc").c_str(), "/iolStateMachineHandler/human:rpc");
-
+    
+    yarp::os::Network::connect(("/"+moduleName+"/prada:rpc").c_str(), "/planner/rpc:i");
     
     yarp::os::Network::connect("/icub/camcalib/left/out", inputImagePortName.c_str());
     yarp::os::Network::connect(("/"+moduleName+"/praxicon:rpc").c_str(), "/praxInterface/speech:i");
@@ -282,6 +285,7 @@ bool ActivityInterface::interruptModule()
     rpcIolState.interrupt();
     imgeBlobPort.interrupt();
     rpcPraxiconInterface.interrupt();
+    rpcPrada.interrupt();
     pradaReporter.interrupt();
     speechReporter.interrupt();
     praxiconToPradaPort.interrupt();
@@ -307,6 +311,7 @@ bool ActivityInterface::close()
     rpcMemory.close();
     rpcARE.close();
     rpcAREcmd.close();
+    rpcPrada.close();
     robotStatus.close();
     rpcWorldState.close();
     rpcIolState.close();
@@ -387,6 +392,21 @@ bool ActivityInterface::executeSpeech (const string &speech)
 /**********************************************************/
 Bottle ActivityInterface::askPraxicon(const string &request)
 {
+    
+    Bottle cmd, reply;
+    cmd.clear(); reply.clear();
+    cmd.addString("stopPlanner");
+    rpcPrada.write(cmd, reply);
+    
+    cmd.clear(); reply.clear();
+    cmd.addString("startPlanner");
+    rpcPrada.write(cmd, reply);
+
+    if (reply.get(0).asVocab()==Vocab::encode("ok"))
+    {
+        executeSpeech("grounding completed!");
+    }
+    
     praxiconRequest = request;
     Bottle listOfGoals, cmdPrax, replyPrax;
     
@@ -566,13 +586,30 @@ bool ActivityInterface::processPradaStatus(const Bottle &status)
             executeSpeech("I need to ask the praxicon for help!" );
             
             
-            yInfo( "[processPradaStatus] asking praxicon for help: %s", praxiconRequest.c_str());
-            Bottle listOfGoals = askPraxicon(praxiconRequest);
+            Bottle cmd, reply;
+            cmd.clear(); reply.clear();
+            cmd.addString("stopPlanner");
+            rpcPrada.write(cmd, reply);
             
-            yInfo("[processPradaStatus] the new list of goals are: %s ",listOfGoals.toString().c_str());
-            yInfo("[processPradaStatus] sending to prada");
-            praxiconToPradaPort.write(listOfGoals);
-            yInfo("[processPradaStatus] sent to prada");
+            cmd.clear(); reply.clear();
+            cmd.addString("startPlanner");
+            rpcPrada.write(cmd, reply);
+            
+            if (reply.get(0).asVocab()==Vocab::encode("ok"))
+            {
+            
+                yInfo( "[processPradaStatus] asking praxicon for help: %s", praxiconRequest.c_str());
+                Bottle listOfGoals = askPraxicon(praxiconRequest);
+            
+                yInfo("[processPradaStatus] the new list of goals are: %s ",listOfGoals.toString().c_str());
+                yInfo("[processPradaStatus] sending to prada");
+                praxiconToPradaPort.write(listOfGoals);
+                yInfo("[processPradaStatus] sent to prada");
+            }
+            else
+            {
+                executeSpeech("cannot seem to get a reply from prada" );
+            }
         }
         else
         {
@@ -1750,6 +1787,9 @@ bool ActivityInterface::pull(const string &objName, const string &toolName)
     //tool attach
     string handName = inHand(toolName);
     
+    handName.clear();
+    handName = "left";
+    
     yInfo( "[pull] will use the %s hand on position %s\n", handName.c_str(), position.toString().c_str());
     
     if (strcmp (handName.c_str(), "none" ) != 0 && position.size()>0)
@@ -1769,29 +1809,29 @@ bool ActivityInterface::pull(const string &objName, const string &toolName)
         cmdkarma.addString("tool");
         cmdkarma.addString("attach");
         cmdkarma.addString(handName.c_str());
-        cmdkarma.addDouble(0.18);
-        cmdkarma.addDouble(-0.18);
+        cmdkarma.addDouble(0.15);
+        cmdkarma.addDouble(-0.15);
         
         if (strcmp (handName.c_str(), "left" ) == 0)
-            cmdkarma.addDouble(0.04);
+            cmdkarma.addDouble(0.03);
         else
-            cmdkarma.addDouble(-0.04);
+            cmdkarma.addDouble(-0.03);
 
         yInfo("[pull] %s\n",cmdkarma.toString().c_str());
         rpcKarma.write(cmdkarma, replykarma);
         
         double result = 0.0;
-        double xoffset = 0.05;
+        double xoffset = 0.03;
         
         yInfo("[pull] Will now send to karmaMotor:\n");
         Bottle karmaMotor,KarmaReply;
         karmaMotor.addString("vdraw");
         karmaMotor.addDouble(position.get(0).asDouble() + 0.05);
         karmaMotor.addDouble(position.get(1).asDouble());
-        karmaMotor.addDouble(position.get(2).asDouble() + xoffset);
+        karmaMotor.addDouble(-0.14 + xoffset);
         karmaMotor.addDouble(90.0);
-        karmaMotor.addDouble(0.04); //10 cm
-        karmaMotor.addDouble(0.1);
+        karmaMotor.addDouble(0.08); //10 cm
+        karmaMotor.addDouble(0.15);
         yInfo("[pull] will send \n %s to KarmaMotor \n", karmaMotor.toString().c_str());
         rpcKarma.write(karmaMotor, KarmaReply);
         
@@ -1806,9 +1846,10 @@ bool ActivityInterface::pull(const string &objName, const string &toolName)
             karmaMotor.addString("draw");
             karmaMotor.addDouble(position.get(0).asDouble() + 0.05);
             karmaMotor.addDouble(position.get(1).asDouble());
-            karmaMotor.addDouble(position.get(2).asDouble() + xoffset);
+            //karmaMotor.addDouble(position.get(2).asDouble() + xoffset);
+            karmaMotor.addDouble(-0.14 + xoffset);
             karmaMotor.addDouble(90.0);
-            karmaMotor.addDouble(0.04);
+            karmaMotor.addDouble(0.08);
             karmaMotor.addDouble(0.15);
             yInfo("[pull] will send \n %s to KarmaMotor \n", karmaMotor.toString().c_str());
             rpcKarma.write(karmaMotor, KarmaReply);
