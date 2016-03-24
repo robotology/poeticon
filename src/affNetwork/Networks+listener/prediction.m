@@ -4,18 +4,28 @@
 %                Instituto Superior Técnico, Universidade de Lisboa, Lisbon, Portugal
 % Author: Pedro Vicente, Atabak Dehban, Afonso Gonçalves, João Abrantes
 % CopyPolicy: Released under the terms of the GNU GPL v2.0
-
 %% Effect prediction, queries server
-% Input:
-%    Bottle1x11 vector with prior - Just doubles
-%    5 desc for the tool
-%    5 desc for the object
-%    1 action
+% Inputs (standard yarp port):
+%    . Bottle1x11 vector with prior - Just doubles
+%        5 desc for the tool   (toolEffector)
+%        5 desc for the object (whole object descriptors)
+%        1 action
+%    . displayON, displayOFF - Turn ON/OFF the display figure
 %
-% Output:
+%    . sameON, sameOFF       - reutilize figure 1 (ON) or create a figure
+%                              for each query (OFF)
+% Output (standard yarp port):
 %   5x5 matrix of probabilities distribution
-%   p(EffectX, EffectY | nodeName1=nodeValue1, ... , nodeName12=nodeValue12)
-
+%   p(EffectX, EffectY | nodeName_1=nodeValue_1, ... , nodeName_i=nodeValue_i)
+%
+% NOTE: Choose the Network (bn). The default Network is 2n_2c_2v
+% n: number of PCA
+%        e.g 1 for tool and 1 for object
+% c: number of PCA components used in each PCA. 
+%        e.g 2components in PCA_tool and 2 in PCA_object
+% v: number of values/bins for discretization of each PCA component. 
+%       e.g v=2 - PCA_tool1 divided in two values/bins, PCA_tool2 divided
+%       in two, ...., etc
 clear;
 
 %% Initialize BN
