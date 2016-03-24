@@ -516,7 +516,6 @@ bool affComm::updateAffordances()
                 yarp::os::Time::delay(0.1);
             }
             rule = data[0];
-            yDebug("ground rule: %s", rule.c_str());
             context = data[1];
             outcome = data[2];
             outcome2 = data[3];
@@ -640,9 +639,11 @@ bool affComm::getPushAff()
     vector<double> data, obj_desc, tool_desc1, tool_desc2;
     vector<string> new_outcome, new_outcome2;
     string obj, tool, new_outcome_string, new_outcome2_string;
+    string obj_label, tool_label, hand_label;
     double prob_succ1, prob_succ2, prob_fail, prob_succ;
     int toolnum=0;
-    yDebug("Push: %s %s %s %s", act[0].c_str(), act[1].c_str(), act[2].c_str(), act[3].c_str());
+    
+    //yDebug("ground rule: %s", rule.c_str());
     if (affnetPort.getInputCount() == 0)
     {
         yWarning("Affordances network not connected, going for default values");
@@ -683,6 +684,29 @@ bool affComm::getPushAff()
             affnet_bottle_out.clear();
             obj = act[1];
             tool = act[3];
+            for (int i = 0; i < objects.size(); ++i)
+            {
+                if (objects[i][0] == obj)
+                {
+                    obj_label = objects[i][1];
+                }
+                if (objects[i][0] == tool)
+                {
+                    tool_label = objects[i][1];
+                }
+            }
+            if (act.size() > 6)
+            {
+                if (act[5] == "11")
+                {
+                    hand_label = "left";
+                }
+                if (act[5] == "12")
+                {
+                    hand_label = "right";
+                }
+            }
+            yDebug("Push: %s with %s on %s", obj_label.c_str(), tool_label.c_str(), hand_label.c_str());
             for (int o = 0; o < descriptors.size(); ++o)
             {
                 if (descriptors[o][0] == strtof(obj.c_str(), NULL))
@@ -902,10 +926,10 @@ bool affComm::getPullAff()
     vector<double> data, obj_desc, tool_desc1, tool_desc2;
     vector<string> new_outcome, new_outcome2;
     string obj, tool, new_outcome_string, new_outcome2_string;
+    string obj_label, tool_label, hand_label;
     double prob_succ1, prob_succ2, prob_fail, prob_succ;
     int toolnum=0;
-
-    yDebug("Pull: %s %s %s %s", act[0].c_str(), act[1].c_str(), act[2].c_str(), act[3].c_str());
+    //yDebug("ground rule: %s", rule.c_str());
     if (affnetPort.getInputCount() == 0)
     {
         yWarning("Affordances network not connected, going for default");
@@ -946,6 +970,29 @@ bool affComm::getPullAff()
             affnet_bottle_out.clear();
             obj = act[1];
             tool = act[3];
+            for (int i = 0; i < objects.size(); ++i)
+            {
+                if (objects[i][0] == obj)
+                {
+                    obj_label = objects[i][1];
+                }
+                if (objects[i][0] == tool)
+                {
+                    tool_label = objects[i][1];
+                }
+            }
+            if (act.size() > 6)
+            {
+                if (act[5] == "11")
+                {
+                    hand_label = "left";
+                }
+                if (act[5] == "12")
+                {
+                    hand_label = "right";
+                }
+            }
+            yDebug("Pull: %s with %s on %s", obj_label.c_str(), tool_label.c_str(), hand_label.c_str());
             for (int o = 0; o < descriptors.size(); ++o)
             {
                 if (descriptors[o][0] == strtof(obj.c_str(), NULL))
