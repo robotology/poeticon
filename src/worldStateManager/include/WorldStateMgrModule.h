@@ -50,7 +50,6 @@ class WorldStateMgrModule : public RFModule, public WorldStateMgr_IDL
         bool resume(const string &objName);
         bool pauseID(const int32_t objID);
         bool resumeID(const int32_t objID);
-        Bottle getColorHist(const int32_t u, const int32_t v);
         bool quit();
 };
 
