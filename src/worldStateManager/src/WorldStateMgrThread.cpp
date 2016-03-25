@@ -1257,9 +1257,10 @@ bool WorldStateMgrThread::constructMemoryFromOPCID(const int &opcID)
 
     if (memoryContainsID(opcID))
     {
-        // note: this happens e.g. when WSOPC is started & initialized before WSM
-        yWarning() << __func__ << "cannot construct memory item"
-                   << opcID << "because this ID is already present in internal short-term memory";
+        // note: this happens e.g. when WSOPC is started & initialized before WSM,
+        // or when WSOPC has entries from a previous experiment that must be kept
+        yInfo() << __func__ << "will not construct memory item"
+                << opcID << "because this ID is already present in internal short-term memory";
         return false;
     }
 
@@ -1319,6 +1320,7 @@ bool WorldStateMgrThread::initMemoryFromOPC()
         return false;
     }
 
+    /*
     // if WSOPC contained more than 2 entries (hands), it means it has data from
     // a previous experiment -> increase countFrom index for tracker
     if (checkOPCStatus(3,opcIDs))
@@ -1327,7 +1329,6 @@ bool WorldStateMgrThread::initMemoryFromOPC()
         increaseCountFrom();
     }
 
-    /*
     // if WSOPC contained more than 2 entries (hands), it means it has data from
     // a previous experiment -> reset it
     if (opcIDs.size() >= 3)
@@ -1353,7 +1354,7 @@ bool WorldStateMgrThread::initMemoryFromOPC()
     for (int o=0; o<opcIDs.size(); o++)
     {
         if (!constructMemoryFromOPCID(opcIDs.get(o).asInt()))
-            yWarning() << "problem with constructMemoryFromOPCID" << opcIDs.get(o).asInt();
+            yWarning() << "will not constructMemoryFromOPCID" << opcIDs.get(o).asInt();
     }
 
     return true;
@@ -2269,9 +2270,9 @@ bool WorldStateMgrThread::doPopulateDB()
                 const int returnedID =
                     opcReply.get(1).asList()->get(1).asInt();
                 if (returnedID != iter->id)
-                    yWarning() << "ID mismatch while adding" << iter->name
-                               << "to database! got" << returnedID
-                               << "was expecting" << iter->id << "!";
+                    yError() << "ID mismatch while adding" << iter->name
+                             << "to database! got" << returnedID
+                             << "was expecting" << iter->id << "!";
             }
         }
     }
