@@ -145,6 +145,7 @@ class PlannerThread : public RateThread
         bool loadUsedObjs();
         bool checkFailure();
         bool compareState();
+        bool IDisPresent(string ID, bool &result);
 
         // IDL functions
         bool startPlanning();

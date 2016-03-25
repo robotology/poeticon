@@ -529,7 +529,7 @@ bool PlannerThread::compileGoal()
         goal_bottle_in = goal_yarp.read(false);
         if (goal_bottle_in)
         {
-            mess_receiv = goal_bottle_in->toString();
+            mess_receiv = goal_bottle_in->toString().c_str();
             yDebug("message received: %s", goal_bottle_in->toString().c_str());
             if (mess_receiv == "done") // success!
             {
@@ -1092,6 +1092,7 @@ bool PlannerThread::increaseHorizon()
                     {
                         temp_vect = split(failed_goal[t], '_');
                         objects_failed.push_back(temp_vect[0]);
+                        objects_failed.push_back(temp_vect[2]);
                     }
                     yInfo("Plan failed");
                     // plan fails, add FAIL to activityInterface bottle
@@ -1104,7 +1105,20 @@ bool PlannerThread::increaseHorizon()
                                 string check_str=object_IDs[inde][1];
                                 transform(check_str.begin(), check_str.end(), check_str.begin(), ::tolower);
                                 if (check_str != "rake" && check_str != "stick" && check_str != "left" && check_str != "right" /*&& find_element(tool_list,check_str) == 0 */){
-                                    prax_bottle_out.addString(object_IDs[inde][1]); // add objects that were involved in the failure
+                                    bool isPresent;
+                                    IDisPresent(objects_failed[u], isPresent);
+                                    if (isPresent)
+                                    {
+                                        yDebug("Object is present: %s", objects_failed[u].c_str());
+                                    }
+                                    else
+                                    {
+                                        yDebug("object is not present: %s", objects_failed[u].c_str());
+                                    }
+                                    if (!isPresent)
+                                    {
+                                        prax_bottle_out.addString(object_IDs[inde][1]); // add objects that were involved in the failure
+                                    }
                                 }
                             }
                         }
@@ -1130,6 +1144,47 @@ bool PlannerThread::increaseHorizon()
         configFileOut << configData[w] << endl;
     }
     configFileOut.close();
+    return true;
+}
+
+bool PlannerThread::IDisPresent(string ID, bool &result)
+{
+    vector<string> split_symbol;
+    if (state.size() > 0)
+    {
+        for (int i = 0; i < state.size(); ++i)
+        {
+            if (state[i].find('-') == std::string::npos && state[i].find(ID) != std::string::npos) // If there is a "true" symbol on the world state with the object ID
+            {
+                yDebug("the symbol being checked is: %s", state[i].c_str());
+                if (state[i].find("isreachable_") != std::string::npos) // If that symbols is "isreachable"
+                {
+                    split_symbol = split(state[i], '_');
+                    if (split_symbol[0] == ID) // If the object is the one that is reachable
+                    {
+                        result = true;
+                        return true;
+                    } 
+                }
+                if (state[i].find("inhand_") != std::string::npos) // if that symbol is "inhand"
+                {
+                    result = true;
+                    return true;
+                }
+                if (state[i].find("on_") != std::string::npos) // if that symbol is "on"; object is present on a stack
+                {
+                    result = true;
+                    return true;
+                }
+            }
+        }
+    }
+    else
+    {
+        return false;
+    }
+    yDebug("Object not present: %s", ID.c_str());
+    result = false;
     return true;
 }
 
@@ -1396,6 +1451,7 @@ bool PlannerThread::checkFailure()
                 fail_obj.push_back(object_IDs[i][0]);
             }
         }
+        /*
         for (int u = 0; u < fail_obj.size(); ++u){ // If an object from the failed list is not a tool or a hand, add it to the list to be reported
             if (fail_obj[u] != "11" && fail_obj[u] != "12" && find_element(toolhandle,fail_obj[u]) == 0){
                 for (int t = 0; t < object_IDs.size(); ++t){
@@ -1406,17 +1462,24 @@ bool PlannerThread::checkFailure()
                 }
             }
         }
+        */
         Bottle& prax_bottle_out = prax_yarp.prepare();
         prax_bottle_out.clear();
         prax_bottle_out.addString("FAIL"); // Reports "FAIL" back to activityInterface
         // and adds the bottle of objects responsible for the failure
-        for (int u = 0; u < aux_fail_obj.size(); ++u){
+        for (int u = 0; u < fail_obj.size(); ++u){
             for (int inde = 0; inde < object_IDs.size(); ++inde){
-                if (object_IDs[inde][0] == aux_fail_obj[u]){
+                if (object_IDs[inde][0] == fail_obj[u]){
                     string check_str = object_IDs[inde][1];
                     transform(check_str.begin(), check_str.end(), check_str.begin(), ::tolower);
-                    if (check_str != "rake" && check_str != "stick" && check_str != "left" && check_str != "right" /*&& find_element(tool_list,check_str) == 0 */){
-                        prax_bottle_out.addString(object_IDs[inde][1]);
+                    if (check_str != "rake" && check_str != "stick" && check_str != "left" && check_str != "right" /*&& find_element(tool_list,check_str) == 0 */) // if not a tool or a hand
+                    {
+                        bool isPresent;
+                        IDisPresent(fail_obj[u], isPresent);
+                        if (!isPresent)
+                        {
+                            prax_bottle_out.addString(object_IDs[inde][1]); // add objects that were involved in the failure
+                        }
                     }
                 }
             }
