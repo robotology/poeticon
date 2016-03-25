@@ -695,13 +695,18 @@ bool affComm::getPushAff()
                     tool_label = objects[i][1];
                 }
             }
-            if (act.size() > 7)
+            /*for (int i = 0; i < act.size(); ++i)
             {
-                if (act[6] == "11")
+                yDebug("act: %s", act[i].c_str());
+            }*/
+            if (act.size() >= 6)
+            {
+                //yDebug("hand: %s", act[6].c_str());
+                if (act[5].find("11") != std::string::npos)
                 {
                     hand_label = "left";
                 }
-                if (act[6] == "12")
+                if (act[5].find("12") != std::string::npos)
                 {
                     hand_label = "right";
                 }
@@ -1099,13 +1104,13 @@ bool affComm::getPullAff()
                     tool_label = objects[i][1];
                 }
             }
-            if (act.size() > 7)
+            if (act.size() >= 6)
             {
-                if (act[6] == "11")
+                if (act[5].find("11") != std::string::npos)
                 {
                     hand_label = "left";
                 }
-                if (act[6] == "12")
+                if (act[5].find("12") != std::string::npos)
                 {
                     hand_label = "right";
                 }
