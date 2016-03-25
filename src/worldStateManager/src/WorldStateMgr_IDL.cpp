@@ -693,7 +693,9 @@ std::vector<std::string> WorldStateMgr_IDL::help(const std::string& functionName
       helpString.push_back("Reset the world state database, initializing it from scratch. ");
       helpString.push_back("In the WSOPC database, with respect to the previous experiment hand entries ");
       helpString.push_back("will get their fields cleared (but their IDs preserved), whereas object ");
-      helpString.push_back("entries will be deleted and new ones will be created with new IDs. ");
+      helpString.push_back("entries will be deleted and new ones will be created with new IDs, except ");
+      helpString.push_back("for special object entries that are protected from deletion (objects that ");
+      helpString.push_back("are currently hidden in a stack, and objects that are currently grasped). ");
       helpString.push_back("NOTE: before launching this command, make sure that segmentation and ");
       helpString.push_back("      object recognition are stable. ");
       helpString.push_back("@return true/false on success/failure ");

@@ -42,7 +42,9 @@ public:
    * Reset the world state database, initializing it from scratch.
    * In the WSOPC database, with respect to the previous experiment hand entries
    * will get their fields cleared (but their IDs preserved), whereas object
-   * entries will be deleted and new ones will be created with new IDs.
+   * entries will be deleted and new ones will be created with new IDs, except
+   * for special object entries that are protected from deletion (objects that
+   * are currently hidden in a stack, and objects that are currently grasped).
    * NOTE: before launching this command, make sure that segmentation and
    *       object recognition are stable.
    * @return true/false on success/failure
