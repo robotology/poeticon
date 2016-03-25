@@ -1156,7 +1156,7 @@ bool PlannerThread::IDisPresent(string ID, bool &result)
         {
             if (state[i].find('-') == std::string::npos && state[i].find(ID) != std::string::npos) // If there is a "true" symbol on the world state with the object ID
             {
-                yDebug("the symbol being checked is: %s", state[i].c_str());
+                //yDebug("the symbol being checked is: %s", state[i].c_str());
                 if (state[i].find("isreachable_") != std::string::npos) // If that symbols is "isreachable"
                 {
                     split_symbol = split(state[i], '_');
