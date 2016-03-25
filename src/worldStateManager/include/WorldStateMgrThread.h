@@ -174,6 +174,7 @@ class WorldStateMgrThread : public RateThread
         string inWhichHand(const string &objName);
         bool getVisibilityByActivityIF(const string &objName, bool &result, int extraTries=4);
         bool belongsToStack(const string &objName, bool &result);
+        bool isInHand(const string &objName, bool &result);
 
         bool setFilterOrder(const int &n);
 

@@ -354,10 +354,11 @@ bool WorldStateMgrThread::resetOPC()
     const int RightHandID = 12;
     for (int entryIdx=0; entryIdx<opcIDs.size(); ++entryIdx)
     {
-        // 2. hand entries: keep them (need to preserve IDs), just reset the fields
+        // hands or objects distinction
         if ((opcIDs.get(entryIdx).asInt() == LeftHandID) ||
             (opcIDs.get(entryIdx).asInt() == RightHandID))
         {
+            // 2. hand entries: keep them (need to preserve IDs), just reset the fields
             std::string handName = id2label(opcIDs.get(entryIdx).asInt());
             yInfo("resetting fields of hand entry %d/%s",
                   opcIDs.get(entryIdx).asInt(), handName.c_str());
@@ -369,9 +370,11 @@ bool WorldStateMgrThread::resetOPC()
             }
         }
         else
-        // 3. object entries: two cases depending whether object is under a stack
         {
+            // 3. object entries: first check if object must be protected from deletion
+            //    (i.e., when it is in a stack or in a robot hand), then act accordingly
             std::string label = id2label(opcIDs.get(entryIdx).asInt());
+
             bool isStacked;
             if (!belongsToStack(label, isStacked))
             {
@@ -379,12 +382,34 @@ bool WorldStateMgrThread::resetOPC()
                          __func__, opcIDs.get(entryIdx).asInt(), label.c_str());
             }
 
-            if (!isStacked)
+            bool isGrasped;
+            isInHand(label, isGrasped);
+
+            // if true, protect this entry from deletion
+            bool keep = isStacked || isGrasped;
+
+            // object protected vs non-protected distinction
+            if (keep)
             {
-                // 3a. if entries are not in any stack, delete them
-                // (it is ok to change their IDs from one
+                // protected cases
+                if (isStacked)
+                {
+                    yInfo("not deleting object entry %d/%s because it is under a stack",
+                          opcIDs.get(entryIdx).asInt(), label.c_str());
+                }
+
+                if (isGrasped)
+                {
+                    yInfo("not deleting object entry %d/%s because it is in a robot hand",
+                          opcIDs.get(entryIdx).asInt(), label.c_str());
+                }
+            }
+            else
+            {
+                // not protected cases -> delete
+                // (it is ok to change the ID from one
                 // experiment to the other -- the only restriction is that an <object,ID>
-                // pair is fixed within the same experiment )
+                // pair is fixed within the same experiment)
 
                 yInfo("deleting object entry %d/%s",
                       opcIDs.get(entryIdx).asInt(), label.c_str());
@@ -411,20 +436,13 @@ bool WorldStateMgrThread::resetOPC()
                              __func__, opcIDs.get(entryIdx).asInt(), label.c_str());
                     return false;
                 }
-
-            } else
-            {
-                // 3b. if an entry is in a stack, keep it
-                yInfo("not deleting object entry %d/%s because it is under a stack",
-                      opcIDs.get(entryIdx).asInt(), label.c_str());
-            }
-
-        }
-    }
+            } // end object protected vs non-protected distinction
+        } // end hands or objects distinction
+    } // end cycle over opcIDs entries
 
     yInfo() << "successfully reset WSOPC -"
             << "hand entries had their fields reset (with IDs kept),"
-            << "objects entries were deleted (except those that were under a stack)";
+            << "visible objects entries were deleted (objects under a stack or currently grasped were not deleted)";
 
     return true;
 }
@@ -2043,6 +2061,23 @@ bool WorldStateMgrThread::belongsToStack(const string &objName, bool &result)
 
     yDebug("%s: determining if %s is below any of these: (%s)... %s",
            __func__, objName.c_str(), activityReply.get(0).asList()->toString().c_str(), BoolToString(result));
+
+    return true;
+}
+
+/**********************************************************/
+bool WorldStateMgrThread::isInHand(const string &objName, bool &result)
+{
+    // result=true iff objName is in one of the robot hands
+
+    if (activityPort.getOutputCount()<1)
+    {
+        yWarning() << __func__ << "not connected to activityInterface";
+        return false;
+    }
+
+    string inHand = inWhichHand(objName); // none, left, right
+    result = (inHand=="left" || inHand=="right");
 
     return true;
 }
