@@ -1309,6 +1309,38 @@ bool ActivityInterface::take(const string &objName, const string &handName)
             }
             else
             {
+                Bottle under = underOf(objName.c_str());
+                yDebug("underOf size is %d and handName %s", under.size(), handName.c_str());
+                
+                double z;
+                
+                if (under.size() == 0 && (strcmp (handName.c_str(), "right" ) == 0))
+                    z = -0.118;
+                
+                if (under.size() == 0 && (strcmp (handName.c_str(), "left" ) == 0))
+                    z = -0.106323;
+                
+                if(under.size() == 1 && (strcmp (handName.c_str(), "right" ) == 0))
+                    z = -0.08;
+                
+                if(under.size() == 1 && (strcmp (handName.c_str(), "left" ) == 0))
+                    z = -0.07;
+                
+                if(under.size() == 2 && (strcmp (handName.c_str(), "right" ) == 0))
+                    z = -0.05;
+                
+                if(under.size() == 2 && (strcmp (handName.c_str(), "left" ) == 0))
+                    z = -0.04;
+                
+                if(under.size() == 3 && (strcmp (handName.c_str(), "right" ) == 0))
+                    z = -0.025;
+                
+                if(under.size() == 3 && (strcmp (handName.c_str(), "left" ) == 0))
+                    z = -0.015;
+                
+                
+                yDebug("The under size is %d, so z= %lf", under.size(), z);
+                
                 //do the take actions
                 Bottle cmd, reply;
                 cmd.clear(), reply.clear();
@@ -1317,7 +1349,9 @@ bool ActivityInterface::take(const string &objName, const string &handName)
                 Bottle &tmp=cmd.addList();
                 tmp.addDouble (refinedPos.get(0).asDouble());
                 tmp.addDouble (refinedPos.get(1).asDouble());
-                tmp.addDouble (refinedPos.get(2).asDouble());
+                //tmp.addDouble (refinedPos.get(2).asDouble());
+                tmp.addDouble (z);
+                
                 cmd.addString (whichHand.c_str());
                 cmd.addString ("still");
                 
@@ -1347,6 +1381,9 @@ bool ActivityInterface::take(const string &objName, const string &handName)
                             }
                         }
                         
+                        string say = "I have the " + objName + " in my hand";
+                        executeSpeech(say);
+                        
                         //do the take actions
                         Bottle cmd, reply;
                         cmd.clear(), reply.clear();
@@ -1369,6 +1406,10 @@ bool ActivityInterface::take(const string &objName, const string &handName)
                         
                     }else
                     {
+                        
+                        string say = "I do not seem to have the " + objName + " in my hand";
+                        executeSpeech(say);
+
                         Bottle cmd, reply;
                         cmd.clear(), reply.clear();
                         cmd.addString("home");
@@ -1518,17 +1559,81 @@ bool ActivityInterface::put(const string &objName, const string &targetName)
                 }
                 else
                 {
+                    //first layer  x = -1.5  and z = -0.08
+                    //second layer x = -1.5  and z = -0.05
+                    //third layer  x = -2  y = +0.01  and z = -0.025
+                    
+                    
+                    //left
+                    //first layer  x = 0.0  and z = -0.07
+                    //second layer x = 0.0  and z = -0.04
+                    //third layer  x = -2  y = +0.0  and z = -0.02
+                    
+                    Bottle under = underOf(targetName.c_str());
+                    yDebug("underOf size is %d", under.size());
+                    
+                    double x = 0.0;
+                    double y = 0.0;
+                    double z = 0.0;
+                    
+                    if (under.size() == 0 && strcmp (handName.c_str(), "right" ) == 0)
+                    {
+                        x = -0.02;
+                        y =  0.0;
+                        z = -0.08;
+                    }
+                    if (under.size() == 0 && strcmp (handName.c_str(), "left" ) == 0)
+                    {
+                        x =  0.0;
+                        y =  0.0;
+                        z = -0.07;
+                    
+                    }
+                    if(under.size() == 1 && strcmp (handName.c_str(), "right" ) == 0)
+                    {
+                        x = -0.02;
+                        y =  0.0;
+                        z = -0.05;
+                    }
+                    if (under.size() == 1 && strcmp (handName.c_str(), "left" ) == 0)
+                    {
+                        x =  0.0;
+                        y =  0.0;
+                        z = -0.04;
+                        
+                    }
+                    
+                    if(under.size() == 2 && strcmp (handName.c_str(), "right" ) == 0)
+                    {
+                        x = -0.02;
+                        y = +0.01;
+                        z = -0.025;
+                    }
+                    if(under.size() == 2 && strcmp (handName.c_str(), "left" ) == 0)
+                    {
+                        x =  0.0;
+                        y =  0.0;
+                        z = -0.016;
+                        
+                    }
+                    
+                    yDebug("The under size is %d, so x= %lf y= %lf z= %lf", under.size(), x, y, z);
+                    
+                    
                     //do the take actions
                     cmd.clear(), reply.clear();
                     cmd.addString("drop");
                     cmd.addString("over");
                     //cmd.addString(targetName.c_str());
                     Bottle &tmp=cmd.addList();
-                    tmp.addDouble (refinedPos.get(0).asDouble());
-                    tmp.addDouble (refinedPos.get(1).asDouble());
-                    tmp.addDouble (refinedPos.get(2).asDouble());
-                    cmd.addString("gently");
+                    tmp.addDouble (refinedPos.get(0).asDouble() + x);
+                    tmp.addDouble (refinedPos.get(1).asDouble() + y);
+                    tmp.addDouble (z);
+                    //cmd.addString("gently");
                     cmd.addString(handName.c_str());
+                    
+                    yInfo("[put] will send the following to ARE: %s", cmd.toString().c_str());
+                    
                     rpcAREcmd.write(cmd, reply);
                 }
             }
@@ -1589,6 +1694,13 @@ Bottle ActivityInterface::askCalibratedLocation(const std::string &objName, cons
         cmd.addString("get_location");
         cmd.addString(handName.c_str());
         cmd.addString(objName.c_str());
+        
+        
+        if (strcmp (handName.c_str(), "right" ) == 0)
+            cmd.addString("poeticon-right");
+        else
+            cmd.addString("poeticon-left");
+        
         rpcReachCalib.write(cmd,position);
         
         yInfo("[getCalibratedLocation] reply position is %s", position.toString().c_str());
@@ -2684,7 +2796,7 @@ bool ActivityInterface::trainObserve(const string &label)
 /**********************************************************/
 bool ActivityInterface::classifyObserve()
 {
-    ImageOf<PixelRgb> img= *imagePortIn.read(true);
+    /*ImageOf<PixelRgb> img= *imagePortIn.read(true);
     imgClassifier.write(img);
     
     bool answer;
@@ -2716,6 +2828,9 @@ bool ActivityInterface::classifyObserve()
         answer = true;
     else
         answer = false;
+    */
+    
+    bool answer = true;
     
     return answer;
 }
