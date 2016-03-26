@@ -56,6 +56,10 @@ void PradaReporter::setManager(ActivityInterface *manager)
 /**********************************************************/
 void PradaReporter::onRead(Bottle &status)
 {
+    yError("-------------------------------------------");
+    yError("%s", status.toString().c_str());
+    yError("-------------------------------------------");
+    
     if (status.size()>1)
         manager->processPradaStatus(status);
 }

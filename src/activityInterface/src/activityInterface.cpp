@@ -404,7 +404,7 @@ Bottle ActivityInterface::askPraxicon(const string &request)
 
     if (reply.get(0).asVocab()==Vocab::encode("ok"))
     {
-        executeSpeech("grounding completed!");
+        executeSpeech("Let's have a look at the scene!");
     }
     
     praxiconRequest = request;
@@ -473,6 +473,8 @@ Bottle ActivityInterface::askPraxicon(const string &request)
     query.addString(request.c_str());
     
     
+    executeSpeech("Let's query the praxicon!");
+    
     yInfo("[askPraxicon] sending \n %s \n", cmdPrax.toString().c_str());
     //send it all to praxicon
     rpcPraxiconInterface.write(cmdPrax,replyPrax);
@@ -507,6 +509,8 @@ Bottle ActivityInterface::askPraxicon(const string &request)
             }
             tmp.addString(tokens[i].c_str());
         }
+        
+        executeSpeech("Got a reply from the Praxicon, will now think about it!");
     }
     else
     {
@@ -537,6 +541,10 @@ bool ActivityInterface::processSpeech(const Bottle &speech)
 /**********************************************************/
 bool ActivityInterface::processPradaStatus(const Bottle &status)
 {
+    yError("");
+    yError("GOT SOMETHING FROM PRADA!!! %s", status.toString().c_str());
+    yError("");
+    
     Bottle objectsUsed;
     Bottle buns;
     buns.addString("Bun-bottom");
