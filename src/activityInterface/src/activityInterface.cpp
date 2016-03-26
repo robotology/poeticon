@@ -569,6 +569,7 @@ bool ActivityInterface::processPradaStatus(const Bottle &status)
         }
         else if (strcmp (status.get(0).asString().c_str(), "FAIL" ) == 0)
         {
+            yInfo( "[processPradaStatus] FAIL request is %s \n", status.toString().c_str());
             Bottle objectsMissing;
             for (int i=1; i< status.size(); i++)
             {
@@ -580,7 +581,7 @@ bool ActivityInterface::processPradaStatus(const Bottle &status)
             {
                 toSay += objectsMissing.get(i).asString();
                 if (i < objectsMissing.size()-1 )
-                    toSay+=" and";
+                    toSay+=" and ";
             }
             executeSpeech(toSay);
             executeSpeech("I need to ask the praxicon for help!" );
@@ -1319,25 +1320,25 @@ bool ActivityInterface::take(const string &objName, const string &handName)
                 
                 bool performAction = true;
                 Bottle under = underOf(objName.c_str());
-                yDebug("underOf size is %d and handName %s", under.size(), handName.c_str());
+                yDebug("underOf size is %d and handName %s", under.size(), whichHand.c_str());
                 
                 double z = -0.118;//default
                 
-                if (under.size() == 0 && (strcmp (handName.c_str(), "right" ) == 0))
+                if (under.size() == 0 && (strcmp (whichHand.c_str(), "right" ) == 0))
                     z = -0.118;
-                else if (under.size() == 0 && (strcmp (handName.c_str(), "left" ) == 0))
+                else if (under.size() == 0 && (strcmp (whichHand.c_str(), "left" ) == 0))
                     z = -0.106323;
-                else if (under.size() == 1 && (strcmp (handName.c_str(), "right" ) == 0))
+                else if (under.size() == 1 && (strcmp (whichHand.c_str(), "right" ) == 0))
                     z = -0.08;
-                else if (under.size() == 1 && (strcmp (handName.c_str(), "left" ) == 0))
+                else if (under.size() == 1 && (strcmp (whichHand.c_str(), "left" ) == 0))
                     z = -0.07;
-                else if (under.size() == 2 && (strcmp (handName.c_str(), "right" ) == 0))
+                else if (under.size() == 2 && (strcmp (whichHand.c_str(), "right" ) == 0))
                     z = -0.05;
-                else if (under.size() == 2 && (strcmp (handName.c_str(), "left" ) == 0))
+                else if (under.size() == 2 && (strcmp (whichHand.c_str(), "left" ) == 0))
                     z = -0.04;
-                else if (under.size() == 3 && (strcmp (handName.c_str(), "right" ) == 0))
+                else if (under.size() == 3 && (strcmp (whichHand.c_str(), "right" ) == 0))
                     z = -0.025;
-                else if (under.size() == 3 && (strcmp (handName.c_str(), "left" ) == 0))
+                else if (under.size() == 3 && (strcmp (whichHand.c_str(), "left" ) == 0))
                     z = -0.015;
                 else
                 {
@@ -1735,11 +1736,12 @@ Bottle ActivityInterface::askCalibratedLocation(const std::string &objName, cons
         
         //do the take actions
         Bottle cmd, reply;
-        cmd.clear(), reply.clear();
+        /*cmd.clear(), reply.clear();
         cmd.addString("idle");
         cmd.addString("head");
         yInfo("[take] will send the following to ARE: %s", cmd.toString().c_str());
         rpcAREcmd.write(cmd, reply);
+         */
         
         cmd.clear(), reply.clear();
         cmd.addString("get_location");
@@ -1762,7 +1764,7 @@ Bottle ActivityInterface::askCalibratedLocation(const std::string &objName, cons
 /**********************************************************/
 Bottle ActivityInterface::getCalibratedLocation(const std::string &objName, const std::string &handName)
 {
-    //Bottle position = askCalibratedLocation(objName, handName);
+    Bottle tmp = askCalibratedLocation(objName, handName);
     
     /*
     int attempts = 5;
@@ -1771,7 +1773,7 @@ Bottle ActivityInterface::getCalibratedLocation(const std::string &objName, cons
     {
         position.clear();
         position = askCalibratedLocation(objName, handName);
-    }*/
+    }
     
     Bottle position;
     int P = 6;           // Total number of points
@@ -1805,7 +1807,6 @@ Bottle ActivityInterface::getCalibratedLocation(const std::string &objName, cons
     
     closestPoints(points, center, N);
     
-    /*
     std::vector<double> values[10];
     
     int attempts = 10;
@@ -1838,9 +1839,11 @@ Bottle ActivityInterface::getCalibratedLocation(const std::string &objName, cons
         }
     }*/
     
-    position.addDouble(center[0]);
-    position.addDouble(center[1]);
-    position.addDouble(center[2]);
+    Bottle position;
+    
+    position.addDouble(tmp.get(1).asDouble());
+    position.addDouble(tmp.get(2).asDouble());
+    position.addDouble(tmp.get(3).asDouble());
     
     return position;
 }
@@ -2385,85 +2388,87 @@ Bottle ActivityInterface::reachableWith(const string &objName)
     
     yInfo("[reachableWith] %s position is %lf %lf %lf \n", objName.c_str(), position.get(0).asDouble(), position.get(1).asDouble(), position.get(2).asDouble());
 
-    if (position.get(0).asDouble() < -0.48){
-        
-        Bottle list = pullableWith(objName);
-        
-        yInfo("[reachableWith] pullableWith list is %s", list.toString().c_str());
-        
-        for (int i = 0; i<list.size(); i++)
-            replyList.addString(list.get(i).asString());
-        
-        // check if tool is in hand
-        if (handStat("left")){
-         
-            for (std::map<string, string>::iterator it=inHandStatus.begin(); it!=inHandStatus.end(); ++it){
-                
-                if (strcmp (it->second.c_str(), "left" ) == 0)
-                    replyList.addString(it->first.c_str());
-            }
+    if (position.size() > 0)
+    {
+        if (position.get(0).asDouble() < -0.48){
             
-        }
-        if (handStat("right")){
-            for (std::map<string, string>::iterator it=inHandStatus.begin(); it!=inHandStatus.end(); ++it){
-                
-                if (strcmp (it->second.c_str(), "right" ) == 0)
-                    replyList.addString(it->first.c_str());
-            }
-        }
-    }
-    else{
-        
-        Bottle list = getNames();
-        
-        yInfo("[reachableWith] getNames list is %s with size %d", list.toString().c_str(), list.size());
-        
-        for (int i = 0; i<list.size(); i++){
+            Bottle list = pullableWith(objName);
             
-            if (strcmp (objName.c_str(), list.get(i).asString().c_str() ) != 0)
-            {
-                //yInfo("check for objects, adding: %s", list.get(i).toString().c_str());
+            yInfo("[reachableWith] pullableWith list is %s", list.toString().c_str());
+            
+            for (int i = 0; i<list.size(); i++)
                 replyList.addString(list.get(i).asString());
-                
-            }
-            //yInfo("replyList so far: %s", replyList.toString().c_str())
-        }
-        
-        // check if tool is in hand
-        if (handStat("left")){
             
-            for (std::map<string, string>::iterator it=inHandStatus.begin(); it!=inHandStatus.end(); ++it){
+            // check if tool is in hand
+            if (handStat("left")){
+             
+                for (std::map<string, string>::iterator it=inHandStatus.begin(); it!=inHandStatus.end(); ++it){
+                    
+                    if (strcmp (it->second.c_str(), "left" ) == 0)
+                        replyList.addString(it->first.c_str());
+                }
                 
-                if (strcmp (it->second.c_str(), "left" ) == 0)
-                    replyList.addString(it->first.c_str());
+            }
+            if (handStat("right")){
+                for (std::map<string, string>::iterator it=inHandStatus.begin(); it!=inHandStatus.end(); ++it){
+                    
+                    if (strcmp (it->second.c_str(), "right" ) == 0)
+                        replyList.addString(it->first.c_str());
+                }
+            }
+        }
+        else{
+            
+            Bottle list = getNames();
+            
+            yInfo("[reachableWith] getNames list is %s with size %d", list.toString().c_str(), list.size());
+            
+            for (int i = 0; i<list.size(); i++){
+                
+                if (strcmp (objName.c_str(), list.get(i).asString().c_str() ) != 0)
+                {
+                    //yInfo("check for objects, adding: %s", list.get(i).toString().c_str());
+                    replyList.addString(list.get(i).asString());
+                    
+                }
+                //yInfo("replyList so far: %s", replyList.toString().c_str())
             }
             
-        }
-        if (handStat("right")){
-            for (std::map<string, string>::iterator it=inHandStatus.begin(); it!=inHandStatus.end(); ++it){
+            // check if tool is in hand
+            if (handStat("left")){
                 
-                if (strcmp (it->second.c_str(), "right" ) == 0)
-                    replyList.addString(it->first.c_str());
+                for (std::map<string, string>::iterator it=inHandStatus.begin(); it!=inHandStatus.end(); ++it){
+                    
+                    if (strcmp (it->second.c_str(), "left" ) == 0)
+                        replyList.addString(it->first.c_str());
+                }
+                
             }
-        }
-        //double leftManip = getManip(objName, "left");
-        //double rightManip = getManip(objName, "right");
-        //fprintf(stdout, "\nleftManip: %lf and rightManip: %lf\n", leftManip, rightManip);
-        
-        yInfo("[reachableWith] after all: %s", replyList.toString().c_str());
-        
-        //using 3D instead of manip for testing
-       /* if(position.get(1).asDouble() < - 0.3 )
+            if (handStat("right")){
+                for (std::map<string, string>::iterator it=inHandStatus.begin(); it!=inHandStatus.end(); ++it){
+                    
+                    if (strcmp (it->second.c_str(), "right" ) == 0)
+                        replyList.addString(it->first.c_str());
+                }
+            }
+            //double leftManip = getManip(objName, "left");
+            //double rightManip = getManip(objName, "right");
+            //fprintf(stdout, "\nleftManip: %lf and rightManip: %lf\n", leftManip, rightManip);
+            
+            yInfo("[reachableWith] after all: %s", replyList.toString().c_str());
+            
+            //using 3D instead of manip for testing
+           /* if(position.get(1).asDouble() < - 0.3 )
+                replyList.addString("left");
+            else if (position.get(1).asDouble() >  0.3 )
+                replyList.addString("right");
+            else{*/
             replyList.addString("left");
-        else if (position.get(1).asDouble() >  0.3 )
             replyList.addString("right");
-        else{*/
-        replyList.addString("left");
-        replyList.addString("right");
-        //}
-        yInfo("[reachableWith] will now send: %s", replyList.toString().c_str());
+            //}
+            yInfo("[reachableWith] will now send: %s", replyList.toString().c_str());
+        }
     }
-    
     return replyList;
 }
 /**********************************************************/
