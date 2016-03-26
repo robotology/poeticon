@@ -160,7 +160,6 @@ protected:
     yarp::os::Semaphore                 semaphore;
     std::string                         praxiconRequest;
     
-    
 public:
     
     ActivityInterface();

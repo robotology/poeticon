@@ -1258,11 +1258,17 @@ string ActivityInterface::holdIn(const string &handName)
 bool ActivityInterface::take(const string &objName, const string &handName)
 {
     
-    goHome();
-    
     yError(" ");
     yError("TAKING %s with %s", objName.c_str(), handName.c_str());
     yError(" ");
+ 
+    //do the take actions
+    Bottle cmd, reply;
+    cmd.clear(), reply.clear();
+    cmd.addString("idle");
+    cmd.addString("head");
+    yInfo("[take] will send the following to ARE: %s", cmd.toString().c_str());
+    rpcAREcmd.write(cmd, reply);
     
     inAction = true;
     pauseAllTrackers();
@@ -1309,56 +1315,71 @@ bool ActivityInterface::take(const string &objName, const string &handName)
             }
             else
             {
+                Bottle cmd, cmdreply;
+                
+                bool performAction = true;
                 Bottle under = underOf(objName.c_str());
                 yDebug("underOf size is %d and handName %s", under.size(), handName.c_str());
                 
-                double z;
+                double z = -0.118;//default
                 
                 if (under.size() == 0 && (strcmp (handName.c_str(), "right" ) == 0))
                     z = -0.118;
-                
-                if (under.size() == 0 && (strcmp (handName.c_str(), "left" ) == 0))
+                else if (under.size() == 0 && (strcmp (handName.c_str(), "left" ) == 0))
                     z = -0.106323;
-                
-                if(under.size() == 1 && (strcmp (handName.c_str(), "right" ) == 0))
+                else if (under.size() == 1 && (strcmp (handName.c_str(), "right" ) == 0))
                     z = -0.08;
-                
-                if(under.size() == 1 && (strcmp (handName.c_str(), "left" ) == 0))
+                else if (under.size() == 1 && (strcmp (handName.c_str(), "left" ) == 0))
                     z = -0.07;
-                
-                if(under.size() == 2 && (strcmp (handName.c_str(), "right" ) == 0))
+                else if (under.size() == 2 && (strcmp (handName.c_str(), "right" ) == 0))
                     z = -0.05;
-                
-                if(under.size() == 2 && (strcmp (handName.c_str(), "left" ) == 0))
+                else if (under.size() == 2 && (strcmp (handName.c_str(), "left" ) == 0))
                     z = -0.04;
-                
-                if(under.size() == 3 && (strcmp (handName.c_str(), "right" ) == 0))
+                else if (under.size() == 3 && (strcmp (handName.c_str(), "right" ) == 0))
                     z = -0.025;
-                
-                if(under.size() == 3 && (strcmp (handName.c_str(), "left" ) == 0))
+                else if (under.size() == 3 && (strcmp (handName.c_str(), "left" ) == 0))
                     z = -0.015;
-                
+                else
+                {
+                        yError("[take] something is not quite right\n");
+                        executeSpeech("There seems to be an issue with the command");
+                        performAction = false;
+                        cmdreply.clear();
+                        cmdreply.addString("nack");
+                }
                 
                 yDebug("The under size is %d, so z= %lf", under.size(), z);
                 
                 //do the take actions
-                Bottle cmd, reply;
+                
+                if (performAction)
+                {
+                    cmd.clear(), cmdreply.clear();
+                    cmd.addString("take");
+                    //cmd.addString(objName.c_str());
+                    Bottle &tmp=cmd.addList();
+                    tmp.addDouble (refinedPos.get(0).asDouble());
+                    tmp.addDouble (refinedPos.get(1).asDouble());
+                    //tmp.addDouble (refinedPos.get(2).asDouble());
+                    tmp.addDouble (z);
+                    
+                    cmd.addString (whichHand.c_str());
+                    cmd.addString ("still");
+                    
+                    yInfo("[take] will send the following to ARE: %s", cmd.toString().c_str());
+                    rpcAREcmd.write(cmd, cmdreply);
+                }
+                
+                //do the take actions
                 cmd.clear(), reply.clear();
-                cmd.addString("take");
-                //cmd.addString(objName.c_str());
-                Bottle &tmp=cmd.addList();
-                tmp.addDouble (refinedPos.get(0).asDouble());
-                tmp.addDouble (refinedPos.get(1).asDouble());
-                //tmp.addDouble (refinedPos.get(2).asDouble());
-                tmp.addDouble (z);
-                
-                cmd.addString (whichHand.c_str());
-                cmd.addString ("still");
-                
+                cmd.addString("idle");
+                cmd.addString("head");
                 yInfo("[take] will send the following to ARE: %s", cmd.toString().c_str());
                 rpcAREcmd.write(cmd, reply);
-            
-                if (reply.get(0).asVocab()==Vocab::encode("ack"))
+                
+                
+
+                if (cmdreply.get(0).asVocab()==Vocab::encode("ack"))
                 {
                     //do the take actions
                     Bottle cmd, reply;
@@ -1495,7 +1516,15 @@ bool ActivityInterface::put(const string &objName, const string &targetName)
     yError("ASKED TO PUT %s on %s", objName.c_str(), targetName.c_str());
     yError("");
     
-    goHome();
+    
+    //do the take actions
+    Bottle cmd, reply;
+    cmd.clear(), reply.clear();
+    cmd.addString("idle");
+    cmd.addString("head");
+    yInfo("[take] will send the following to ARE: %s", cmd.toString().c_str());
+    rpcAREcmd.write(cmd, reply);
+
     
     pauseAllTrackers();
     string handName = inHand(objName);
@@ -1576,65 +1605,78 @@ bool ActivityInterface::put(const string &objName, const string &targetName)
                     double y = 0.0;
                     double z = 0.0;
                     
+                    bool performAction = true;
+                    
                     if (under.size() == 0 && strcmp (handName.c_str(), "right" ) == 0)
                     {
-                        x = -0.02;
-                        y =  0.0;
-                        z = -0.08;
+                        x = -0.01;
+                        y =  0.02;
+                        z = -0.07;
                     }
-                    if (under.size() == 0 && strcmp (handName.c_str(), "left" ) == 0)
+                    else if (under.size() == 0 && strcmp (handName.c_str(), "left" ) == 0)
                     {
                         x =  0.0;
-                        y =  0.0;
+                        y =  -0.02;
                         z = -0.07;
                     
                     }
-                    if(under.size() == 1 && strcmp (handName.c_str(), "right" ) == 0)
+                    else if(under.size() == 1 && strcmp (handName.c_str(), "right" ) == 0)
                     {
-                        x = -0.02;
+                        x = -0.01;
                         y =  0.0;
                         z = -0.05;
                     }
-                    if (under.size() == 1 && strcmp (handName.c_str(), "left" ) == 0)
+                    else if (under.size() == 1 && strcmp (handName.c_str(), "left" ) == 0)
                     {
                         x =  0.0;
-                        y =  0.0;
+                        y =  -0.02;
                         z = -0.04;
                         
                     }
                     
-                    if(under.size() == 2 && strcmp (handName.c_str(), "right" ) == 0)
+                    else if(under.size() == 2 && strcmp (handName.c_str(), "right" ) == 0)
                     {
                         x = -0.02;
                         y = +0.01;
                         z = -0.025;
                     }
-                    if(under.size() == 2 && strcmp (handName.c_str(), "left" ) == 0)
+                    else if(under.size() == 2 && strcmp (handName.c_str(), "left" ) == 0)
                     {
                         x =  0.0;
-                        y =  0.0;
+                        y =  -0.02;
                         z = -0.016;
                         
+                    }
+                    else
+                    {
+                        yError("[put] something is not quite right\n");
+                        executeSpeech("There seems to be an issue with the command");
+                        performAction = false;
+                        reply.clear();
+                        reply.addString("nack");
                     }
                     
                     yDebug("The under size is %d, so x= %lf y= %lf z= %lf", under.size(), x, y, z);
                     
                     
-                    //do the take actions
-                    cmd.clear(), reply.clear();
-                    cmd.addString("drop");
-                    cmd.addString("over");
-                    //cmd.addString(targetName.c_str());
-                    Bottle &tmp=cmd.addList();
-                    tmp.addDouble (refinedPos.get(0).asDouble() + x);
-                    tmp.addDouble (refinedPos.get(1).asDouble() + y);
-                    tmp.addDouble (z);
-                    //cmd.addString("gently");
-                    cmd.addString(handName.c_str());
-                    
-                    yInfo("[put] will send the following to ARE: %s", cmd.toString().c_str());
-                    
-                    rpcAREcmd.write(cmd, reply);
+                    if (performAction)
+                    {
+                        //do the take actions
+                        cmd.clear(), reply.clear();
+                        cmd.addString("drop");
+                        cmd.addString("over");
+                        //cmd.addString(targetName.c_str());
+                        Bottle &tmp=cmd.addList();
+                        tmp.addDouble (refinedPos.get(0).asDouble() + x);
+                        tmp.addDouble (refinedPos.get(1).asDouble() + y);
+                        tmp.addDouble (z);
+                        //cmd.addString("gently");
+                        cmd.addString(handName.c_str());
+                        
+                        yInfo("[put] will send the following to ARE: %s", cmd.toString().c_str());
+                        
+                        rpcAREcmd.write(cmd, reply);
+                    }
                 }
             }
             else
@@ -1690,7 +1732,16 @@ Bottle ActivityInterface::askCalibratedLocation(const std::string &objName, cons
     Bottle position;
     if (rpcReachCalib.getOutputCount()>0)
     {
-        Bottle cmd;
+        
+        //do the take actions
+        Bottle cmd, reply;
+        cmd.clear(), reply.clear();
+        cmd.addString("idle");
+        cmd.addString("head");
+        yInfo("[take] will send the following to ARE: %s", cmd.toString().c_str());
+        rpcAREcmd.write(cmd, reply);
+        
+        cmd.clear(), reply.clear();
         cmd.addString("get_location");
         cmd.addString(handName.c_str());
         cmd.addString(objName.c_str());
@@ -1808,62 +1859,75 @@ bool ActivityInterface::askForTool(const std::string &handName, const int32_t po
         
         yInfo( "[askForTool] tool label is: %s \n",label.c_str());
         
-        pauseAllTrackers();
-        Bottle cmdAre, replyAre;
-        cmdAre.clear();
-        replyAre.clear();
-        cmdAre.addString("point");
-        Bottle &tmp=cmdAre.addList();
-        tmp.addInt (pos_x);
-        tmp.addInt (pos_y);
+        Bottle position = get3D(label);
         
-        cmdAre.addString(handName.c_str());
-        rpcAREcmd.write(cmdAre,replyAre);
+        yInfo("position is %s", position.toString().c_str());
         
-        cmdAre.clear();
-        replyAre.clear();
-        cmdAre.addString("tato");
-        cmdAre.addString(handName.c_str());
-        rpcAREcmd.write(cmdAre, replyAre);
-        
-        yInfo("[askForTool] done tato\n");
-        
-        cmdAre.clear();
-        replyAre.clear();
-        cmdAre.addString("hand");
-        cmdAre.addString("close_hand_tool");
-        cmdAre.addString(handName.c_str());
-        rpcAREcmd.write(cmdAre, replyAre);
-        Time::delay(5.0);
-        yInfo( "[askForTool] done close\n");
-        
-        cmdAre.clear();
-        replyAre.clear();
-        cmdAre.addString("home");
-        cmdAre.addString("arms");
-        cmdAre.addString("head");
-        rpcAREcmd.write(cmdAre, replyAre);
-        
-        //update inHandStatus map
-        
-        inHandStatus.insert(pair<string, string>(label.c_str(), handName.c_str()));
-        
-        if (availableTools.size()<1)
+        if ( position.size()>0 )
         {
-            availableTools.push_back(label.c_str());
-            yInfo("[askForTool] availableTools is empty\n");
-            yInfo("[askForTool] adding %s to list\n", label.c_str());
+            pauseAllTrackers();
+            Bottle cmdAre, replyAre;
+            cmdAre.clear();
+            replyAre.clear();
+            cmdAre.addString("point");
+            Bottle &tmp=cmdAre.addList();
+            tmp.addDouble(position.get(0).asDouble() + 0.02);
+            tmp.addDouble(position.get(1).asDouble());
+            tmp.addDouble(-0.106323);
+            
+            cmdAre.addString(handName.c_str());
+            rpcAREcmd.write(cmdAre,replyAre);
+            
+            cmdAre.clear();
+            replyAre.clear();
+            cmdAre.addString("tato");
+            cmdAre.addString(handName.c_str());
+            rpcAREcmd.write(cmdAre, replyAre);
+            
+            yInfo("[askForTool] done tato\n");
+            
+            cmdAre.clear();
+            replyAre.clear();
+            cmdAre.addString("hand");
+            cmdAre.addString("close_hand_tool");
+            cmdAre.addString(handName.c_str());
+            rpcAREcmd.write(cmdAre, replyAre);
+            Time::delay(5.0);
+            yInfo( "[askForTool] done close\n");
+            
+            cmdAre.clear();
+            replyAre.clear();
+            cmdAre.addString("home");
+            cmdAre.addString("arms");
+            cmdAre.addString("head");
+            rpcAREcmd.write(cmdAre, replyAre);
+            
+            //update inHandStatus map
+            
+            inHandStatus.insert(pair<string, string>(label.c_str(), handName.c_str()));
+            
+            if (availableTools.size()<1)
+            {
+                availableTools.push_back(label.c_str());
+                yInfo("[askForTool] availableTools is empty\n");
+                yInfo("[askForTool] adding %s to list\n", label.c_str());
+            }
+            else
+            {
+                if (std::find(availableTools.begin(), availableTools.end(), label.c_str()) == availableTools.end())
+                {
+                    yInfo("[askForTool] name %s NOT available\n", label.c_str());
+                    yInfo("[askForTool] adding it to list\n");
+                    availableTools.push_back(label.c_str());
+                }
+            }
+            resumeAllTrackers();
         }
         else
         {
-            if (std::find(availableTools.begin(), availableTools.end(), label.c_str()) == availableTools.end())
-            {
-                yInfo("[askForTool] name %s NOT available\n", label.c_str());
-                yInfo("[askForTool] adding it to list\n");
-                availableTools.push_back(label.c_str());
-            }
+            executeSpeech ("I cannot see anything at this position");
+            yError("[askForTool] Cannot see anything at this position\n");
         }
-        resumeAllTrackers();
     }
     else
     {
@@ -2078,7 +2142,7 @@ bool ActivityInterface::closestPoints(std::vector<std::vector<double> > &points,
     {
         int S = points.size();
         
-        cout << "Points left :"  << endl;
+        cout << S << " Points left : "  << endl;
         for(int p=0; p < S; ++p){
             cout << "(" << points[p][0] << ", " << points[p][1] << ", "  << points[p][2] << ") "  << endl;
         }
@@ -2116,6 +2180,7 @@ bool ActivityInterface::closestPoints(std::vector<std::vector<double> > &points,
         }
         
         
+        yInfo("done...");
         points.push_back(center);
         //repeat
     }
@@ -2796,7 +2861,7 @@ bool ActivityInterface::trainObserve(const string &label)
 /**********************************************************/
 bool ActivityInterface::classifyObserve()
 {
-    /*ImageOf<PixelRgb> img= *imagePortIn.read(true);
+    ImageOf<PixelRgb> img= *imagePortIn.read(true);
     imgClassifier.write(img);
     
     bool answer;
@@ -2828,9 +2893,7 @@ bool ActivityInterface::classifyObserve()
         answer = true;
     else
         answer = false;
-    */
     
-    bool answer = true;
     
     return answer;
 }
