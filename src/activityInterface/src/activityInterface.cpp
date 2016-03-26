@@ -1481,6 +1481,13 @@ bool ActivityInterface::take(const string &objName, const string &handName)
                         Bottle cmd, reply;
                         cmd.clear(), reply.clear();
                         cmd.addString("home");
+                        cmd.addString("arm");
+                        cmd.addString(whichHand.c_str());
+                        yInfo("[take] will send the following to ARE: %s", cmd.toString().c_str());
+                        rpcAREcmd.write(cmd, reply);
+                        
+                        cmd.clear(), reply.clear();
+                        cmd.addString("home");
                         cmd.addString("hand");
                         cmd.addString(whichHand.c_str());
                         yInfo("[take] will send the following to ARE: %s", cmd.toString().c_str());
@@ -3056,7 +3063,16 @@ bool ActivityInterface::gotSpike(const string &handName)
             Bottle cmd, reply;
             cmd.clear(), reply.clear();
             cmd.addString("home");
-            cmd.addString("all");
+            cmd.addString("arm");
+            cmd.addString(handName.c_str());
+            yInfo("[take] will send the following to ARE: %s", cmd.toString().c_str());
+            rpcAREcmd.write(cmd, reply);
+            
+            cmd.clear(), reply.clear();
+            cmd.addString("home");
+            cmd.addString("hand");
+            cmd.addString(handName.c_str());
+            yInfo("[take] will send the following to ARE: %s", cmd.toString().c_str());
             rpcAREcmd.write(cmd, reply);
         }
     }
