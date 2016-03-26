@@ -416,6 +416,11 @@ Bottle ActivityInterface::askPraxicon(const string &request)
     
     Bottle objectsMemory = getNames();
     
+    std::string inHandLeft = holdIn("left");
+    std::string inHandRight = holdIn("right");
+    
+    
+    
     yInfo("[askPraxicon] tool names: %s \n", toolLikeMemory.toString().c_str());
     yInfo("[askPraxicon] object names: %s \n", objectsMemory.toString().c_str());
     
@@ -442,6 +447,11 @@ Bottle ActivityInterface::askPraxicon(const string &request)
         if (total==toolLikeMemory.size())
             listOfObjects.addString(objectsMemory.get(i).asString().c_str());
     }
+    if (strcmp (inHandLeft.c_str(), "none" ) != 0)
+        listOfObjects.addString(inHandLeft.c_str());
+    
+    if (strcmp (inHandRight.c_str(), "none" ) != 0)
+        listOfObjects.addString(inHandRight.c_str());
     
     Bottle &missing=cmdPrax.addList();
     //create query list
@@ -1312,10 +1322,34 @@ bool ActivityInterface::take(const string &objName, const string &handName)
             //initObjectTracker(objName);
             string whichHand;
             
-            if (position.get(1).asDouble() <= - 0.005)
-                whichHand = "left";
+            if (position.get(1).asDouble() < - 0.005)
+            {
+                bool inHand = handStat("left");
+                if (!inHand)
+                {
+                    yInfo("I have the left hand free");
+                    whichHand = "left";
+                }
+                else
+                {
+                    yInfo("I have the left hand taken using right");
+                    whichHand = "right";
+                }
+            }
             else
-                whichHand = "right";
+            {
+                bool inHand = handStat("right");
+                if (!inHand)
+                {
+                    yInfo("I have the right hand free");
+                    whichHand = "right";
+                }
+                else
+                {
+                    yInfo("I have the right hand taken using left");
+                    whichHand = "left";
+                }
+            }
             
             yInfo("[take] requesting take with hand %s", whichHand.c_str());
             
@@ -1447,7 +1481,8 @@ bool ActivityInterface::take(const string &objName, const string &handName)
                         Bottle cmd, reply;
                         cmd.clear(), reply.clear();
                         cmd.addString("home");
-                        cmd.addString("all");
+                        cmd.addString("hand");
+                        cmd.addString(whichHand.c_str());
                         yInfo("[take] will send the following to ARE: %s", cmd.toString().c_str());
                         rpcAREcmd.write(cmd, reply);
                     }
@@ -1488,6 +1523,7 @@ bool ActivityInterface::take(const string &objName, const string &handName)
 /**********************************************************/
 bool ActivityInterface::drop(const string &objName)
 {
+    inAction = true;
     pauseAllTrackers();
     string handName = inHand(objName);
     if (strcmp (handName.c_str(), "none" ) != 0 )
@@ -1519,6 +1555,7 @@ bool ActivityInterface::drop(const string &objName)
         yError("[drop] I am not holding anything\n");
     }
     resumeAllTrackers();
+    inAction = false;
     return true;
 }
 
@@ -1868,6 +1905,8 @@ bool ActivityInterface::askForTool(const std::string &handName, const int32_t po
     
     goHome();
     
+    yInfo("[askForTool]The label at %d %d is : %s", pos_x, pos_y, label.c_str());
+    
     if (!label.empty())
     {
         executeSpeech ("can you give me the " + label + "please?");
@@ -1876,7 +1915,7 @@ bool ActivityInterface::askForTool(const std::string &handName, const int32_t po
         
         Bottle position = get3D(label);
         
-        yInfo("position is %s", position.toString().c_str());
+        yInfo(" [askForTool] position is %s", position.toString().c_str());
         
         if ( position.size()>0 )
         {
@@ -2000,7 +2039,7 @@ bool ActivityInterface::pull(const string &objName, const string &toolName)
         cmdkarma.addString("tool");
         cmdkarma.addString("attach");
         cmdkarma.addString(handName.c_str());
-        cmdkarma.addDouble(0.15);
+        cmdkarma.addDouble(0.12);
         cmdkarma.addDouble(-0.15);
         
         if (strcmp (handName.c_str(), "left" ) == 0)
@@ -2012,12 +2051,12 @@ bool ActivityInterface::pull(const string &objName, const string &toolName)
         rpcKarma.write(cmdkarma, replykarma);
         
         double result = 0.0;
-        double xoffset = 0.03;
+        double xoffset = 0.01;
         
         yInfo("[pull] Will now send to karmaMotor:\n");
         Bottle karmaMotor,KarmaReply;
         karmaMotor.addString("vdraw");
-        karmaMotor.addDouble(position.get(0).asDouble() + 0.05);
+        karmaMotor.addDouble(position.get(0).asDouble() + 0.01);
         karmaMotor.addDouble(position.get(1).asDouble());
         karmaMotor.addDouble(-0.14 + xoffset);
         karmaMotor.addDouble(90.0);
@@ -2035,7 +2074,7 @@ bool ActivityInterface::pull(const string &objName, const string &toolName)
         {
             Bottle karmaMotor,KarmaReply;
             karmaMotor.addString("draw");
-            karmaMotor.addDouble(position.get(0).asDouble() + 0.05);
+            karmaMotor.addDouble(position.get(0).asDouble() + 0.01);
             karmaMotor.addDouble(position.get(1).asDouble());
             //karmaMotor.addDouble(position.get(2).asDouble() + xoffset);
             karmaMotor.addDouble(-0.14 + xoffset);
@@ -2043,14 +2082,26 @@ bool ActivityInterface::pull(const string &objName, const string &toolName)
             karmaMotor.addDouble(0.08);
             karmaMotor.addDouble(0.15);
             yInfo("[pull] will send \n %s to KarmaMotor \n", karmaMotor.toString().c_str());
+            
+            
+            Bottle cmd,reply;
+            cmd.addString("look");
+            cmd.addString("hand");
+            cmd.addString(handName.c_str());
+            rpcAREcmd.write(cmd,reply);
+            
             rpcKarma.write(karmaMotor, KarmaReply);
             
-            Bottle are,reply;
-            are.clear(),reply.clear();
-            are.addString("home");
-            are.addString("head");
-            are.addString("arms");
-            rpcAREcmd.write(are,reply);
+            cmd.clear(),reply.clear();
+            cmd.addString("head");
+            cmd.addString("idle");
+            rpcAREcmd.write(cmd,reply);
+            
+            cmd.clear(),reply.clear();
+            cmd.addString("home");
+            cmd.addString("head");
+            cmd.addString("arms");
+            rpcAREcmd.write(cmd,reply);
             
         }
         else
@@ -2470,14 +2521,14 @@ Bottle ActivityInterface::reachableWith(const string &objName)
             yInfo("[reachableWith] after all: %s", replyList.toString().c_str());
             
             //using 3D instead of manip for testing
-           /* if(position.get(1).asDouble() < - 0.3 )
+           if(position.get(1).asDouble() < - 0.15 )
                 replyList.addString("left");
-            else if (position.get(1).asDouble() >  0.3 )
+            else if (position.get(1).asDouble() >  0.15 )
                 replyList.addString("right");
-            else{*/
-            replyList.addString("left");
-            replyList.addString("right");
-            //}
+            else{
+                replyList.addString("left");
+                replyList.addString("right");
+            }
             yInfo("[reachableWith] will now send: %s", replyList.toString().c_str());
         }
     }
