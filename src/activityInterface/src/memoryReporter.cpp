@@ -60,7 +60,7 @@ void PradaReporter::onRead(Bottle &status)
     yError("%s", status.toString().c_str());
     yError("-------------------------------------------");
     
-    if (status.size()>1)
+    if (status.size()>0)
         manager->processPradaStatus(status);
 }
 

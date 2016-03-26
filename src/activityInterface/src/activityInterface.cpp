@@ -591,6 +591,10 @@ bool ActivityInterface::processPradaStatus(const Bottle &status)
                 if (i < objectsMissing.size()-1 )
                     toSay+=" and ";
             }
+            
+            toSay.clear();
+            toSay = "Something has changed in the scene! I cannot complete the previous plan" ;
+            
             executeSpeech(toSay);
             executeSpeech("I need to ask the praxicon for help!" );
             
