@@ -378,15 +378,21 @@ bool PlannerThread::groundRules()
     }
     // instructs affordanceCommunication module to init
     Bottle& aff_bottle_out = aff_yarp.prepare();
-    aff_bottle_out.clear();
-    aff_bottle_out.addString("start");
-    aff_yarp.write();
+    if (!stopping)
+    {
+        aff_bottle_out.clear();
+        aff_bottle_out.addString("start");
+        aff_yarp.write();
+    }
     Time::delay(0.3);
     // instructs affordanceCommunication module to await commands from geometricGrounding
-    aff_bottle_out = aff_yarp.prepare();
-    aff_bottle_out.clear();
-    aff_bottle_out.addString("update");
-    aff_yarp.write();
+    if (!stopping)
+    {
+        aff_bottle_out = aff_yarp.prepare();
+        aff_bottle_out.clear();
+        aff_bottle_out.addString("update");
+        aff_yarp.write();
+    }
     while (!closing && !stopping) { // await confirmation from affordanceCommunication
         aff_bottle_in = aff_yarp.read(false);
         if (aff_bottle_in){
@@ -401,11 +407,14 @@ bool PlannerThread::groundRules()
         Time::delay(0.1);
     }
     // instructs geometricGrounding module to start grounding
-    Bottle& geo_bottle_out = geo_yarp.prepare();
-    geo_bottle_out.clear();
-    geo_bottle_out.addString("update");
-    geo_yarp.write();
-    yInfo("Grounding...");
+    if (!stopping)
+    {
+        Bottle& geo_bottle_out = geo_yarp.prepare();
+        geo_bottle_out.clear();
+        geo_bottle_out.addString("update");
+        geo_yarp.write();
+        yInfo("Grounding...");
+    }
     while (!closing && !stopping) { // awaits confirmation that grounding is complete
         geo_bottle_in = geo_yarp.read(false);
         if (geo_bottle_in != NULL){
@@ -429,10 +438,13 @@ bool PlannerThread::groundRules()
         Time::delay(0.1);
     }
     // Query affordanceCommunication to get the position of the tool-handles (to point when asking for them)
-    aff_bottle_out = aff_yarp.prepare();
-    aff_bottle_out.clear();
-    aff_bottle_out.addString("query");
-    aff_yarp.write();
+    if (!stopping)
+    {
+        aff_bottle_out = aff_yarp.prepare();
+        aff_bottle_out.clear();
+        aff_bottle_out.addString("query");
+        aff_yarp.write();
+    }
     while (!closing && !stopping) {
         yarp::os::Time::delay(0.1);
         aff_bottle_in = aff_yarp.read(false);
@@ -473,9 +485,12 @@ bool PlannerThread::compileGoal()
     }
     // Instructs goalCompiler module to await an instruction from praxiconInterface. Message might be sent before this, but it will only compile after this command
     Bottle& goal_bottle_out = goal_yarp.prepare();
-    goal_bottle_out.clear();
-    goal_bottle_out.addString("praxicon");
-    goal_yarp.write();
+    if (!stopping)
+    {
+        goal_bottle_out.clear();
+        goal_bottle_out.addString("praxicon");
+        goal_yarp.write();
+    }
     yInfo("Waiting for praxicon..."); // waits for message, timeout at 5 minutes
     string mess_receiv;
     while (!closing && !stopping) {
@@ -519,11 +534,14 @@ bool PlannerThread::compileGoal()
         }
         Time::delay(0.5);
     }
-    // Instructs the goalCompiler module to compile the set of subgoals
-    goal_bottle_out = goal_yarp.prepare();
-    goal_bottle_out.clear();
-    goal_bottle_out.addString("update");
-    goal_yarp.write();
+    if (!stopping)
+    {
+        // Instructs the goalCompiler module to compile the set of subgoals
+        goal_bottle_out = goal_yarp.prepare();
+        goal_bottle_out.clear();
+        goal_bottle_out.addString("update");
+        goal_yarp.write();
+    }
     while (!closing && !stopping) {
         yarp::os::Time::delay(0.1);
         goal_bottle_in = goal_yarp.read(false);

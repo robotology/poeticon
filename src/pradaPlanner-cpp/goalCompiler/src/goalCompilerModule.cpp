@@ -206,10 +206,11 @@ string goalCompiler::plannerCommand()
 {
     string command;
     while (!isStopping()){
-		yarp::os::Time::delay(0.1);
+        yarp::os::Time::delay(0.1);
         plannerBottle = plannerPort.read(false);
         if (plannerBottle != NULL){
             command = plannerBottle->toString().c_str();
+            //plannerBottle->clear();
             return command;
         }
     }
@@ -262,6 +263,7 @@ bool goalCompiler::receiveInstructions()
                 plannerBottleOut.clear();
                 plannerBottleOut.addString("done");
                 plannerPort.write();
+                //praxiconBottle->clear();
                 return true;
             }
         }
