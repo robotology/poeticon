@@ -1075,8 +1075,14 @@ bool WorldStateMgrThread::computeObjProperties(const int &id, const string &labe
         pos2d.addDouble(v);
 
         // prepare 2D shape descriptors property (desc2d)
+        bool validDesc = false;
+        validDesc = inAff != NULL &&
+                    abi >= 1 &&
+                    abi <= sizeAff &&
+                    inAff->get(abi).isList() &&
+                    inAff->get(abi).asList()->size() > 0;
         const int areaIdx = 23;
-        if ((inAff != NULL) && (abi >= 1) && (abi <= sizeAff))
+        if (validDesc)
         {
             desc2d.clear();
             desc2d.addDouble(inAff->get(abi).asList()->get(areaIdx).asDouble()); // area
@@ -1095,6 +1101,8 @@ bool WorldStateMgrThread::computeObjProperties(const int &id, const string &labe
             abi >= 1 &&
             abi <= sizeAff &&
             inToolAff->get(abi).asList()->size() == 2 &&
+            inToolAff->get(abi).asList()->get(0).isList() &&
+            inToolAff->get(abi).asList()->get(1).isList() &&
             inToolAff->get(abi).asList()->get(0).asList()->size() > 0 && // TODO: actual size
             inToolAff->get(abi).asList()->get(1).asList()->size() > 0; // TODO: actual size
         if (validToolDesc)
@@ -2511,6 +2519,7 @@ void WorldStateMgrThread::fsmPerception()
                               "object recognition and WSOPC database. getNames() =" <<
                               activityReply.get(0).asList()->toString().c_str() <<
                               "; opcIDs =" << opcIDs.toString().c_str();
+
                 candidateTrackMap.clear();
             }
 
