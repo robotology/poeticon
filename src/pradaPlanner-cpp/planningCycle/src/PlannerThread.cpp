@@ -1209,17 +1209,20 @@ bool PlannerThread::IDisPresent(string ID, bool &result)
 // function that checks which symbols are present across subgoals
 bool PlannerThread::checkHoldingSymbols()
 {
+    yDebug("checking symbols that still hold...");
     vector<string> holding_symbols;
     if (plan_level >= 1){
         for (int t = 0; t < subgoals[plan_level-1].size(); ++t){
             if (find_element(subgoals[plan_level],subgoals[plan_level-1][t]) == 1){
                 holding_symbols.push_back(subgoals[plan_level-1][t]);
+                yDebug("%s", subgoals[plan_level-1][t].c_str());
             }
         }
-        if (holding_symbols.size() != 0){
+/*        if (holding_symbols.size() != 0){
             holding_symbols.erase(holding_symbols.end());
-        }
+        }*/
         for (int t = 0; t < holding_symbols.size(); ++t){
+            yDebug("checking: %s", holding_symbols[t].c_str());
             if (find_element(state, holding_symbols[t])== 0){ // If one of the symbols present in an already-achieved subgoal is not present on the current state:
                 yInfo("Situation changed, receding in plan");
                 return false; 
