@@ -1797,12 +1797,12 @@ Bottle ActivityInterface::askCalibratedLocation(const std::string &objName, cons
         
         //do the take actions
         Bottle cmd, reply;
-        /*cmd.clear(), reply.clear();
+        cmd.clear(), reply.clear();
         cmd.addString("idle");
         cmd.addString("head");
         yInfo("[take] will send the following to ARE: %s", cmd.toString().c_str());
         rpcAREcmd.write(cmd, reply);
-         */
+        
         
         cmd.clear(), reply.clear();
         cmd.addString("get_location");
@@ -1958,7 +1958,7 @@ bool ActivityInterface::askForTool(const std::string &handName, const int32_t po
             cmdAre.addString("close_hand_tool");
             cmdAre.addString(handName.c_str());
             rpcAREcmd.write(cmdAre, replyAre);
-            Time::delay(5.0);
+            Time::delay(4.0);
             yInfo( "[askForTool] done close\n");
             
             cmdAre.clear();
