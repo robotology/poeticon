@@ -1672,41 +1672,40 @@ bool ActivityInterface::put(const string &objName, const string &targetName)
                     
                     if (under.size() == 0 && strcmp (handName.c_str(), "right" ) == 0)
                     {
-                        x = -0.01;
-                        y =  0.02;
+                        x = -0.02;
+                        y =  0.0;
                         z = -0.07;
                     }
                     else if (under.size() == 0 && strcmp (handName.c_str(), "left" ) == 0)
                     {
-                        x =  0.0;
-                        y =  -0.02;
+                        x =  -0.025;
+                        y =  -0.01;
                         z = -0.07;
                     
                     }
                     else if(under.size() == 1 && strcmp (handName.c_str(), "right" ) == 0)
                     {
-                        x = -0.01;
-                        y =  0.0;
+                        x = -0.03;
+                        y =  0.01;
                         z = -0.05;
                     }
                     else if (under.size() == 1 && strcmp (handName.c_str(), "left" ) == 0)
                     {
-                        x =  0.0;
-                        y =  -0.02;
-                        z = -0.04;
-                        
+                        x =  -0.03;
+                        y =  0.015;
+                        z = -0.045;
                     }
                     
                     else if(under.size() == 2 && strcmp (handName.c_str(), "right" ) == 0)
                     {
-                        x = -0.02;
-                        y = +0.01;
-                        z = -0.025;
+                        x =  -0.025;
+                        y =  0.01;
+                        z = -0.03;
                     }
                     else if(under.size() == 2 && strcmp (handName.c_str(), "left" ) == 0)
                     {
-                        x =  0.0;
-                        y =  -0.02;
+                        x =  -0.03;
+                        y =  -0.03;
                         z = -0.016;
                         
                     }
@@ -2395,8 +2394,8 @@ bool ActivityInterface::testFill()
     onTopElements.insert(pair<int, string>(elements, "Bun-bottom"));
     elements ++;
     onTopElements.insert(pair<int, string>(elements, "Ham"));
-    //elements ++;
-    //onTopElements.insert(pair<int, string>(elements, "Tomato"));
+    elements ++;
+    onTopElements.insert(pair<int, string>(elements, "Tomato"));
     //elements ++;
     //onTopElements.insert(pair<int, string>(elements, "Bun-top"));
     
@@ -2975,6 +2974,8 @@ bool ActivityInterface::classifyObserve()
     else
         answer = false;
     
+
+    //answer = false;
     
     return answer;
 }
