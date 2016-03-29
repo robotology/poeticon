@@ -39,7 +39,7 @@ bool goalCompiler::configure(ResourceFinder &rf)
         command = "";
         command = plannerCommand();
         yDebug("Command received: %s", command.c_str());
-        if (!loadObjs())
+/*        if (!loadObjs())
         {
             yWarning("failed to load objects");
             if (!plannerReply("failed objects"))
@@ -48,13 +48,13 @@ bool goalCompiler::configure(ResourceFinder &rf)
                 //return false;
             }
             continue;
-        }
+        }*/
         if (command == "praxicon")
         {
             if (!loadObjs())
             {
                 yWarning("failed to load objects");
-            	if (!plannerReply("failed objects"))
+            	if (!plannerReply("failed_objects"))
             	{
                 	yError("failed to communicate with planner");
                 	//return false;
@@ -72,7 +72,7 @@ bool goalCompiler::configure(ResourceFinder &rf)
             if (!loadObjs())
             {
                 yWarning("failed to load objects");
-            	if (!plannerReply("failed objects"))
+            	if (!plannerReply("failed_objects"))
             	{
                 	yError("failed to communicate with planner");
                 	//return false;
@@ -82,7 +82,7 @@ bool goalCompiler::configure(ResourceFinder &rf)
             if (!loadRules())
             {
                 yWarning("failed to load rules");
-            	if (!plannerReply("failed rules"))
+            	if (!plannerReply("failed_rules"))
             	{
                 	yError("failed to communicate with planner");
                 	//return false;
@@ -92,7 +92,7 @@ bool goalCompiler::configure(ResourceFinder &rf)
             if (!loadInstructions())
             {
                 yWarning("failed to load instructions");
-            	if (!plannerReply("failed instructions"))
+            	if (!plannerReply("failed_instructions"))
             	{
                 	yError("failed to communicate with planner");
                 	//return false;
@@ -102,7 +102,7 @@ bool goalCompiler::configure(ResourceFinder &rf)
             if (!compile())
             {
                 yWarning("failed to compile goals");
-            	if (!plannerReply("failed compiling"))
+            	if (!plannerReply("failed_compiling"))
             	{
                 	yError("failed to communicate with planner");
                 	//return false;
@@ -112,7 +112,7 @@ bool goalCompiler::configure(ResourceFinder &rf)
             if (!translate())
             {
                 yWarning("failed to translate goals");
-            	if (!plannerReply("failed translation"))
+            	if (!plannerReply("failed_translation"))
             	{
                 	yError("failed to communicate with planner");
                 	//return false;
@@ -122,7 +122,7 @@ bool goalCompiler::configure(ResourceFinder &rf)
 			if (!checkConsistency())
 			{
 				yWarning("failed consistency test");
-            	if (!plannerReply("failed consistency"))
+            	if (!plannerReply("failed_consistency"))
             	{
                 	yError("failed to communicate with planner");
                 	//return false;
@@ -132,7 +132,7 @@ bool goalCompiler::configure(ResourceFinder &rf)
             if (!clearUnimportantGoals())
 			{
 				yWarning("failed clearing unimportant subgoals");
-            	if (!plannerReply("failed pruning"))
+            	if (!plannerReply("failed_pruning"))
             	{
                 	yError("failed to communicate with planner");
                 	//return false;
@@ -142,7 +142,7 @@ bool goalCompiler::configure(ResourceFinder &rf)
             if (!writeFiles())
             {
                 yWarning("failed to write files");
-            	if (!plannerReply("failed writing"))
+            	if (!plannerReply("failed_writing"))
             	{
                 	yError("failed to communicate with planner");
                 	//return false;
@@ -222,18 +222,31 @@ bool goalCompiler::receiveInstructions()
     string temp_str;
     int timer_count = 0;
     while (!isStopping()){
-		yarp::os::Time::delay(0.1);
+        yarp::os::Time::delay(0.1);
         if (timer_count == 3000)
         {
             yError("timeout: no instructions received before 5 minutes time");
             Bottle &plannerBottleOut = plannerPort.prepare();
             plannerBottleOut.clear();
-            plannerBottleOut.addString("failed Praxicon");
+            plannerBottleOut.addString("failed_Praxicon");
             plannerPort.write();
             return false;
         }
+        if (plannerPort.getPendingReads() > 0)
+        {
+            return true; //there is a new planner command, exit the function and read it
+        }
         praxiconBottle = praxiconPort.read(false);
         if (praxiconBottle != NULL){
+            if (!loadObjs())
+            {
+                yWarning("failed to load objects");
+                if (!plannerReply("failed_objects"))
+                {
+                    yError("failed to communicate with planner");
+                }
+                return false;
+            }
             yInfo("bottle received: %s", praxiconBottle->toString().c_str());
             instructions.clear();
             if (praxiconBottle->toString().find("a") != -1){
@@ -266,13 +279,21 @@ bool goalCompiler::receiveInstructions()
                 //praxiconBottle->clear();
                 return true;
             }
+            else 
+            {
+                Bottle &plannerBottleOut = plannerPort.prepare();
+                plannerBottleOut.clear();
+                plannerBottleOut.addString("empty_bottle");
+                plannerPort.write();
+                return false;
+            }
         }
         if (praxiconPort.getInputCount() == 0)
         {
             yError("praxicon crashed or disconnected");
             Bottle &plannerBottleOut = plannerPort.prepare();
             plannerBottleOut.clear();
-            plannerBottleOut.addString("failed Praxicon");
+            plannerBottleOut.addString("failed_Praxicon");
             plannerPort.write();
             return false;
         }

@@ -506,12 +506,12 @@ bool PlannerThread::compileGoal()
                 yInfo("Praxicon instruction received, compiling...");
                 break;
             }
-            else if (mess_receiv == "failed objects") // failed to obtain objects from planningCycle
+            else if (mess_receiv == "failed_objects") // failed to obtain objects from planningCycle
             {
                 yError("goalCompiler failed to load object list.");
                 return false;
             }
-            else if (mess_receiv == "failed Praxicon") // timeout
+            else if (mess_receiv == "failed_Praxicon") // timeout
             {
                 yError("Praxicon crashed or took too long to reply (5 minutes timeout).");
                 return false;
@@ -519,6 +519,11 @@ bool PlannerThread::compileGoal()
             else if (mess_receiv == "unknown") // unknown object in the instructions provided by Praxicon
             {
                 yWarning("Unknown object in Praxicon message, unable to compile.");
+                return false;
+            }
+            else if (mess_receiv == "empty_bottle") // received an empty bottle from praxicon
+            {
+                yError("Empty bottle received from Praxicon; change the world and askPraxicon again");
                 return false;
             }
             else // any other message:
@@ -554,43 +559,43 @@ bool PlannerThread::compileGoal()
                 yInfo("Goal Compiling is complete!");
                 break;
             }
-            else if (mess_receiv == "failed objects") // failed to obtain the objects from the planningCycle
+            else if (mess_receiv == "failed_objects") // failed to obtain the objects from the planningCycle
             {
                 yWarning("goalCompiler failed to load object list.");
                 return false;
             }
-            else if (mess_receiv == "failed rules") // failed to obtain the rules from the rules file (rules.dat)
+            else if (mess_receiv == "failed_rules") // failed to obtain the rules from the rules file (rules.dat)
             {
                 yWarning("goalCompiler failed to load rules list.");
                 return false;
             }
-            else if (mess_receiv == "failed instructions") // failed to obtain instructions from the Praxicon message (probably won't ever happen, given previous messages)
+            else if (mess_receiv == "failed_instructions") // failed to obtain instructions from the Praxicon message (probably won't ever happen, given previous messages)
             {
                 yWarning("goalCompiler failed to load instructions list.");
                 return false;
             }
-            else if (mess_receiv == "failed compiling") // failed during the compilation of the subgoals
+            else if (mess_receiv == "failed_compiling") // failed during the compilation of the subgoals
             {
                 yWarning("goalCompiler failed to compile the subgoals.");
                 return false;
             }
-            else if (mess_receiv == "failed translation") // failed during the translation of the subgoals (labels->IDs)
+            else if (mess_receiv == "failed_translation") // failed during the translation of the subgoals (labels->IDs)
             {
                 yWarning("goalCompiler failed to translate the subgoals.");
                 return false;
             }
-            else if (mess_receiv == "failed consistency") // failed the consistency check performed by the module (undoable plan)
+            else if (mess_receiv == "failed_consistency") // failed the consistency check performed by the module (undoable plan)
             {
                 yWarning("Consistency Check failed; the instructions provided by the Praxicon cannot be achieved.");
                 // send message to praxicon
                 return false;
             }
-            else if (mess_receiv == "failed pruning") // failed in eliminating undesirable subgoals
+            else if (mess_receiv == "failed_pruning") // failed in eliminating undesirable subgoals
             {
                 yWarning("goalCompiler failed to prune the subgoal list.");
                 return false;
             }
-            else if (mess_receiv == "failed writing") // failed in writing to the subgoal.dat file
+            else if (mess_receiv == "failed_writing") // failed in writing to the subgoal.dat file
             {
                 yWarning("goalCompiler failed to write subgoals to the subgoal file.");
                 return false;
