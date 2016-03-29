@@ -44,7 +44,7 @@
         </module>
         <module>
                 <name>iolStateMachineHandler</name>
-                <parameters>--tracker_timeout 0.0 --attention off</parameters>
+                <parameters>--tracker_timeout 0.5 --attention off</parameters>
                 <node>icub22</node>
         </module>
         <module>
