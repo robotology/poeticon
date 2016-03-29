@@ -456,6 +456,15 @@ bool WorldStateMgrThread::resetOPCHandFields(const int &handID)
     if (opcPort.getOutputCount()<1)
         return false;
 
+    const int LeftHandID = 11;
+    const int RightHandID = 12;
+    if ((handID != LeftHandID) && (handID != RightHandID))
+    {
+        yError("%s called with a non-hand ID argument", __func__);
+        return false;
+    }
+    const string handName = (handID==LeftHandID ? "left" : "right");
+
     Bottle opcCmd;
     Bottle opcCmdContent;
     Bottle opcReply;
@@ -474,7 +483,7 @@ bool WorldStateMgrThread::resetOPCHandFields(const int &handID)
 
     Bottle bIsFree;
     bIsFree.addString("is_free");
-    bool newIsFreeValue = true; // TODO: better ask it to activityIF?
+    bool newIsFreeValue = isHandFree(handName);
     bIsFree.addString( BoolToString(newIsFreeValue) );
     opcCmdContent.addList() = bIsFree;
     opcCmd.addList() = opcCmdContent;
@@ -984,6 +993,8 @@ bool WorldStateMgrThread::computeObjProperties(const int &id, const string &labe
                                                Bottle &onTopOf,
                                                Bottle &reachW, Bottle &pullW)
 {
+    //yDebug("%s begin %d/%s", __func__, id, label.c_str());
+
     if (activityPort.getOutputCount()<1)
         return false;
 
@@ -1042,8 +1053,10 @@ bool WorldStateMgrThread::computeObjProperties(const int &id, const string &labe
     double u=0.0, v=0.0;
     if (tbi != -1)
     {
+        //yDebug("%s start reading coordinates of %d/%s", __func__, id, label.c_str());
         u = inTargets->get(tbi).asList()->get(1).asDouble();
         v = inTargets->get(tbi).asList()->get(2).asDouble();
+        //yDebug("%s finish reading coordinates of %d/%s", __func__, id, label.c_str());
     }
     int abi = -1; // affordance blobs Bottle index
     if (visibleByTracker)
@@ -1192,6 +1205,8 @@ bool WorldStateMgrThread::computeObjProperties(const int &id, const string &labe
     }
 
     // end symbols that depend on activityInterface
+
+    //yDebug("%s end %d/%s", __func__, id, label.c_str());
 
     return true;
 }
