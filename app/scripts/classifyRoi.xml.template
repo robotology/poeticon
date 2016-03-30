@@ -1,0 +1,97 @@
+<application>
+<name>Classify Observe ROI </name>
+
+        <dependencies>
+                <port>/icub/camcalib/left/out</port>
+                <port>/icub/camcalib/right/out</port>
+                <port>/iKinGazeCtrl/rpc</port>
+        </dependencies>
+
+        <module>
+                <name>dispBlobber</name>
+                <parameters>--minBlobSize 1000</parameters>
+                <node>icub21</node>
+        </module>
+        <module>
+                <name>caffeCoder</name>
+                <parameters>--name caffeCoderRoi</parameters>
+                <node>icub-tesla</node>
+        </module>
+        <module>
+                <name>linearClassifierModule</name>
+                <parameters>--name linearClassifierModuleRoi --BufferSize 1 --CSVM 1.0 --databaseFolder ROIDatabase --WeightedSVM 1</parameters>
+                <node>icub-b1</node>
+        </module>
+        <module>
+                <name>himrepClassifier</name>
+                <parameters>--name himrepClassifierRoi</parameters>
+                <node>icub21</node>
+        </module>
+        <module>
+                <name>objectsPropertiesCollector</name>
+                <parameters>--name memoryRoi --db memory_CAFFE_ROI.ini</parameters>
+                <node>icub-b2</node>
+        </module>
+        <module>
+                <name>yarpview</name>
+                <parameters>--name /roiViewer/nearBlob --compact</parameters>
+                <node>icub22</node>
+        </module>
+
+        <connection>
+                <from>/activityInterface/imgClassifier:o</from>
+                <to>/himrepClassifierRoi/img:i</to>
+                <protocol>tcp</protocol>
+        </connection>
+        <connection>
+                <from>/activityInterface/classify:rpc</from>
+                <to>/himrepClassifierRoi/rpc</to>
+                <protocol>tcp</protocol>
+        </connection>
+
+        <connection>
+                <from>/himrepClassifierRoi/img:o</from>
+                <to>/caffeCoderRoi/img:i</to>
+                <protocol>tcp</protocol>
+        </connection>
+        <connection>
+                <from>/caffeCoderRoi/code:o</from>
+                <to>/himrepClassifierRoi/features:i</to>
+                <protocol>tcp</protocol>
+        </connection>
+        <connection>
+                <from>/himrepClassifierRoi/features:o</from>
+                <to>/linearClassifierModuleRoi/features:i</to>
+                <protocol>tcp</protocol>
+        </connection>
+        <connection>
+                <from>/linearClassifierModuleRoi/scores:o</from>
+                <to>/himrepClassifierRoi/scores:i</to>
+                <protocol>tcp</protocol>
+        </connection>
+        <connection>
+                <from>/himrepClassifierRoi/classify:rpc</from>
+                <to>/linearClassifierModuleRoi/rpc</to>
+                <protocol>tcp</protocol>
+        </connection>
+        <connection>
+                <from>/caffeCoderRoi/img:o</from>
+                <to>/himrepClassifierRoi/SIFTimg:i</to>
+                <protocol>tcp</protocol>
+        </connection>
+        <connection>
+                <from>/himrepClassifierRoi/opc</from>
+                <to>/memoryRoi/rpc</to>
+                <protocol>tcp</protocol>
+        </connection>
+         <connection>
+                <from>/SFM/disp:o</from>
+                <to>/dispBlobber/img:i</to>
+                <protocol>tcp</protocol>
+        </connection>
+        <connection>
+                <from>/dispBlobber/opt:o</from>
+                <to>/roiViewer/nearBlob</to>
+                <protocol>tcp</protocol>
+        </connection>
+</application>
