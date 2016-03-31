@@ -673,14 +673,17 @@ bool Manager::updateModule()
 
 /*******************************************************define tool*************************************************/
 
-if (rxCmd==Vocab::encode("tool_transform"))
+if (rxCmd==Vocab::encode("toolTransform"))
     {
         if (cmd.size()>3)
         {
             toolName = cmd.get(1).asString();
-            toolTransformSimple[0]=cmd.get(2).asDouble();
-            toolTransformSimple[1]=cmd.get(3).asDouble();
-            toolTransformSimple[2]=cmd.get(4).asDouble();
+//            toolTransformSimple[0]=cmd.get(2).asDouble();
+//            toolTransformSimple[1]=cmd.get(3).asDouble();
+//            toolTransformSimple[2]=cmd.get(4).asDouble();
+            toolTransform[0][0] = cmd.get(2).asDouble();
+            toolTransform[0][1] = cmd.get(3).asDouble();
+            toolTransform[0][2] = cmd.get(4).asDouble();
 
         }
         else
@@ -690,14 +693,21 @@ if (rxCmd==Vocab::encode("tool_transform"))
 
         reply.addString("tool_transform");
         reply.addString(toolName.c_str());
-        reply.addDouble(*toolTransformSimple.data());
+//        reply.addDouble(*toolTransformSimple.data());
 //        reply.addDouble(toolTransform[1]);
 //        reply.addDouble(toolTransform[2]);
 //        std::ostringstream strs;
 //        strs << toolX;
 //        std::string toolX_str = strs.str();
 //        reply.addString(toolX_str.c_str());
-        rpcHuman.reply(reply);
+//        rpcHuman.reply(reply);
+         if (executeToolAttach(toolTransform[0]))
+		    fprintf(stderr,"\nTool attached (requested transform)\n");
+		else
+		    fprintf(stderr,"\nERROR -- Problem in attaching the tool...\n");
+
+
+
 
 
 //                if (executeToolAttach(toolTransformDefault))
@@ -793,20 +803,20 @@ if (rxCmd==Vocab::encode("tool_transform"))
         get3DPosition(objImgPos_onTable, objectPos);
         segmentAndTrack(objImgPos.x, objImgPos.y);
 
-        //fprintf(stderr,"eff %d %s %s\n", actionId, toolName.data(), targetName.data());
+        fprintf(stderr,"eff %d %s %s\n", actionId, toolName.data(), targetName.data());
 
-        effData << "eff" << " ";
+//        effData << "eff" << " ";
         if (simMode.compare("on")==0)
         {
-            effData << toolSimNum   << " ";
-            effData << targetSimNum << " ";
+//            effData << toolSimNum   << " ";
+//            effData << targetSimNum << " ";
         }
         else
         {
-            effData << toolName.data()   << " ";
-            effData << targetName.data() << " ";
+//            effData << toolName.data()   << " ";
+//            effData << targetName.data() << " ";
         }
-        effData << actionId   << " ";
+//        effData << actionId   << " ";
 
         yarp::sig::Vector objectPosTracker;
         yarp::sig::Vector *trackVec = targetPF.read(true);
@@ -818,11 +828,11 @@ if (rxCmd==Vocab::encode("tool_transform"))
 
         fprintf(stderr,"\n\n***********Get FIRST object sample\n\n");
 
-        effData << objectPosTracker[0] << " "
-        << objectPosTracker[1] << " "
-        << objectPosTracker[2] << " "
-        << objImgPos.x << " "
-        << objImgPos.y;
+//        effData << objectPosTracker[0] << " "
+//        << objectPosTracker[1] << " "
+//        << objectPosTracker[2] << " "
+//        << objImgPos.x << " "
+//        << objImgPos.y;
         getActionParam();
 
     /*    performAction(); //on objectPos (not on objectPosTracker, which might be inaccurate)
@@ -844,22 +854,21 @@ if (rxCmd==Vocab::encode("tool_transform"))
             << objImgPos.y;
         }*/
 
-        goHomeArmsHead();
+//        goHomeArmsHead();
 
         Time::delay(0.5);
 
-        fprintf(stderr,"\n\n**********Get LAST object sample\n\n");
-        fprintf(stderr,"\n\n**********I reached end of info\n\n");
+        fprintf(stderr,"\n\n**********Get LAST object sample here\n\n");
+//
+//        effData << " " <<  objectPosTracker[0] << " "
+//        << objectPosTracker[1] << " "
+//        << objectPosTracker[2] << " "
+//        << objImgPos.x << " "
+//        << objImgPos.y;
 
-        effData << " " <<  objectPosTracker[0] << " "
-        << objectPosTracker[1] << " "
-        << objectPosTracker[2] << " "
-        << objImgPos.x << " "
-        << objImgPos.y;
-
-        effData << '\n';
-        effData.close();
-        effData.open(effdataFileName.c_str(), ofstream::out | ofstream::app);
+//        effData << '\n';
+//        effData.close();
+//        effData.open(effdataFileName.c_str(), ofstream::out | ofstream::app);
 
 
     }
@@ -1514,9 +1523,11 @@ void Manager::performAction()
             //karmaMotor.addInt(pose);
             karmaMotor.addDouble(actPos[0]);
             karmaMotor.addDouble(actPos[1]);
-            karmaMotor.addDouble(actPos[2] + 0.03);
-            karmaMotor.addDouble(90.0); // direction (before it was 180.0)
-            karmaMotor.addDouble(-objectSizeOffset*2.0 - 0.05); // initial tool-object distance
+//            karmaMotor.addDouble(actPos[2] + 0.03);
+            karmaMotor.addDouble(actPos[2]);
+            karmaMotor.addDouble(270.0); // direction (before it was 180.0)
+//            karmaMotor.addDouble(-objectSizeOffset*2.0 - 0.05); // initial tool-object distance
+            karmaMotor.addDouble(objectSizeOffset);
             karmaMotor.addDouble(-MOVEMENT_LENGTH); // movement lenght
             fprintf(stdout,"Will now send to karmaMotor:\n");
             fprintf(stdout,"%s\n",karmaMotor.toString().c_str());
@@ -1533,9 +1544,11 @@ void Manager::performAction()
                 //karmaMotor.addInt(pose);
                 karmaMotor.addDouble(actPos[0]);
                 karmaMotor.addDouble(actPos[1]);
-                karmaMotor.addDouble(actPos[2] + 0.03);  //table offset is bigger for the Push action
-                karmaMotor.addDouble(90.0); // direction (before it was 180.0)
-                karmaMotor.addDouble(-objectSizeOffset*2.0 - 0.05); // initial tool-object distance
+//                karmaMotor.addDouble(actPos[2] + 0.03);  //table offset is bigger for the Push action
+                karmaMotor.addDouble(actPos[2]);
+                karmaMotor.addDouble(270.0); // direction (before it was 180.0)
+//                karmaMotor.addDouble(-objectSizeOffset*2.0 - 0.05); // initial tool-object distance
+                karmaMotor.addDouble(objectSizeOffset);
                 karmaMotor.addDouble(-MOVEMENT_LENGTH); // movement lenght
                 fprintf(stdout,"Will now send to karmaMotor:\n");
                 fprintf(stdout,"%s\n",karmaMotor.toString().c_str());
@@ -1586,7 +1599,7 @@ void Manager::getActionParam()
         actPos[2]=objectPos[2] + tableHeightOffset;     // define table offset
     }
 
-    fprintf(stdout,"Acting on position: x=%+.3f y=%+.3f z=%+.3f\n",actPos[0],actPos[1],actPos[2]);
+    fprintf(stdout,"Acting on position: x=%+.3f y=%+.3f z=%+.3f tho=%+.3f\n",actPos[0],actPos[1],actPos[2],tableHeightOffset);
 
     yarp::sig::Vector *trackVec = targetPF.read(true);
     yarp::sig::Vector vec = *trackVec;
@@ -1642,6 +1655,8 @@ void Manager::getActionParam()
 
             fprintf(stdout,"%s\n",reply.toString().c_str());
             rpcHuman.reply(reply);
+            fprintf(stdout,"Will now send to karmaMotor:\n");
+            fprintf(stdout,"%s\n",reply.toString().c_str());
             //actionStartTime=Time::now();
             //rpcMotorKarma.write(karmaMotor, KarmaReply);
             //actionDurationTime=Time::now()-actionStartTime;
@@ -1704,13 +1719,15 @@ void Manager::getActionParam()
             //karmaMotor.addInt(pose);
             karmaMotor.addDouble(actPos[0]);
             karmaMotor.addDouble(actPos[1]);
-            karmaMotor.addDouble(actPos[2] + 0.03);
-            karmaMotor.addDouble(90.0); // direction (before it was 180.0)
-            karmaMotor.addDouble(-objectSizeOffset*2.0 - 0.05); // initial tool-object distance
+//            karmaMotor.addDouble(actPos[2] + 0.03);
+            karmaMotor.addDouble(actPos[2]);
+            karmaMotor.addDouble(270.0); // direction (before it was 180.0)
+//            karmaMotor.addDouble(-objectSizeOffset*2.0 - 0.05); // initial tool-object distance
+            karmaMotor.addDouble(objectSizeOffset);
             karmaMotor.addDouble(-MOVEMENT_LENGTH); // movement lenght
             fprintf(stdout,"Will now send to karmaMotor:\n");
             fprintf(stdout,"%s\n",karmaMotor.toString().c_str());
-            //rpcMotorKarma.write(karmaMotor, KarmaReply);
+            rpcMotorKarma.write(karmaMotor, KarmaReply);
             fprintf(stdout,"outcome is %s:\n",KarmaReply.toString().c_str());
             rpcHuman.reply(KarmaReply);
 
@@ -1952,12 +1969,24 @@ int Manager::askForTool()
 /**********************************************************/
 void Manager::graspTool()
 {
+//    Time::delay(1.0);
+//    fprintf(stdout,"Start 'clto' '%s' (close tool %s) proceedure:\n",hand.c_str(),hand.c_str());
+//    Bottle cmdAre,replyAre;
+//    cmdAre.clear();
+//    replyAre.clear();
+//    cmdAre.addString("clto");
+//    cmdAre.addString(hand.c_str());
+//    fprintf(stdout,"cmd sent: %s\n",cmdAre.toString().c_str());
+//    rpcMotorAre.write(cmdAre, replyAre);
+//    fprintf(stdout,"reply: %s\n",replyAre.toString().c_str());
+
     Time::delay(1.0);
-    fprintf(stdout,"Start 'clto' '%s' (close tool %s) proceedure:\n",hand.c_str(),hand.c_str());
+    fprintf(stdout,"Start 'hand' '%s' (close tool %s) proceedure:\n",hand.c_str(),hand.c_str());
     Bottle cmdAre,replyAre;
     cmdAre.clear();
     replyAre.clear();
-    cmdAre.addString("clto");
+    cmdAre.addString("hand");
+    cmdAre.addString("close_hand_tool");
     cmdAre.addString(hand.c_str());
     fprintf(stdout,"cmd sent: %s\n",cmdAre.toString().c_str());
     rpcMotorAre.write(cmdAre, replyAre);

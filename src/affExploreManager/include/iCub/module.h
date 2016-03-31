@@ -48,10 +48,10 @@ const double                    DEFAULT_CLOSE_THR            = 30.0;
 const double                    VDRAW_THR                    = 0.1;
 const double                    TOOL_LEFT_TRANSFORM_DEFAULT[]      = {0.18, -0.18,  0.04};
 const double                    TOOL_RIGHT_TRANSFORM_DEFAULT[]     = {0.18, -0.18, -0.04};
-const double                    TABLE_HEIGHT_OFFSET_DEFAULT  = 0.05;
+const double                    TABLE_HEIGHT_OFFSET_DEFAULT  = 0.07; // used to be 0.05;
 const double                    OBJECT_SIZE_OFFSET_DEFAULT   = 0.04;
 const int                       HAND_NATURAL_POSE_DEFAULT    = 0; // 0 = straight pose (hand palms facing each others), 1 = pronated pose (hand palms facing the table).
-const double                    MOVEMENT_LENGTH              = 0.10;
+const double                    MOVEMENT_LENGTH              = 0.12;
 
 /**********************************************************/
 
