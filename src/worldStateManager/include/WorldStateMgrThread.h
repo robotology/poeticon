@@ -23,6 +23,7 @@
 #include <yarp/os/Port.h>
 #include <yarp/os/Property.h>
 #include <yarp/os/RateThread.h>
+#include <yarp/os/ResourceFinder.h>
 #include <yarp/os/RpcClient.h>
 #include <yarp/os/Time.h>
 #include <yarp/os/Vocab.h>
@@ -64,6 +65,8 @@ class WorldStateMgrThread : public RateThread
 {
     private:
         string moduleName;
+        ResourceFinder rf;
+
         string opcPortName;
         string inTargetsPortName;
         string inAffPortName;
@@ -86,7 +89,7 @@ class WorldStateMgrThread : public RateThread
         int countFrom;
         bool withFilter;
         int filterOrder;
-        bool needInit;
+        bool needTrackerInit;
         bool initFinished;
         bool needUpdate;
         bool toldUserBlobsConnected;
@@ -106,9 +109,7 @@ class WorldStateMgrThread : public RateThread
 
     public:
         WorldStateMgrThread(const string &_moduleName,
-                            const double _period,
-                            const int _countFrom,
-                            const bool _withFilter);
+                            ResourceFinder &_rf);
         bool openPorts();
         void close();
         void interrupt();
@@ -126,6 +127,9 @@ class WorldStateMgrThread : public RateThread
 
         bool opcContainsID(const int &id);
         bool checkOPCStatus(const int &minEntries, Bottle &ids);
+        bool resetOPC();
+        bool resetOPCHandFields(const int &handID);
+        bool increaseCountFrom();
 
         bool refreshBlobs();
 
@@ -159,7 +163,8 @@ class WorldStateMgrThread : public RateThread
                                  Bottle &reachW, Bottle &pullW);
 
         bool tellActivityGoHome();
-        int label2id(const string &label);
+        string id2label(const int &id);
+        int label2id(const string &label, bool useTrackerCheck=false);
         bool getLabel(const int &u, const int &v, string &label);
         bool getLabelMajorityVote(const int &u, const int &v, string &winnerLabel, const int &rounds=5);
         bool isOnTopOf(const string &objName, Bottle &objBelow);
@@ -167,6 +172,9 @@ class WorldStateMgrThread : public RateThread
         bool isPullableWith(const string &objName, Bottle &objPullable);
         bool isHandFree(const string &handName);
         string inWhichHand(const string &objName);
+        bool getVisibilityByActivityIF(const string &objName, bool &result, int extraTries=4);
+        bool belongsToStack(const string &objName, bool &result);
+        bool isInHand(const string &objName, bool &result);
 
         bool setFilterOrder(const int &n);
 

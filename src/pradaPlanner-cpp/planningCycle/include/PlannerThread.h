@@ -28,6 +28,7 @@
 #include <yarp/os/Time.h>
 #include <yarp/os/Vocab.h>
 #include <yarp/sig/Vector.h>
+#include <algorithm>
 
 #include "Helpers.h"
 
@@ -82,6 +83,7 @@ class PlannerThread : public RateThread
         bool restartPlan;
         bool resumePlan;
         bool startPlan;
+        bool stopping;
         
         int plan_level;
 
@@ -105,6 +107,7 @@ class PlannerThread : public RateThread
         vector<string> objects_used;
         vector<string> goal;
         vector<string> failed_goal;
+        //vector<string> tool_list;
 
         vector<vector<string> > subgoals;
         vector<vector<string> > object_IDs;
@@ -142,6 +145,7 @@ class PlannerThread : public RateThread
         bool loadUsedObjs();
         bool checkFailure();
         bool compareState();
+        bool IDisPresent(string ID, bool &result);
 
         // IDL functions
         bool startPlanning();
@@ -167,6 +171,7 @@ class PlannerThread : public RateThread
         string showCurrentState();
         string showCurrentGoal();
         string printSymbol(string symbol);
+        //Bottle getToolList();
 };
 
 #endif

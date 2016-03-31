@@ -17,7 +17,7 @@ object_port = yarp.Port()
 poeticon_port = yarp.Port()
 
 -- defining objects and actions vocabularies
-objects = {"rake", "meat", "cheese", "tomato", "stick", "bun-bottom", "bun-top"}
+objects = {"Rake", "Stick", "Ham", "Tomato", "Bun-bottom", "Bun-top"}
 actions = {"{point at}", "{what is this}"}
 
 -- defining speech grammar for Menu

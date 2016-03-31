@@ -19,8 +19,7 @@
 #include <yarp/os/RpcClient.h>
 #include <yarp/os/Time.h>
 #include <yarp/os/Vocab.h>
-//#include <cstdio>
-//#include <iostream>
+#include <yarp/os/Log.h>
 #include <fstream>
 #include <sstream>
 #include <string.h>
@@ -87,6 +86,7 @@ class goalCompiler : public RFModule
         bool translate();
         bool writeFiles();
 		bool checkConsistency();
+        bool clearUnimportantGoals();
 };
 
 #endif

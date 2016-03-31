@@ -19,13 +19,14 @@
 #include <yarp/os/RpcClient.h>
 #include <yarp/os/Time.h>
 #include <yarp/os/Vocab.h>
-//#include <cstdio>
-//#include <iostream>
+#include <yarp/os/Log.h>
+#include <yarp/os/LogStream.h>
 #include <fstream>
 #include <sstream>
 #include <string.h>
 #include <vector>
 #include <algorithm>
+#include <string>
 
 #include "Helpers.h"
 
@@ -39,6 +40,7 @@ class affComm : public RFModule
  
         string moduleName;
         string PathName;
+        bool display;
 
         vector<vector<string> > translation;
         vector<vector<string> > objects;
@@ -63,7 +65,7 @@ class affComm : public RFModule
 
         RpcClient descQueryPort;
         RpcClient actionQueryPort;
-		RpcClient objectQueryPort;
+        RpcClient objectQueryPort;
 
         Bottle *plannerBottle;
         Bottle *Affor_bottle_in;
@@ -81,7 +83,7 @@ class affComm : public RFModule
         virtual double getPeriod();
 
         void openPorts();
-        bool switchDisplayOff();
+        bool switchDisplay();
         bool loadObjs();
         bool plannerCommand();
         bool affordancesCycle();

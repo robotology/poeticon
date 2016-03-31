@@ -32,12 +32,6 @@ class WorldStateMgrModule : public RFModule, public WorldStateMgr_IDL
         // pointer to a new thread
         WorldStateMgrThread *thread;
 
-        // thread stuff
-        double threadPeriod;
-        int countFrom;
-        bool withFilter;
-        int filterOrder;
-
     public:
         virtual bool configure(ResourceFinder &rf);
         virtual bool interruptModule();

@@ -87,6 +87,9 @@ protected:
     yarp::os::RpcClient                 rpcMemory;
     yarp::os::RpcClient                 rpcWorldState;
     yarp::os::RpcClient                 rpcIolState;
+    yarp::os::RpcClient                 rpcClassifier;
+    yarp::os::RpcClient                 rpcReachCalib;
+    yarp::os::RpcClient                 rpcPrada;
     
     yarp::os::RpcClient                 rpcKarma;
     
@@ -95,10 +98,12 @@ protected:
     yarp::os::Port                      praxiconToPradaPort;
     
     yarp::os::Port                      robotStatus;
-    
+    yarp::os::Port                      imgClassifier;
+
     std::string                         inputBlobPortName;
     std::string                         inputImagePortName;
-    
+
+    yarp::os::BufferedPort<yarp::os::Bottle>                                dispBlobRoi;
     yarp::os::BufferedPort<yarp::os::Bottle>                                blobsPort;
     yarp::os::BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelRgb> >        imagePortIn;
     yarp::os::BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelMono> >       imgeBlobPort;
@@ -139,6 +144,7 @@ protected:
     
     /* parameters */
     bool                                closing;
+    bool                                inAction;
     bool                                scheduleLoadMemory;
     
     std::map<std::string, std::string>  inHandStatus;
@@ -153,7 +159,6 @@ protected:
     
     yarp::os::Semaphore                 semaphore;
     std::string                         praxiconRequest;
-    
     
 public:
     
@@ -188,11 +193,21 @@ public:
     bool                resumeAllTrackers();
     bool                initObjectTracker(const std::string &objName);
     yarp::os::Bottle    trackStackedObject(const std::string &objName);
+    std::string         processScores(const yarp::os::Bottle &scores);
+    std::vector<std::size_t> locate_all( const std::vector<std::string>& seq, const std::string& what );
+    
+    bool                avgMatrix(const std::vector<std::vector<double> > &M, std::vector<double> &avgVec);
+    bool                closestPoints(std::vector<std::vector<double> > &points, std::vector<double> &center, int N = 5);
+    bool                minMatrix(const std::vector<std::vector<double> > &M, int &minX, int &minY, double &minimum);
+    bool                pwDist(const std::vector<std::vector<double> >  &points, std::vector<std::vector<double> >  &pwd);
     
     bool                with_robot;
     bool                shouldUpdate;
     bool                allPaused;
     
+    bool                previousAction;
+    bool                recheckUnder;
+
     int                 incrementSize[10];
 
     /* rpc interface functions */
@@ -206,6 +221,7 @@ public:
     bool                take(const std::string &objName, const std::string &handName);
     bool                put(const std::string &objName, const std::string &targetName);
     yarp::os::Bottle    underOf(const std::string &objName);
+    yarp::os::Bottle    queryUnderOf(const std::string &objName);
     yarp::os::Bottle    getOffset(const std::string &objName);
     bool                askForTool(const std::string &handName, const int32_t pos_x, const int32_t pos_y);
     yarp::os::Bottle    reachableWith(const std::string &objName);
@@ -220,6 +236,16 @@ public:
     bool                resetObjStack();
     bool                testFill();
     yarp::os::Bottle    getCog(const int32_t tlpos_x, const int32_t tlpos_y, const int32_t brpos_x, const int32_t brpos_y);
+    
+    bool                trainObserve(const std::string &label);
+    bool                classifyObserve();
+    bool                gotSpike(const std::string &handName);
+    std::string         holdIn(const std::string &handName);
+    yarp::os::Bottle    askCalibratedLocation(const std::string &objectName, const std::string &handName);
+    yarp::os::Bottle    getCalibratedLocation(const std::string &objectName, const std::string &handName);
+    yarp::os::Bottle    getAverageVisibleObject(const int32_t iterations);
+    
+    
     
     bool                quit();
 };

@@ -8,8 +8,18 @@ set(APPNAME poeticon)
 file(GLOB conf ${CMAKE_CURRENT_SOURCE_DIR}/conf/*.ini)
 file(GLOB scripts ${CMAKE_CURRENT_SOURCE_DIR}/scripts/*.template)
 
-file(GLOB prada ${CMAKE_CURRENT_SOURCE_DIR}/conf/planner.exe)
-file(GLOB pradaFiles ${CMAKE_CURRENT_SOURCE_DIR}/conf/config ${CMAKE_CURRENT_SOURCE_DIR}/conf/*.dat)
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/conf/planner.exe")
+  set(prada_FOUND ON)
+  message(STATUS "libPRADA found")
+else()
+  set(prada_FOUND OFF)
+  message(WARNING "libPRADA not found")
+endif()
+
+if(prada_FOUND)
+  file(GLOB prada ${CMAKE_CURRENT_SOURCE_DIR}/conf/planner.exe)
+  file(GLOB pradaFiles ${CMAKE_CURRENT_SOURCE_DIR}/conf/config ${CMAKE_CURRENT_SOURCE_DIR}/conf/*.dat)
+endif()
 
 set(lua_fsm ${CMAKE_CURRENT_SOURCE_DIR}/lua/poeticon_root_fsm.lua)
 set(lua_bin ${CMAKE_CURRENT_SOURCE_DIR}/lua/poeticon_main.lua)
@@ -25,8 +35,10 @@ icubcontrib_set_default_prefix()
 yarp_install(FILES ${conf} DESTINATION ${ICUBCONTRIB_CONTEXTS_INSTALL_DIR}/${APPNAME})
 yarp_install(FILES ${scripts} DESTINATION ${ICUBCONTRIB_APPLICATIONS_TEMPLATES_INSTALL_DIR})
 
-yarp_install(PROGRAMS ${prada} DESTINATION ${ICUBCONTRIB_CONTEXTS_INSTALL_DIR}/${APPNAME})
-yarp_install(FILES ${pradaFiles} DESTINATION ${ICUBCONTRIB_CONTEXTS_INSTALL_DIR}/${APPNAME})
+if(prada_FOUND)
+  yarp_install(PROGRAMS ${prada} DESTINATION ${ICUBCONTRIB_CONTEXTS_INSTALL_DIR}/${APPNAME})
+  yarp_install(FILES ${pradaFiles} DESTINATION ${ICUBCONTRIB_CONTEXTS_INSTALL_DIR}/${APPNAME})
+endif()
 
 yarp_install(PROGRAMS ${lua_fsm} DESTINATION ${ICUBCONTRIB_CONTEXTS_INSTALL_DIR}/${APPNAME}/lua)
 

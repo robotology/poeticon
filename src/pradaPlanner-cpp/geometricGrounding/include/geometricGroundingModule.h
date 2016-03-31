@@ -19,13 +19,13 @@
 #include <yarp/os/RpcClient.h>
 #include <yarp/os/Time.h>
 #include <yarp/os/Vocab.h>
-//#include <cstdio>
-//#include <iostream>
+#include <yarp/os/Log.h>
 #include <fstream>
 #include <sstream>
 #include <string.h>
 #include <vector>
 #include <algorithm>
+#include <string>
 
 #include "Helpers.h"
 
@@ -82,7 +82,7 @@ class geoGround : public RFModule
         void openPorts();
         bool loadObjs();
         string plannerCommand();
-        bool plannerReply();
+        bool plannerReply(string replyString);
         bool loadPreRules();
         bool createRulesList();
         bool getAffordances();

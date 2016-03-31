@@ -25,6 +25,15 @@ public:
   virtual bool read(yarp::os::ConnectionReader& connection);
 };
 
+class activityInterface_IDLServer_holdIn : public yarp::os::Portable {
+public:
+  std::string handName;
+  std::string _return;
+  void init(const std::string& handName);
+  virtual bool write(yarp::os::ConnectionWriter& connection);
+  virtual bool read(yarp::os::ConnectionReader& connection);
+};
+
 class activityInterface_IDLServer_getLabel : public yarp::os::Portable {
 public:
   int32_t xpos;
@@ -253,6 +262,51 @@ public:
   virtual bool read(yarp::os::ConnectionReader& connection);
 };
 
+class activityInterface_IDLServer_trainObserve : public yarp::os::Portable {
+public:
+  std::string label;
+  bool _return;
+  void init(const std::string& label);
+  virtual bool write(yarp::os::ConnectionWriter& connection);
+  virtual bool read(yarp::os::ConnectionReader& connection);
+};
+
+class activityInterface_IDLServer_classifyObserve : public yarp::os::Portable {
+public:
+  bool _return;
+  void init();
+  virtual bool write(yarp::os::ConnectionWriter& connection);
+  virtual bool read(yarp::os::ConnectionReader& connection);
+};
+
+class activityInterface_IDLServer_gotSpike : public yarp::os::Portable {
+public:
+  std::string handName;
+  bool _return;
+  void init(const std::string& handName);
+  virtual bool write(yarp::os::ConnectionWriter& connection);
+  virtual bool read(yarp::os::ConnectionReader& connection);
+};
+
+class activityInterface_IDLServer_getCalibratedLocation : public yarp::os::Portable {
+public:
+  std::string objName;
+  std::string handName;
+  yarp::os::Bottle _return;
+  void init(const std::string& objName, const std::string& handName);
+  virtual bool write(yarp::os::ConnectionWriter& connection);
+  virtual bool read(yarp::os::ConnectionReader& connection);
+};
+
+class activityInterface_IDLServer_getAverageVisibleObject : public yarp::os::Portable {
+public:
+  int32_t iterations;
+  yarp::os::Bottle _return;
+  void init(const int32_t iterations);
+  virtual bool write(yarp::os::ConnectionWriter& connection);
+  virtual bool read(yarp::os::ConnectionReader& connection);
+};
+
 class activityInterface_IDLServer_quit : public yarp::os::Portable {
 public:
   bool _return;
@@ -306,6 +360,29 @@ bool activityInterface_IDLServer_handStat::read(yarp::os::ConnectionReader& conn
 
 void activityInterface_IDLServer_handStat::init(const std::string& handName) {
   _return = false;
+  this->handName = handName;
+}
+
+bool activityInterface_IDLServer_holdIn::write(yarp::os::ConnectionWriter& connection) {
+  yarp::os::idl::WireWriter writer(connection);
+  if (!writer.writeListHeader(2)) return false;
+  if (!writer.writeTag("holdIn",1,1)) return false;
+  if (!writer.writeString(handName)) return false;
+  return true;
+}
+
+bool activityInterface_IDLServer_holdIn::read(yarp::os::ConnectionReader& connection) {
+  yarp::os::idl::WireReader reader(connection);
+  if (!reader.readListReturn()) return false;
+  if (!reader.readString(_return)) {
+    reader.fail();
+    return false;
+  }
+  return true;
+}
+
+void activityInterface_IDLServer_holdIn::init(const std::string& handName) {
+  _return = "";
   this->handName = handName;
 }
 
@@ -879,6 +956,119 @@ void activityInterface_IDLServer_getCog::init(const int32_t tlxpos, const int32_
   this->brypos = brypos;
 }
 
+bool activityInterface_IDLServer_trainObserve::write(yarp::os::ConnectionWriter& connection) {
+  yarp::os::idl::WireWriter writer(connection);
+  if (!writer.writeListHeader(2)) return false;
+  if (!writer.writeTag("trainObserve",1,1)) return false;
+  if (!writer.writeString(label)) return false;
+  return true;
+}
+
+bool activityInterface_IDLServer_trainObserve::read(yarp::os::ConnectionReader& connection) {
+  yarp::os::idl::WireReader reader(connection);
+  if (!reader.readListReturn()) return false;
+  if (!reader.readBool(_return)) {
+    reader.fail();
+    return false;
+  }
+  return true;
+}
+
+void activityInterface_IDLServer_trainObserve::init(const std::string& label) {
+  _return = false;
+  this->label = label;
+}
+
+bool activityInterface_IDLServer_classifyObserve::write(yarp::os::ConnectionWriter& connection) {
+  yarp::os::idl::WireWriter writer(connection);
+  if (!writer.writeListHeader(1)) return false;
+  if (!writer.writeTag("classifyObserve",1,1)) return false;
+  return true;
+}
+
+bool activityInterface_IDLServer_classifyObserve::read(yarp::os::ConnectionReader& connection) {
+  yarp::os::idl::WireReader reader(connection);
+  if (!reader.readListReturn()) return false;
+  if (!reader.readBool(_return)) {
+    reader.fail();
+    return false;
+  }
+  return true;
+}
+
+void activityInterface_IDLServer_classifyObserve::init() {
+  _return = false;
+}
+
+bool activityInterface_IDLServer_gotSpike::write(yarp::os::ConnectionWriter& connection) {
+  yarp::os::idl::WireWriter writer(connection);
+  if (!writer.writeListHeader(2)) return false;
+  if (!writer.writeTag("gotSpike",1,1)) return false;
+  if (!writer.writeString(handName)) return false;
+  return true;
+}
+
+bool activityInterface_IDLServer_gotSpike::read(yarp::os::ConnectionReader& connection) {
+  yarp::os::idl::WireReader reader(connection);
+  if (!reader.readListReturn()) return false;
+  if (!reader.readBool(_return)) {
+    reader.fail();
+    return false;
+  }
+  return true;
+}
+
+void activityInterface_IDLServer_gotSpike::init(const std::string& handName) {
+  _return = false;
+  this->handName = handName;
+}
+
+bool activityInterface_IDLServer_getCalibratedLocation::write(yarp::os::ConnectionWriter& connection) {
+  yarp::os::idl::WireWriter writer(connection);
+  if (!writer.writeListHeader(3)) return false;
+  if (!writer.writeTag("getCalibratedLocation",1,1)) return false;
+  if (!writer.writeString(objName)) return false;
+  if (!writer.writeString(handName)) return false;
+  return true;
+}
+
+bool activityInterface_IDLServer_getCalibratedLocation::read(yarp::os::ConnectionReader& connection) {
+  yarp::os::idl::WireReader reader(connection);
+  if (!reader.readListReturn()) return false;
+  if (!reader.read(_return)) {
+    reader.fail();
+    return false;
+  }
+  return true;
+}
+
+void activityInterface_IDLServer_getCalibratedLocation::init(const std::string& objName, const std::string& handName) {
+  this->objName = objName;
+  this->handName = handName;
+}
+
+bool activityInterface_IDLServer_getAverageVisibleObject::write(yarp::os::ConnectionWriter& connection) {
+  yarp::os::idl::WireWriter writer(connection);
+  if (!writer.writeListHeader(2)) return false;
+  if (!writer.writeTag("getAverageVisibleObject",1,1)) return false;
+  if (!writer.writeI32(iterations)) return false;
+  return true;
+}
+
+bool activityInterface_IDLServer_getAverageVisibleObject::read(yarp::os::ConnectionReader& connection) {
+  yarp::os::idl::WireReader reader(connection);
+  if (!reader.readListReturn()) return false;
+  if (!reader.read(_return)) {
+    reader.fail();
+    return false;
+  }
+  return true;
+}
+
+void activityInterface_IDLServer_getAverageVisibleObject::init(const int32_t iterations) {
+  this->iterations = iterations;
+}
+
 bool activityInterface_IDLServer_quit::write(yarp::os::ConnectionWriter& connection) {
   yarp::os::idl::WireWriter writer(connection);
   if (!writer.writeListHeader(1)) return false;
@@ -919,6 +1109,16 @@ bool activityInterface_IDLServer::handStat(const std::string& handName) {
   helper.init(handName);
   if (!yarp().canWrite()) {
     yError("Missing server method '%s'?","bool activityInterface_IDLServer::handStat(const std::string& handName)");
+  }
+  bool ok = yarp().write(helper,helper);
+  return ok?helper._return:_return;
+}
+std::string activityInterface_IDLServer::holdIn(const std::string& handName) {
+  std::string _return = "";
+  activityInterface_IDLServer_holdIn helper;
+  helper.init(handName);
+  if (!yarp().canWrite()) {
+    yError("Missing server method '%s'?","std::string activityInterface_IDLServer::holdIn(const std::string& handName)");
   }
   bool ok = yarp().write(helper,helper);
   return ok?helper._return:_return;
@@ -1173,6 +1373,56 @@ yarp::os::Bottle activityInterface_IDLServer::getCog(const int32_t tlxpos, const
   bool ok = yarp().write(helper,helper);
   return ok?helper._return:_return;
 }
+bool activityInterface_IDLServer::trainObserve(const std::string& label) {
+  bool _return = false;
+  activityInterface_IDLServer_trainObserve helper;
+  helper.init(label);
+  if (!yarp().canWrite()) {
+    yError("Missing server method '%s'?","bool activityInterface_IDLServer::trainObserve(const std::string& label)");
+  }
+  bool ok = yarp().write(helper,helper);
+  return ok?helper._return:_return;
+}
+bool activityInterface_IDLServer::classifyObserve() {
+  bool _return = false;
+  activityInterface_IDLServer_classifyObserve helper;
+  helper.init();
+  if (!yarp().canWrite()) {
+    yError("Missing server method '%s'?","bool activityInterface_IDLServer::classifyObserve()");
+  }
+  bool ok = yarp().write(helper,helper);
+  return ok?helper._return:_return;
+}
+bool activityInterface_IDLServer::gotSpike(const std::string& handName) {
+  bool _return = false;
+  activityInterface_IDLServer_gotSpike helper;
+  helper.init(handName);
+  if (!yarp().canWrite()) {
+    yError("Missing server method '%s'?","bool activityInterface_IDLServer::gotSpike(const std::string& handName)");
+  }
+  bool ok = yarp().write(helper,helper);
+  return ok?helper._return:_return;
+}
+yarp::os::Bottle activityInterface_IDLServer::getCalibratedLocation(const std::string& objName, const std::string& handName) {
+  yarp::os::Bottle _return;
+  activityInterface_IDLServer_getCalibratedLocation helper;
+  helper.init(objName,handName);
+  if (!yarp().canWrite()) {
+    yError("Missing server method '%s'?","yarp::os::Bottle activityInterface_IDLServer::getCalibratedLocation(const std::string& objName, const std::string& handName)");
+  }
+  bool ok = yarp().write(helper,helper);
+  return ok?helper._return:_return;
+}
+yarp::os::Bottle activityInterface_IDLServer::getAverageVisibleObject(const int32_t iterations) {
+  yarp::os::Bottle _return;
+  activityInterface_IDLServer_getAverageVisibleObject helper;
+  helper.init(iterations);
+  if (!yarp().canWrite()) {
+    yError("Missing server method '%s'?","yarp::os::Bottle activityInterface_IDLServer::getAverageVisibleObject(const int32_t iterations)");
+  }
+  bool ok = yarp().write(helper,helper);
+  return ok?helper._return:_return;
+}
 bool activityInterface_IDLServer::quit() {
   bool _return = false;
   activityInterface_IDLServer_quit helper;
@@ -1226,6 +1476,22 @@ bool activityInterface_IDLServer::read(yarp::os::ConnectionReader& connection) {
       if (!writer.isNull()) {
         if (!writer.writeListHeader(1)) return false;
         if (!writer.writeBool(_return)) return false;
+      }
+      reader.accept();
+      return true;
+    }
+    if (tag == "holdIn") {
+      std::string handName;
+      if (!reader.readString(handName)) {
+        reader.fail();
+        return false;
+      }
+      std::string _return;
+      _return = holdIn(handName);
+      yarp::os::idl::WireWriter writer(reader);
+      if (!writer.isNull()) {
+        if (!writer.writeListHeader(1)) return false;
+        if (!writer.writeString(_return)) return false;
       }
       reader.accept();
       return true;
@@ -1645,6 +1911,86 @@ bool activityInterface_IDLServer::read(yarp::os::ConnectionReader& connection) {
       reader.accept();
       return true;
     }
+    if (tag == "trainObserve") {
+      std::string label;
+      if (!reader.readString(label)) {
+        reader.fail();
+        return false;
+      }
+      bool _return;
+      _return = trainObserve(label);
+      yarp::os::idl::WireWriter writer(reader);
+      if (!writer.isNull()) {
+        if (!writer.writeListHeader(1)) return false;
+        if (!writer.writeBool(_return)) return false;
+      }
+      reader.accept();
+      return true;
+    }
+    if (tag == "classifyObserve") {
+      bool _return;
+      _return = classifyObserve();
+      yarp::os::idl::WireWriter writer(reader);
+      if (!writer.isNull()) {
+        if (!writer.writeListHeader(1)) return false;
+        if (!writer.writeBool(_return)) return false;
+      }
+      reader.accept();
+      return true;
+    }
+    if (tag == "gotSpike") {
+      std::string handName;
+      if (!reader.readString(handName)) {
+        reader.fail();
+        return false;
+      }
+      bool _return;
+      _return = gotSpike(handName);
+      yarp::os::idl::WireWriter writer(reader);
+      if (!writer.isNull()) {
+        if (!writer.writeListHeader(1)) return false;
+        if (!writer.writeBool(_return)) return false;
+      }
+      reader.accept();
+      return true;
+    }
+    if (tag == "getCalibratedLocation") {
+      std::string objName;
+      std::string handName;
+      if (!reader.readString(objName)) {
+        reader.fail();
+        return false;
+      }
+      if (!reader.readString(handName)) {
+        reader.fail();
+        return false;
+      }
+      yarp::os::Bottle _return;
+      _return = getCalibratedLocation(objName,handName);
+      yarp::os::idl::WireWriter writer(reader);
+      if (!writer.isNull()) {
+        if (!writer.writeListHeader(1)) return false;
+        if (!writer.write(_return)) return false;
+      }
+      reader.accept();
+      return true;
+    }
+    if (tag == "getAverageVisibleObject") {
+      int32_t iterations;
+      if (!reader.readI32(iterations)) {
+        reader.fail();
+        return false;
+      }
+      yarp::os::Bottle _return;
+      _return = getAverageVisibleObject(iterations);
+      yarp::os::idl::WireWriter writer(reader);
+      if (!writer.isNull()) {
+        if (!writer.writeListHeader(1)) return false;
+        if (!writer.write(_return)) return false;
+      }
+      reader.accept();
+      return true;
+    }
     if (tag == "quit") {
       bool _return;
       _return = quit();
@@ -1692,6 +2038,7 @@ std::vector<std::string> activityInterface_IDLServer::help(const std::string& fu
     helpString.push_back("*** Available commands:");
     helpString.push_back("getManip");
     helpString.push_back("handStat");
+    helpString.push_back("holdIn");
     helpString.push_back("getLabel");
     helpString.push_back("inHand");
     helpString.push_back("get3D");
@@ -1717,6 +2064,11 @@ std::vector<std::string> activityInterface_IDLServer::help(const std::string& fu
     helpString.push_back("resetObjStack");
     helpString.push_back("testFill");
     helpString.push_back("getCog");
+    helpString.push_back("trainObserve");
+    helpString.push_back("classifyObserve");
+    helpString.push_back("gotSpike");
+    helpString.push_back("getCalibratedLocation");
+    helpString.push_back("getAverageVisibleObject");
     helpString.push_back("quit");
     helpString.push_back("help");
   }
@@ -1733,6 +2085,12 @@ std::vector<std::string> activityInterface_IDLServer::help(const std::string& fu
       helpString.push_back("Get the status of the left or right hand ");
       helpString.push_back("@param handName specifies the name of the hand in question ");
       helpString.push_back("@return true/false on holding or not ");
+    }
+    if (functionName=="holdIn") {
+      helpString.push_back("std::string holdIn(const std::string& handName) ");
+      helpString.push_back("Get the object located in handName ");
+      helpString.push_back("@param handName specifies the name of the hand in question ");
+      helpString.push_back("@return string with the name of the object ");
     }
     if (functionName=="getLabel") {
       helpString.push_back("std::string getLabel(const int32_t xpos, const int32_t ypos) ");
@@ -1884,6 +2242,36 @@ std::vector<std::string> activityInterface_IDLServer::help(const std::string& fu
       helpString.push_back("@param brxpos specifies the 2D position of the object bounding box (bottom right on the X axis) ");
       helpString.push_back("@param brxpos specifies the 2D position of the object bounding box (bottom right on the Y axis) ");
       helpString.push_back("@return string with the name of the object ");
+    }
+    if (functionName=="trainObserve") {
+      helpString.push_back("bool trainObserve(const std::string& label) ");
+      helpString.push_back("Trains the classifier with the associated label ");
+      helpString.push_back("@param label specifies the name of the classified object ");
+      helpString.push_back("@return true/false on success/failure ");
+    }
+    if (functionName=="classifyObserve") {
+      helpString.push_back("bool classifyObserve() ");
+      helpString.push_back("Classifies what is seen in the image ");
+      helpString.push_back("@return true/false on object in hand or not ");
+    }
+    if (functionName=="gotSpike") {
+      helpString.push_back("bool gotSpike(const std::string& handName) ");
+      helpString.push_back("Informs activityInterface that something has changed in the hand ");
+      helpString.push_back("@return true/false on success/failure ");
+    }
+    if (functionName=="getCalibratedLocation") {
+      helpString.push_back("yarp::os::Bottle getCalibratedLocation(const std::string& objName, const std::string& handName) ");
+      helpString.push_back("Returns a yarp Bottle containing the calibrated position of requested object and hand ");
+      helpString.push_back("@param objName string containing the name of the required object ");
+      helpString.push_back("@param handName string containing the name of the required object ");
+      helpString.push_back("@return true/false on success/failure ");
+    }
+    if (functionName=="getAverageVisibleObject") {
+      helpString.push_back("yarp::os::Bottle getAverageVisibleObject(const int32_t iterations) ");
+      helpString.push_back("Returns a yarp Bottle containing the calibrated position of requested object and hand ");
+      helpString.push_back("@param objName string containing the name of the required object ");
+      helpString.push_back("@param handName string containing the name of the required object ");
+      helpString.push_back("@return true/false on success/failure ");
     }
     if (functionName=="quit") {
       helpString.push_back("bool quit() ");

@@ -32,13 +32,15 @@
 </module>
 <module>
     <name>objectsPropertiesCollector</name>
-    <parameters>--name wsopc --context poeticon --db dbhands.ini --nosave --async_bc</parameters>
+    <parameters>--name wsopc --context poeticon --db dbhands.ini --no-save-db --async-bc</parameters>
     <node>console</node>
 </module>
 <module>
     <name>opc2prada</name>
     <node>console</node>
 </module>
+
+<-- Note: the modules belonging to the probabilistic planner part (planningCycle, affordanceCommunication, geometricGrounding, goalCompiler) must have access to the same "contexts/poeticon" directory. One way to accomplish this is to run them on the same machine. -->
 <module>
     <name>planningCycle</name>
     <node>console</node>
@@ -53,6 +55,12 @@
 </module>
 <module>
     <name>affordanceCommunication</name>
+    <parameters>--display off</parameters> <!-- set to on to show MATLAB windows -->
+    <node>console</node>
+</module>
+
+<module>
+    <name>karmaMotor</name>
     <node>console</node>
 </module>
 
