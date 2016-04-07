@@ -1428,7 +1428,7 @@ void Manager::performAction()
     switch(actionId)
     {
         case 1:
-            fprintf(stderr,"\n Tap from right \n");
+/*            fprintf(stderr,"\n Tap from right \n");
 
             fprintf(stdout,"Will now send to karmaMotor:\n");
             //karmaMotor.addString("pusp");  //when using this method, you should add the 'pose' parameter
@@ -1445,11 +1445,53 @@ void Manager::performAction()
             rpcMotorKarma.write(karmaMotor, KarmaReply);
             actionDurationTime=Time::now()-actionStartTime;
             fprintf(stdout,"action is %s:\n",KarmaReply.toString().c_str());
-            fprintf(stdout,"Action duration time was: %.3lf\n",actionDurationTime);
+            fprintf(stdout,"Action duration time was: %.3lf\n",actionDurationTime);*/
+            fprintf(stderr,"\n Tap from right simulation: \n");
+
+
+            karmaMotor.addString("vpus");
+            //karmaMotor.addInt(pose);
+            karmaMotor.addDouble(actPos[0]);
+            karmaMotor.addDouble(actPos[1]);
+            karmaMotor.addDouble(actPos[2]);
+            karmaMotor.addDouble(0.0); // initial tool-object angle
+            karmaMotor.addDouble(objectSizeOffset); // initial tool-object distance
+            karmaMotor.addDouble(MOVEMENT_LENGTH); // movement lenght
+            fprintf(stdout,"Will now send to karmaMotor:\n");
+            fprintf(stdout,"%s\n",karmaMotor.toString().c_str());
+            rpcMotorKarma.write(karmaMotor, KarmaReply);
+            fprintf(stdout,"outcome is %s:\n",KarmaReply.toString().c_str());
+
+            if (KarmaReply.get(1).asDouble()<VDRAW_THR)
+            {
+                fprintf(stderr,"\n Tap from right: \n");
+
+                karmaMotor.clear();
+                karmaMotor.addString("push");
+                karmaMotor.addDouble(actPos[0]);
+                karmaMotor.addDouble(actPos[1]);
+                karmaMotor.addDouble(actPos[2]);
+                karmaMotor.addDouble(0.0); // initial tool-object angle
+                karmaMotor.addDouble(objectSizeOffset); // initial tool-object distance
+                karmaMotor.addDouble(MOVEMENT_LENGTH); // movement lenght
+                fprintf(stdout,"Will now send to karmaMotor:\n");
+                fprintf(stdout,"%s\n",karmaMotor.toString().c_str());
+                KarmaReply.clear();
+                actionStartTime=Time::now();
+                rpcMotorKarma.write(karmaMotor, KarmaReply);
+                actionDurationTime=Time::now()-actionStartTime;
+                fprintf(stdout,"outcome is %s:\n",KarmaReply.toString().c_str());
+                fprintf(stdout,"Action duration time was: %.3lf\n",actionDurationTime);
+            }
+            else
+            {
+                fprintf(stderr,"iCub: Sorry man, cannot do that :( \n");
+            }
+
             break;
 
         case 2:
-            fprintf(stderr,"\n Tap from left: \n");
+  /*          fprintf(stderr,"\n Tap from left: \n");
 
             fprintf(stdout,"Will now send to karmaMotor:\n");
             //karmaMotor.addString("pusp");  //when using this method, you should add the 'pose' parameter
@@ -1467,6 +1509,48 @@ void Manager::performAction()
             actionDurationTime=Time::now()-actionStartTime;
             fprintf(stdout,"outcome is %s:\n",KarmaReply.toString().c_str());
             fprintf(stdout,"Action duration time was: %.3lf\n",actionDurationTime);
+            break;*/
+            fprintf(stderr,"\n Tap from left simulation: \n");
+
+
+            karmaMotor.addString("vpus");
+            //karmaMotor.addInt(pose);
+            karmaMotor.addDouble(actPos[0]);
+            karmaMotor.addDouble(actPos[1]);
+            karmaMotor.addDouble(actPos[2]);
+            karmaMotor.addDouble(180.0); // initial tool-object angle
+            karmaMotor.addDouble(objectSizeOffset); // initial tool-object distance
+            karmaMotor.addDouble(-MOVEMENT_LENGTH); // movement lenght
+            fprintf(stdout,"Will now send to karmaMotor:\n");
+            fprintf(stdout,"%s\n",karmaMotor.toString().c_str());
+            rpcMotorKarma.write(karmaMotor, KarmaReply);
+            fprintf(stdout,"outcome is %s:\n",KarmaReply.toString().c_str());
+
+            if (KarmaReply.get(1).asDouble()<VDRAW_THR)
+            {
+                fprintf(stderr,"\n Tap from left: \n");
+
+                karmaMotor.clear();
+                karmaMotor.addString("push");
+                karmaMotor.addDouble(actPos[0]);
+                karmaMotor.addDouble(actPos[1]);
+                karmaMotor.addDouble(actPos[2]);
+                karmaMotor.addDouble(180.0); // initial tool-object angle
+                karmaMotor.addDouble(objectSizeOffset); // initial tool-object distance
+                karmaMotor.addDouble(-MOVEMENT_LENGTH); // movement lenght
+                fprintf(stdout,"Will now send to karmaMotor:\n");
+                fprintf(stdout,"%s\n",karmaMotor.toString().c_str());
+                KarmaReply.clear();
+                actionStartTime=Time::now();
+                rpcMotorKarma.write(karmaMotor, KarmaReply);
+                actionDurationTime=Time::now()-actionStartTime;
+                fprintf(stdout,"outcome is %s:\n",KarmaReply.toString().c_str());
+                fprintf(stdout,"Action duration time was: %.3lf\n",actionDurationTime);
+                }
+            else
+            {
+                fprintf(stderr,"iCub: Sorry man, cannot do that :( \n");
+            }
             break;
 
         case 3:
@@ -1619,51 +1703,41 @@ void Manager::getActionParam()
     switch(actionId)
     {
         case 1:
-            fprintf(stderr,"\n Tap from right \n");
+            fprintf(stderr,"\n Tap from right simulation: \n");
 
-            //fprintf(stdout,"Will now send to karmaMotor:\n");
-            //karmaMotor.addString("pusp");  //when using this method, you should add the 'pose' parameter
-            //reply.addString("push");
-            //karmaMotor.addInt(pose);
-            reply.addDouble(actPos[0]);
-            reply.addDouble(actPos[1]);
-            reply.addDouble(actPos[2]);
-            reply.addDouble(90.0); // direction (from right)
-            reply.addDouble(objectSizeOffset); // Amount of the movement. It takes in consideration the object dimension, for an object of about objectSizeOffset radius. This might be taken from the object descriptors as well... (FUTURE WORKS)
 
-            fprintf(stdout,"%s\n",reply.toString().c_str());
-            rpcHuman.reply(reply);
-            //actionStartTime=Time::now();
-            //rpcMotorKarma.write(karmaMotor, KarmaReply);
-            //actionDurationTime=Time::now()-actionStartTime;
-            //fprintf(stdout,"action is %s:\n",KarmaReply.toString().c_str());
-            //fprintf(stdout,"Action duration time was: %.3lf\n",actionDurationTime);
+            karmaMotor.addString("vpus");
+            karmaMotor.addDouble(actPos[0]);
+            karmaMotor.addDouble(actPos[1]);
+            karmaMotor.addDouble(actPos[2]);
+            karmaMotor.addDouble(0.0); // initial tool-object angle
+            karmaMotor.addDouble(objectSizeOffset); // initial tool-object distance
+            karmaMotor.addDouble(MOVEMENT_LENGTH); // movement lenght
+            fprintf(stdout,"Will now send to karmaMotor:\n");
+            fprintf(stdout,"%s\n",karmaMotor.toString().c_str());
+            rpcMotorKarma.write(karmaMotor, KarmaReply);
+            fprintf(stdout,"outcome is %s:\n",KarmaReply.toString().c_str());
+
+
             break;
 
         case 2:
-            fprintf(stderr,"\n Tap from left: \n");
+            fprintf(stderr,"\n Tap from left simulation: \n");
 
-            fprintf(stdout,"Will now send to karmaMotor:\n");
-            //karmaMotor.addString("pusp");  //when using this method, you should add the 'pose' parameter
-            //karmaMotor.addString("push");
-            //karmaMotor.addInt(pose);
-            reply.addDouble(actPos[0]);
-            reply.addDouble(actPos[1]);
-            reply.addDouble(actPos[2]);
-            reply.addDouble(270.0); // direction (from left)
-            reply.addDouble(objectSizeOffset); // Amount of the movement. It takes in consideration the object dimension, for an object of about objectSizeOffset radius. This might be taken from the object descriptors as well... (FUTURE WORKS)
 
-            fprintf(stdout,"%s\n",reply.toString().c_str());
-            rpcHuman.reply(reply);
+            karmaMotor.addString("vpus");
+            karmaMotor.addDouble(actPos[0]);
+            karmaMotor.addDouble(actPos[1]);
+            karmaMotor.addDouble(actPos[2]);
+            karmaMotor.addDouble(180.0); // initial tool-object angle
+            karmaMotor.addDouble(objectSizeOffset); // initial tool-object distance
+            karmaMotor.addDouble(-MOVEMENT_LENGTH); // movement lenght
             fprintf(stdout,"Will now send to karmaMotor:\n");
-            fprintf(stdout,"%s\n",reply.toString().c_str());
-            //actionStartTime=Time::now();
-            //rpcMotorKarma.write(karmaMotor, KarmaReply);
-            //actionDurationTime=Time::now()-actionStartTime;
-            //fprintf(stdout,"outcome is %s:\n",KarmaReply.toString().c_str());
-            //fprintf(stdout,"Action duration time was: %.3lf\n",actionDurationTime);
+            fprintf(stdout,"%s\n",karmaMotor.toString().c_str());
+            rpcMotorKarma.write(karmaMotor, KarmaReply);
+            fprintf(stdout,"outcome is %s:\n",KarmaReply.toString().c_str());
+
             break;
-
         case 3:
             fprintf(stderr,"\n Drawing simulation: \n");
 
