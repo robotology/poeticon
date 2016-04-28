@@ -1,5 +1,5 @@
 <application>
-<name>Classify Observe ROI </name>
+<name>Classify Observe ROI</name>
 
         <dependencies>
                 <port>/icub/camcalib/left/out</port>
@@ -10,32 +10,32 @@
         <module>
                 <name>dispBlobber</name>
                 <parameters>--minBlobSize 1000</parameters>
-                <node>icub21</node>
+                <node>pwrNode1</node>
         </module>
         <module>
                 <name>caffeCoder</name>
                 <parameters>--name caffeCoderRoi</parameters>
-                <node>icub-tesla</node>
+                <node>gpuNode</node>
         </module>
         <module>
                 <name>linearClassifierModule</name>
                 <parameters>--name linearClassifierModuleRoi --BufferSize 1 --CSVM 1.0 --databaseFolder ROIDatabase --WeightedSVM 1</parameters>
-                <node>icub-b1</node>
+                <node>pwrNode2</node>
         </module>
         <module>
                 <name>himrepClassifier</name>
                 <parameters>--name himrepClassifierRoi</parameters>
-                <node>icub21</node>
+                <node>pwrNode1</node>
         </module>
         <module>
                 <name>objectsPropertiesCollector</name>
                 <parameters>--name memoryRoi --db memory_CAFFE_ROI.ini</parameters>
-                <node>icub-b2</node>
+                <node>pwrNode3</node>
         </module>
         <module>
                 <name>yarpview</name>
                 <parameters>--name /roiViewer/nearBlob --compact</parameters>
-                <node>icub22</node>
+                <node>console</node>
         </module>
 
         <connection>

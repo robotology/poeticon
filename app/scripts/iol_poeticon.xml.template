@@ -13,82 +13,81 @@
 
         <module>
                 <name>lbpExtract</name>
-                <node>icub21</node>
+                <node>pwrNode1</node>
         </module>
         <module>
-            <name>SFM</name>
-            <node>icub-cuda</node>
+                <name>SFM</name>
+                <node>gpuNode</node>
         </module>
         <module>
                 <name>caffeCoder</name>
-                <parameters></parameters>
-                <node>icub-tesla</node>
+                <node>gpuNode</node>
         </module>
         <module>
                 <name>linearClassifierModule</name>
                 <parameters> --BufferSize 1 --CSVM 1.0 --databaseFolder IOLDatabase --WeightedSVM 1</parameters>
-                <node>icub-b1</node>
+                <node>pwrNode2</node>
         </module>
         <module>
                 <name>himrepClassifier</name>
-                <node>icub21</node>
+                <node>pwrNode1</node>
         </module>
         <module>
                 <name>actionsRenderingEngine</name>
                 <parameters>--motor::block_eyes 5.0</parameters>
-                <node>icub22</node>
+                <node>pwrNode3</node>
         </module>
         <module>
                 <name>iolReachingCalibration</name>
-                <node>icub22</node>
+                <node>pwrNode3</node>
         </module>
         <module>
                 <name>iolStateMachineHandler</name>
                 <parameters>--tracker_timeout 0.5 --attention off</parameters>
-                <node>icub22</node>
+                <node>pwrNode3</node>
         </module>
         <module>
                 <name>objectsPropertiesCollector</name>
                 <parameters>--name memory --db memory_CAFFE.ini</parameters>
-                <node>icub-b2</node>
+                <node>pwrNode4</node>
         </module>
         <module>
                 <name>iSpeak</name>
                 <parameters>--package acapela-tts</parameters>
-                <node>icub-win1</node>
+                <node>winNode1</node>
         </module>
         <module>
                 <name>speechRecognizer</name>
-                <node>icub-win1</node>
+                <node>winNode1</node>
         </module>
         <module>
                 <name>iolHelper</name>
-                <node>icub-b1</node>
+                <node>pwrNode2</node>
         </module>
         <module>
                 <name>yarpview</name>
                 <parameters>--name /iolViewer/disparity --x 0 --y 0 --p 50 --compact</parameters>
-                <node>icub22</node>
+                <node>console</node>
         </module>
         <module>
                 <name>yarpview</name>
                 <parameters>--name /iolViewer/lbpSegmented --x 320 --y 0 --p 50 --compact</parameters>
-                <node>icub22</node>
+                <node>console</node>
         </module>
         <module>
                 <name>yarpview</name>
                 <parameters>--name /iolViewer/manager/tracker --x 0 --y 370 --p 50 --compact</parameters>
-                <node>icub22</node>
+                <node>console</node>
         </module>
         <module>
                 <name>yarpview</name>
                 <parameters>--name /iolViewer/manager/localizer --x 320 --y 370 --out /iolViewer/manager/localizer/out --p 50 --compact</parameters>
-                <node>icub22</node>
+                <node>console</node>
         </module>
         <module>
                 <name>yarpview</name>
                 <parameters>--name /iolViewer/manager/histogram --x 640 --y 220 --w 600 --h 600 --p 50 --compact</parameters>
-                <node>icub22</node>
+                <node>console</node>
         </module>
 
         <connection>
