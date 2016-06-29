@@ -40,7 +40,7 @@ bool BlobDescriptorModule::configure(ResourceFinder &rf)
     toolAffDescriptorOutputPortName = getName( rf.check( "tool_aff_descriptor_output_port",Value("/toolAffDescriptor:o"),"Tool-Affordance descriptor output port (string)" ).asString() );
     bothPartsImgOutputPortName = getName( rf.check( "tool_parts_image_output_port",Value("/toolParts:o"),"Both tool parts image output port (string)" ).asString() );
     _minAreaThreshold = rf.check( "min_area_threshold",Value(200),"Minimum number of pixels allowed for foreground objects" ).asInt();
-    _maxAreaThreshold = rf.check( "max_area_threshold",Value(20000),"Maximum number of pixels allowed for foreground objects" ).asInt();
+    _maxAreaThreshold = rf.check( "max_area_threshold",Value(3000),"Maximum number of pixels allowed for foreground objects" ).asInt();
 
     _maxObjects = rf.check( "max_objects",Value(20),"Maximum number of objects to process" ).asInt();
     if( _maxObjects <= 0)
@@ -418,7 +418,7 @@ bool BlobDescriptorModule::updateModule()
             _objDescTable[i].minor_axis = (_objDescTable[i].enclosing_rect.size.width > _objDescTable[i].enclosing_rect.size.height ? _objDescTable[i].enclosing_rect.size.height : _objDescTable[i].enclosing_rect.size.width);
             _objDescTable[i].rect_area = _objDescTable[i].major_axis*_objDescTable[i].minor_axis;
             _objDescTable[i].bounding_rect = cvBoundingRect(_objDescTable[i].contours,0);
-        
+
             CvPoint2D32f center;
             float radius;
             cvMinEnclosingCircle( _objDescTable[i].affcontours, &center, &radius );
@@ -524,7 +524,13 @@ bool BlobDescriptorModule::updateModule()
             /*20*/objbot.addDouble((double)cvQueryHistValue_1D(_objDescTable[i].objHist, 13));
             /*21*/objbot.addDouble((double)cvQueryHistValue_1D(_objDescTable[i].objHist, 14));
             /*22*/objbot.addDouble((double)cvQueryHistValue_1D(_objDescTable[i].objHist, 15));
-            /*23*/objbot.addDouble((double)_objDescTable[i].contour_area);
+
+            double contour_area_normalized_saturated = (double)_objDescTable[i].contour_area / _maxAreaThreshold;
+            if (contour_area_normalized_saturated > 1.0)
+                contour_area_normalized_saturated = 1.0;
+
+            /*23*/objbot.addDouble(contour_area_normalized_saturated);
+
             /*24*/objbot.addDouble((double)_objDescTable[i].convexity);
             /*25*/objbot.addDouble((double)_objDescTable[i].eccentricity);
             /*26*/objbot.addDouble((double)_objDescTable[i].compactness);
@@ -954,7 +960,12 @@ bool BlobDescriptorModule::updateModule()
             //topBot.addDouble(top_center.y);
             topBot.addDouble(top_new.x);
             topBot.addDouble(top_new.y);
-            topBot.addDouble(top_area);
+
+            double top_area_normalized_saturated = (double)top_area / _maxAreaThreshold;
+            if (top_area_normalized_saturated > 1.0)
+                top_area_normalized_saturated = 1.0;
+
+            topBot.addDouble(top_area_normalized_saturated);
             topBot.addDouble(top_convexity);
             topBot.addDouble(top_eccentricity);
             topBot.addDouble(top_compactness);
@@ -969,7 +980,12 @@ bool BlobDescriptorModule::updateModule()
             //botBot.addDouble(bot_center.y);
             botBot.addDouble(bot_new.x);
             botBot.addDouble(bot_new.y);
-            botBot.addDouble(bot_area);
+
+            double bot_area_normalized_saturated = (double)bot_area / _maxAreaThreshold;
+            if (bot_area_normalized_saturated > 1.0)
+                bot_area_normalized_saturated = 1.0;
+
+            botBot.addDouble(bot_area_normalized_saturated);
             botBot.addDouble(bot_convexity);
             botBot.addDouble(bot_eccentricity);
             botBot.addDouble(bot_compactness);
