@@ -23,12 +23,14 @@
 #include "iCub/module.h"
 #include <gsl/gsl_math.h>
 #include <time.h>
+#include <boost/filesystem.hpp>
+#include <opencv2/core/core.hpp>
 
 using namespace std;
 using namespace yarp::os;
 using namespace yarp::sig;
 using namespace yarp::math;
-
+namespace fs = boost::filesystem;
 #define RET_INVALID     -1
 
 #define CMD_TRAIN               VOCAB4('t','r','a','i')
@@ -65,16 +67,17 @@ bool Manager::configure(ResourceFinder &rf)
 
     const ConstString icubContribEnvPath = yarp::os::getenv("ICUBcontrib_DIR");
     const ConstString localPath = "/share/ICUBcontrib/contexts/affExploreManager/";
+    savePath = icubContribEnvPath + localPath;
 
     descdataFileName = rf.check("descdataFileName",Value("descData.txt")).asString();
-    descdataFileName = icubContribEnvPath + localPath + descdataFileName;
+    descdataFileName = savePath + descdataFileName;
     descData.open(descdataFileName.c_str(), ofstream::out | ofstream::app);
     descdataMinFileName = rf.check("descdataMinFileName",Value("descDataMin.txt")).asString();
-    descdataMinFileName = icubContribEnvPath + localPath + descdataMinFileName;
+    descdataMinFileName = savePath + descdataMinFileName;
     descDataMin.open(descdataMinFileName.c_str(), ofstream::out | ofstream::app);
 
     effdataFileName = rf.check("effdataFileName",Value("effData.txt")).asString();
-    effdataFileName = icubContribEnvPath + localPath + effdataFileName;
+    effdataFileName = savePath + effdataFileName;
     effData.open(effdataFileName.c_str(), ofstream::out | ofstream::app);
 
     closeThr=rf.check("closeThr", Value(DEFAULT_CLOSE_THR)).asDouble();
@@ -83,6 +86,8 @@ bool Manager::configure(ResourceFinder &rf)
     //incoming
     fullBlobDescriptorInputPort.open(("/"+name+"/fullObjDesc:i").c_str());
     partsBlobDescriptorInputPort.open(("/"+name+"/partsObjDesc:i").c_str());
+    imagePortLeft.open( ("/" + name + "/left/image:i").c_str() );
+    imagePortRight.open( ("/" + name + "/right/image:i").c_str() );
 
     targetPF.open(("/"+name+"/particle:i").c_str());
     blobExtractor.open(("/"+name+"/blobs:i").c_str());
@@ -343,6 +348,7 @@ bool Manager::updateModule()
         string objectName;
 
         objectName = cmd.get(1).asString();
+        targetName = objectName;
 
         reply.addString("desc");
         reply.addString(objectName.data());
@@ -407,7 +413,7 @@ bool Manager::updateModule()
         actionId = 0;
 
 
-        targetName = cmd.get(1).asString();
+        targetName = cmd.get(1).asString();targetName = cmd.get(1).asString();
 
         reply.addString("observe ");
         reply.addString(targetName.data()); //object name
@@ -508,19 +514,27 @@ bool Manager::updateModule()
         segmentAndTrack(objImgPos.x, objImgPos.y);
 
         //fprintf(stderr,"eff %d %s %s\n", actionId, toolName.data(), targetName.data());
-
-        effData << "eff" << " ";
+        effDataTxt << "eff" << " ";
+//        effData << "eff" << " ";
         if (simMode.compare("on")==0)
         {
-            effData << toolSimNum   << " ";
-            effData << targetSimNum << " ";
+            effDataTxt << toolSimNum   << " ";
+            effDataTxt << targetSimNum << " ";
+//            effData << toolSimNum   << " ";
+//            effData << targetSimNum << " ";
         }
         else
         {
-            effData << toolName.data()   << " ";
-            effData << targetName.data() << " ";
+            effDataTxt << toolName.data()   << " ";
+            effDataTxt << targetName.data() << " ";
+//            effData << toolName.data()   << " ";
+//            effData << targetName.data() << " ";
         }
-        effData << actionId   << " ";
+        effDataTxt << actionId   << " ";
+//        effData << actionId   << " ";
+
+        imgLeft = imagePortLeft.read();
+        imgRight = imagePortRight.read();
 
         yarp::sig::Vector objectPosTracker;
         yarp::sig::Vector *trackVec = targetPF.read(true);
@@ -532,13 +546,19 @@ bool Manager::updateModule()
 
         fprintf(stderr,"\n\n***********Get FIRST object sample\n\n");
 
-        effData << objectPosTracker[0] << " "
+        effDataTxt << objectPosTracker[0] << " "
         << objectPosTracker[1] << " "
         << objectPosTracker[2] << " "
         << objImgPos.x << " "
         << objImgPos.y;
+//        effData << objectPosTracker[0] << " "
+//        << objectPosTracker[1] << " "
+//        << objectPosTracker[2] << " "
+//        << objImgPos.x << " "
+//        << objImgPos.y;
 
-        performAction(); //on objectPos (not on objectPosTracker, which might be inaccurate)
+        bool actionResult;
+        performAction(actionResult); //on objectPos (not on objectPosTracker, which might be inaccurate)
 
         for (int i=0; i<motSteps; i++)
         {
@@ -550,7 +570,12 @@ bool Manager::updateModule()
             objectPosTracker.clear();
             get3DPosition(objImgPos, objectPosTracker);
 
-            effData << " " <<  objectPosTracker[0] << " "
+//            effData << " " <<  objectPosTracker[0] << " "
+//            << objectPosTracker[1] << " "
+//            << objectPosTracker[2] << " "
+//            << objImgPos.x << " "
+//            << objImgPos.y;
+            effDataTxt << " " <<  objectPosTracker[0] << " "
             << objectPosTracker[1] << " "
             << objectPosTracker[2] << " "
             << objImgPos.x << " "
@@ -563,13 +588,21 @@ bool Manager::updateModule()
 
         fprintf(stderr,"\n\n**********Get LAST object sample\n\n");
 
-        effData << " " <<  objectPosTracker[0] << " "
+        effDataTxt << " " <<  objectPosTracker[0] << " "
         << objectPosTracker[1] << " "
         << objectPosTracker[2] << " "
         << objImgPos.x << " "
         << objImgPos.y;
+//        effData << " " <<  objectPosTracker[0] << " "
+//        << objectPosTracker[1] << " "
+//        << objectPosTracker[2] << " "
+//        << objImgPos.x << " "
+//        << objImgPos.y;
 
-        effData << '\n';
+        effDataTxt << '\n';
+//        effData << '\n';
+//        effData << effDataTxt.str();
+        writeConfirmation(actionResult);
         effData.close();
         effData.open(effdataFileName.c_str(), ofstream::out | ofstream::app);
 
@@ -673,7 +706,7 @@ bool Manager::updateModule()
 
 /*******************************************************define tool*************************************************/
 
-if (rxCmd==Vocab::encode("toolTransform"))
+if (rxCmd==Vocab::encode("tool_transform"))
     {
         if (cmd.size()>3)
         {
@@ -693,62 +726,14 @@ if (rxCmd==Vocab::encode("toolTransform"))
 
         reply.addString("tool_transform");
         reply.addString(toolName.c_str());
-//        reply.addDouble(*toolTransformSimple.data());
-//        reply.addDouble(toolTransform[1]);
-//        reply.addDouble(toolTransform[2]);
-//        std::ostringstream strs;
-//        strs << toolX;
-//        std::string toolX_str = strs.str();
-//        reply.addString(toolX_str.c_str());
-//        rpcHuman.reply(reply);
-         if (executeToolAttach(toolTransform[0]))
+        if (executeToolAttach(toolTransform[0]))
+		    {
 		    fprintf(stderr,"\nTool attached (requested transform)\n");
+		    rpcHuman.reply(reply);
+		    }
 		else
 		    fprintf(stderr,"\nERROR -- Problem in attaching the tool...\n");
 
-
-
-
-
-//                if (executeToolAttach(toolTransformDefault))
-//		    fprintf(stderr,"\nTool attached (default transform)\n");
-//		else
-//		    fprintf(stderr,"\nERROR -- Problem in attaching the tool...\n");
-//
-//            }
-//
-//        }
-//        else
-//        {
-//            if (cmd.size()>1)
-//            {
-//                toolSimNum = cmd.get(1).asInt();
-//            }
-//	    else
-//	    {
-//		toolSimNum = 1;
-//	    }
-//            //toolSimNum = cmd.get(1).asInt();
-//
-//            goHomeArmsHead();
-//            cmdSim.clear(); //clears the space in front of the robot
-//            replySim.clear();
-//            cmdSim.addString("clea");
-//            simObjLoaderModuleOutputPort.write(cmdSim,replySim);
-//            //moves the tool to the hand of the robot, magnet ON
-//            cmdSim.clear();
-//            replySim.clear();
-//            cmdSim.addString("grab");
-//            cmdSim.addInt(toolSimNum);
-//            simObjLoaderModuleOutputPort.write(cmdSim,replySim);
-//
-//            executeToolAttach(toolTransform[toolSimNum-1]);
-//        }
-//
-//        goHomeArmsHead();
-//        reply.addString("grab:");
-//        reply.addString(toolName.c_str());
-//        rpcHuman.reply(reply);
     }
 
 
@@ -791,11 +776,6 @@ if (rxCmd==Vocab::encode("toolTransform"))
     {
         actionId = cmd.get(1).asInt();
 
-       /* reply.addString("info");
-        reply.addInt(actionId);
-        reply.addString(toolName.data());
-        reply.addString(targetName.data());
-        rpcHuman.reply(reply);*/
 
         lookAtObject();
         updateObjVisPos();
@@ -805,18 +785,6 @@ if (rxCmd==Vocab::encode("toolTransform"))
 
         fprintf(stderr,"eff %d %s %s\n", actionId, toolName.data(), targetName.data());
 
-//        effData << "eff" << " ";
-        if (simMode.compare("on")==0)
-        {
-//            effData << toolSimNum   << " ";
-//            effData << targetSimNum << " ";
-        }
-        else
-        {
-//            effData << toolName.data()   << " ";
-//            effData << targetName.data() << " ";
-        }
-//        effData << actionId   << " ";
 
         yarp::sig::Vector objectPosTracker;
         yarp::sig::Vector *trackVec = targetPF.read(true);
@@ -828,48 +796,12 @@ if (rxCmd==Vocab::encode("toolTransform"))
 
         fprintf(stderr,"\n\n***********Get FIRST object sample\n\n");
 
-//        effData << objectPosTracker[0] << " "
-//        << objectPosTracker[1] << " "
-//        << objectPosTracker[2] << " "
-//        << objImgPos.x << " "
-//        << objImgPos.y;
         getActionParam();
 
-    /*    performAction(); //on objectPos (not on objectPosTracker, which might be inaccurate)
-
-        for (int i=0; i<motSteps; i++)
-        {
-            fprintf(stderr,"Error: While reading and storing the tracker data");
-            Time::delay(actionTime/(double)motSteps);
-            trackVec = targetPF.read(true);
-            objImgPos.x = (*trackVec)[0];
-            objImgPos.y = (*trackVec)[5];
-            objectPosTracker.clear();
-            get3DPosition(objImgPos, objectPosTracker);
-
-            effData << " " <<  objectPosTracker[0] << " "
-            << objectPosTracker[1] << " "
-            << objectPosTracker[2] << " "
-            << objImgPos.x << " "
-            << objImgPos.y;
-        }*/
-
-//        goHomeArmsHead();
 
         Time::delay(0.5);
 
         fprintf(stderr,"\n\n**********Get LAST object sample here\n\n");
-//
-//        effData << " " <<  objectPosTracker[0] << " "
-//        << objectPosTracker[1] << " "
-//        << objectPosTracker[2] << " "
-//        << objImgPos.x << " "
-//        << objImgPos.y;
-
-//        effData << '\n';
-//        effData.close();
-//        effData.open(effdataFileName.c_str(), ofstream::out | ofstream::app);
-
 
     }
 
@@ -1380,8 +1312,7 @@ void Manager::updateObjVisPos()
 }
 
 /**********************************************************/
-
-void Manager::performAction()
+void Manager::performAction(bool &actionResult)
 {
     //Attach the tool
     //executeToolAttach(toolTransform[toolId-1]);
@@ -1422,6 +1353,7 @@ void Manager::performAction()
     z_start = objectPosTracker[2];
     u_start = objImgPos.x;
     v_start = objImgPos.y;
+    actionResult = true;
 
     //Bottle karmaMotor, KarmaReply;
 
@@ -1486,6 +1418,7 @@ void Manager::performAction()
             else
             {
                 fprintf(stderr,"iCub: Sorry man, cannot do that :( \n");
+                actionResult = false;
             }
 
             break;
@@ -1550,6 +1483,7 @@ void Manager::performAction()
             else
             {
                 fprintf(stderr,"iCub: Sorry man, cannot do that :( \n");
+                actionResult = false;
             }
             break;
 
@@ -1596,6 +1530,7 @@ void Manager::performAction()
             else
             {
                 fprintf(stderr,"iCub: Sorry man, cannot do that :( \n");
+                actionResult = false;
             }
             break;
 
@@ -1646,20 +1581,252 @@ void Manager::performAction()
             else
             {
                 fprintf(stderr,"iCub: Sorry man, cannot do that :( \n");
+                actionResult = false;
             }
             break;
 
         default:
             fprintf(stderr,"\n Error! Doing nothing... \n");
+            actionResult = false;
     }
 }
 
 /**********************************************************/
+int Manager::writeImages()
+{
+    if(toolName=="" || targetName=="")
+        return 1;
+    string path = savePath + "/" + toolName + "/" + targetName + "/" ;
 
+    switch(actionId)
+    {
+        case 1:
+//          (from right)
+            {path+="tap_from_right";
+            string path_left = path + "/"+"left_camera";
+            string path_right = path + "/"+"right_camera";
+            fs::path dir_left = path_left;
+            fs::path dir_right = path_right;
+            fs::create_directories(dir_left);
+            fs::create_directories(dir_right);
+            string imgNumber = "-1";
+            string imgNumberLeft = "-1";
+            string imgNumberRight = "-1";
+            for (fs::directory_iterator i = fs::directory_iterator(dir_left); i != fs::directory_iterator(); i++)
+            {
+                if (!fs::is_directory(i->path())) //we eliminate directories
+                {
+                    string filename = i->path().filename().string();
+                    size_t const pos = filename.find_last_of('_');
+                    imgNumberLeft = max(imgNumberLeft,filename.substr(pos+1));
+                }
+                else
+                    continue;
+            }
+            for (fs::directory_iterator i = fs::directory_iterator(dir_right); i != fs::directory_iterator(); i++)
+            {
+                if (!fs::is_directory(i->path())) //we eliminate directories
+                {
+                    string filename = i->path().filename().string();
+                    size_t const pos = filename.find_last_of('_');
+                    imgNumberRight = max(imgNumberRight,filename.substr(pos+1));
+                }
+                else
+                    continue;
+            }
+            imgNumber = max(imgNumberLeft,imgNumberRight);
+            stringstream out;
+            out << (atoi(imgNumber.c_str()) + 1);
+            imgNumber = out.str();
+            cv_imgMatTemplate = cv::cvarrToMat(static_cast<IplImage*>(imgLeft->getIplImage()));
+            string name = path_left + "/before_" + imgNumber + ".jpg";
+            imwrite(name,cv_imgMatTemplate);
+            cv_imgMatTemplate = cv::cvarrToMat(static_cast<IplImage*>(imgRight->getIplImage()));
+            name = path_right + "/before_" + imgNumber + ".jpg";
+            imwrite(name,cv_imgMatTemplate);
+            imgLeft = imagePortLeft.read();
+            imgRight = imagePortRight.read();
+            cv_imgMatTemplate = cv::cvarrToMat(static_cast<IplImage*>(imgLeft->getIplImage()));
+            name = path_left + "/after_" + imgNumber + ".jpg";
+            imwrite(name,cv_imgMatTemplate);
+            cv_imgMatTemplate = cv::cvarrToMat(static_cast<IplImage*>(imgRight->getIplImage()));
+            name = path_right + "/after_" + imgNumber + ".jpg";
+            imwrite(name,cv_imgMatTemplate);
+            break;}
+
+        case 2:
+//          (from left)
+            {path+="tap_from_left";
+            string path_left = path + "/"+"left_camera";
+            string path_right = path + "/"+"right_camera";
+            fs::path dir_left = path_left;
+            fs::path dir_right = path_right;
+            fs::create_directories(dir_left);
+            fs::create_directories(dir_right);
+            string imgNumber = "-1";
+            string imgNumberLeft = "-1";
+            string imgNumberRight = "-1";
+            for (fs::directory_iterator i = fs::directory_iterator(dir_left); i != fs::directory_iterator(); i++)
+            {
+                if (!fs::is_directory(i->path())) //we eliminate directories
+                {
+                    string filename = i->path().filename().string();
+                    size_t const pos = filename.find_last_of('_');
+                    imgNumberLeft = max(imgNumberLeft,filename.substr(pos+1));
+                }
+                else
+                    continue;
+            }
+            for (fs::directory_iterator i = fs::directory_iterator(dir_right); i != fs::directory_iterator(); i++)
+            {
+                if (!fs::is_directory(i->path())) //we eliminate directories
+                {
+                    string filename = i->path().filename().string();
+                    size_t const pos = filename.find_last_of('_');
+                    imgNumberRight = max(imgNumberRight,filename.substr(pos+1));
+                }
+                else
+                    continue;
+            }
+            imgNumber = max(imgNumberLeft,imgNumberRight);
+            stringstream out;
+            out << (atoi(imgNumber.c_str()) + 1);
+            imgNumber = out.str();
+            cv_imgMatTemplate = cv::cvarrToMat(static_cast<IplImage*>(imgLeft->getIplImage()));
+            string name = path_left + "/before_" + imgNumber + ".jpg";
+            imwrite(name,cv_imgMatTemplate);
+            cv_imgMatTemplate = cv::cvarrToMat(static_cast<IplImage*>(imgRight->getIplImage()));
+            name = path_right + "/before_" + imgNumber + ".jpg";
+            imwrite(name,cv_imgMatTemplate);
+            imgLeft = imagePortLeft.read();
+            imgRight = imagePortRight.read();
+            cv_imgMatTemplate = cv::cvarrToMat(static_cast<IplImage*>(imgLeft->getIplImage()));
+            name = path_left + "/after_" + imgNumber + ".jpg";
+            imwrite(name,cv_imgMatTemplate);
+            cv_imgMatTemplate = cv::cvarrToMat(static_cast<IplImage*>(imgRight->getIplImage()));
+            name = path_right + "/after_" + imgNumber + ".jpg";
+            imwrite(name,cv_imgMatTemplate);
+            break;}
+
+        case 3:
+//          (draw)
+
+            {path+="draw";
+            string path_left = path + "/"+"left_camera";
+            string path_right = path + "/"+"right_camera";
+            fs::path dir_left = path_left;
+            fs::path dir_right = path_right;
+            fs::create_directories(dir_left);
+            fs::create_directories(dir_right);
+            string imgNumber = "-1";
+            string imgNumberLeft = "-1";
+            string imgNumberRight = "-1";
+            for (fs::directory_iterator i = fs::directory_iterator(dir_left); i != fs::directory_iterator(); i++)
+            {
+                if (!fs::is_directory(i->path())) //we eliminate directories
+                {
+                    string filename = i->path().filename().string();
+                    size_t const pos = filename.find_last_of('_');
+                    imgNumberLeft = max(imgNumberLeft,filename.substr(pos+1));
+                }
+                else
+                    continue;
+            }
+            for (fs::directory_iterator i = fs::directory_iterator(dir_right); i != fs::directory_iterator(); i++)
+            {
+                if (!fs::is_directory(i->path())) //we eliminate directories
+                {
+                    string filename = i->path().filename().string();
+                    size_t const pos = filename.find_last_of('_');
+                    imgNumberRight = max(imgNumberRight,filename.substr(pos+1));
+                }
+                else
+                    continue;
+            }
+            imgNumber = max(imgNumberLeft,imgNumberRight);
+            stringstream out;
+            out << (atoi(imgNumber.c_str()) + 1);
+            imgNumber = out.str();
+            cv_imgMatTemplate = cv::cvarrToMat(static_cast<IplImage*>(imgLeft->getIplImage()));
+            string name = path_left + "/before_" + imgNumber + ".jpg";
+            imwrite(name,cv_imgMatTemplate);
+            cv_imgMatTemplate = cv::cvarrToMat(static_cast<IplImage*>(imgRight->getIplImage()));
+            name = path_right + "/before_" + imgNumber + ".jpg";
+            imwrite(name,cv_imgMatTemplate);
+            imgLeft = imagePortLeft.read();
+            imgRight = imagePortRight.read();
+            cv_imgMatTemplate = cv::cvarrToMat(static_cast<IplImage*>(imgLeft->getIplImage()));
+            name = path_left + "/after_" + imgNumber + ".jpg";
+            imwrite(name,cv_imgMatTemplate);
+            cv_imgMatTemplate = cv::cvarrToMat(static_cast<IplImage*>(imgRight->getIplImage()));
+            name = path_right + "/after_" + imgNumber + ".jpg";
+            imwrite(name,cv_imgMatTemplate);
+            break;}
+
+        case 4:
+//          (push)
+            {path+="push";
+            string path_left = path + "/"+"left_camera";
+            string path_right = path + "/"+"right_camera";
+            fs::path dir_left = path_left;
+            fs::path dir_right = path_right;
+            fs::create_directories(dir_left);
+            fs::create_directories(dir_right);
+            string imgNumber = "-1";
+            string imgNumberLeft = "-1";
+            string imgNumberRight = "-1";
+            for (fs::directory_iterator i = fs::directory_iterator(dir_left); i != fs::directory_iterator(); i++)
+            {
+                if (!fs::is_directory(i->path())) //we eliminate directories
+                {
+                    string filename = i->path().filename().string();
+                    size_t const pos = filename.find_last_of('_');
+                    imgNumberLeft = max(imgNumberLeft,filename.substr(pos+1));
+                }
+                else
+                    continue;
+            }
+            for (fs::directory_iterator i = fs::directory_iterator(dir_right); i != fs::directory_iterator(); i++)
+            {
+                if (!fs::is_directory(i->path())) //we eliminate directories
+                {
+                    string filename = i->path().filename().string();
+                    size_t const pos = filename.find_last_of('_');
+                    imgNumberRight = max(imgNumberRight,filename.substr(pos+1));
+                }
+                else
+                    continue;
+            }
+            imgNumber = max(imgNumberLeft,imgNumberRight);
+            stringstream out;
+            out << (atoi(imgNumber.c_str()) + 1);
+            imgNumber = out.str();
+            cv_imgMatTemplate = cv::cvarrToMat(static_cast<IplImage*>(imgLeft->getIplImage()));
+            string name = path_left + "/before_" + imgNumber + ".jpg";
+            imwrite(name,cv_imgMatTemplate);
+            cv_imgMatTemplate = cv::cvarrToMat(static_cast<IplImage*>(imgRight->getIplImage()));
+            name = path_right + "/before_" + imgNumber + ".jpg";
+            imwrite(name,cv_imgMatTemplate);
+            imgLeft = imagePortLeft.read();
+            imgRight = imagePortRight.read();
+            cv_imgMatTemplate = cv::cvarrToMat(static_cast<IplImage*>(imgLeft->getIplImage()));
+            name = path_left + "/after_" + imgNumber + ".jpg";
+            imwrite(name,cv_imgMatTemplate);
+            cv_imgMatTemplate = cv::cvarrToMat(static_cast<IplImage*>(imgRight->getIplImage()));
+            name = path_right + "/after_" + imgNumber + ".jpg";
+            imwrite(name,cv_imgMatTemplate);
+            break;}
+
+        default:
+            fprintf(stderr,"\n Error! Doing nothing... \n");
+            return 1;
+    }
+    return 0;
+}
+
+/**********************************************************/
 void Manager::getActionParam()
 {
-    //Attach the tool
-    //executeToolAttach(toolTransform[toolId-1]);
 
     Bottle karmaMotor, KarmaReply, reply;
     int pose=handNaturalPose;
@@ -1677,7 +1844,6 @@ void Manager::getActionParam()
     }
     else
     {
-        //actPos[0]=objectPos[0] - objectSizeOffset;      // takes in consideration the object dimension, for an object of about objectSizeOffset radius. This might be taken from the object descriptors as well... (FUTURE WORKS)
         actPos[0]=objectPos[0];
         actPos[1]=objectPos[1];
         actPos[2]=objectPos[2] + tableHeightOffset;     // define table offset
@@ -1698,7 +1864,6 @@ void Manager::getActionParam()
     u_start = objImgPos.x;
     v_start = objImgPos.y;
 
-    //Bottle karmaMotor, KarmaReply;
 
     switch(actionId)
     {
@@ -1755,34 +1920,6 @@ void Manager::getActionParam()
             rpcMotorKarma.write(karmaMotor, KarmaReply);
             fprintf(stdout,"outcome is %s:\n",KarmaReply.toString().c_str());
             rpcHuman.reply(KarmaReply);
-
-           /* if (KarmaReply.get(1).asDouble()<VDRAW_THR)
-            {
-                fprintf(stderr,"\n Draw: \n");
-
-                karmaMotor.clear();
-                //karmaMotor.addString("drap");  //when using this method, you should add the 'pose' parameter
-                karmaMotor.addString("draw");
-                //karmaMotor.addInt(pose);
-                karmaMotor.addDouble(actPos[0]);
-                karmaMotor.addDouble(actPos[1]);
-                karmaMotor.addDouble(actPos[2]);
-                karmaMotor.addDouble(90.0); // direction (before it was 180.0)
-                karmaMotor.addDouble(objectSizeOffset); // initial tool-object distance
-                karmaMotor.addDouble(MOVEMENT_LENGTH); // movement lenght
-                fprintf(stdout,"Will now send to karmaMotor:\n");
-                fprintf(stdout,"%s\n",karmaMotor.toString().c_str());
-                KarmaReply.clear();
-                actionStartTime=Time::now();
-                rpcMotorKarma.write(karmaMotor, KarmaReply);
-                actionDurationTime=Time::now()-actionStartTime;
-                fprintf(stdout,"outcome is %s:\n",KarmaReply.toString().c_str());
-                fprintf(stdout,"Action duration time was: %.3lf\n",actionDurationTime);
-            }
-            else
-            {
-                fprintf(stderr,"iCub: Sorry man, cannot do that :( \n");
-            }*/
             break;
 
         case 4:
@@ -1793,10 +1930,8 @@ void Manager::getActionParam()
             //karmaMotor.addInt(pose);
             karmaMotor.addDouble(actPos[0]);
             karmaMotor.addDouble(actPos[1]);
-//            karmaMotor.addDouble(actPos[2] + 0.03);
             karmaMotor.addDouble(actPos[2]);
             karmaMotor.addDouble(270.0); // direction (before it was 180.0)
-//            karmaMotor.addDouble(-objectSizeOffset*2.0 - 0.05); // initial tool-object distance
             karmaMotor.addDouble(objectSizeOffset);
             karmaMotor.addDouble(-MOVEMENT_LENGTH); // movement lenght
             fprintf(stdout,"Will now send to karmaMotor:\n");
@@ -1805,33 +1940,6 @@ void Manager::getActionParam()
             fprintf(stdout,"outcome is %s:\n",KarmaReply.toString().c_str());
             rpcHuman.reply(KarmaReply);
 
-            /*if (KarmaReply.get(1).asDouble()<VDRAW_THR)
-            {
-                fprintf(stderr,"\n Push (opposite draw) \n");
-
-                karmaMotor.clear();
-                //karmaMotor.addString("drap"); //when using this method, you should add the 'pose' parameter
-                karmaMotor.addString("draw");
-                //karmaMotor.addInt(pose);
-                karmaMotor.addDouble(actPos[0]);
-                karmaMotor.addDouble(actPos[1]);
-                karmaMotor.addDouble(actPos[2] + 0.03);  //table offset is bigger for the Push action
-                karmaMotor.addDouble(90.0); // direction (before it was 180.0)
-                karmaMotor.addDouble(-objectSizeOffset*2.0 - 0.05); // initial tool-object distance
-                karmaMotor.addDouble(-MOVEMENT_LENGTH); // movement lenght
-                fprintf(stdout,"Will now send to karmaMotor:\n");
-                fprintf(stdout,"%s\n",karmaMotor.toString().c_str());
-                KarmaReply.clear();
-                actionStartTime=Time::now();
-                rpcMotorKarma.write(karmaMotor, KarmaReply);
-                actionDurationTime=Time::now()-actionStartTime;
-                fprintf(stdout,"outcome is %s:\n",KarmaReply.toString().c_str());
-                fprintf(stdout,"Action duration time was: %.3lf\n",actionDurationTime);
-            }
-            else
-            {
-                fprintf(stderr,"iCub: Sorry man, cannot do that :( \n");
-            }*/
             break;
 
         default:
@@ -1956,6 +2064,61 @@ void Manager::lookAtObject()
 
     reply.addString("done");
     rpcHuman.reply(reply);
+}
+/**********************************************************/
+void Manager::writeConfirmation(bool actionResult)
+{
+
+
+    if(actionResult)
+        {
+        Bottle cmd, val, reply;
+        int rxCmd;
+
+        fprintf(stderr,"Tell me please!\n");
+
+        while (!isStopping())
+        {
+            fprintf(stderr,"Should I write it or not?[yes|no]\n");
+            rpcHuman.read(cmd, true);
+            rxCmd=processHumanCmd(cmd,val);
+            if(rxCmd==Vocab::encode("yes"))
+            {
+                effData << effDataTxt.str();
+                writeImages();
+                effDataTxt.str("");
+                effDataTxt.clear();
+                reply.addString("written");
+    //            printf(stderr,"OK! it was saved\n");
+                rpcHuman.reply(reply);
+                break;
+            }
+            else if(rxCmd==Vocab::encode("no"))
+            {
+                effDataTxt.str("");
+                effDataTxt.clear();
+                reply.addString("skipped writing");
+    //            printf(stderr,"OK! it was discarded\n");
+                rpcHuman.reply(reply);
+                break;
+            }
+            else
+            {
+                reply.addString("Yo! Should I write the last trial or not? [yes|no]");
+                rpcHuman.reply(reply);
+                reply.clear();
+            }
+            Time::delay(0.5);
+
+        }
+    }
+    else
+    {
+        fprintf(stderr,"No action was done!\n");
+        effDataTxt.str("");
+        effDataTxt.clear();
+    }
+
 }
 
 

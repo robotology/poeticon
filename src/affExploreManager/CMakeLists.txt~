@@ -26,7 +26,7 @@ icubcontrib_set_default_prefix()
 
 find_package(OpenCV)
 find_package(GSL)
-find_package(Boost COMPONENTS system filesystem REQUIRED)
+find_package(Boost COMPONENTS filesystem REQUIRED)
 
 include_directories(${PROJECT_SOURCE_DIR}/include
                     ${ctrlLib_INCLUDE_DIRS}
@@ -48,5 +48,5 @@ source_group("Header Files" FILES ${folder_header})
 
 # add executables and link libraries.
 add_executable(${PROJECTNAME} ${folder_header} ${folder_source})
-target_link_libraries(${PROJECTNAME} ${OpenCV_LIBRARIES} ${GSL_LIBRARIES} ${YARP_LIBRARIES} ${Boost_FILESYSTEM_LIBRARY} ${Boost_SYSTEM_LIBRARY})
+target_link_libraries(${PROJECTNAME} ${OpenCV_LIBRARIES} ${GSL_LIBRARIES} ${YARP_LIBRARIES} ${Boost_FILESYSTEM_LIBRARY})
 install(TARGETS ${PROJECTNAME} DESTINATION bin)

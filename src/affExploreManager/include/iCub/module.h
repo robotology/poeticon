@@ -25,6 +25,8 @@
 #include <sstream>
 #include <vector>
 
+#include <opencv2/opencv.hpp>
+
 #include <yarp/os/Time.h>
 #include <yarp/os/Semaphore.h>
 #include <yarp/os/RFModule.h>
@@ -228,6 +230,7 @@ protected:
 
     std::string                 descdataFileName;   //name of visual descriptors data file
     std::string                 descdataMinFileName;   //name of (minimal) visual descriptors data file
+    std::string                 savePath;    //name of effects data file
     std::string                 effdataFileName;    //name of effects data file
     std::string                 simMode;            //flags if the module is running exclusively with the simulator
     yarp::os::Port              rpcHuman;           //human rpc port (receive commands via rpc)
@@ -297,6 +300,7 @@ protected:
     std::ofstream               descData;
     std::ofstream               descDataMin;
     std::ofstream               effData;
+    std::ostringstream          effDataTxt;
 
     BlobInfo                    objDesc;
     BlobPartInfo                objTopDesc;
@@ -319,13 +323,20 @@ protected:
     int                         maxObjects;
     double                      closeThr;
 
-    yarp::os::BufferedPort<yarp::os::Bottle>        fullBlobDescriptorInputPort;
-    yarp::os::BufferedPort<yarp::os::Bottle>        partsBlobDescriptorInputPort;
+    yarp::os::BufferedPort<yarp::os::Bottle>                            fullBlobDescriptorInputPort;
+    yarp::os::BufferedPort<yarp::os::Bottle>                            partsBlobDescriptorInputPort;
+    yarp::os::BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelBgr> >    imagePortLeft;
+    yarp::os::BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelBgr> >    imagePortRight;
+    yarp::sig::ImageOf<yarp::sig::PixelBgr>                             *imgLeft;
+    yarp::sig::ImageOf<yarp::sig::PixelBgr>                             *imgRight;
+    cv::Mat                                                             cv_imgMatTemplate;
 
-    void                        performAction();
+    void                        performAction(bool &actionResult);
+    int                         writeImages();
     void                        getActionParam();
     int                         lookAtTool();   //might be used if tools are on a rack...
     void                        lookAtObject();
+    void                        writeConfirmation(bool actionResult);
     void                        computeObjectDesc();
     void                        computeAllDesc_TEST();
     int                         askForTool();
