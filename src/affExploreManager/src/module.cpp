@@ -1849,7 +1849,7 @@ void Manager::getActionParam()
         actPos[2]=objectPos[2] + tableHeightOffset;     // define table offset
     }
 
-    fprintf(stdout,"Acting on position: x=%+.3f y=%+.3f z=%+.3f tho=%+.3f\n",actPos[0],actPos[1],actPos[2],tableHeightOffset);
+    fprintf(stdout,"Acting on position: x=%+.3f y=%+.3f z=%+.3f tho=%+.3f offset=%+.3f\n",actPos[0],actPos[1],actPos[2],tableHeightOffset, objectSizeOffset);
 
     yarp::sig::Vector *trackVec = targetPF.read(true);
     yarp::sig::Vector vec = *trackVec;
