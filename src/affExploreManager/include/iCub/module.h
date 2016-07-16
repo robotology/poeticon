@@ -336,7 +336,7 @@ protected:
     void                        getActionParam();
     int                         lookAtTool();   //might be used if tools are on a rack...
     void                        lookAtObject();
-    void                        writeConfirmation(bool actionResult);
+    void                        writeConfirmation(bool actionResult, yarp::sig::Vector objectPosTracker, yarp::sig::Vector *trackVec);
     void                        computeObjectDesc();
     void                        computeAllDesc_TEST();
     int                         askForTool();

@@ -560,7 +560,7 @@ bool Manager::updateModule()
         bool actionResult;
         performAction(actionResult); //on objectPos (not on objectPosTracker, which might be inaccurate)
 
-        for (int i=0; i<motSteps; i++)
+        for (int i=0; i<motSteps-1; i++)
         {
             fprintf(stderr,"Error: While reading and storing the tracker data");
             Time::delay(actionTime/(double)motSteps);
@@ -586,7 +586,7 @@ bool Manager::updateModule()
 
         Time::delay(0.5);
 
-        fprintf(stderr,"\n\n**********Get LAST object sample\n\n");
+//        fprintf(stderr,"\n\n**********Get LAST object sample\n\n");
 
         effDataTxt << " " <<  objectPosTracker[0] << " "
         << objectPosTracker[1] << " "
@@ -602,7 +602,7 @@ bool Manager::updateModule()
         effDataTxt << '\n';
 //        effData << '\n';
 //        effData << effDataTxt.str();
-        writeConfirmation(actionResult);
+        writeConfirmation(actionResult, objectPosTracker, trackVec);
         effData.close();
         effData.open(effdataFileName.c_str(), ofstream::out | ofstream::app);
 
@@ -2066,7 +2066,7 @@ void Manager::lookAtObject()
     rpcHuman.reply(reply);
 }
 /**********************************************************/
-void Manager::writeConfirmation(bool actionResult)
+void Manager::writeConfirmation(bool actionResult, yarp::sig::Vector objectPosTracker, yarp::sig::Vector *trackVec)
 {
 
 
@@ -2084,6 +2084,23 @@ void Manager::writeConfirmation(bool actionResult)
             rxCmd=processHumanCmd(cmd,val);
             if(rxCmd==Vocab::encode("yes"))
             {
+                Time::delay(actionTime/(double)motSteps);
+                trackVec = targetPF.read(true);
+                objImgPos.x = (*trackVec)[0];
+                objImgPos.y = (*trackVec)[5];
+                objectPosTracker.clear();
+                get3DPosition(objImgPos, objectPosTracker);
+
+    //            effData << " " <<  objectPosTracker[0] << " "
+    //            << objectPosTracker[1] << " "
+    //            << objectPosTracker[2] << " "
+    //            << objImgPos.x << " "
+    //            << objImgPos.y;
+                effDataTxt << " " <<  objectPosTracker[0] << " "
+                << objectPosTracker[1] << " "
+                << objectPosTracker[2] << " "
+                << objImgPos.x << " "
+                << objImgPos.y;
                 effData << effDataTxt.str();
                 writeImages();
                 effDataTxt.str("");
