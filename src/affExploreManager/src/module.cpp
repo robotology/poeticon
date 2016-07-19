@@ -599,7 +599,7 @@ bool Manager::updateModule()
 //        << objImgPos.x << " "
 //        << objImgPos.y;
 
-        effDataTxt << '\n';
+//        effDataTxt << '\n';
 //        effData << '\n';
 //        effData << effDataTxt.str();
         writeConfirmation(actionResult, objectPosTracker, trackVec);
@@ -2101,6 +2101,7 @@ void Manager::writeConfirmation(bool actionResult, yarp::sig::Vector objectPosTr
                 << objectPosTracker[2] << " "
                 << objImgPos.x << " "
                 << objImgPos.y;
+                effDataTxt << '\n';
                 effData << effDataTxt.str();
                 writeImages();
                 effDataTxt.str("");
