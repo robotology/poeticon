@@ -373,7 +373,7 @@ bool PlannerThread::groundRules()
         return false;
     }
     if (aff_yarp.getOutputCount() == 0) {
-        yError("Affordances communication module not connected, unable to ground rules!");
+        yError("affordanceCommunication module not connected, unable to ground rules!");
         return false;
     }
     // instructs affordanceCommunication module to init
@@ -401,17 +401,19 @@ bool PlannerThread::groundRules()
         }
         if (aff_yarp.getOutputCount() == 0)
         {
-            yError("Affordances communication module crashed");
+            yError("affordanceCommunication module crashed");
             return false;
         }
         Time::delay(0.1);
     }
     // instructs geometricGrounding module to start grounding
+    double t0, t1; // for timing
     if (!stopping)
     {
         Bottle& geo_bottle_out = geo_yarp.prepare();
         geo_bottle_out.clear();
         geo_bottle_out.addString("update");
+        t0 = yarp::os::Time::now();
         geo_yarp.write();
         yInfo("Grounding...");
     }
@@ -422,7 +424,8 @@ bool PlannerThread::groundRules()
             yInfo("message received: %s", command.c_str());
         }
         if (command == "ready"){ // success!
-            yInfo("Grounding Complete!");
+            t1 = yarp::os::Time::now();
+            yInfo("Grounding Complete! Elapsed time: %f", t1-t0);
             break;
         }
         if (geo_yarp.getOutputCount() == 0) // module crashed
@@ -539,12 +542,14 @@ bool PlannerThread::compileGoal()
         }
         Time::delay(0.5);
     }
+    double t0, t1; // for timing
     if (!stopping)
     {
         // Instructs the goalCompiler module to compile the set of subgoals
         goal_bottle_out = goal_yarp.prepare();
         goal_bottle_out.clear();
         goal_bottle_out.addString("update");
+        t0 = yarp::os::Time::now();
         goal_yarp.write();
     }
     while (!closing && !stopping) {
@@ -556,7 +561,8 @@ bool PlannerThread::compileGoal()
             yDebug("message received: %s", goal_bottle_in->toString().c_str());
             if (mess_receiv == "done") // success!
             {
-                yInfo("Goal Compiling is complete!");
+                t1 = yarp::os::Time::now();
+                yInfo("Goal Compiling is complete! Elapsed time: %f", t1-t0);
                 break;
             }
             else if (mess_receiv == "failed_objects") // failed to obtain the objects from the planningCycle
@@ -899,6 +905,7 @@ bool PlannerThread::loadRules()
 }
 
 // function that lowers the probability of success of actions that fail
+// adaptability heuristic
 bool PlannerThread::adaptRules()
 {
     string temp_str;
@@ -1040,7 +1047,10 @@ int PlannerThread::PRADA()
     FILE * pFile;
     pFile = fopen(pipeFileName.c_str(),"w");
     fclose(pFile);
+    double t0 = yarp::os::Time::now();
     int sys_flag = system(process_string.c_str());
+    double t1 = yarp::os::Time::now();
+    yInfo("PRADA elapsed time: %f", t1-t0);
     if (sys_flag == 34304) // code for executable failure
     {
         yError("Error with PRADA files, load failed");
@@ -1094,6 +1104,8 @@ bool PlannerThread::increaseHorizon()
             temp_vect = split(configData[w+2], ' ');
             horizon = atoi(temp_vect[1].c_str());
             horizon = horizon + 1;
+
+            // creativity heuristic
             if (horizon > 10) // if horizon is too large already
             {
                 yWarning("horizon too large, jumping to next goal");
@@ -1152,6 +1164,7 @@ bool PlannerThread::increaseHorizon()
                     return false; // leaves function
                 }
             }
+
             configData[w+2] = "PRADA_horizon " + static_cast<ostringstream*>( &(ostringstream() << horizon) )->str(); // if it didn't fail, update horizon + 1
             break;
         }
@@ -1212,6 +1225,7 @@ bool PlannerThread::IDisPresent(string ID, bool &result)
 }
 
 // function that checks which symbols are present across subgoals
+// goal consistency heuristic
 bool PlannerThread::checkHoldingSymbols()
 {
     yDebug("checking symbols that still hold...");
