@@ -19,6 +19,9 @@ bool PlannerModule::configure(ResourceFinder &rf)
     handlerPort.open(handlerPortName.c_str());
     attach(handlerPort);
     closing = false;
+    bool useAdaptability = rf.check("adaptability",Value("on")).asString()=="on"?true:false;
+    bool useGoalConsistency = rf.check("goalConsistency",Value("on")).asString()=="on"?true:false;
+    bool useCreativity = rf.check("creativity",Value("on")).asString()=="on"?true:false;
 
     // thread stuff
     threadPeriod = 0.033; // [s]
@@ -31,6 +34,7 @@ bool PlannerModule::configure(ResourceFinder &rf)
         delete thread;
         return false;
     }
+    thread->initValues(useAdaptability, useGoalConsistency, useCreativity);
     return true;
 }
 

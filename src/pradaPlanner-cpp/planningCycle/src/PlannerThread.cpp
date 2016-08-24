@@ -113,6 +113,13 @@ bool PlannerThread::threadInit()
     return true;
 }
 
+void PlannerThread::initValues(bool adaptability, bool goalConsistency, bool creativity)
+{
+    useAdaptability = adaptability;
+    useGoalConsistency = goalConsistency;
+    useCreativity = creativity;
+}
+
 void PlannerThread::run()
 {
     while (!closing) //while running
@@ -705,7 +712,7 @@ Bottle PlannerThread::printObjs()
 }
 
 /* - For future use (tool names propagation)
-Bottle PlannerThread::printObjs()
+Bottle PlannerThread::printTools()
 {
     return tool_bottle;
 }
@@ -1106,7 +1113,7 @@ bool PlannerThread::increaseHorizon()
             horizon = horizon + 1;
 
             // creativity heuristic
-            if (horizon > 10) // if horizon is too large already
+            if (horizon > 10 && useCreativity) // if horizon is too large already
             {
                 yWarning("horizon too large, jumping to next goal");
                 jumpForward(); // jumps to next plan-level
@@ -1121,7 +1128,7 @@ bool PlannerThread::increaseHorizon()
                         }
                     }
                 }
-                if ((plan_level >= subgoals.size() && !checkGoalCompletion()) || !checkHoldingSymbols()) // if plan-level already exceeds maximum subgoal size, and the goal was not completed
+                if ((plan_level >= subgoals.size() && !checkGoalCompletion()) || (!checkHoldingSymbols() && useGoalConsistency)) // if plan-level already exceeds maximum subgoal size, and the goal was not completed
                 {
                     for (int t = 0; t < failed_goal.size(); ++t)
                     {
@@ -1160,6 +1167,63 @@ bool PlannerThread::increaseHorizon()
                     }
                     yDebug("Sending to Praxicon: %s", prax_bottle_out.toString().c_str());
                     prax_yarp.write(); 
+                    restartPlan = true;
+                    return false; // leaves function
+                }
+            }
+//----------In case we are NOT using the creativity heuristic-----------------------------------
+            else if (horizon > 10 && !useCreativity)
+            {
+                yInfo("Plan failed, horizon is too large");
+                if (failed_goal.size() == 0)
+                {
+                    for (int t = 0; t < goal.size(); ++t)
+                    {
+                        if (find_element(state,goal[t]) == 0)
+                        {
+                            failed_goal.push_back(goal[t]);
+                        }
+                    }
+                }
+                if ((!checkGoalCompletion()) || (!checkHoldingSymbols() && useGoalConsistency)) // if the goal was not completed
+                {
+                    for (int t = 0; t < failed_goal.size(); ++t)
+                    {
+                        temp_vect = split(failed_goal[t], '_');
+                        objects_failed.push_back(temp_vect[0]);
+                        objects_failed.push_back(temp_vect[2]);
+                    }
+                    yInfo("Plan failed");
+                    // plan fails, add FAIL to activityInterface bottle
+                    Bottle& prax_bottle_out = prax_yarp.prepare();
+                    prax_bottle_out.clear();
+                    prax_bottle_out.addString("FAIL");
+                    for (int u = 0; u < objects_failed.size(); ++u){
+                        for (int inde = 0; inde < object_IDs.size(); ++inde){
+                            if (object_IDs[inde][0] == objects_failed[u]){
+                                string check_str=object_IDs[inde][1];
+                                transform(check_str.begin(), check_str.end(), check_str.begin(), ::tolower);
+                                if (check_str != "rake" && check_str != "stick" && check_str != "left" && check_str != "right" /*&& find_element(tool_list,check_str) == 0 */){
+                                    bool isPresent;
+                                    IDisPresent(objects_failed[u], isPresent);
+                                    if (isPresent)
+                                    {
+                                        yDebug("Object is present: %s", objects_failed[u].c_str());
+                                    }
+                                    else
+                                    {
+                                        yDebug("object is not present: %s", objects_failed[u].c_str());
+                                    }
+                                    if (!isPresent)
+                                    {
+                                        prax_bottle_out.addString(object_IDs[inde][1]); // add objects that were involved in the failure
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    yDebug("Sending to Praxicon: %s", prax_bottle_out.toString().c_str());
+                    prax_yarp.write();
                     restartPlan = true;
                     return false; // leaves function
                 }
@@ -1673,19 +1737,22 @@ bool PlannerThread::planning_cycle()
     {
         return false;
     }
-    if (compareState()) // compares the current world state to the previous world state (from preserve state)
+    if (useAdaptability)
     {
-        if (!checkPause())
+        if (compareState()) // compares the current world state to the previous world state (from preserve state)
         {
-            return false;
-        }
-        if (!adaptRules()) // If the state hasn't changed, adapt the last action (it failed)
-        {
-            return false;
-        }
-        if (!checkPause())
-        {
-            return false;
+            if (!checkPause())
+            {
+                return false;
+            }
+            if (!adaptRules()) // If the state hasn't changed, adapt the last action (it failed)
+            {
+                return false;
+            }
+            if (!checkPause())
+            {
+                return false;
+            }
         }
     }
     if (!checkPause())
@@ -1708,24 +1775,27 @@ bool PlannerThread::planning_cycle()
     {
         return false;
     }
-    if (!checkHoldingSymbols()) // check if symbols belonging to previous goals are still true on the current goal
+    if (useGoalConsistency)
     {
-        if (!checkPause())
+        if (!checkHoldingSymbols()) // check if symbols belonging to previous goals are still true on the current goal
         {
-            return false;
-        }
-        jumpBack(); // If there are symbols that disappeared, jump back one plan-level
-        if (!checkPause())
-        {
-            return false;
-        }
-        if (!resetConfig()) // reset Horizon
-        {
-            return false;
-        }
-        if (!checkPause())
-        {
-            return false;
+            if (!checkPause())
+            {
+                return false;
+            }
+            jumpBack(); // If there are symbols that disappeared, jump back one plan-level
+            if (!checkPause())
+            {
+                return false;
+            }
+            if (!resetConfig()) // reset Horizon
+            {
+                return false;
+            }
+            if (!checkPause())
+            {
+                return false;
+            }
         }
     }
     else // If the previous goal is still verified

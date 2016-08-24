@@ -84,6 +84,9 @@ class PlannerThread : public RateThread
         bool resumePlan;
         bool startPlan;
         bool stopping;
+        bool useAdaptability;
+        bool useGoalConsistency;
+        bool useCreativity;
         
         int plan_level;
 
@@ -128,6 +131,7 @@ class PlannerThread : public RateThread
         virtual void run();
 
         // module
+        void initValues(bool adaptability, bool goalConsistency, bool creativity);
         void stopPlanning();
         bool checkPause();
         bool completePlannerState();
