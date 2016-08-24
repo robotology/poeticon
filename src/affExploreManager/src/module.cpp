@@ -1663,16 +1663,16 @@ int Manager::writeImages()
             fs::path dir_right = path_right;
             fs::create_directories(dir_left);
             fs::create_directories(dir_right);
-            string imgNumber = "-1";
-            string imgNumberLeft = "-1";
-            string imgNumberRight = "-1";
+            int imgNumber = -1;
+            int imgNumberLeft = -1;
+            int imgNumberRight = -1;
             for (fs::directory_iterator i = fs::directory_iterator(dir_left); i != fs::directory_iterator(); i++)
             {
                 if (!fs::is_directory(i->path())) //we eliminate directories
                 {
                     string filename = i->path().filename().string();
                     size_t const pos = filename.find_last_of('_');
-                    imgNumberLeft = max(imgNumberLeft,filename.substr(pos+1));
+                    imgNumberLeft = max(imgNumberRight,atoi(filename.substr(pos+1).c_str()));
                 }
                 else
                     continue;
@@ -1683,28 +1683,32 @@ int Manager::writeImages()
                 {
                     string filename = i->path().filename().string();
                     size_t const pos = filename.find_last_of('_');
-                    imgNumberRight = max(imgNumberRight,filename.substr(pos+1));
+                    imgNumberRight = max(imgNumberRight,atoi(filename.substr(pos+1).c_str()));
                 }
                 else
                     continue;
             }
             imgNumber = max(imgNumberLeft,imgNumberRight);
+//            fprintf(stderr,"\n before img number is:\n");
+//            fprintf(stdout,"%s\n",imgNumber.c_str());
             stringstream out;
-            out << (atoi(imgNumber.c_str()) + 1);
-            imgNumber = out.str();
+            out << (imgNumber + 1);
+            string sImgNumber = out.str();
+            fprintf(stderr,"\n after img number is\n");
+            fprintf(stdout,"%s\n",sImgNumber.c_str());
             cv_imgMatTemplate = cv::cvarrToMat(static_cast<IplImage*>(imgLeft->getIplImage()));
-            string name = path_left + "/before_" + imgNumber + ".jpg";
+            string name = path_left + "/before_" + sImgNumber + ".jpg";
             imwrite(name,cv_imgMatTemplate);
             cv_imgMatTemplate = cv::cvarrToMat(static_cast<IplImage*>(imgRight->getIplImage()));
-            name = path_right + "/before_" + imgNumber + ".jpg";
+            name = path_right + "/before_" + sImgNumber + ".jpg";
             imwrite(name,cv_imgMatTemplate);
             imgLeft = imagePortLeft.read();
             imgRight = imagePortRight.read();
             cv_imgMatTemplate = cv::cvarrToMat(static_cast<IplImage*>(imgLeft->getIplImage()));
-            name = path_left + "/after_" + imgNumber + ".jpg";
+            name = path_left + "/after_" + sImgNumber + ".jpg";
             imwrite(name,cv_imgMatTemplate);
             cv_imgMatTemplate = cv::cvarrToMat(static_cast<IplImage*>(imgRight->getIplImage()));
-            name = path_right + "/after_" + imgNumber + ".jpg";
+            name = path_right + "/after_" + sImgNumber + ".jpg";
             imwrite(name,cv_imgMatTemplate);
             break;}
 
