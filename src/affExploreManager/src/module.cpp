@@ -1654,6 +1654,7 @@ int Manager::writeImages()
             cv_imgMatTemplate = cv::cvarrToMat(static_cast<IplImage*>(imgRight->getIplImage()));
             name = path_right + "/after_" + sImgNumber + ".jpg";
             imwrite(name,cv_imgMatTemplate);
+            fprintf(stdout,"Image number %s is saved.\n",sImgNumber.c_str());
             break;}
 
         case 2:
@@ -1710,6 +1711,7 @@ int Manager::writeImages()
             cv_imgMatTemplate = cv::cvarrToMat(static_cast<IplImage*>(imgRight->getIplImage()));
             name = path_right + "/after_" + sImgNumber + ".jpg";
             imwrite(name,cv_imgMatTemplate);
+            fprintf(stdout,"Image number %s is saved.\n",sImgNumber.c_str());
             break;}
 
         case 3:
@@ -1767,6 +1769,7 @@ int Manager::writeImages()
             cv_imgMatTemplate = cv::cvarrToMat(static_cast<IplImage*>(imgRight->getIplImage()));
             name = path_right + "/after_" + sImgNumber + ".jpg";
             imwrite(name,cv_imgMatTemplate);
+            fprintf(stdout,"Image number %s is saved.\n",sImgNumber.c_str());
             break;}
 
         case 4:
@@ -1822,6 +1825,7 @@ int Manager::writeImages()
             cv_imgMatTemplate = cv::cvarrToMat(static_cast<IplImage*>(imgRight->getIplImage()));
             name = path_right + "/after_" + sImgNumber + ".jpg";
             imwrite(name,cv_imgMatTemplate);
+            fprintf(stdout,"Image number %s is saved.\n",sImgNumber.c_str());
             break;}
 
         default:
