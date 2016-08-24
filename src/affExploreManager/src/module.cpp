@@ -1638,8 +1638,6 @@ int Manager::writeImages()
             stringstream out;
             out << (imgNumber + 1);
             string sImgNumber = out.str();
-            fprintf(stderr,"\n after img number is\n");
-            fprintf(stdout,"%s\n",sImgNumber.c_str());
             cv_imgMatTemplate = cv::cvarrToMat(static_cast<IplImage*>(imgLeft->getIplImage()));
             string name = path_left + "/before_" + sImgNumber + ".jpg";
             imwrite(name,cv_imgMatTemplate);
@@ -1695,8 +1693,6 @@ int Manager::writeImages()
             stringstream out;
             out << (imgNumber + 1);
             string sImgNumber = out.str();
-            fprintf(stderr,"\n after img number is\n");
-            fprintf(stdout,"%s\n",sImgNumber.c_str());
             cv_imgMatTemplate = cv::cvarrToMat(static_cast<IplImage*>(imgLeft->getIplImage()));
             string name = path_left + "/before_" + sImgNumber + ".jpg";
             imwrite(name,cv_imgMatTemplate);
@@ -1753,8 +1749,6 @@ int Manager::writeImages()
             stringstream out;
             out << (imgNumber + 1);
             string sImgNumber = out.str();
-            fprintf(stderr,"\n after img number is\n");
-            fprintf(stdout,"%s\n",sImgNumber.c_str());
             cv_imgMatTemplate = cv::cvarrToMat(static_cast<IplImage*>(imgLeft->getIplImage()));
             string name = path_left + "/before_" + sImgNumber + ".jpg";
             imwrite(name,cv_imgMatTemplate);
@@ -1809,8 +1803,6 @@ int Manager::writeImages()
             imgNumber = max(imgNumberLeft,imgNumberRight);stringstream out;
             out << (imgNumber + 1);
             string sImgNumber = out.str();
-            fprintf(stderr,"\n after img number is\n");
-            fprintf(stdout,"%s\n",sImgNumber.c_str());
             cv_imgMatTemplate = cv::cvarrToMat(static_cast<IplImage*>(imgLeft->getIplImage()));
             string name = path_left + "/before_" + sImgNumber + ".jpg";
             imwrite(name,cv_imgMatTemplate);
