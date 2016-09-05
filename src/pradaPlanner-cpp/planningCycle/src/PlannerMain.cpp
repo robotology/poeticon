@@ -15,10 +15,20 @@ int main(int argc, char *argv[])
     Network yarp;
 
     ResourceFinder rf;
-    rf.setVerbose(false);
+    rf.setVerbose(true);
     rf.setDefaultContext("poeticon");    // overridden by --context
     rf.setDefaultConfigFile("planner.ini");  // overridden by --from
     rf.configure(argc, argv);
+
+    if(rf.check("help"))
+    {
+        yInfo("Available options:");
+        yInfo("--name <prefix> (default: planner)");
+        yInfo("--adaptability <on|off> (use adaptability heuristic, default: on)");
+        yInfo("--creativity <on|off> (use creativity heuristic, default: on)");
+        yInfo("--goalConsistency <on|off> (use goal consistency heuristic, default: on)");
+        return 0; // EXIT_SUCCESS
+    }
 
     if(! yarp.checkNetwork() )
     {

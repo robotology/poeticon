@@ -34,6 +34,9 @@ bool PlannerModule::configure(ResourceFinder &rf)
         delete thread;
         return false;
     }
+    yInfo("adaptability heuristic is %s", useAdaptability?"on":"off");
+    yInfo("creativity heuristic is %s", useCreativity?"on":"off");
+    yInfo("goal consistency heuristic is %s", useGoalConsistency?"on":"off");
     thread->initValues(useAdaptability, useGoalConsistency, useCreativity);
     return true;
 }
