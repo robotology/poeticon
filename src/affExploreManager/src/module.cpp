@@ -23,6 +23,7 @@
 #include "iCub/module.h"
 #include <gsl/gsl_math.h>
 #include <time.h>
+#include <math.h>
 #include <boost/filesystem.hpp>
 #include <opencv2/core/core.hpp>
 
@@ -536,13 +537,14 @@ bool Manager::updateModule()
         imgLeft = imagePortLeft.read();
         imgRight = imagePortRight.read();
 
-        yarp::sig::Vector objectPosTracker;
+        yarp::sig::Vector objectPosTracker, initialObjPosTracker;
         yarp::sig::Vector *trackVec = targetPF.read(true);
 
         objImgPos.x = (*trackVec)[0];
         objImgPos.y = (*trackVec)[5];
 
         get3DPosition(objImgPos,objectPosTracker);
+        initialObjPosTracker = objectPosTracker;
 
         fprintf(stderr,"\n\n***********Get FIRST object sample\n\n");
 
@@ -602,7 +604,7 @@ bool Manager::updateModule()
 //        effDataTxt << '\n';
 //        effData << '\n';
 //        effData << effDataTxt.str();
-        writeConfirmation(actionResult, objectPosTracker, trackVec);
+        writeConfirmation(actionResult, objectPosTracker, initialObjPosTracker, trackVec);
         effData.close();
         effData.open(effdataFileName.c_str(), ofstream::out | ofstream::app);
 
@@ -2069,7 +2071,7 @@ void Manager::lookAtObject()
     rpcHuman.reply(reply);
 }
 /**********************************************************/
-void Manager::writeConfirmation(bool actionResult, yarp::sig::Vector objectPosTracker, yarp::sig::Vector *trackVec)
+void Manager::writeConfirmation(bool actionResult, yarp::sig::Vector objectPosTracker, yarp::sig::Vector initialObjPosTracker, yarp::sig::Vector *trackVec)
 {
 
 
@@ -2077,6 +2079,7 @@ void Manager::writeConfirmation(bool actionResult, yarp::sig::Vector objectPosTr
         {
         Bottle cmd, val, reply;
         int rxCmd;
+        bool firsttTime = true;
 
         fprintf(stderr,"Tell me please!\n");
 
@@ -2093,7 +2096,23 @@ void Manager::writeConfirmation(bool actionResult, yarp::sig::Vector objectPosTr
                 objImgPos.y = (*trackVec)[5];
                 objectPosTracker.clear();
                 get3DPosition(objImgPos, objectPosTracker);
-
+                bool simpleMeasures = fabs(objectPosTracker[0]-initialObjPosTracker[0])>0.5 or fabs(objectPosTracker[1]-initialObjPosTracker[1])>0.5;
+                simpleMeasures = simpleMeasures or objectPosTracker[0] < -0.9 or fabs(objectPosTracker[1])>0.6;
+                if(firsttTime)
+                {
+                    if(simpleMeasures)
+                    {
+                        reply.addString("But it was a weird measurement. On x axis the current measurement is: ");
+                        reply.addDouble(objectPosTracker[0]);
+                        reply.addString(" and on y axis the movement is: ");
+                        reply.addDouble(objectPosTracker[1]);
+                        reply.addString("/nAre you still sure you want me to save it? [yes|no]");
+                        rpcHuman.reply(reply);
+                        reply.clear();
+                        firsttTime = false;
+                        continue;
+                    }
+                }
     //            effData << " " <<  objectPosTracker[0] << " "
     //            << objectPosTracker[1] << " "
     //            << objectPosTracker[2] << " "
@@ -2125,7 +2144,10 @@ void Manager::writeConfirmation(bool actionResult, yarp::sig::Vector objectPosTr
             }
             else
             {
-                reply.addString("Yo! Should I write the last trial or not? [yes|no]");
+                if(firsttTime)
+                    reply.addString("Yo! Should I write the last trial or not? [yes|no]");
+                else
+                    reply.addString("Yo! Even though it was a weird measurement, should I write it or not? [yes|no]");
                 rpcHuman.reply(reply);
                 reply.clear();
             }
