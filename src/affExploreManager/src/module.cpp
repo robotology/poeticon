@@ -2096,8 +2096,6 @@ void Manager::writeConfirmation(bool actionResult, yarp::sig::Vector objectPosTr
                 objImgPos.y = (*trackVec)[5];
                 objectPosTracker.clear();
                 get3DPosition(objImgPos, objectPosTracker);
-                bool simpleMeasures = fabs(objectPosTracker[0]-initialObjPosTracker[0])>0.5 or fabs(objectPosTracker[1]-initialObjPosTracker[1])>0.5;
-                simpleMeasures = simpleMeasures or objectPosTracker[0] < -0.9 or fabs(objectPosTracker[1])>0.6;
                 if(firsttTime)
                 {
                     bool simpleMeasures = fabs(objectPosTracker[0]-initialObjPosTracker[0])>0.5 or fabs(objectPosTracker[1]-initialObjPosTracker[1])>0.5;
