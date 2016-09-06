@@ -2104,7 +2104,7 @@ void Manager::writeConfirmation(bool actionResult, yarp::sig::Vector objectPosTr
                     {
                         reply.addString("But it was a weird measurement. On x axis the current measurement is: ");
                         reply.addDouble(objectPosTracker[0]);
-                        reply.addString(" and on y axis the movement is: ");
+                        reply.addString(" and on y axis the current measurement is: ");
                         reply.addDouble(objectPosTracker[1]);
                         reply.addString(". Are you still sure you want me to save it? [yes|no]");
                         rpcHuman.reply(reply);
