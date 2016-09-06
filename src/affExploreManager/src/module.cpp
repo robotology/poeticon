@@ -2106,7 +2106,11 @@ void Manager::writeConfirmation(bool actionResult, yarp::sig::Vector objectPosTr
                         reply.addDouble(objectPosTracker[0]);
                         reply.addString(" and on y axis the current measurement is: ");
                         reply.addDouble(objectPosTracker[1]);
-                        reply.addString(". Are you still sure you want me to save it? [yes|no]");
+                        reply.addString(" and the initial measurements are: ");
+                        reply.addDouble(initialObjPosTracker[0]);
+                        reply.addString(" and: ");
+                        reply.addDouble(initialObjPosTracker[1]);
+                        reply.addString(" respectively. Are you still sure you want me to save it? [yes|no]");
                         rpcHuman.reply(reply);
                         reply.clear();
                         firsttTime = false;
