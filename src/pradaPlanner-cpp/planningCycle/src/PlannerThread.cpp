@@ -1797,8 +1797,133 @@ bool PlannerThread::planning_cycle()
                 return false;
             }
         }
+        else // If the previous goal is still verified
+        {
+// NOTE: THIS CAN PROBABLY BE OPTIMISED (the code in this "else" is the same as the one when "useGoalConsistency == false"). NEEDS FURTHER TESTING BEFORE THAT.
+            if (!checkPause())
+            {
+                return false;
+            }
+            if (checkGoalCompletion()) // check if the current goal has been completed
+            {
+                if (!checkPause())
+                {
+                    return false;
+                }
+                if (!resetRules()) // If the goal was completed, reset the rules to after-grounding probability values
+                {
+                    return false;
+                }
+                if (!checkPause())
+                {
+                    return false;
+                }
+                if (!resetConfig()) // reset planning horizon back to 5
+                {
+                    return false;
+                }
+                if (!checkPause())
+                {
+                    return false;
+                }
+                if (!loadRules()) // load reset rules
+                {
+                    return false;
+                }
+                if (!checkPause())
+                {
+                    return false;
+                }
+                if (!jumpForward()) // jump one plan-level forward
+                {
+                    return false;
+                }
+                if (!checkPause())
+                {
+                    return false;
+                }
+                if (!planCompletion()) // check if all the subgoals have been met (plan completed)
+                {
+                    return true; // if there are still goals to be completed, planning should be resumed
+                }
+                if (!checkPause())
+                {
+                    return false;
+                }
+                return true;
+            }
+            else { // if the current goal has yet to be completed
+                if (!checkPause())
+                {
+                    return false;
+                }
+                string tmp_str = showCurrentGoal(); 
+                yInfo("Current subgoal: %s", tmp_str.c_str());
+                int flag_prada = PRADA(); // run PRADA planner (planner.exe)
+                if (!checkPause())
+                {
+                    return false;
+                }
+                if (flag_prada == 0) // if PRADA fails for any reason, terminate plan
+                {
+                    return false;
+                }
+                else if (flag_prada == 2) // If PRADA finds no valid action:
+                {
+                    if (!increaseHorizon()) // increase planning horizon by 1
+                    {
+                        return false;
+                    }
+                    if (!checkPause())
+                    {
+                        return false;
+                    }
+                    return true; // resume plan
+                }
+                if (!loadUsedObjs()) // loads the objects used by the current action into memory
+                {
+                    return false;
+                }
+                if (!checkPause())
+                {
+                    return false;
+                }
+                if (!codeAction()) // encodes the action to be sent to activityInterface
+                {
+                    return false;
+                }
+                if (!checkPause())
+                {
+                    return false;
+                }
+                if (!execAction()) // instructs execution of action
+                {
+                    return false;
+                }
+                if (!checkPause())
+                {
+                    return false;
+                }
+                if (!preserveState()) // stores the current world state to compare later
+                {
+                    return false;
+                }
+                if (!checkPause())
+                {
+                    return false;
+                }
+                if (!checkFailure()) // checks if plan has failed before continuing
+                {
+                    return false;
+                }
+                if (!checkPause())
+                {
+                    return false;
+                }
+            }
+        }
     }
-    else // If the previous goal is still verified
+    else // If goal consistency heuristic is not being used
     {
         if (!checkPause())
         {
