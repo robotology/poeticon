@@ -513,6 +513,7 @@ bool Manager::updateModule()
         objectPos.clear();
         get3DPosition(objImgPos_onTable, objectPos);
         segmentAndTrack(objImgPos.x, objImgPos.y);
+        yarp::sig::Vector initialObjPos = objectPos;
 
         //fprintf(stderr,"eff %d %s %s\n", actionId, toolName.data(), targetName.data());
         effDataTxt << "eff" << " ";
@@ -537,20 +538,20 @@ bool Manager::updateModule()
         imgLeft = imagePortLeft.read();
         imgRight = imagePortRight.read();
 
-        yarp::sig::Vector objectPosTracker, initialObjPosTracker;
+        yarp::sig::Vector objectPosTracker;//, initialObjPosTracker;
         yarp::sig::Vector *trackVec = targetPF.read(true);
 
         objImgPos.x = (*trackVec)[0];
         objImgPos.y = (*trackVec)[5];
 
         get3DPosition(objImgPos,objectPosTracker);
-        initialObjPosTracker = objectPosTracker;
+//        initialObjPosTracker = objectPosTracker;
 
         fprintf(stderr,"\n\n***********Get FIRST object sample\n\n");
 
-        effDataTxt << objectPosTracker[0] << " "
-        << objectPosTracker[1] << " "
-        << objectPosTracker[2] << " "
+        effDataTxt << objectPos[0] << " "
+        << objectPos[1] << " "
+        << objectPos[2] << " "
         << objImgPos.x << " "
         << objImgPos.y;
 //        effData << objectPosTracker[0] << " "
@@ -604,7 +605,7 @@ bool Manager::updateModule()
 //        effDataTxt << '\n';
 //        effData << '\n';
 //        effData << effDataTxt.str();
-        writeConfirmation(actionResult, objectPosTracker, initialObjPosTracker, trackVec);
+        writeConfirmation(actionResult, objectPosTracker, initialObjPos, trackVec);
         effData.close();
         effData.open(effdataFileName.c_str(), ofstream::out | ofstream::app);
 
