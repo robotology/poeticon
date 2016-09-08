@@ -15,6 +15,15 @@ bool PlannerModule::configure(ResourceFinder &rf)
     moduleName = rf.check("name", Value("planner")).asString();
     PathName = rf.findPath("contexts/"+rf.getContext());
     setName(moduleName.c_str());
+
+    if (PathName==""){
+        yError("path to contexts/%s not found", rf.getContext().c_str());
+        return false;    
+    }
+    else {
+        yInfo("Context FOUND! %s", PathName.c_str());
+    }
+
     handlerPortName = "/" + moduleName + "/rpc:i";
     handlerPort.open(handlerPortName.c_str());
     attach(handlerPort);
@@ -112,12 +121,12 @@ bool PlannerModule::updateState()
 
 bool PlannerModule::loadObjects()
 {
-	return thread->loadObjs();
+    return thread->loadObjs();
 }
 
 Bottle PlannerModule::printObjects()
 {
-	return thread->printObjs();
+    return thread->printObjs();
 }
 
 bool PlannerModule::loadState()
@@ -223,7 +232,7 @@ string PlannerModule::showCurrentGoal()
 
 string PlannerModule::showSymbol(string symbol)
 {
-	return thread->printSymbol(symbol);
+    return thread->printSymbol(symbol);
 }
 
 bool PlannerModule::quit()

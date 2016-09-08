@@ -17,13 +17,12 @@ bool geoGround::configure(ResourceFinder &rf)
     PathName = rf.findPath("contexts/"+rf.getContext());
     setName(moduleName.c_str());
 
-
     if (PathName==""){
         yError("path to contexts/%s not found", rf.getContext().c_str());
         return false;    
     }
     else {
-        yInfo("Context FOUND!");
+        yInfo("Context FOUND! %s", PathName.c_str());
     }
 
     openFiles();
@@ -40,7 +39,7 @@ bool geoGround::groundingCycle()
 {
     while (!isStopping())
     {
-		yarp::os::Time::delay(0.1);
+        yarp::os::Time::delay(0.1);
         if (plannerPort.getInputCount() == 0)
         {
             yWarning("planner not connected");
@@ -641,16 +640,16 @@ void geoGround::openFiles()
 
 void geoGround::openPorts()
 {
-	string portName;
+    string portName;
 
-	portName = "/" + moduleName + "/planner_cmd:io";
+    portName = "/" + moduleName + "/planner_cmd:io";
     plannerPort.open(portName);
 
-	portName = "/" + moduleName + "/affordances_cmd:io";
+    portName = "/" + moduleName + "/affordances_cmd:io";
     affordancePort.open(portName);
 
-	portName = "/" + moduleName + "/planner_rpc:o";
-	objectQueryPort.open(portName);
+    portName = "/" + moduleName + "/planner_rpc:o";
+    objectQueryPort.open(portName);
 }
 
 bool geoGround::close()
@@ -679,45 +678,45 @@ bool geoGround::interrupt()
 bool geoGround::loadObjs()
 {
 
-	vector<string> temp_vect;
-	if (objectQueryPort.getOutputCount() == 0){
+    vector<string> temp_vect;
+    if (objectQueryPort.getOutputCount() == 0){
         yError("planner not connected!");
         return false;
     }
-	objects.clear();
-	tools.clear();
+    objects.clear();
+    tools.clear();
     cmd.clear();
     cmd.addString("printObjects");
     objectQueryPort.write(cmd,reply);
     if (reply.size() > 0 && reply.get(0).isList() && reply.get(0).asList()->size() > 2){
         yInfo("Objects updated!");
-		for (int i = 0; i < reply.get(0).asList()->size(); ++i)
-		{
-			temp_vect.clear();
-			temp_vect.push_back( NumbertoString(reply.get(0).asList()->get(i).asList()->get(0).asInt() ) );
-			temp_vect.push_back(reply.get(0).asList()->get(i).asList()->get(1).asString());
-			objects.push_back(temp_vect[0]);
+        for (int i = 0; i < reply.get(0).asList()->size(); ++i)
+        {
+            temp_vect.clear();
+            temp_vect.push_back( NumbertoString(reply.get(0).asList()->get(i).asList()->get(0).asInt() ) );
+            temp_vect.push_back(reply.get(0).asList()->get(i).asList()->get(1).asString());
+            objects.push_back(temp_vect[0]);
             string check_str=temp_vect[1];
             transform(check_str.begin(), check_str.end(), check_str.begin(), ::tolower);
-        	if (check_str == "stick" || check_str == "rake")
-        	{
-            	tools.push_back(temp_vect[0]);
-        	}
-		}
-		return true;
+            if (check_str == "stick" || check_str == "rake")
+            {
+                tools.push_back(temp_vect[0]);
+            }
+        }
+        return true;
     }
     else {
         yError("Objects update failed!");
-		return false;
+        return false;
     }
-	return false;
+    return false;
 }
 
 string geoGround::plannerCommand()
 {
     string command;
     while (!isStopping()){
-		yarp::os::Time::delay(0.1);
+        yarp::os::Time::delay(0.1);
         plannerBottle = plannerPort.read(false);
         if (plannerBottle != NULL){
             command = plannerBottle->toString().c_str();

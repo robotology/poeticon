@@ -16,13 +16,12 @@ bool goalCompiler::configure(ResourceFinder &rf)
     PathName = rf.findPath("contexts/"+rf.getContext());
     setName(moduleName.c_str());
 
-
     if (PathName==""){
         yError("path to contexts/%s not found", rf.getContext().c_str());
         return false;    
     }
     else {
-        yInfo("Context FOUND!");
+        yInfo("Context FOUND! %s", PathName.c_str());
     }
     openFiles();
     openPorts();
@@ -30,7 +29,7 @@ bool goalCompiler::configure(ResourceFinder &rf)
 
     while (!isStopping())
     {
-		yarp::os::Time::delay(0.1);
+        yarp::os::Time::delay(0.1);
         if (plannerPort.getInputCount() == 0)
         {
             yWarning("planner not connected");
@@ -54,11 +53,11 @@ bool goalCompiler::configure(ResourceFinder &rf)
             if (!loadObjs())
             {
                 yWarning("failed to load objects");
-            	if (!plannerReply("failed_objects"))
-            	{
-                	yError("failed to communicate with planner");
-                	//return false;
-            	}
+                if (!plannerReply("failed_objects"))
+                {
+                    yError("failed to communicate with planner");
+                    //return false;
+                }
                 continue;
             }
             if (!receiveInstructions())
@@ -72,81 +71,81 @@ bool goalCompiler::configure(ResourceFinder &rf)
             if (!loadObjs())
             {
                 yWarning("failed to load objects");
-            	if (!plannerReply("failed_objects"))
-            	{
-                	yError("failed to communicate with planner");
-                	//return false;
-            	}
+                if (!plannerReply("failed_objects"))
+                {
+                    yError("failed to communicate with planner");
+                    //return false;
+                }
                 continue;
             }
             if (!loadRules())
             {
                 yWarning("failed to load rules");
-            	if (!plannerReply("failed_rules"))
-            	{
-                	yError("failed to communicate with planner");
-                	//return false;
-            	}
+                if (!plannerReply("failed_rules"))
+                {
+                    yError("failed to communicate with planner");
+                    //return false;
+                }
                 continue;
             }
             if (!loadInstructions())
             {
                 yWarning("failed to load instructions");
-            	if (!plannerReply("failed_instructions"))
-            	{
-                	yError("failed to communicate with planner");
-                	//return false;
-            	}
+                if (!plannerReply("failed_instructions"))
+                {
+                    yError("failed to communicate with planner");
+                    //return false;
+                }
                 continue;
             }
             if (!compile())
             {
                 yWarning("failed to compile goals");
-            	if (!plannerReply("failed_compiling"))
-            	{
-                	yError("failed to communicate with planner");
-                	//return false;
-            	}
+                if (!plannerReply("failed_compiling"))
+                {
+                    yError("failed to communicate with planner");
+                    //return false;
+                }
                 continue;
             }
             if (!translate())
             {
                 yWarning("failed to translate goals");
-            	if (!plannerReply("failed_translation"))
-            	{
-                	yError("failed to communicate with planner");
-                	//return false;
-            	}
+                if (!plannerReply("failed_translation"))
+                {
+                    yError("failed to communicate with planner");
+                    //return false;
+                }
                 continue;
             }
-			if (!checkConsistency())
-			{
-				yWarning("failed consistency test");
-            	if (!plannerReply("failed_consistency"))
-            	{
-                	yError("failed to communicate with planner");
-                	//return false;
-            	}
-				continue;
-			}
+            if (!checkConsistency())
+            {
+                yWarning("failed consistency test");
+                if (!plannerReply("failed_consistency"))
+                {
+                    yError("failed to communicate with planner");
+                    //return false;
+                }
+                continue;
+            }
             if (!clearUnimportantGoals())
-			{
-				yWarning("failed clearing unimportant subgoals");
-            	if (!plannerReply("failed_pruning"))
-            	{
-                	yError("failed to communicate with planner");
-                	//return false;
-            	}
-				continue;
-			}
+            {
+                yWarning("failed clearing unimportant subgoals");
+                if (!plannerReply("failed_pruning"))
+                {
+                    yError("failed to communicate with planner");
+                    //return false;
+                }
+                continue;
+            }
             if (!writeFiles())
             {
                 yWarning("failed to write files");
-            	if (!plannerReply("failed_writing"))
-            	{
-                	yError("failed to communicate with planner");
-                	//return false;
-            	}
+                if (!plannerReply("failed_writing"))
+                {
+                    yError("failed to communicate with planner");
+                    //return false;
+                }
                 continue;
             }
             if (!plannerReply("done"))
@@ -174,16 +173,16 @@ void goalCompiler::openFiles()
 
 void goalCompiler::openPorts()
 {
-	string portName;
+    string portName;
 
-	portName = "/" + moduleName + "/planner_cmd:io";
+    portName = "/" + moduleName + "/planner_cmd:io";
     plannerPort.open(portName);
-	
-	portName = "/" + moduleName + "/prax_inst:i";
+    
+    portName = "/" + moduleName + "/prax_inst:i";
     praxiconPort.open(portName);
 
-	portName = "/" + moduleName + "/planner_rpc:o";
-	objectQueryPort.open(portName);
+    portName = "/" + moduleName + "/planner_rpc:o";
+    objectQueryPort.open(portName);
 }
 
 bool goalCompiler::close()
@@ -304,13 +303,13 @@ bool goalCompiler::receiveInstructions()
 
 bool goalCompiler::loadObjs()
 {
-	vector<string> temp_vect;
-	if (objectQueryPort.getOutputCount() == 0){
+    vector<string> temp_vect;
+    if (objectQueryPort.getOutputCount() == 0){
         yError("planner not connected!" );
         return false;
     }
-	object_list.clear();
-	translat.clear();
+    object_list.clear();
+    translat.clear();
     action_sequence.clear();
     cmd.clear();
     subgoals.clear();
@@ -318,33 +317,33 @@ bool goalCompiler::loadObjs()
     objectQueryPort.write(cmd,reply);
     if (reply.size() > 0 && reply.get(0).isList() && reply.get(0).asList()->size() > 2){
         yInfo("Objects updated!");
-		for (int i = 0; i < reply.get(0).asList()->size(); ++i)
-		{
-			temp_vect.clear();
-			temp_vect.push_back( NumbertoString(reply.get(0).asList()->get(i).asList()->get(0).asInt() ) );
-			temp_vect.push_back(reply.get(0).asList()->get(i).asList()->get(1).asString());
-        	if (find_element(object_list, temp_vect[1]) == 1)
-        	{
-            	yError("There are objects that share labels, unable to compile");
-				return false;
-        	}
-			translat.push_back(temp_vect);
-			object_list.push_back(temp_vect[1]);
-		}
-		return true;
+        for (int i = 0; i < reply.get(0).asList()->size(); ++i)
+        {
+            temp_vect.clear();
+            temp_vect.push_back( NumbertoString(reply.get(0).asList()->get(i).asList()->get(0).asInt() ) );
+            temp_vect.push_back(reply.get(0).asList()->get(i).asList()->get(1).asString());
+            if (find_element(object_list, temp_vect[1]) == 1)
+            {
+                yError("There are objects that share labels, unable to compile");
+                return false;
+            }
+            translat.push_back(temp_vect);
+            object_list.push_back(temp_vect[1]);
+        }
+        return true;
     }
     else {
         yError("Objects update failed!");
-		return false;
+        return false;
     }
-	return false;
+    return false;
 }
 
 
 bool goalCompiler::loadRules()
 {
     string line;
-	actions.clear();
+    actions.clear();
     preRuleFile.open(preRuleFileName.c_str());
     if (!preRuleFile.is_open())
     {
@@ -354,7 +353,7 @@ bool goalCompiler::loadRules()
     while ( getline(preRuleFile, line)){
         actions.push_back(line);
     }
-	preRuleFile.close();
+    preRuleFile.close();
     return true;
 }
 
@@ -386,7 +385,7 @@ bool goalCompiler::compile()
             for (int j = 0; j < actions.size(); ++j){
                 if (actions[j].find(prax_action[1]) != std::string::npos){
                     obj = prax_action[2];
-					found_action = actions[j];
+                    found_action = actions[j];
                     if (actions[j+4].find("_ALL") != std::string::npos){
                         tool = prax_action[0];
                         new_action = actions;
@@ -466,7 +465,7 @@ bool goalCompiler::compile()
                                         if (new_temp_rule[v].find(var_find) != std::string::npos){
                                             not_add_flag = 1;
                                             break;
-	                                }
+                                    }
                                     }
                                     if (not_add_flag != 1){
                                         new_temp_rule.push_back(temp_rule[w]);
@@ -475,7 +474,7 @@ bool goalCompiler::compile()
                                 temp_str = "";
                                 for (int h = 0; h<new_temp_rule.size(); ++h){
                                     temp_str += new_temp_rule[h];
-	                        }
+                            }
                                 new_action[j] = temp_str;
                             }
                         }
@@ -487,27 +486,27 @@ bool goalCompiler::compile()
                         new_temp_rule.erase(new_temp_rule.begin(),new_temp_rule.begin()+1);
                         aux_subgoal = new_temp_rule;
                         vector<string> temp_subgoal;
-						if (subgoals.size() > 0)
+                        if (subgoals.size() > 0)
                         {
                             temp_subgoal = subgoals[subgoals.size()-1];
                         }
                         for (int i = 0; i < aux_subgoal.size(); ++i){
                             temp_subgoal.push_back(aux_subgoal[i]);
                         }
-						temp_action.clear();
-						temp_action.push_back(found_action);
-						temp_action.push_back(obj);
-						temp_action.push_back(tool);
-						action_sequence.push_back(temp_action);
+                        temp_action.clear();
+                        temp_action.push_back(found_action);
+                        temp_action.push_back(obj);
+                        temp_action.push_back(tool);
+                        action_sequence.push_back(temp_action);
                         subgoals.push_back(temp_subgoal);
                     }
                     else if (actions[j].find("put_") != std::string::npos){
-						found_action = actions[j];
+                        found_action = actions[j];
                         tool = prax_action[2];
                         temp_vect = split(instructions[0][g-1], ' ');
                         obj = temp_vect[2];
                         temp_str = actions[j+4];
-	                    while (!isStopping()) {
+                        while (!isStopping()) {
                             if (temp_str.find("_obj") != std::string::npos){
                                 temp_str.replace(temp_str.find("_obj"),4,obj);
                             }
@@ -541,15 +540,15 @@ bool goalCompiler::compile()
                         for (int i = 0; i < aux_subgoal.size(); ++i){
                             temp_subgoal.push_back(aux_subgoal[i]);
                         }
-						temp_action.clear();
-						temp_action.push_back(found_action);
-						temp_action.push_back(obj);
-						temp_action.push_back(tool);
-						action_sequence.push_back(temp_action);
+                        temp_action.clear();
+                        temp_action.push_back(found_action);
+                        temp_action.push_back(obj);
+                        temp_action.push_back(tool);
+                        action_sequence.push_back(temp_action);
                         subgoals.push_back(temp_subgoal);
                     }
-            	    else if ((actions[j].find("_obj") != std::string::npos && actions[j].find("_tool") != std::string::npos) || (actions[j].find("_obj") != std::string::npos && actions[j].find("_hand") != std::string::npos)){
-						found_action = actions[j];
+                    else if ((actions[j].find("_obj") != std::string::npos && actions[j].find("_tool") != std::string::npos) || (actions[j].find("_obj") != std::string::npos && actions[j].find("_hand") != std::string::npos)){
+                        found_action = actions[j];
                         tool = prax_action[0];
                         obj = prax_action[2];
                         temp_str = actions[j+4];
@@ -597,11 +596,11 @@ bool goalCompiler::compile()
                             temp_subgoal.push_back(aux_subgoal[i]);
                         }
                         yInfo("temp_subgoal done");
-						temp_action.clear();
-						temp_action.push_back(found_action);
-						temp_action.push_back(obj);
-						temp_action.push_back(tool);
-						action_sequence.push_back(temp_action);
+                        temp_action.clear();
+                        temp_action.push_back(found_action);
+                        temp_action.push_back(obj);
+                        temp_action.push_back(tool);
+                        action_sequence.push_back(temp_action);
                         subgoals.push_back(temp_subgoal);
                     }
                     yInfo("action translated");
@@ -655,10 +654,10 @@ bool goalCompiler::compile()
         }
     }
     yInfo("action sequence: ");
-	for (int i = 0; i < action_sequence.size(); ++i)
-	{
-		yInfo("%s %s %s", action_sequence[i][0].c_str(), action_sequence[i][1].c_str(), action_sequence[i][2].c_str() );
-	}
+    for (int i = 0; i < action_sequence.size(); ++i)
+    {
+        yInfo("%s %s %s", action_sequence[i][0].c_str(), action_sequence[i][1].c_str(), action_sequence[i][2].c_str() );
+    }
     return true;
 }
 
@@ -758,130 +757,130 @@ bool goalCompiler::plannerReply(string reply)
 
 bool goalCompiler::checkConsistency()
 {
-	string requirements, negated_symbol, failed_action, temp_str;
-	vector<string> required_state_vector, requirement_vector;
-	yInfo("checking consistency");
+    string requirements, negated_symbol, failed_action, temp_str;
+    vector<string> required_state_vector, requirement_vector;
+    yInfo("checking consistency");
 
-	for (int i = 1; i < action_sequence.size(); ++i)
-	{
-		for (int j = 0; j < actions.size(); ++j)
-		{
-			if (actions[j] == action_sequence[i][0])
-			{
-				requirements = actions[j+2];
-				while (!isStopping())
-				{
-					if (requirements.find("_obj") != std::string::npos)
-					{
-                    	requirements.replace(requirements.find("_obj"),4,action_sequence[i][1]);
+    for (int i = 1; i < action_sequence.size(); ++i)
+    {
+        for (int j = 0; j < actions.size(); ++j)
+        {
+            if (actions[j] == action_sequence[i][0])
+            {
+                requirements = actions[j+2];
+                while (!isStopping())
+                {
+                    if (requirements.find("_obj") != std::string::npos)
+                    {
+                        requirements.replace(requirements.find("_obj"),4,action_sequence[i][1]);
                     }
                     else if (requirements.find("_tool") != std::string::npos)
-					{
-						requirements.replace(requirements.find("_tool"),5,action_sequence[i][2]);
-					}
-					else if (requirements.find("_hand") != std::string::npos)
-					{
-						requirements.replace(requirements.find("_hand"),5,"left");
-					}
-					else {
+                    {
+                        requirements.replace(requirements.find("_tool"),5,action_sequence[i][2]);
+                    }
+                    else if (requirements.find("_hand") != std::string::npos)
+                    {
+                        requirements.replace(requirements.find("_hand"),5,"left");
+                    }
+                    else {
                         break;
                     }
-				}
+                }
                 yDebug("requirements: %s", requirements.c_str());
-				requirement_vector = split(requirements, ' ');
-				requirements = "";
-				for (int k = 0; k < requirement_vector.size(); ++k)
-				{
-					if (requirement_vector[k].find("_ALL") != std::string::npos)
-					{
-						for (int y = 0; y < translat.size(); ++y)
-						{
-							if (requirement_vector[k].find(translat[y][1]) == std::string::npos)
-							{
-								temp_str = requirement_vector[k];
-								temp_str.replace(requirement_vector[k].find("_ALL"),4,translat[y][1]);
-								requirements = requirements + temp_str + " ";
-							}
-						}
-					}
-					else
-					{
-						requirements = requirements + requirement_vector[k] + " ";
-					}
-				}
+                requirement_vector = split(requirements, ' ');
+                requirements = "";
+                for (int k = 0; k < requirement_vector.size(); ++k)
+                {
+                    if (requirement_vector[k].find("_ALL") != std::string::npos)
+                    {
+                        for (int y = 0; y < translat.size(); ++y)
+                        {
+                            if (requirement_vector[k].find(translat[y][1]) == std::string::npos)
+                            {
+                                temp_str = requirement_vector[k];
+                                temp_str.replace(requirement_vector[k].find("_ALL"),4,translat[y][1]);
+                                requirements = requirements + temp_str + " ";
+                            }
+                        }
+                    }
+                    else
+                    {
+                        requirements = requirements + requirement_vector[k] + " ";
+                    }
+                }
                 yDebug("requirements: %s", requirements.c_str());
-				for (int k = 0; k < translat.size(); ++k)
-				{
-					while (!isStopping()) {
-                    	if (requirements.find(translat[k][1]) != std::string::npos){
-                    	    requirements.replace(requirements.find(translat[k][1]),translat[k][1].size(),translat[k][0]);
-                    	}
-                    	else {
-                    	    break;
-                    	}
-					}                
-				}
+                for (int k = 0; k < translat.size(); ++k)
+                {
+                    while (!isStopping()) {
+                        if (requirements.find(translat[k][1]) != std::string::npos){
+                            requirements.replace(requirements.find(translat[k][1]),translat[k][1].size(),translat[k][0]);
+                        }
+                        else {
+                            break;
+                        }
+                    }                
+                }
                 yDebug("requirements: %s", requirements.c_str());
-				required_state_vector = split(requirements, ' ');
-				for (int k = 0; k < required_state_vector.size(); ++k)
-				{
-					if (required_state_vector[k].find('-') != std::string::npos)
-					{
-						negated_symbol = required_state_vector[k];
-						negated_symbol.replace(negated_symbol.find('-'),1,"");
-						if (find_element(subgoals[i-1], negated_symbol) == 1)
-						{
-							yWarning("plan not executable");
-							failed_action = action_sequence[i][0];
-							if (failed_action.find("_obj") != std::string::npos)
-							{
-								failed_action.replace(failed_action.find("_obj"),4,action_sequence[i][1]);
-							}
-							if (failed_action.find("_tool") != std::string::npos)
-							{
-								failed_action.replace(failed_action.find("_tool"),5,action_sequence[i][2]);
-							}
-							if (failed_action.find("_hand") != std::string::npos)
-							{
-								failed_action.replace(failed_action.find("_hand"),5,"left");
-							}
-							yWarning("failed step: %s",	failed_action.c_str());
+                required_state_vector = split(requirements, ' ');
+                for (int k = 0; k < required_state_vector.size(); ++k)
+                {
+                    if (required_state_vector[k].find('-') != std::string::npos)
+                    {
+                        negated_symbol = required_state_vector[k];
+                        negated_symbol.replace(negated_symbol.find('-'),1,"");
+                        if (find_element(subgoals[i-1], negated_symbol) == 1)
+                        {
+                            yWarning("plan not executable");
+                            failed_action = action_sequence[i][0];
+                            if (failed_action.find("_obj") != std::string::npos)
+                            {
+                                failed_action.replace(failed_action.find("_obj"),4,action_sequence[i][1]);
+                            }
+                            if (failed_action.find("_tool") != std::string::npos)
+                            {
+                                failed_action.replace(failed_action.find("_tool"),5,action_sequence[i][2]);
+                            }
+                            if (failed_action.find("_hand") != std::string::npos)
+                            {
+                                failed_action.replace(failed_action.find("_hand"),5,"left");
+                            }
+                            yWarning("failed step: %s",    failed_action.c_str());
                             yDebug("failing symbol: %s", negated_symbol.c_str());
                             subgoals.clear();
-							return false;
-						}
-					}
-					else 
-					{
-						negated_symbol = "-" + required_state_vector[k];
-						if (find_element(subgoals[i-1], negated_symbol) == 1)
-						{
-							yWarning( "plan not executable");
-							failed_action = action_sequence[i][0];
-							if (failed_action.find("_obj") != std::string::npos)
-							{
-								failed_action.replace(failed_action.find("_obj"),4,action_sequence[i][1]);
-							}
-							if (failed_action.find("_tool") != std::string::npos)
-							{
-								failed_action.replace(failed_action.find("_tool"),5,action_sequence[i][2]);
-							}
-							if (failed_action.find("_hand") != std::string::npos)
-							{
-								failed_action.replace(failed_action.find("_hand"),5,"left");
-							}
-							yWarning("failed step: %s", failed_action.c_str());
+                            return false;
+                        }
+                    }
+                    else 
+                    {
+                        negated_symbol = "-" + required_state_vector[k];
+                        if (find_element(subgoals[i-1], negated_symbol) == 1)
+                        {
+                            yWarning( "plan not executable");
+                            failed_action = action_sequence[i][0];
+                            if (failed_action.find("_obj") != std::string::npos)
+                            {
+                                failed_action.replace(failed_action.find("_obj"),4,action_sequence[i][1]);
+                            }
+                            if (failed_action.find("_tool") != std::string::npos)
+                            {
+                                failed_action.replace(failed_action.find("_tool"),5,action_sequence[i][2]);
+                            }
+                            if (failed_action.find("_hand") != std::string::npos)
+                            {
+                                failed_action.replace(failed_action.find("_hand"),5,"left");
+                            }
+                            yWarning("failed step: %s", failed_action.c_str());
                             yDebug("failing symbol: %s", negated_symbol.c_str());
                             subgoals.clear();
-							return false;
-						}
-					}
-				}
-				break;
-			}
-		}
-	}
-	return true;
+                            return false;
+                        }
+                    }
+                }
+                break;
+            }
+        }
+    }
+    return true;
 }
 
 bool goalCompiler::clearUnimportantGoals()

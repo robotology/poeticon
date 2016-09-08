@@ -50,7 +50,7 @@ bool affComm::configure(ResourceFinder &rf)
         return false;    
     }
     else {
-        yInfo("Context Found!");
+        yInfo("Context FOUND! %s", PathName.c_str());
     }
 
     openPorts();
