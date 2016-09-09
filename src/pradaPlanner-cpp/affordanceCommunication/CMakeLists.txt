@@ -6,8 +6,7 @@
 
 cmake_minimum_required(VERSION 2.6)
 
-set(PROJECTNAME affordanceCommunication)
-project(${PROJECTNAME})
+project(affordanceCommunication)
 
 find_package(YARP)
 find_package(ICUB)
@@ -15,10 +14,6 @@ find_package(ICUBcontrib)
 
 list(APPEND CMAKE_MODULE_PATH ${YARP_MODULE_PATH})
 list(APPEND CMAKE_MODULE_PATH ${ICUBCONTRIB_MODULE_PATH})
-
-# include(YarpIDL)
-# set(IDL_GENERATED_CODE_DIR "${CMAKE_CURRENT_SOURCE_DIR}") #?
-# yarp_idl_to_dir(${PROJECTNAME}.thrift ${IDL_GENERATED_CODE_DIR})
 
 include(YarpInstallationHelpers)
 include(ICUBcontribHelpers)
@@ -35,8 +30,8 @@ include_directories(${PROJECT_SOURCE_DIR}/include
                     ${PROJECT_SOURCE_DIR}/../common/include
                     ${YARP_INCLUDE_DIRS})
 
-add_executable(${PROJECTNAME} ${source} ${header})
+add_executable(${PROJECT_NAME} ${source} ${header})
 
-target_link_libraries(${PROJECTNAME} ${YARP_LIBRARIES}) 
+target_link_libraries(${PROJECT_NAME} ${YARP_LIBRARIES}) 
 
-install(TARGETS ${PROJECTNAME} DESTINATION bin)
+install(TARGETS ${PROJECT_NAME} DESTINATION bin)

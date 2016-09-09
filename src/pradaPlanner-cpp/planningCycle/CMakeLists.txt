@@ -6,8 +6,7 @@
 
 cmake_minimum_required(VERSION 2.6)
 
-set(PROJECTNAME planningCycle)
-project(${PROJECTNAME})
+project(planningCycle)
 
 find_package(YARP)
 find_package(ICUB)
@@ -18,7 +17,7 @@ list(APPEND CMAKE_MODULE_PATH ${ICUBCONTRIB_MODULE_PATH})
 
 include(YarpIDL)
 set(IDL_GENERATED_CODE_DIR "${CMAKE_CURRENT_SOURCE_DIR}") #?
-yarp_idl_to_dir(${PROJECTNAME}.thrift ${IDL_GENERATED_CODE_DIR})
+yarp_idl_to_dir(${PROJECT_NAME}.thrift ${IDL_GENERATED_CODE_DIR})
 
 include(YarpInstallationHelpers)
 include(ICUBcontribHelpers)
@@ -37,8 +36,8 @@ include_directories(${PROJECT_SOURCE_DIR}/include
                     ${IDL_GENERATED_CODE_DIR}/include
                    )
 
-add_executable(${PROJECTNAME} ${source} ${header})
+add_executable(${PROJECT_NAME} ${source} ${header})
 
-target_link_libraries(${PROJECTNAME} ${YARP_LIBRARIES}) 
+target_link_libraries(${PROJECT_NAME} ${YARP_LIBRARIES}) 
 
-install(TARGETS ${PROJECTNAME} DESTINATION bin)
+install(TARGETS ${PROJECT_NAME} DESTINATION bin)

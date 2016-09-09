@@ -35,14 +35,13 @@ class goalCompiler : public RFModule
 {
     private:
         // module parameters
- 
         string moduleName;
         string PathName;
 
         vector<vector<string> > instructions;
         vector<vector<string> > translat;
         vector<vector<string> > subgoals;
-		vector<vector<string> > action_sequence;
+        vector<vector<string> > action_sequence;
         vector<string> actions;
         vector<string> object_list;
 
@@ -53,10 +52,10 @@ class goalCompiler : public RFModule
         BufferedPort<Bottle> plannerPort;
         BufferedPort<Bottle> praxiconPort;
 
-		RpcClient objectQueryPort;
+        RpcClient objectQueryPort;
 
-		Bottle cmd;
-		Bottle reply;
+        Bottle cmd;
+        Bottle reply;
 
         Bottle *plannerBottle;
         Bottle *praxiconBottle;
@@ -72,7 +71,6 @@ class goalCompiler : public RFModule
         virtual bool updateModule();
         virtual bool interrupt();
 
-        
         void openFiles();
         void openPorts();
         bool loadObjs();
@@ -85,7 +83,7 @@ class goalCompiler : public RFModule
         bool compile();
         bool translate();
         bool writeFiles();
-		bool checkConsistency();
+        bool checkConsistency();
         bool clearUnimportantGoals();
 };
 

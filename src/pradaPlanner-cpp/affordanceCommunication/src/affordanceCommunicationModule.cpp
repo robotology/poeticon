@@ -12,13 +12,23 @@
 bool affComm::configure(ResourceFinder &rf)
 {
     // module parameters
-    vector<string> temp_vect;
     moduleName = rf.check("name", Value("affordanceCommunication")).asString();
-    PathName = rf.findPath("contexts/"+rf.getContext());
     setName(moduleName.c_str());
+
+    PathName = rf.findPath("contexts/"+rf.getContext());
+    if (PathName=="")
+    {
+        yError("Path to context %s not found", rf.getContext().c_str());
+        return false;
+    }
+    else {
+        yInfo("Context FOUND! %s", PathName.c_str());
+    }
+
     display = rf.check("display",Value("off")).asString()=="on"?true:false;
     yInfo("MATLAB display is %s", (display ? "on" : "off"));
 
+    vector<string> temp_vect;
     temp_vect.clear();
     temp_vect.push_back("1");
     temp_vect.push_back("grasp");
@@ -44,14 +54,6 @@ bool affComm::configure(ResourceFinder &rf)
     temp_vect.push_back("reach");
     translation.push_back(temp_vect);
     // translation = {{"1","grasp"},{"2","drop"},{"3","put"},{"4","pull"},{"5","push"},{"6","reach"}};
-
-    if (PathName==""){
-        yError("Path to contexts/%s not found", rf.getContext().c_str());
-        return false;    
-    }
-    else {
-        yInfo("Context FOUND! %s", PathName.c_str());
-    }
 
     openPorts();
 

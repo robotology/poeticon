@@ -13,12 +13,13 @@ bool PlannerModule::configure(ResourceFinder &rf)
 {
     // module parameters
     moduleName = rf.check("name", Value("planner")).asString();
-    PathName = rf.findPath("contexts/"+rf.getContext());
     setName(moduleName.c_str());
 
-    if (PathName==""){
-        yError("path to contexts/%s not found", rf.getContext().c_str());
-        return false;    
+    PathName = rf.findPath("contexts/"+rf.getContext());
+    if (PathName=="")
+    {
+        yError("Path to context %s not found", rf.getContext().c_str());
+        return false;
     }
     else {
         yInfo("Context FOUND! %s", PathName.c_str());

@@ -10,7 +10,12 @@
 #include "PlannerThread.h"
 #include "Helpers.h"
 
-PlannerThread::PlannerThread(const string &_moduleName, const double _period, const string &_PathName):moduleName(_moduleName),RateThread(int(_period*1000.0)),PathName(_PathName)
+PlannerThread::PlannerThread(const string &_moduleName,
+                             const double _period,
+                             const string &_PathName)
+                             : moduleName(_moduleName),
+                               RateThread(int(_period*1000.0)),
+                               PathName(_PathName)
 {
 }
 
@@ -99,7 +104,6 @@ bool PlannerThread::threadInit()
     stopping = false; //When the module is issued the stopPlanner command by rpc, this becomes true
     resumePlan = true; //Variable responsible for pausing/resuming the plan, changed by pausePlanner/resumePlanner on rpc.
     plan_level = 0; //Variable that stores the current steps made by the planner
-
 
     // initialize file names
     openFiles();

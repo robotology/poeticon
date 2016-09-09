@@ -54,11 +54,11 @@ class geoGround : public RFModule
 
         BufferedPort<Bottle> plannerPort;
         BufferedPort<Bottle> affordancePort;
-		
-		RpcClient objectQueryPort;
 
-		Bottle cmd;
-		Bottle reply;
+        RpcClient objectQueryPort;
+
+        Bottle cmd;
+        Bottle reply;
 
         Bottle *plannerBottle;
         Bottle *AffBottle;

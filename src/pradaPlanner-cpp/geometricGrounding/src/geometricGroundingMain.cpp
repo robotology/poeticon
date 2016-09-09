@@ -20,7 +20,6 @@ int main(int argc, char *argv[])
     rf.setDefaultConfigFile("geometricGrounding.ini");  // overridden by --from
     rf.configure(argc, argv);
 
-
     if(! yarp.checkNetwork() )
     {
         yError("yarp server does not seem available");
