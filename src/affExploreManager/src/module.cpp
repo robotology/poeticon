@@ -544,7 +544,7 @@ bool Manager::updateModule()
         objImgPos.x = (*trackVec)[0];
         objImgPos.y = (*trackVec)[5];
 
-        get3DPosition(objImgPos,objectPosTracker);
+//        get3DPosition(objImgPos,objectPosTracker);
 //        initialObjPosTracker = objectPosTracker;
 
         fprintf(stderr,"\n\n***********Get FIRST object sample\n\n");
