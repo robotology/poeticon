@@ -525,7 +525,7 @@ bool WorldStateMgrThread::updateCountFrom()
     const int maxOldID = opcIDs.get(opcIDs.size()-1).asInt();
 
     countFrom = maxOldID+1;
-    yInfo("reset routine: updated countFrom to %d", countFrom);
+    yInfo("updated countFrom to %d", countFrom);
 
     return true;
 }
@@ -1786,6 +1786,9 @@ bool WorldStateMgrThread::constructMapFromNames(const Bottle &names)
 {
     if (names.size() <= 0)
         return false;
+
+    // increase countFrom (future additions start index)
+    updateCountFrom();
 
     for (int n=0; n<names.size(); ++n)
     {
