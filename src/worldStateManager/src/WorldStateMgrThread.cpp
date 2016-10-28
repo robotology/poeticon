@@ -524,8 +524,13 @@ bool WorldStateMgrThread::updateCountFrom()
     // therefore to obtain the maximum we can just get the last value
     const int maxOldID = opcIDs.get(opcIDs.size()-1).asInt();
 
-    countFrom = maxOldID+1;
-    yInfo("updated countFrom to %d", countFrom);
+    if (maxOldID+1 > countFrom)
+    {
+        countFrom = maxOldID+1;
+        yInfo("updated countFrom to %d", countFrom);
+    }
+    else
+        yDebug("not updating countFrom, keeping it at %d", countFrom);
 
     return true;
 }
@@ -1944,7 +1949,8 @@ bool WorldStateMgrThread::doPopulateDB()
         bPullW.addList() = pullW;
 
         // write to WSOPC
-        if (opcContainsID(iter->id))
+        //if (opcContainsID(iter->id))
+        if (memoryContainsID(iter->id))
         {
             // WSOPC already contains this entry
             // -> update it with command
