@@ -1949,8 +1949,8 @@ bool WorldStateMgrThread::doPopulateDB()
         bPullW.addList() = pullW;
 
         // write to WSOPC
-        //if (opcContainsID(iter->id))
-        if (memoryContainsID(iter->id))
+        if (opcContainsID(iter->id))
+        //if (memoryContainsID(iter->id))
         {
             // WSOPC already contains this entry
             // -> update it with command
