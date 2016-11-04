@@ -20,6 +20,13 @@ int main(int argc, char *argv[])
     rf.setDefaultConfigFile("goalCompiler.ini");  // overridden by --from
     rf.configure(argc, argv);
 
+    if(rf.check("help"))
+    {
+        yInfo("Options available:");
+        yInfo(" --goalSimplification <on|off> (remove hand-specific goals, default: on)");
+        return 0;
+    }
+
     if(! yarp.checkNetwork() )
     {
         yError("yarp server does not seem available");

@@ -25,6 +25,8 @@ bool goalCompiler::configure(ResourceFinder &rf)
         yInfo("Context FOUND! %s", PathName.c_str());
     }
 
+    bool useGoalSimplification = rf.check("goalSimplification",Value("on")).asString()=="on"?true:false;
+
     openFiles();
     openPorts();
 
@@ -131,15 +133,18 @@ bool goalCompiler::configure(ResourceFinder &rf)
                 }
                 continue;
             }
-            if (!clearUnimportantGoals())
+            if (useGoalSimplification)
             {
-                yWarning("failed clearing unimportant subgoals");
-                if (!plannerReply("failed_pruning"))
+                if (!clearUnimportantGoals())
                 {
-                    yError("failed to communicate with planner");
-                    //return false;
+                    yWarning("failed clearing unimportant subgoals");
+                    if (!plannerReply("failed_pruning"))
+                    {
+                        yError("failed to communicate with planner");
+                        //return false;
+                    }
+                    continue;
                 }
-                continue;
             }
             if (!writeFiles())
             {
