@@ -20,6 +20,13 @@ int main(int argc, char *argv[])
     rf.setDefaultConfigFile("geometricGrounding.ini");  // overridden by --from
     rf.configure(argc, argv);
 
+    if(rf.check("help"))
+    {
+        yInfo("Options available:");
+        yInfo(" --prerules <filename> (pre-rules file, default: pre_rules.dat)");
+        return 0; // EXIT_SUCCESS
+    }
+
     if(! yarp.checkNetwork() )
     {
         yError("yarp server does not seem available");

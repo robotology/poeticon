@@ -28,7 +28,12 @@ bool goalCompiler::configure(ResourceFinder &rf)
     bool useGoalSimplification = rf.check("goalSimplification",Value("on")).asString()=="on"?true:false;
     yInfo("goal simplification (removal of hand-specific goals) is %s", useGoalSimplification?"on":"off");
 
-    openFiles();
+    // set filenames
+    goalFileName =PathName + "/goal.dat";
+    subgoalFileName = PathName + "/subgoals.dat";
+    preRuleFileName = PathName + "/" + rf.check("prerules",Value("pre_rules.dat")).asString();
+    yInfo("pre-rules filename: %s", preRuleFileName.c_str());
+
     openPorts();
 
     string command;
@@ -171,13 +176,6 @@ bool goalCompiler::configure(ResourceFinder &rf)
 bool goalCompiler::updateModule()
 {
     return !isStopping();
-}
-
-void goalCompiler::openFiles()
-{
-    goalFileName =PathName + "/goal.dat";
-    subgoalFileName = PathName + "/subgoals.dat";
-    preRuleFileName = PathName + "/pre_rules.dat";
 }
 
 void goalCompiler::openPorts()

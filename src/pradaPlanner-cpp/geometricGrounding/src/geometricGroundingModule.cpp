@@ -26,7 +26,14 @@ bool geoGround::configure(ResourceFinder &rf)
         yInfo("Context FOUND! %s", PathName.c_str());
     }
 
-    openFiles();
+    // set filenames
+    presymbolFileName = PathName + "/pre_symbols.dat";
+    preruleFileName = PathName + "/" + rf.check("prerules",Value("pre_rules.dat")).asString();
+    yInfo("pre-rules filename: %s", preruleFileName.c_str());
+    ruleFileName = PathName + "/rules.dat";
+    symbolFileName = PathName + "/symbols.dat";
+    objectsFileName = PathName + "/Object_names-IDs.dat";
+
     openPorts();
 
     if (!groundingCycle())
@@ -630,15 +637,6 @@ vector<string> geoGround::create_symbols(string symbols){
         }
     }
     return new_symbol;
-}
-
-void geoGround::openFiles()
-{
-    presymbolFileName = PathName + "/pre_symbols.dat";
-    preruleFileName = PathName + "/pre_rules.dat";
-    ruleFileName = PathName + "/rules.dat";
-    symbolFileName = PathName + "/symbols.dat";
-    objectsFileName = PathName + "/Object_names-IDs.dat";
 }
 
 void geoGround::openPorts()

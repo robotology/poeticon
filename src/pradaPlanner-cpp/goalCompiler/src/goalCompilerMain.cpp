@@ -24,7 +24,8 @@ int main(int argc, char *argv[])
     {
         yInfo("Options available:");
         yInfo(" --goalSimplification <on|off> (remove hand-specific goals, default: on)");
-        return 0;
+        yInfo(" --prerules <filename> (pre-rules file, default: pre_rules.dat)");
+        return 0; // EXIT_SUCCESS
     }
 
     if(! yarp.checkNetwork() )

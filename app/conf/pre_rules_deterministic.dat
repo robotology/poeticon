@@ -1,0 +1,52 @@
+
+# Rule #1  (1 out of 5)
+ACTION:
+  push__obj_with__tool_in__hand()
+CONTEXT:
+  -_obj_ishand() _tool_inhand__hand() _obj_isreachable_with__tool()
+OUTCOMES:
+  0.85 -_obj_isreachable_with__ALL()
+  0.15 <noise>
+
+
+# Rule #2  (2 out of 5)
+ACTION:
+  pull__obj_with__tool_in__hand()
+CONTEXT:
+  -_obj_ishand() _tool_inhand__hand() _obj_isreachable_with__tool() _obj_ispullable_with__tool()
+OUTCOMES:
+  0.85 _obj_isreachable_with__ALL()
+  0.15 <noise>
+
+
+# Rule #3  (3 out of 5)
+ACTION:
+  grasp__obj_with__hand()
+CONTEXT:
+  -_obj_ishand() _hand_clearhand() _hand_ishand() _obj_isreachable_with__hand() -_ALL_on__obj() -_obj_inhand__OTHERHAND()
+OUTCOMES:
+  0.85 _obj_inhand__hand() -_hand_clearhand()
+  0.15 <noise>
+
+
+# Rule #4  (4 out of 5)
+ACTION:
+  drop__obj_with__hand()
+CONTEXT:
+  -_obj_ishand() _obj_inhand__hand() _hand_ishand()
+OUTCOMES:
+  0.85 -_obj_inhand__hand() _hand_clearhand()
+  0.15 <noise>
+
+
+# Rule #5  (5 out of 5)
+ACTION:
+  put__tool_on__obj_with__hand()
+CONTEXT:
+  -_tool_ishand() _obj_isreachable_with__hand() -_obj_ishand() _tool_inhand__hand()
+OUTCOMES:
+  0.85 _tool_on__obj() -_tool_inhand__hand() _hand_clearhand()
+  #0.15 -_tool_inhand__hand() _hand_clearhand()
+  0.15 <noise>
+
+

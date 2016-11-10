@@ -71,7 +71,6 @@ class goalCompiler : public RFModule
         virtual bool updateModule();
         virtual bool interrupt();
 
-        void openFiles();
         void openPorts();
         bool loadObjs();
         string plannerCommand();

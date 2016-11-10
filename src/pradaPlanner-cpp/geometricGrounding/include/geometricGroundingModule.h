@@ -78,7 +78,6 @@ class geoGround : public RFModule
         bool groundingCycle();
         vector<string> create_rules(string pre_rule);
         vector<string> create_symbols(string symbols);
-        void openFiles();
         void openPorts();
         bool loadObjs();
         string plannerCommand();
