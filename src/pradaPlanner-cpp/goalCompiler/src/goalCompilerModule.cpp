@@ -26,6 +26,7 @@ bool goalCompiler::configure(ResourceFinder &rf)
     }
 
     bool useGoalSimplification = rf.check("goalSimplification",Value("on")).asString()=="on"?true:false;
+    yInfo("goal simplification (removal of hand-specific goals) is %s", useGoalSimplification?"on":"off");
 
     openFiles();
     openPorts();
