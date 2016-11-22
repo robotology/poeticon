@@ -75,6 +75,7 @@ bool WorldStateMgrThread::threadInit()
     }
 
     // user-specified parameters
+    countFrom   = rf.check("countFrom", Value(13)).asInt();
     withFilter  = rf.check("filter") && rf.find("filter").asString()!="off";
     if (withFilter)
     {
