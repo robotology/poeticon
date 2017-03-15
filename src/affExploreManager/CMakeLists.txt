@@ -1,5 +1,5 @@
 # Copyright: (C) 2015 VisLab - Institute for Systems and Robotics - Instituto Superior Técnico
-# Authors: Lorenzo Jamone, Afonso Gonçalves
+# Authors: Lorenzo Jamone, Afonso Gonçalves, Atabak Dehban
 # CopyPolicy: Released under the terms of the GNU GPL v2.0.
 
 cmake_minimum_required(VERSION 2.6)
@@ -10,7 +10,7 @@ set(PROJECTNAME affExploreManager)
 project(${PROJECTNAME})
 
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR})
-   
+
 find_package(YARP)
 find_package(ICUB)
 find_package(ICUBcontrib)
@@ -30,7 +30,7 @@ find_package(Boost COMPONENTS system filesystem REQUIRED)
 
 include_directories(${PROJECT_SOURCE_DIR}/include
                     ${ctrlLib_INCLUDE_DIRS}
-                    ${OpenCV_INCLUDE_DIRS} 
+                    ${OpenCV_INCLUDE_DIRS}
                     ${GSL_INCLUDE_DIRS}
                     ${YARP_INCLUDE_DIRS}
                     ${Boost_INCLUDE_DIR}

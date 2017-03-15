@@ -1,6 +1,6 @@
 /*
  * Copyright (C) 2015 VisLab - Instituto Superior Tecnico
- * Author: Lorenzo Jamone
+ * Author: Lorenzo Jamone, Afonso Gonçalves, Atabak Dehban
  * email:  ljamone@isr.ist.utl.pt
  * Permission is granted to copy, distribute, and/or modify this program
  * under the terms of the GNU General Public License, version 2 or any
