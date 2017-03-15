@@ -1,6 +1,6 @@
 /*
  * Copyright (C) 2015 VisLab, Instituto Superior Tecnico
- * Authors: Lorenzo Jamone, Afonso Gonçalves
+ * Authors: Lorenzo Jamone, Afonso Gonçalves, Atabak Dehban
  * email:  ljamone@isr.ist.utl.pt
  * Based on software from Vadim Tikhanoff and Ugo Pattacini (Istituto Italiano di Tecnologia)
  * Permission is granted to copy, distribute, and/or modify this program
@@ -372,4 +372,3 @@ public:
     double  getPeriod();
 };
 #endif
-
