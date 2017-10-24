@@ -6,7 +6,6 @@
 
 #include <yarp/os/Wire.h>
 #include <yarp/os/idl/WireTypes.h>
-#include <yarp/os/Bottle.h>
 
 class WorldStateMgr_IDL;
 
@@ -51,6 +50,7 @@ public:
    */
   virtual bool reset();
   /**
+   * DEPRECATED
    * Pauses a specific stacking thread. This will
    * pause the required tracking thread with the _name_
    * provided by the user.
@@ -60,6 +60,7 @@ public:
    */
   virtual bool pause(const std::string& objName);
   /**
+   * DEPRECATED
    * Resumes a specific stacking thread. This will
    * resume the required tracking thread with the _name_
    * provided by the user.
@@ -69,6 +70,7 @@ public:
    */
   virtual bool resume(const std::string& objName);
   /**
+   * DEPRECATED
    * Pauses a specific stacking thread. This will
    * pause the required tracking thread with the _ID_
    * provided by the user.
@@ -78,6 +80,7 @@ public:
    */
   virtual bool pauseID(const int32_t objID);
   /**
+   * DEPRECATED
    * Resumes a specific stacking thread. This will
    * resume the required tracking thread with the _ID_
    * provided by the user.
@@ -86,13 +89,6 @@ public:
    * @return true/false on success/failure
    */
   virtual bool resumeID(const int32_t objID);
-  /**
-   * Get the color histogram of the object requested by the user.
-   * @param u specifies the u coordinate of the object
-   * @param v specifies the v coordinate of the object
-   * @return Bottle containing color histogram
-   */
-  virtual yarp::os::Bottle getColorHist(const int32_t u, const int32_t v);
   /**
    * Quit the module.
    * @return true/false on success/failure
