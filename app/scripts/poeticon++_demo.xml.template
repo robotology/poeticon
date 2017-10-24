@@ -19,10 +19,6 @@
     <node>pwrNode</node>
 </module>
 <module>
-    <name>activeParticleTrack</name>
-    <node>pwrNode</node>
-</module>
-<module>
     <name>worldStateManager</name>
     <node>console</node>
 </module>
@@ -127,15 +123,6 @@
     <protocol>udp</protocol>
 </connection>
 <connection>
-    <from>/activeParticleTrack/image:o</from>
-    <to>/view/track</to>
-    <protocol>udp</protocol>
-</connection>
-<connection>
-    <from>/icub/camcalib/left/out</from>
-    <to>/activeParticleTrack/image:i</to>
-</connection>
-<connection>
     <from>/wsm/activity:rpc</from>
     <to>/activityInterface/rpc:i</to>
 </connection>
@@ -146,14 +133,6 @@
 <connection>
     <from>/activityInterface/praxicon:rpc</from>
     <to>/praxInterface/speech:i</to>
-</connection>
-<connection>
-    <from>/wsm/tracker:rpc</from>
-    <to>/activeParticleTrack/rpc:i</to>
-</connection>
-<connection>
-    <from>/activeParticleTrack/target:o</from>
-    <to>/wsm/target:i</to>
 </connection>
 <connection>
     <from>/blobDescriptor/affDescriptor:o</from>
@@ -258,15 +237,15 @@
 <!-- connection between three auxiliary planner modules, and the rpc port -->
 <connection>
     <from>/affordanceCommunication/planner_rpc:o</from>
-    <to>/planner/rpc:i</to> 
+    <to>/planner/rpc:i</to>
 </connection>
 <connection>
     <from>/geometricGrounding/planner_rpc:o</from>
-    <to>/planner/rpc:i</to> 
+    <to>/planner/rpc:i</to>
 </connection>
 <connection>
     <from>/goalCompiler/planner_rpc:o</from>
-    <to>/planner/rpc:i</to> 
+    <to>/planner/rpc:i</to>
 </connection>
 
 </application>
