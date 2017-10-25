@@ -1,20 +1,53 @@
+-- adapted from IOL Lua scripts, written by Ali Paikan
 
-dofile(rf:findFile("iol_interact_fsm.lua"))
-dofile(rf:findFile("iol_funcs.lua"))
---require("iol_interact_fsm")
---require("yarp")
+-- initialize yarp
+if yarp == nil then
+    require("yarp")
+    yarp.Network()
+end
+
+-- find all required files
+if rf ~= nil then
+    iol_interact_fsm = rf:findFile("poeticon_interact_fsm.lua")
+    iol_funcs = rf:findFile("poeticon_funcs.lua")
+else
+    iol_interact_fsm = "poeticon_interact_fsm.lua"
+    iol_funcs = "poeticon_funcs.lua"
+end
+
+
 return rfsm.state {
 
+  ----------------------------------
+  -- entry of root state          --
+  ----------------------------------
+    entry=function()
+        dofile(iol_funcs)
+    end,
+
+  ----------------------------------
+  -- state INIT_IOL               --
+  ----------------------------------
+  ST_INITIOL = rfsm.state{
+          doo=function()
+                  ret = IOL_Initialize()
+                  if ret == false then
+                          rfsm.send_events(fsm, 'e_error')
+                  else
+                          rfsm.send_events(fsm, 'e_iol_ok')
+                  end
+          end
+  },
+
    ----------------------------------
-   -- state INITPORTS                  --
+   -- state INITPORTS             --
    ----------------------------------
    ST_INITPORTS = rfsm.state{
-           entry=function()
+           doo=function()
                    ret = ispeak_port:open("/IOL/speak")
                    ret = ret and speechRecog_port:open("/IOL/speechRecog")
                    ret = ret and iol_port:open("/IOL/iolmanager")
                    ret = ret and object_port:open("/IOL/objectHelper")
-                   ret = ret and poeticon_port:open("/IOL/poeticon")
                    if ret == false then
                            rfsm.send_events(fsm, 'e_error')
                    else
@@ -27,27 +60,26 @@ return rfsm.state {
    -- state CONNECTPORTS           --
    ----------------------------------
    ST_CONNECTPORTS = rfsm.state{
-           entry=function()
+           doo=function()
                    ret = yarp.NetworkBase_connect(ispeak_port:getName(), "/iSpeak")
                    ret =  ret and yarp.NetworkBase_connect(speechRecog_port:getName(), "/speechRecognizer/rpc")
                    ret =  ret and yarp.NetworkBase_connect(iol_port:getName(), "/iolStateMachineHandler/human:rpc")
                    ret =  ret and yarp.NetworkBase_connect(object_port:getName(), "/iolHelper/rpc")
-                   ret =  ret and yarp.NetworkBase_connect(poeticon_port:getName(), "/activityInterface/speech:i")
                    if ret == false then
                            print("\n\nERROR WITH CONNECTIONS, PLEASE CHECK\n\n")
                            rfsm.send_events(fsm, 'e_error')
                    end
            end
    },
-   
+
    ----------------------------------
    -- state RETREIVEMEMORY         --
    ----------------------------------
    ST_RETREIVEMEMORY = rfsm.state{
-           entry=function()
+           doo=function()
                    ret = true
                    ret = ret and (IH_Expand_vocab(object_port, objects) == "OK")
-                   
+
                    if ret == false then
                            rfsm.send_events(fsm, 'e_error')
                    end
@@ -58,7 +90,7 @@ return rfsm.state {
    -- state INITVOCABS             --
    ----------------------------------
    ST_INITVOCABS = rfsm.state{
-           entry=function()
+           doo=function()
                    ret = true
                    for key, word in pairs(objects) do
                            ret = ret and (SM_RGM_Expand(speechRecog_port, "#Object", word) == "OK")
@@ -76,7 +108,7 @@ return rfsm.state {
    -- state HOME                   --
    ----------------------------------
    ST_HOME = rfsm.state{
-           entry=function()
+           doo=function()
                    print("everything is fine, going home!")
                    speak(ispeak_port, "Ready")
                    IOL_goHome(iol_port)
@@ -88,7 +120,7 @@ return rfsm.state {
    -- state FATAL                  --
    ----------------------------------
    ST_FATAL = rfsm.state{
-           entry=function()
+           doo=function()
                    print("Fatal!")
                    shouldExit = true;
            end
@@ -98,7 +130,7 @@ return rfsm.state {
    -- state FINI                   --
    ----------------------------------
    ST_FINI = rfsm.state{
-           entry=function()
+           doo=function()
                    print("Closing...")
                    yarp.NetworkBase_disconnect(ispeak_port:getName(), "/iSpeak")
                    yarp.NetworkBase_disconnect(speechRecog_port:getName(), "/speechRecognizer/rpc")
@@ -117,26 +149,29 @@ return rfsm.state {
    --------------------------------------------
    -- state MENU  is defined in menu_fsm.lua --
    --------------------------------------------
-   ST_INTERACT = interact_fsm,
+   ST_INTERACT = dofile(iol_interact_fsm),
 
 
    ----------------------------------
    -- setting the transitions      --
    ----------------------------------
 
-   rfsm.transition { src='initial', tgt='ST_INITPORTS' },
+   rfsm.transition { src='initial', tgt='ST_INITIOL' },
+   rfsm.transition { src='ST_INITIOL', tgt='ST_INITPORTS', events={'e_iol_ok'} },
+   rfsm.transition { src='ST_INITIOL', tgt='ST_FATAL', events={ 'e_error' } },
+
    rfsm.transition { src='ST_INITPORTS', tgt='ST_CONNECTPORTS', events={ 'e_connect' } },
    rfsm.transition { src='ST_INITPORTS', tgt='ST_FATAL', events={ 'e_error' } },
 
    rfsm.transition { src='ST_CONNECTPORTS', tgt='ST_FINI', events={ 'e_error' } },
    rfsm.transition { src='ST_CONNECTPORTS', tgt='ST_RETREIVEMEMORY', events={ 'e_done' } },
    rfsm.transition { src='ST_RETREIVEMEMORY', tgt='ST_INITVOCABS', events={ 'e_done' } },
-   
+
    rfsm.transition { src='ST_RETREIVEMEMORY', tgt='ST_FINI', events={ 'e_error' } },
    rfsm.transition { src='ST_INITVOCABS', tgt='ST_FINI', events={ 'e_error' } },
    rfsm.transition { src='ST_INITVOCABS', tgt='ST_HOME', events={ 'e_done' } },
 
    rfsm.transition { src='ST_HOME', tgt='ST_INTERACT', events={ 'e_done' } },
    rfsm.transition { src='ST_INTERACT', tgt='ST_FINI', events={ 'e_menu_done' } },
-   
+
 }
