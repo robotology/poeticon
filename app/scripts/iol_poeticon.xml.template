@@ -48,7 +48,7 @@
         </module>
         <module>
                 <name>objectsPropertiesCollector</name>
-                <parameters>--name memory --db memory_CAFFE.ini</parameters>
+                <parameters>--name memory --db memory_POETICON.ini</parameters>
                 <node>pwrNode4</node>
         </module>
         <module>
