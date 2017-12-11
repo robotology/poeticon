@@ -897,6 +897,7 @@ bool geoGround::getAffordances()
 bool geoGround::createSymbolList()
 {
     string line;
+    new_symbols.clear();
     vector<string> symbols, temp_symbols;
     presymbolFile.open(presymbolFileName.c_str());
     if (!presymbolFile.is_open())
