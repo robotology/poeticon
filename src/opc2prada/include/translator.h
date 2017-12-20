@@ -22,6 +22,7 @@
 #include <yarp/os/Vocab.h>
 
 #include <fstream>
+#include <iostream>
 #include <string>
 
 #include "OPC2PRADA_IDL.h"
