@@ -36,7 +36,7 @@ bool ActiveSeg::configure(ResourceFinder &rf)
 /**********************************************************/
 ActiveSeg::Error ActiveSeg::getSegWithFixation( const IplImage *img, IplImage* &seg, SegInfo &info )
 {
-    YARP_ASSERT (img);
+    yAssert(img);
 
     if (info.fix_x >= img->width || info.fix_x <= 0 || info.fix_y >=img->height || info.fix_y <= 0)
     {
@@ -132,8 +132,8 @@ inline void ActiveSeg::segmentWithFixation(IplImage *img_in, double x, double y)
 /**********************************************************/
 ActiveSeg::Error  ActiveSeg::getTemplateFromSeg(const IplImage *img, IplImage* seg, IplImage* &tpl, SegInfo &info)
 {
-    YARP_ASSERT (img);
-    YARP_ASSERT (seg);
+    yAssert(img);
+    yAssert(seg);
 
     int top = -1;
     int left = -1;
@@ -210,7 +210,7 @@ rightFound:
 
 ActiveSeg::Error ActiveSeg::getTemplate( const IplImage *img, IplImage* &tpl, SegInfo &info )
 {
-    YARP_ASSERT (img);
+    yAssert(img);
     IplImage* seg = cvCloneImage(img);
     ActiveSeg::Error ret;
 
