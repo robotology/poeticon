@@ -35,7 +35,7 @@ ACTION:
 CONTEXT:
   -_obj_ishand() _obj_inhand__hand() _hand_ishand()
 OUTCOMES:
-  0.95 -_obj_inhand__hand() _hand_clearhand()
+  0.95 -_obj_inhand__hand() _hand_clearhand() _obj_isreachable_with__hand()
   0.05 <noise>
 
 
@@ -48,5 +48,3 @@ OUTCOMES:
   0.7 _tool_on__obj() -_tool_inhand__hand() _hand_clearhand()
   0.15 -_tool_inhand__hand() _hand_clearhand()
   0.15 <noise>
-
-
