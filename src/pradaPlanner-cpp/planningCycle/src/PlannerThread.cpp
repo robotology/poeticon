@@ -1137,8 +1137,13 @@ bool PlannerThread::increaseHorizon()
                     for (int t = 0; t < failed_goal.size(); ++t)
                     {
                         temp_vect = split(failed_goal[t], '_');
-                        objects_failed.push_back(temp_vect[0]);
-                        objects_failed.push_back(temp_vect[2]);
+                        for (int o = 0; o < temp_vect.size(); ++o)
+                        {
+                            if (temp_vect[o].find_first_of("0123456789") != std::string::npos)
+                            {
+                                objects_failed.push_back(temp_vect[o]);
+                            }
+                        }
                     }
                     yInfo("Plan failed");
                     // plan fails, add FAIL to activityInterface bottle
@@ -1194,8 +1199,13 @@ bool PlannerThread::increaseHorizon()
                     for (int t = 0; t < failed_goal.size(); ++t)
                     {
                         temp_vect = split(failed_goal[t], '_');
-                        objects_failed.push_back(temp_vect[0]);
-                        objects_failed.push_back(temp_vect[2]);
+                        for (int o = 0; o < temp_vect.size(); ++o)
+                        {
+                            if (temp_vect[o].find_first_of("0123456789") != std::string::npos)
+                            {
+                                objects_failed.push_back(temp_vect[o]);
+                            }
+                        }
                     }
                     yInfo("Plan failed");
                     // plan fails, add FAIL to activityInterface bottle
