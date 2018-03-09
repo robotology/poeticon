@@ -43,7 +43,7 @@ OUTCOMES:
 ACTION:
   put__tool_on__obj_with__hand()
 CONTEXT:
-  -_tool_ishand() _obj_isreachable_with__hand() -_obj_ishand() _tool_inhand__hand()
+  -_tool_ishand() _obj_isreachable_with__hand() -_obj_ishand() _tool_inhand__hand() -_ALL_on__obj()
 OUTCOMES:
   0.7 _tool_on__obj() -_tool_inhand__hand() _hand_clearhand()
   0.15 -_tool_inhand__hand() _hand_clearhand()
