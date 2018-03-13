@@ -781,6 +781,7 @@ bool PlannerThread::loadObjs()
     object_IDs.clear();
     cmd.clear();
     cmd.addString("loadObjects");
+    reply.clear();
     opc2prada_rpc.write(cmd,reply);
     if (reply.size() > 0 && reply.get(0).isList() && reply.get(0).asList()->size() > 2){
         object_bottle.clear(); // creates a bottle for the "printObjects" command
@@ -1491,7 +1492,12 @@ bool PlannerThread:: execAction()
         message.addString(obj); // object label
         message.addString(hand); // hand for grasping (left/right)
     }
-    else { // for drop, pull, push, and put
+    else if (act == "drop")
+    {
+        message.addString(act);
+        message.addString(obj);
+    }
+    else { // for pull, push, and put
         message.addString(act); 
         message.addString(obj);
         message.addString(hand);
