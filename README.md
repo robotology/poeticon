@@ -13,7 +13,7 @@ Needed to compile the core build:
 - [OpenCV](http://opencv.org/downloads.html), version 2.4
 
 PRADA probabilistic planner also needs:
-- [libPRADA](http://www.informatik.uni-hamburg.de/ML/contents/people/lang/private/prada/), mirrored in the *3rdparty* directory
+- [libPRADA](http://userpage.fu-berlin.de/tlang/prada/), mirrored in the *3rdparty* directory
 
 Affordance network dependencies:
 - [YARP Java bindings](http://www.yarp.it/yarp_swig.html) (in the YARP build directory, call CMake and enable ```YARP_COMPILE_BINDINGS```, ```CREATE_JAVA```)
