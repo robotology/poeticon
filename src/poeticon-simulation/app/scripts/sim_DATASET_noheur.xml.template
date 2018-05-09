@@ -1,0 +1,224 @@
+<application>
+<name>Planner Simulator, DATASET, No Heuristics</name>
+
+<dependencies>
+    <port>/icub/camcalib/left/out</port>
+</dependencies>
+
+<module>
+    <name>lbpExtract</name>
+    <parameters>--radius 7 --maxArea 6000 --maxArcLength 600</parameters>
+    <node>localhost</node>
+</module>
+<module>
+    <name>dummyActivityInterface</name>
+    <node>localhost</node>
+</module>
+<module>
+    <name>objectsPropertiesCollector</name>
+    <!-- replace DATASET with memory file corresponding to the datadump -->
+    <parameters>--name dummyMemory --context poeticon --db dummy_memory_DATASET.ini --no-save-db</parameters>
+    <node>localhost</node>
+</module>
+<module>
+    <name>blobDescriptor</name>
+    <node>localhost</node>
+</module>
+<module>
+    <name>sequentialLabeller</name>
+    <node>localhost</node>
+</module>
+<module>
+    <name>worldStateManager</name>
+    <node>localhost</node>
+</module>
+<module>
+    <name>objectsPropertiesCollector</name>
+    <parameters>--name wsopc --context poeticon --db dbhands.ini --no-save-db --async-bc</parameters>
+    <node>localhost</node>
+</module>
+<module>
+    <name>opc2prada</name>
+    <node>localhost</node>
+</module>
+<module>
+    <name>dummyPraxiconInterface</name>
+    <node>localhost</node>
+</module>
+
+<!-- Note: the modules belonging to the probabilistic planner part (planningCycle, affordanceCommunication, geometricGrounding, goalCompiler) must have access to the same "contexts/poeticon" directory. One way to accomplish this is to run them on the same machine. -->
+<module>
+    <name>planningCycle</name>
+    <parameters>--adaptability off --goalConsistency off --creativity off</parameters>
+    <node>localhost</node>
+</module>
+<module>
+    <name>geometricGrounding</name>
+    <node>localhost</node>
+</module>
+<module>
+    <name>goalCompiler</name>
+    <parameters>--goalSimplification off</parameters>
+    <node>localhost</node>
+</module>
+<module>
+    <name>affordanceCommunication</name>
+    <parameters>--display off</parameters> <!-- set to on to show MATLAB windows -->
+    <node>localhost</node>
+</module>
+
+<module>
+    <name>yarpview</name>
+    <parameters>--name /view/blobdesc --x 320 --y 0</parameters>
+    <node>localhost</node>
+</module>
+
+<connection>
+    <from>/icub/camcalib/left/out</from>
+    <to>/lbpExtract/image:i</to>
+    <protocol>udp</protocol>
+</connection>
+<connection>
+    <from>/lbpExtract/extractedlbp:o</from>
+    <to>/sequentialLabeller/binImg:i</to>
+    <protocol>udp</protocol>
+</connection>
+<connection>
+    <from>/lbpExtract/extractedlbp:o</from>
+    <to>/blobDescriptor/binImg:i</to>
+    <protocol>udp</protocol>
+</connection>
+<connection>
+    <from>/activityInterface/memory:rpc</from>
+    <to>/dummyMemory/rpc</to>
+</connection>
+<connection>
+    <from>/activityInterface/prada:rpc</from>
+    <to>/planner/rpc:i</to>
+</connection>
+<connection>
+    <from>/icub/camcalib/left/out</from>
+    <to>/blobDescriptor/rawImg:i</to>
+    <protocol>udp</protocol>
+</connection>
+<connection>
+    <from>/sequentialLabeller/labeledImg:o</from>
+    <to>/blobDescriptor/labeledImg:i</to>
+    <protocol>udp</protocol>
+</connection>
+<connection>
+    <from>/blobDescriptor/viewImg:o</from>
+    <to>/view/blobdesc</to>
+    <protocol>udp</protocol>
+</connection>
+<connection>
+    <from>/wsm/activity:rpc</from>
+    <to>/activityInterface/rpc:i</to>
+</connection>
+<connection>
+    <from>/activityInterface/praxicon:rpc</from>
+    <to>/praxInterface/speech:i</to>
+</connection>
+<connection>
+    <from>/blobDescriptor/affDescriptor:o</from>
+    <to>/wsm/affDescriptor:i</to>
+</connection>
+<connection>
+    <from>/blobDescriptor/toolAffDescriptor:o</from>
+    <to>/wsm/toolAffDescriptor:i</to>
+</connection>
+<connection>
+    <from>/wsm/opc:io</from>
+    <to>/wsopc/rpc</to>
+</connection>
+<connection>
+    <from>/opc2prada/rpcClient</from>
+    <to>/wsopc/rpc</to>
+</connection>
+<connection>
+    <from>/wsopc/broadcast:o</from>
+    <to>/opc2prada/broadcast:i</to>
+</connection>
+<connection>
+    <from>/planner/wsm_rpc:o</from>
+    <to>/wsm/rpc:i</to>
+</connection>
+<connection>
+    <from>/planner/actInt_rpc:o</from>
+    <to>/activityInterface/rpc:i</to>
+</connection>
+<connection>
+    <from>/affordanceCommunication/aff_query:io</from>
+    <to>/Eprediction/read:i</to>
+</connection>
+<connection>
+    <from>/Eprediction/write:o</from>
+    <to>/affordanceCommunication/aff_query:io</to>
+</connection>
+<connection>
+    <from>/affordanceCommunication/actInt_rpc:o</from>
+    <to>/activityInterface/rpc:i</to>
+</connection>
+<connection>
+    <from>/planner/opc2prada_rpc:o</from>
+    <to>/opc2prada/rpc:i</to>
+</connection>
+<connection>
+    <from>/planner/ground_cmd:io</from>
+    <to>/geometricGrounding/planner_cmd:io</to>
+</connection>
+<connection>
+    <from>/planner/goal_cmd:io</from>
+    <to>/goalCompiler/planner_cmd:io</to>
+</connection>
+<connection>
+    <from>/geometricGrounding/planner_cmd:io</from>
+    <to>/planner/ground_cmd:io</to>
+</connection>
+<connection>
+    <from>/goalCompiler/planner_cmd:io</from>
+    <to>/planner/goal_cmd:io</to>
+</connection>
+<connection>
+    <from>/activityInterface/praxicon:o</from>
+    <to>/goalCompiler/prax_inst:i</to>
+</connection>
+<connection>
+    <from>/planner/prax_inst:o</from>
+    <to>/activityInterface/prada:i</to>
+</connection>
+<connection>
+    <from>/affordanceCommunication/ground_cmd:io</from>
+    <to>/geometricGrounding/affordances_cmd:io</to>
+</connection>
+<connection>
+    <from>/geometricGrounding/affordances_cmd:io</from>
+    <to>/affordanceCommunication/ground_cmd:io</to>
+</connection>
+<connection>
+    <from>/affordanceCommunication/opc2prada_query:io</from>
+    <to>/opc2prada/rpc:i</to>
+</connection>
+<connection>
+    <from>/affordanceCommunication/planner_cmd:io</from>
+    <to>/planner/affordances_cmd:io</to>
+</connection>
+<connection>
+    <from>/planner/affordances_cmd:io</from>
+    <to>/affordanceCommunication/planner_cmd:io</to>
+</connection>
+<!-- connection between three auxiliary planner modules, and the rpc port -->
+<connection>
+    <from>/affordanceCommunication/planner_rpc:o</from>
+    <to>/planner/rpc:i</to> 
+</connection>
+<connection>
+    <from>/geometricGrounding/planner_rpc:o</from>
+    <to>/planner/rpc:i</to> 
+</connection>
+<connection>
+    <from>/goalCompiler/planner_rpc:o</from>
+    <to>/planner/rpc:i</to> 
+</connection>
+
+</application>

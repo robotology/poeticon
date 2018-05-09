@@ -3,6 +3,8 @@
 
 cmake_minimum_required(VERSION 2.6)
 
+option(BUILD_simulation "Build poeticon-simulation" ON)
+
 set(PROJECTNAME poeticon)
 project(${PROJECTNAME})
 
@@ -43,3 +45,8 @@ if(OpenCV_FOUND)
 else(OpenCV_FOUND)
     message(STATUS "OpenCV not found or selected, skipping vision modules")
 endif(OpenCV_FOUND)
+
+# simulated symbolic reasoner modules
+if (BUILD_simulation)
+    add_subdirectory(poeticon-simulation)
+endif()
