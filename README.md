@@ -7,29 +7,30 @@ This is the repository of the [POETICON++ EU project](http://www.poeticon.eu).
 
 ### Dependencies
 
-Needed to compile the core build:
+Mandatory dependencies of the core build:
 - [YARP](https://github.com/robotology/yarp)
 - [icub-contrib-common](https://github.com/robotology/icub-contrib-common)
 - [OpenCV](http://opencv.org/downloads.html), version 2.4
 
-PRADA probabilistic planner also needs:
+Dependencies of probabilistic planning:
 - [libPRADA](http://userpage.fu-berlin.de/tlang/prada/), mirrored in the *3rdparty* directory
 
-Affordance network dependencies:
+Dependencies of affordance perception:
+- [MATLAB](http://www.mathworks.com/products/matlab)
 - [YARP Java bindings](http://www.yarp.it/yarp_swig.html) (in the YARP build directory, call CMake and enable ```YARP_COMPILE_BINDINGS```, ```CREATE_JAVA```, ```PREPARE_CLASS_FILES```)
 - YARP for MATLAB (add the directory with the Java ```*.class``` files to the classpath, and the directory with ```libjyarp.so``` to ```librarypath.txt```)
 - [pmtk3](https://github.com/probml/pmtk3) (installation: launch MATLAB as superuser, run ```initPmtk3.m```, click on setPath, select the pmtk3 directories then Save to permanently add them to MATLABPATH)
 
-### Additional dependencies for specific modules
+### External projects
 
-External projects used in the full POETICON++ demo:
+The following external projects are needed to execute the full POETICON++ demo:
 - [Hierarchical Image Representation](https://github.com/robotology/himrep)
 - [Interactive Objects Learning](https://github.com/robotology/iol)
 - [karma](https://github.com/robotology/karma)
 - [segmentation](https://github.com/robotology/segmentation)
 - [stereo-vision](https://github.com/robotology/stereo-vision)
 
-Speech recognition dependencies:
+Dependencies of the optional speech recognition component:
 - [YARP Lua bindings](http://wiki.icub.org/yarpdoc/yarp_swig.html)
 - [rFSM](https://github.com/kmarkus/rFSM) (just clone it, no need to compile)
 
