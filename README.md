@@ -54,7 +54,11 @@ Note: the modules belonging to the probabilistic planner part (planningCycle, af
 
 ## Documentation
 
-Please refer to the documentation inside each module, and to the help commands available via RPC interfaces.
+**Affordance perception** sensorimotor data and documentation are [here](./src/affNetwork).
+
+Instructions on how to run the **simulated symbolic reasoner** (to test **probabilistic planning** under noisy conditions and with different heuristics) are [here](./src/poeticon-simulation).
+
+Further documentation is available inside each module source, and via the help commands available via RPC interfaces.
 
 ## Articles
 
