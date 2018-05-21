@@ -29,10 +29,11 @@ create a symbolic link with the name `dummy_activity_$SCENARIO.ini` (e.g.,
 `dummy_activity_complex6.ini`), which should link to one of the existing noise
 definitions. For example:
   `ln -s dummy_activity_complex6_onearm_050.ini dummy_activity_complex6.ini`
+
 Note: the numbers at the end of the filename, and inside it, refer to the
-_reliability_, which is the opposite of noise (1 - noise)
-Note: the name of the link must correspond to the `--from` argument as defined
-in the XML next to the `dummyActivityInterface` module
+_reliability_, which is the opposite of noise, i.e., (1 - noise)
+
+Note: the name of the link must correspond to the `--from` argument as defined in the XML next to the `dummyActivityInterface` module
 
 ## How to run
 
@@ -72,7 +73,7 @@ put Bun-top Ham=SUCCESS
 [...]
 ```
 
-* the sequence of `ex()` metrics data structures is written to file and then be used to extract statistics in Python or MATLAB - contact me for more information
+* the sequence of `ex()` metrics data structures is written to file and can be used to extract statistics in Python or MATLAB - contact me for more information
 
 ## Copyright and contact information
 
