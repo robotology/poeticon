@@ -27,9 +27,6 @@ bool WorldStateMgrThread::openPorts()
     opcPortName = "/" + moduleName + "/opc:io";
     ret = ret && opcPort.open(opcPortName.c_str());
 
-    inTargetsPortName = "/" + moduleName + "/target:i";
-    ret = ret && inTargetsPort.open(inTargetsPortName.c_str());
-
     inAffPortName = "/" + moduleName + "/affDescriptor:i";
     ret = ret && inAffPort.open(inAffPortName.c_str());
 
@@ -38,9 +35,6 @@ bool WorldStateMgrThread::openPorts()
 
     activityPortName = "/" + moduleName + "/activity:rpc";
     ret = ret && activityPort.open(activityPortName.c_str());
-
-    trackerPortName = "/" + moduleName + "/tracker:rpc";
-    ret = ret && trackerPort.open(trackerPortName.c_str());
 
     return ret;
 }
@@ -51,11 +45,9 @@ void WorldStateMgrThread::close()
     yInfo("closing ports");
 
     opcPort.close();
-    inTargetsPort.close();
     inAffPort.close();
     inToolAffPort.close();
     activityPort.close();
-    trackerPort.close();
 }
 
 /**********************************************************/
@@ -65,11 +57,9 @@ void WorldStateMgrThread::interrupt()
 
     yInfo("interrupting ports");
     opcPort.interrupt();
-    inTargetsPort.interrupt();
     inAffPort.interrupt();
     inToolAffPort.interrupt();
     activityPort.interrupt();
-    trackerPort.interrupt();
 }
 
 /**********************************************************/
@@ -120,7 +110,7 @@ void WorldStateMgrThread::run()
         */
 
         // enter perception state machine
-        fsmPerception();
+        fsm();
 
         yarp::os::Time::delay(0.01);
     }
@@ -129,17 +119,14 @@ void WorldStateMgrThread::run()
 /**********************************************************/
 bool WorldStateMgrThread::initVars()
 {
-    fsmState = STATE_PERCEPTION_WAIT_OPC;
+    state = STATE_WAIT_OPC;
     toldUserOPCConnected = false;
     initFinished = false;
     t = yarp::os::Time::now();
     inAff = NULL;
     inToolAff = NULL;
-    inTargets = NULL;
-    needTrackerInit = false;
     needUpdate = false;
     toldUserBlobsConnected = false;
-    toldUserTrackerConnected = false;
     toldActivityGoHome = false;
     toldUserActivityIFConnected = false;
 
@@ -151,33 +138,13 @@ bool WorldStateMgrThread::clearAll()
 {
     // reset variables
     toldUserOPCConnected = false;
-    needTrackerInit = false;
     initFinished = false;
-
-    // activityInterface automatically detects unstacking events for the
-    // "sabotage" scenario - no need to manually reset the whole stack
-    // in memory. it's better not to do it at all and leave it to activityIF,
-    // so that one can transition from an experiment to the next one (with
-    // possibly a partial stack inherited from the previous experiment).
-    //
-    // reset activityInterface's objects stack (full stack memory)
-    //if (activityPort.getOutputCount()>=1)
-    //{
-    //    Bottle activityCmd, activityReply;
-    //    activityCmd.addString("resetObjStack");
-    //    yInfo() << "sending activityInterface instruction:" << activityCmd.toString().c_str();
-    //    activityPort.write(activityCmd, activityReply); // reply is always "ok"
-    //}
-
-    // reset activeParticleTracker
-    resetTracker();
 
     // reset internal short-term memory
     hands.clear(); // empty hands container
     initMemoryFromOPC(); // put left and right entries into hands container
     objs.clear();
-    trackIDs.clear();
-    candidateTrackMap.clear();
+    candidateMap.clear();
 
     return true;
 }
@@ -244,20 +211,6 @@ bool WorldStateMgrThread::tellUserBlobsConnected()
 }
 
 /**********************************************************/
-bool WorldStateMgrThread::tellUserConnectTracker()
-{
-    double t0 = yarp::os::Time::now();
-    if (t0-t>10.0 && trackerPort.getOutputCount()<1)
-    {
-        yInfo("waiting for connection: /activeParticleTrack/target:o %s",
-              inTargetsPortName.c_str());
-        t = t0;
-    }
-
-    return true;
-}
-
-/**********************************************************/
 bool WorldStateMgrThread::tellUserConnectActivityIF()
 {
     double t0 = yarp::os::Time::now();
@@ -269,6 +222,31 @@ bool WorldStateMgrThread::tellUserConnectActivityIF()
     }
 
     return true;
+}
+
+bool WorldStateMgrThread::ensureOpcNumEntries(const int &minEntries)
+{
+    if (opcPort.getOutputCount()<1)
+        return false;
+
+    // query: [ask] (all)
+    Bottle opcCmd, opcCmdContent, opcReply;
+    opcCmd.addVocab(Vocab::encode("ask"));
+    opcCmdContent.addString("all");
+    opcCmd.addList() = opcCmdContent;
+    opcPort.write(opcCmd, opcReply);
+
+    // reply: [ack] (id (11 12 13 ...))
+    bool ret = false;
+    ret = opcReply.size()>1 &&
+          opcReply.get(0).asVocab()==Vocab::encode("ack") &&
+          opcReply.get(1).isList() &&
+          opcReply.get(1).asList()->size()>0 &&
+          opcReply.get(1).asList()->get(0).asString()=="id" &
+          opcReply.get(1).asList()->get(1).isList() &&
+          opcReply.get(1).asList()->get(1).asList()->size()>=minEntries;
+
+    return ret;
 }
 
 /**********************************************************/
@@ -291,6 +269,7 @@ bool WorldStateMgrThread::opcContainsID(const int &id)
 }
 
 /**********************************************************/
+// TODO: remove
 bool WorldStateMgrThread::checkOPCStatus(const int &minEntries, Bottle &ids)
 {
     // this function returns true/false if WSOPC already
@@ -343,11 +322,9 @@ bool WorldStateMgrThread::resetOPC()
         return false;
     }
 
-    // increase countFrom (activeParticleTracker start index) to account for
-    // the fact that some IDs will be deleted from WSOPC (never to be used again)
-    // and the tracker will need to start counting from a fresh ID in order to
-    // make the world state and planner happy.
-    increaseCountFrom();
+    // increase countFrom (future WSOPC additions start index) to account for
+    // the fact that some IDs will now deleted from WSOPC (never to be used again)
+    updateCountFrom();
 
     // cycle over opcIDs entries (hands and objects)
     const int LeftHandID = 11;
@@ -411,7 +388,30 @@ bool WorldStateMgrThread::resetOPC()
                 // experiment to the other -- the only restriction is that an <object,ID>
                 // pair is fixed within the same experiment)
 
-                yInfo("deleting object entry %d/%s",
+                // first, delete from objs container
+                // inefficient way:
+                int idxToRemove = 0;
+                for(std::vector<MemoryItemObj>::const_iterator iter = objs.begin();
+                    iter != objs.end();
+                    ++iter)
+                {
+                    if ((iter->id == opcIDs.get(entryIdx).asInt()) &&
+                        (iter->name == label.c_str()))
+                    {
+                        idxToRemove = iter - objs.begin();
+                    }
+                }
+                yInfo("deleting object entry %d/%s from internal short-term memory (element %d)",
+                      opcIDs.get(entryIdx).asInt(), label.c_str(), idxToRemove);
+                objs.erase(objs.begin() + idxToRemove);
+
+                // TODO efficient way:
+                //MemoryItemObj objToRemove(...);
+                //const int idxToRemove = std::find(objs.begin(), objs.end(), objToRemove) - objs.begin();
+                //objs.erase(std::remove(objs.begin(), objs.end(), objToRemove), objs.end());
+
+                // secondly, delete from WSOPC
+                yInfo("deleting object entry %d/%s from WSOPC",
                       opcIDs.get(entryIdx).asInt(), label.c_str());
                 // query: [del] (("id" <num>))
                 Bottle opcCmd, opcCmdContent, opcReply;
@@ -506,7 +506,7 @@ bool WorldStateMgrThread::resetOPCHandFields(const int &handID)
 }
 
 /**********************************************************/
-bool WorldStateMgrThread::increaseCountFrom()
+bool WorldStateMgrThread::updateCountFrom()
 {
     if (opcPort.getOutputCount()<1)
         return false;
@@ -525,8 +525,13 @@ bool WorldStateMgrThread::increaseCountFrom()
     // therefore to obtain the maximum we can just get the last value
     const int maxOldID = opcIDs.get(opcIDs.size()-1).asInt();
 
-    countFrom = maxOldID+1;
-    yInfo("reset routine: increased countFrom to %d", countFrom);
+    if (maxOldID+1 > countFrom)
+    {
+        countFrom = maxOldID+1;
+        yInfo("updated countFrom to %d", countFrom);
+    }
+    else
+        yDebug("not updating countFrom, keeping it at %d", countFrom);
 
     return true;
 }
@@ -558,81 +563,11 @@ bool WorldStateMgrThread::refreshBlobs()
     return true;
 }
 
-/**********************************************************/
-bool WorldStateMgrThread::checkTrackerStatus()
-{
-    // this function returns true/false if activeParticleTrack is already
-    // tracking or not. additionally, it updates the trackIDs variable.
-
-    if (trackerPort.getOutputCount()<1)
-        return false;
-
-    Bottle trackerCmd, trackerReply;
-    trackerCmd.addString("getIDs");
-    //yDebug() << __func__ <<  "sending query to tracker:" << trackerCmd.toString().c_str();
-    trackerPort.write(trackerCmd, trackerReply);
-    //yDebug() << __func__ <<  "obtained response:" << trackerReply.toString().c_str();
-
-    bool notNullList = trackerReply.size()>0 &&
-                       trackerReply.get(0).isList() &&
-                       trackerReply.get(0).asList()->size()>0;
-
-    // update trackIDs - includes paused IDs
-    if (notNullList)
-        trackIDs = * trackerReply.get(0).asList();
-
-    return notNullList;
-}
-
-/**********************************************************/
-bool WorldStateMgrThread::configureTracker()
-{
-    if (trackerPort.getOutputCount()<1)
-        return false;
-
-    if (!toldUserTrackerConnected)
-    {
-        yInfo("connected to tracker");
-        toldUserTrackerConnected = true;
-    }
-
-    // if tracker already initialized -> reset it
-    if (checkTrackerStatus())
-    {
-        yInfo("tracker was already initialized from a previous experiment -> will reset it and start again with index countFrom %d",
-              countFrom);
-
-        // reset
-        yInfo("now resetting tracker...");
-        if (!resetTracker())
-            yWarning("problem resetting tracker");
-    }
-
-    // now send countFrom rpc instruction
-    yInfo("configuring tracker with instruction: countFrom %d", countFrom);
-    Bottle trackerCmd, trackerReply;
-    trackerCmd.addString("countFrom");
-    trackerCmd.addInt(countFrom);
-    //yDebug() << __func__ <<  "sending query to tracker:" << trackerCmd.toString().c_str();
-    trackerPort.write(trackerCmd, trackerReply);
-    //yDebug() << __func__ <<  "obtained response:" << trackerReply.toString().c_str();
-    bool validResponse = false;
-    validResponse = trackerReply.size()>0 &&
-                    trackerReply.get(0).asVocab()==Vocab::encode("ok");
-    if (!validResponse)
-    {
-        yWarning() << __func__ << "obtained invalid response from tracker:" << trackerReply.toString().c_str();
-        return false;
-    }
-
-    return true;
-}
-
-/**********************************************************/
+/*
 bool WorldStateMgrThread::getTrackNames()
 {
     // note: when this function fails (returns false),
-    //       candidateTrackMap must be cleared
+    //       candidateMap must be cleared
 
     if (activityPort.getOutputCount()<1)
         return false;
@@ -682,11 +617,11 @@ bool WorldStateMgrThread::getTrackNames()
             return false;
         }
 
-        // fail if this already exists in memory or in candidateTrackMap
+        // fail if this already exists in memory or in candidateMap
         if ( memoryContainsID(id) ||
              memoryContainsName(label) ||
-             mapContainsKey(candidateTrackMap,id) ||
-             mapContainsValue(candidateTrackMap,label) )
+             mapContainsKey(candidateMap,id) ||
+             mapContainsValue(candidateMap,label) )
         {
             yWarning("winning label --> %s <--, however not going to add it to memory because it seems to be a duplicate",
                      label.c_str());
@@ -696,7 +631,7 @@ bool WorldStateMgrThread::getTrackNames()
 
         // assume names cannot change -> use insert(), not operator[]
         // http://stackoverflow.com/questions/326062/in-stl-maps-is-it-better-to-use-mapinsert-than
-        candidateTrackMap.insert(make_pair(id,label));
+        candidateMap.insert(make_pair(id,label));
 
         if (i==trackIDs.size()-1) yInfo("done asking for visible object labels");
     }
@@ -704,7 +639,7 @@ bool WorldStateMgrThread::getTrackNames()
     if (allCandidateNamesUnique)
     {
         yInfo("success, all candidate object IDs and names are unique:");
-        dumpMap(candidateTrackMap);
+        dumpMap(candidateMap);
     }
     else
     {
@@ -714,197 +649,13 @@ bool WorldStateMgrThread::getTrackNames()
 
     return true;
 }
-
-/**********************************************************/
-bool WorldStateMgrThread::initTracker()
-{
-    if (trackerPort.getOutputCount()<1)
-        return false;
-
-    if (checkTrackerStatus())
-    {
-        yDebug("tracker already initialized, will not do it again!");
-        return false;
-    }
-
-    // get fresh coordinates from segmentation/blobDesc
-    refreshBlobs();
-
-    yInfo("initializing tracking of %d objects:", sizeAff);
-    double u=0.0, v=0.0;
-
-    for(int a=0; a<sizeAff; a++)
-    {
-        u = inAff->get(a+1).asList()->get(0).asDouble();
-        v = inAff->get(a+1).asList()->get(1).asDouble();
-
-        Bottle trackerCmd;
-        Bottle trackerReply;
-
-        trackerCmd.addString("track");
-        trackerCmd.addDouble(u);
-        trackerCmd.addDouble(v);
-        //yDebug() << __func__ <<  "sending fixation request to tracker:" << trackerCmd.toString().c_str();
-        trackerPort.write(trackerCmd,trackerReply);
-        //yDebug() << __func__ <<  "obtained response:" << trackerReply.toString().c_str();
-
-        if (trackerReply.size()>0 && trackerReply.get(0).isInt() && trackerReply.get(0).asInt()!=-1)
-            yInfo("%f %f -> id %d", u, v, trackerReply.get(0).asInt());
-        else
-            yWarning("problem initializing tracker with fixation %f %f, got invalid response %s, was expecting an integer such as %d",
-                u, v, trackerReply.toString().c_str(), countFrom+a);
-    }
-
-    return true;
-}
-
-/**********************************************************/
-bool WorldStateMgrThread::refreshTracker()
-{
-    if (trackerPort.getOutputCount()<1)
-    {
-        yWarning() << __func__ << "not connected to tracker";
-        return false;
-    }
-
-    // compute pausedIDs Bottle with "getPausedIDs" rpc
-    Bottle pausedIDs;
-    Bottle trackerCmd, trackerReply;
-    trackerCmd.addString("getPausedIDs");
-    //yDebug() << __func__ <<  "sending query to tracker:" << trackerCmd.toString().c_str();
-    trackerPort.write(trackerCmd, trackerReply);
-    //yDebug() << __func__ <<  "obtained response:" << trackerReply.toString().c_str();
-    bool validReply = trackerReply.size()>0 &&
-                      trackerReply.get(0).isList();
-    if (validReply)
-        pausedIDs = * trackerReply.get(0).asList();
-
-    // update number of currently visible tracks: num. all tracks minus num. paused
-    sizeTargets = trackIDs.size() - pausedIDs.size();
-    //yDebug("sizeTargets=%d", sizeTargets);
-
-    if (sizeTargets > 0)
-    {
-        // default case: there are visible tracks -> blocking read
-        inTargets = inTargetsPort.read(true);
-    }
-    else
-    {
-        // no visible tracks (all tracks paused) -> a few non-blocking reads
-        const int numTries = 5;
-        for (int t=0; t<numTries; ++t)
-        {
-            inTargets = inTargetsPort.read(false);
-            yarp::os::Time::delay(0.1);
-            if (inTargets != NULL)
-                break;
-        }
-        if (inTargets == NULL)
-        {
-            yWarning("%s did not receive data from tracker after %d tries",
-                     __func__, numTries);
-            return false;
-        }
-    }
-
-    return true;
-}
-
-/**********************************************************/
-bool WorldStateMgrThread::resetTracker()
-{
-    if (trackerPort.getOutputCount()<1)
-    {
-        yWarning() << __func__ << "not connected to tracker";
-        return false;
-    }
-
-    Bottle trackerCmd, trackerReply;
-
-    // due to https://github.com/robotology/poeticon/issues/186
-    // resume all paused tracks first (all paused tracks that are valid i.e.
-    // that are currently in "getIDs") before doing activeParticleTrack "reset".
-    // now the issue has been solved, but this workaround is harmless, leaving it for now.
-    Bottle pausedIDs;
-    trackerCmd.addString("getPausedIDs");
-    //yDebug() << __func__ <<  "sending instruction to activeParticleTracker:" << trackerCmd.toString().c_str();
-    trackerPort.write(trackerCmd, trackerReply);
-    //yDebug() << __func__ <<  "obtained response:" << trackerReply.toString().c_str();
-    bool gotPausedTracks = trackerReply.size()>0 &&
-                           trackerReply.get(0).isList() &&
-                           trackerReply.get(0).asList()->size()>0;
-    if (gotPausedTracks)
-    {
-        Bottle pausedIDs = *trackerReply.get(0).asList();
-        yDebug("pausedIDs: %s", pausedIDs.toString().c_str());
-        for (int p=0; p<pausedIDs.size(); ++p)
-        {
-            const int id = pausedIDs.get(p).asInt();
-            // validity test for this paused ID (check if it is present in "getIDs")
-            if (ensureTrackerHasID(id))
-            {
-                yDebug("%s resuming valid track %d before tracker reset", __func__, id);
-                resumeTrackID(id);
-            }
-            else
-                yDebug("%s not resuming invalid track %d before tracker reset", __func__, id);
-        }
-    }
-
-    trackerCmd.clear();
-    trackerReply.clear();
-    trackerCmd.addString("reset");
-    trackerPort.write(trackerCmd, trackerReply);
-    yInfo() << __func__ <<  "sending instruction to activeParticleTracker:" << trackerCmd.toString().c_str();
-    bool validResponse = false;
-    validResponse = trackerReply.size()>0 &&
-                    trackerReply.get(0).asVocab()==Vocab::encode("ok");
-    if (!validResponse)
-    {
-        yWarning() << __func__ <<  "obtained invalid response:" << trackerReply.toString().c_str();
-        return false;
-    }
-
-    return true;
-}
-
-/**********************************************************/
-bool WorldStateMgrThread::ensureTrackerHasID(const int &id)
-{
-    if (trackerPort.getOutputCount()<1)
-    {
-        yWarning() << __func__ << "not connected to tracker";
-        return false;
-    }
-
-    // refresh trackIDs Bottle
-    if (!checkTrackerStatus())
-    {
-        yWarning() << __func__ << "problem refreshing tracker and trackIDs";
-        return false;
-    }
-
-    if (trackIDs.size()>0)
-    {
-        for (int idx=0; idx<trackIDs.size(); ++idx)
-        {
-            if (trackIDs.get(idx).asInt()==id)
-            {
-                //yDebug() << __func__ << "found ID" << id << "in trackIDs";
-                return true;
-            }
-        }
-    }
-
-    yWarning() << __func__ << "did not find ID" << id << "in trackIDs";
-    return false;
-}
+*/
 
 /**********************************************************/
 bool WorldStateMgrThread::getAffBottleIndexFromTrackROI(const int &u, const int &v, int &abi)
 {
     // Finds the AffBottleIndex of inAff->get(abi) corresponding to
-    // the TrackerBottleIndex inTargets->get(tbi).
+    // the tracker ROI coordinates u v.
     //
     // Current implementation: from tracker ROI centre, detect the most likely
     // blob index within blobDescriptor Bottle, using Euclidean distance. 
@@ -952,37 +703,8 @@ bool WorldStateMgrThread::getAffBottleIndexFromTrackROI(const int &u, const int 
     }
 
     abi = minBlobIdx;
+
     return true;
-}
-
-/**********************************************************/
-bool WorldStateMgrThread::getTrackerBottleIndexFromID(const int &id, int &tbi)
-{
-    // no current tracks (or all tracks paused)
-    if (inTargets == NULL)
-        return false;
-
-    // we assume that activeParticleTrack is streaming a Bottle with ordered IDs:
-    // ((13 ...) (14 ...) (15 ...))
-    // TODO: verify that this is the case, else reorder
-
-    // compare first element of each sublist with searched id
-    for (int currBottleIdx = 0;
-         currBottleIdx < inTargets->size();
-         ++currBottleIdx)
-    {
-        if (inTargets->get(currBottleIdx).asList()->get(0).asInt() == id)
-        {
-            // found
-            tbi = currBottleIdx;
-            //yDebug() << __func__ << "found track" << id << "at Bottle index" << tbi;
-            return true;
-        }
-    }
-
-    //yDebug() << __func__ << "did not find track id" << id <<
-    //         "in Bottle: likely this object stopped being tracked";
-    return false;
 }
 
 /**********************************************************/
@@ -993,94 +715,34 @@ bool WorldStateMgrThread::computeObjProperties(const int &id, const string &labe
                                                Bottle &onTopOf,
                                                Bottle &reachW, Bottle &pullW)
 {
-    //yDebug("%s begin %d/%s", __func__, id, label.c_str());
+    yDebug("%s begin %d/%s", __func__, id, label.c_str());
 
     if (activityPort.getOutputCount()<1)
         return false;
 
-    /*
-    bool visibleByActivityIF;
-    if (!getVisibilityByActivityIF(label, visibleByActivityIF))
+    Bottle activityCmd, activityReply;
+    activityCmd.addString("get2D");
+    activityCmd.addString(label.c_str());
+    //yDebug() << __func__ << "sending query:" << activityCmd.toString().c_str();
+    activityPort.write(activityCmd, activityReply);
+
+    bool isVisible = activityReply.size()>0 &&
+                     activityReply.get(0).isList() &&
+                     activityReply.get(0).asList()->size()>0; // has valid ROI coordinates
+
+    // begin symbols that depend on IOL tracker and shape descriptors
+
+    double u, v;
+
+    if (isVisible)
     {
-        yWarning("%s %d/%s: problem with getVisibilityByActivityIF",
-                 __func__, id, label.c_str());
-    }
+        double tl_x = activityReply.get(0).asList()->get(0).asDouble();
+        double tl_y = activityReply.get(0).asList()->get(1).asDouble();
+        double br_x = activityReply.get(0).asList()->get(2).asDouble();
+        double br_y = activityReply.get(0).asList()->get(3).asDouble();
 
-    bool isStacked;
-    if (!belongsToStack(label, isStacked))
-    {
-        yWarning("%s %d/%s: problem with belongsToStack",
-                 __func__, id, label.c_str());
-    }
-
-    // distinguish between geometric changes (invisible but stacked/occluded)
-    // and semantic changes (invisible and disappeared from scene)
-    if (!visibleByActivityIF)
-    {
-        if (isStacked)
-        {
-            yInfo("detected a GEOMETRIC change in the world: %d/%s is not visible because it is below something else",
-                  id, label.c_str());
-        }
-        else
-        {
-            yInfo("detected a SEMANTIC change in the world: %d/%s disappeared from the scene",
-                  id, label.c_str());
-        }
-    }
-    */
-
-    // by default the object is tracked and we can compute all symbols
-    bool visibleByTracker = true;
-
-    // if possible, refresh inTargets Bottle
-    if (trackerPort.getOutputCount()>0)
-        refreshTracker();
-
-    // find the "tracker Bottle index" within inTargets Bottle that matches id
-    int tbi = -1;
-    if (!getTrackerBottleIndexFromID(id,tbi))
-    {
-        //yDebug() << __func__ << "did not find track id" << id
-        //         << "in tracker Bottle: object not visible ->"
-        //         << "going to update activityInterface symbols only,"
-        //         << "leaving shape descriptors untouched";
-        visibleByTracker = false;
-    }
-
-    // find the "affordance Bottle index" within inAff Bottle that matches
-    // with the selected tracker blob
-    double u=0.0, v=0.0;
-    if (tbi != -1)
-    {
-        //yDebug("%s start reading coordinates of %d/%s", __func__, id, label.c_str());
-        u = inTargets->get(tbi).asList()->get(1).asDouble();
-        v = inTargets->get(tbi).asList()->get(2).asDouble();
-        //yDebug("%s finish reading coordinates of %d/%s", __func__, id, label.c_str());
-    }
-    int abi = -1; // affordance blobs Bottle index
-    if (visibleByTracker)
-    {
-        if (!getAffBottleIndexFromTrackROI(u,v,abi))
-        {
-            yDebug() << __func__
-                << "did not find affordance blob index from coordinates"
-                << u << v << "-> going to update activityInterface symbols only,"
-                << "leaving shape descriptors untouched";
-            visibleByTracker = false;
-        }
-    }
-
-    //yDebug("%s %d/%s: visibleByActivityIF=%s; trackerBottleIndex=%d affordanceBottleIndex=%d visibleByTracker=%s",
-    //       __func__, id, label.c_str(), BoolToString(visibleByActivityIF), tbi, abi, BoolToString(visibleByTracker));
-
-    yDebug("%s %d/%s: trackerBottleIndex=%d affordanceBottleIndex=%d visibleByTracker=%s",
-           __func__, id, label.c_str(), tbi, abi, BoolToString(visibleByTracker));
-
-    // now we know that object was found in both tracker and shape descriptors
-    if (visibleByTracker)
-    {
-        // begin symbols that depend on tracker and shape descriptors
+        u = (tl_x + br_x) / 2.0;
+        v = (tl_y + br_y) / 2.0;
 
         // prepare position property (pos2d)
         pos2d.clear();
@@ -1088,6 +750,13 @@ bool WorldStateMgrThread::computeObjProperties(const int &id, const string &labe
         pos2d.addDouble(v);
 
         // prepare 2D shape descriptors property (desc2d)
+        int abi = -1; // affordance blobs Bottle index
+        if (!getAffBottleIndexFromTrackROI(u,v,abi))
+        {
+            yWarning() << __func__
+                       << "did not find affordance blob index from coordinates"
+                       << u << v;
+        }
         bool validDesc = false;
         validDesc = inAff != NULL &&
                     abi >= 1 &&
@@ -1147,11 +816,13 @@ bool WorldStateMgrThread::computeObjProperties(const int &id, const string &labe
         }
         else
             yWarning("problem reading descriptors of object parts");
-
-        // end symbols that depend on tracker and shape descriptors
     }
+    else
+        yWarning("%s is not visible", label.c_str());
 
-    // begin symbols that depend on activityInterface
+    // end symbols that depend on IOL tracker and shape descriptors
+
+    // begin symbols that depend on activityInterface only
 
     // prepare in_hand property (none/left/right)
     inHand = inWhichHand(label);
@@ -1214,21 +885,21 @@ bool WorldStateMgrThread::computeObjProperties(const int &id, const string &labe
 /**********************************************************/
 bool WorldStateMgrThread::constructMemoryFromMap()
 {
-    if (candidateTrackMap.empty())
+    if (candidateMap.empty())
     {
-        yWarning() << __func__ << "candidateTrackMap empty";
+        yWarning() << __func__ << "candidateMap empty";
         return false;
     }
 
     // for each <id,label> pair
-    for (idLabelMap::const_iterator iter = candidateTrackMap.begin();
-        iter != candidateTrackMap.end();
+    for (idLabelMap::const_iterator iter = candidateMap.begin();
+        iter != candidateMap.end();
         ++iter)
     {
         // make sure item is not already present in memory containers
         if (memoryContainsID(iter->first) || memoryContainsName(iter->second))
         {
-            yWarning("item already present in memory containers!");
+            yWarning("item %d/%s already present in memory containers!", iter->first, iter->second.c_str());
             return false;
         }
 
@@ -1263,6 +934,8 @@ bool WorldStateMgrThread::constructMemoryFromOPCID(const int &opcID)
 {
     if (opcPort.getOutputCount()<1)
         return false;
+
+    //yDebug() << __func__ << opcID << "start";
 
     // query: [get] (id 11)
     Bottle opcCmd, opcCmdContent, opcReply;
@@ -1315,9 +988,9 @@ bool WorldStateMgrThread::constructMemoryFromOPCID(const int &opcID)
     if (memoryContainsName(name))
     {
         // note: this happens e.g. when WSOPC is started & initialized before WSM
-        //yDebug() << __func__ << "cannot construct memory item"
-        //           << opcID << "with associated name" << name
-        //           << "because this name is already present in internal short-term memory";
+        yDebug() << __func__ << "cannot construct memory item"
+                   << opcID << "with associated name" << name
+                   << "because this name is already present in internal short-term memory";
         return false;
     }
 
@@ -1353,49 +1026,34 @@ bool WorldStateMgrThread::initMemoryFromOPC()
     if (opcPort.getOutputCount()<1)
         return false;
 
-    // make sure WSOPC contains at least 2 entries, and save them to opcIDs
+    // put list of current OPC IDs here
     Bottle opcIDs;
-    if (!checkOPCStatus(2,opcIDs))
-    {
-        yWarning("problem verifying that WSOPC has at least 2 entries");
+
+    // query: [ask] (all)
+    Bottle opcCmd, opcCmdContent, opcReply;
+    opcCmd.addVocab(Vocab::encode("ask"));
+    opcCmdContent.addString("all");
+    opcCmd.addList() = opcCmdContent;
+    opcPort.write(opcCmd, opcReply);
+
+    // reply: [ack] (id (11 12 13 ...))
+    bool valid = false;
+    valid = opcReply.size()>1 &&
+            opcReply.get(0).asVocab()==Vocab::encode("ack") &&
+            opcReply.get(1).isList() &&
+            opcReply.get(1).asList()->size()>0 &&
+            opcReply.get(1).asList()->get(0).asString()=="id" &
+            opcReply.get(1).asList()->get(1).isList();
+
+    if (!valid)
         return false;
-    }
 
-    /*
-    // if WSOPC contained more than 2 entries (hands), it means it has data from
-    // a previous experiment -> increase countFrom index for tracker
-    if (checkOPCStatus(3,opcIDs))
-    {
-        yDebug() << __func__ << "increasing countFrom...";
-        increaseCountFrom();
-    }
-
-    // if WSOPC contained more than 2 entries (hands), it means it has data from
-    // a previous experiment -> reset it
-    if (opcIDs.size() >= 3)
-    {
-        yInfo("WSOPC has some object entries from a previous experiment -> resetting it...");
-        if (resetOPC())
-            yInfo("... done resetting WSOPC");
-        else
-            yError("... problem resetting WSOPC");
-    }
-
-    // refresh opcIDs again, it should have exactly 2 entries (hands)
-    checkOPCStatus(2,opcIDs);
-    if (opcIDs.size() >= 3)
-    {
-        yError("WSOPC has 3+ entries after resetting it, cannot safely complete %s",
-               __func__);
-        return false;
-    }
-    */
+    opcIDs = * opcReply.get(1).asList()->get(1).asList();
 
     // try constructing memory item from each ID (will not construct those whose IDs already exist)
     for (int o=0; o<opcIDs.size(); o++)
     {
-        if (!constructMemoryFromOPCID(opcIDs.get(o).asInt()))
-            yWarning() << "will not constructMemoryFromOPCID" << opcIDs.get(o).asInt();
+        constructMemoryFromOPCID(opcIDs.get(o).asInt());
     }
 
     return true;
@@ -1624,9 +1282,9 @@ string WorldStateMgrThread::id2label(const int &id)
         }
     }
 
-    // search in candidateTrackMap (not yet saved to objects memory)
-    for(idLabelMap::const_iterator iter = candidateTrackMap.begin();
-        iter != candidateTrackMap.end();
+    // search in candidateMap (not yet saved to objects memory)
+    for(idLabelMap::const_iterator iter = candidateMap.begin();
+        iter != candidateMap.end();
         ++iter)
     {
         if (iter->first == id)
@@ -1639,7 +1297,7 @@ string WorldStateMgrThread::id2label(const int &id)
 }
 
 /**********************************************************/
-int WorldStateMgrThread::label2id(const string &label, bool useTrackerCheck)
+int WorldStateMgrThread::label2id(const string &label)
 {
     if (label.empty())
     {
@@ -1664,27 +1322,12 @@ int WorldStateMgrThread::label2id(const string &label, bool useTrackerCheck)
         ++iter)
     {
         if (iter->name == label)
-        {
-            if (useTrackerCheck) // extra check used for pause/resume
-            {
-                if (ensureTrackerHasID(iter->id))
-                {
-                    //yDebug("confirmed that tracker has ID %d", iter->id);
-                    return iter->id;
-                }
-                else
-                    yWarning("tracker does not have ID %d but short-term memory has it!", iter->id);
-            }
-            else // other cases
-            {
-                return iter->id;
-            }
-        }
+            return iter->id;
     }
 
-    // search in candidateTrackMap (not yet saved to objects memory)
-    for(idLabelMap::const_iterator iter = candidateTrackMap.begin();
-        iter != candidateTrackMap.end();
+    // search in candidateMap (not yet saved to objects memory)
+    for(idLabelMap::const_iterator iter = candidateMap.begin();
+        iter != candidateMap.end();
         ++iter)
     {
         if (iter->second == label)
@@ -1694,6 +1337,45 @@ int WorldStateMgrThread::label2id(const string &label, bool useTrackerCheck)
     // id not found anywhere
     //yWarning("did not find id corresponding to label %s", label.c_str());
     return -1;
+}
+
+/**********************************************************/
+bool WorldStateMgrThread::getLabelsFromActivityIF(Bottle &names)
+{
+    if (activityPort.getOutputCount()<1)
+    {
+        yWarning() << __func__ << "not connected to activityInterface";
+        return false;
+    }
+
+    // TODO: explore using getOPCNames, which includes trained but not visible names
+    // acquire getNames list
+    Bottle activityCmd;
+    Bottle activityReply;
+    activityCmd.addString("getNames");
+    activityPort.write(activityCmd, activityReply);
+
+    bool validResponse = activityReply.size()>0 &&
+                         activityReply.get(0).isList();
+
+    if (!validResponse)
+    {
+        yError("%s obtained invalid response from activityInterface", __func__);
+        return false;
+    }
+
+    bool somethingVisible = validResponse &&
+                            activityReply.get(0).asList()->size()>0;
+
+    if (!somethingVisible)
+    {
+        yWarning("%s getNames is empty", __func__);
+        return false;
+    }
+
+    names = * activityReply.get(0).asList();
+
+    return true;
 }
 
 /**********************************************************/
@@ -2106,6 +1788,27 @@ bool WorldStateMgrThread::isInHand(const string &objName, bool &result)
 }
 
 /**********************************************************/
+bool WorldStateMgrThread::constructMapFromNames(const Bottle &names)
+{
+    if (names.size() <= 0)
+        return false;
+
+    // increase countFrom (future additions start index)
+    updateCountFrom();
+
+    for (int n=0; n<names.size(); ++n)
+    {
+        int id = countFrom+n;
+        // assume names cannot change -> use insert(), not operator[]
+        // http://stackoverflow.com/questions/326062/in-stl-maps-is-it-better-to-use-mapinsert-than
+        yDebug("%s inserting %d/%s in candidateMap", __func__, id, names.get(n).asString().c_str());
+        candidateMap.insert(make_pair(id,names.get(n).asString()));
+    }
+
+    return true;
+}
+
+/**********************************************************/
 bool WorldStateMgrThread::setFilterOrder(const int &n)
 {
     if (is_integer(n))
@@ -2248,6 +1951,7 @@ bool WorldStateMgrThread::doPopulateDB()
 
         // write to WSOPC
         if (opcContainsID(iter->id))
+        //if (memoryContainsID(iter->id))
         {
             // WSOPC already contains this entry
             // -> update it with command
@@ -2324,13 +2028,14 @@ bool WorldStateMgrThread::doPopulateDB()
 
             if (validResponse)
             {
-                // make sure that OPC's returned id equals memory id
                 const int returnedID =
                     opcReply.get(1).asList()->get(1).asInt();
+
+                // make sure that OPC's returned id equals memory id
                 if (returnedID != iter->id)
                     yError() << "ID mismatch while adding" << iter->name
                              << "to database! got" << returnedID
-                             << "was expecting" << iter->id << "!";
+                             << "but was expecting" << iter->id;
             }
         }
     }
@@ -2346,12 +2051,12 @@ bool WorldStateMgrThread::doPopulateDB()
 }
 
 /**********************************************************/
-void WorldStateMgrThread::fsmPerception()
+void WorldStateMgrThread::fsm()
 {
-    //yDebug("perception state=%d", fsmState);
-    switch(fsmState)
+    //yDebug("state=%d", state);
+    switch(state)
     {
-        case STATE_PERCEPTION_WAIT_OPC:
+        case STATE_WAIT_OPC:
         {
             tellUserConnectOPC();
 
@@ -2366,13 +2071,27 @@ void WorldStateMgrThread::fsmPerception()
                 printMemoryState();
 
                 // proceed
-                fsmState = STATE_PERCEPTION_WAIT_BLOBS;
+                state = STATE_WAIT_ACTIVITYIF;
             }
 
             break;
         }
 
-        case STATE_PERCEPTION_WAIT_BLOBS:
+        case STATE_WAIT_ACTIVITYIF:
+        {
+            tellUserConnectActivityIF();
+            tellActivityGoHome();
+
+            if (toldActivityGoHome)
+            {
+                // proceed
+                state = STATE_WAIT_SHAPEDESC;
+            }
+
+            break;
+        }
+
+        case STATE_WAIT_SHAPEDESC:
         {
             tellUserConnectBlobs();
 
@@ -2384,177 +2103,87 @@ void WorldStateMgrThread::fsmPerception()
 
             // when something arrives, proceed
             if (inAff != NULL)
-                fsmState = STATE_PERCEPTION_READ_BLOBS;
+                state = STATE_READ_SHAPEDESC;
 
             break;
         }
 
-        case STATE_PERCEPTION_READ_BLOBS:
+        case STATE_READ_SHAPEDESC:
         {
             // if size>0 proceed, else go back one state
             if (sizeAff > 0)
-                fsmState = STATE_PERCEPTION_WAIT_TRACKER;
+                state = STATE_SET_MEMORY;
             else
-                fsmState = STATE_PERCEPTION_WAIT_BLOBS;
+                state = STATE_WAIT_SHAPEDESC;
 
             break;
         }
 
-        case STATE_PERCEPTION_WAIT_TRACKER:
+        case STATE_SET_MEMORY:
         {
-            tellUserConnectTracker();
-
-            if (inTargetsPort.getInputCount()>0)
+            //yDebug("candidateMap.size()=%lu, hands.size()=%lu, objs.size()=%lu", candidateMap.size(), hands.size(), objs.size());
+            if (ensureOpcNumEntries(3))
             {
-                // pre-initialize tracker, setting the "countFrom" starting
-                // index (13 upon a clean start of all modules, a higher number
-                // if something was initialized previously and had to be reset).
-                configureTracker();
+                // WSOPC already initialized
+                //yDebug("WSOPC has 3+ entries, it was already initialized");
+
+                // construct memory item for each ID
+                initMemoryFromOPC();
+
+                //yDebug("candidateMap.size()=%lu, hands.size()=%lu, objs.size()=%lu", candidateMap.size(), hands.size(), objs.size());
 
                 // proceed
-                fsmState = STATE_PERCEPTION_INIT_TRACKER;
+                state = STATE_POPULATE_DB;
             }
-
-            break;
-        }
-
-        case STATE_PERCEPTION_INIT_TRACKER:
-        {
-            if (!checkTrackerStatus())
+            else
             {
-                if (needTrackerInit)
+                // WSOPC not yet initialized (it has only 2 hand entries)
+                //yDebug("WSOPC only has the 2 hand entries");
+
+                // acquire labels, if successful construct memory items from map
+                Bottle names;
+                if (getLabelsFromActivityIF(names))
                 {
-                    // start tracking blobs provided by segmentation/blobDesc
-                    initTracker();
+                    // fill up <ID,label> map
+                    if (constructMapFromNames(names))
+                    {
+                        // add unique <ID,label> pairs to objs container
+                        if (constructMemoryFromMap())
+                        {
+                            yInfo("success, added candidate object IDs and names to short-term memory");
+                        }
+                        else
+                            yWarning("problem with constructMemoryFromMap"); // TODO: go back?
 
-                    needTrackerInit = false;
+                        // proceed
+                        state = STATE_POPULATE_DB;
+                    }
+                    else
+                    {
+                        // failure constructing map
+                        yDebug("problem with constructMapFromNames, clearing map and trying again...");
+                        candidateMap.clear();
+                    }
                 }
-            }
-            else
-            {
-                yInfo("%d objects are being tracked", trackIDs.size());
-
-                // proceed
-                fsmState = STATE_PERCEPTION_READ_TRACKER;
-            }
-
-            break;
-        }
-
-        case STATE_PERCEPTION_READ_TRACKER:
-        {
-            // acquire tracks
-            if(!refreshTracker())
-                yWarning("problem with refreshTracker");
-
-            // if size>0 proceed, else stay in same state
-            if (sizeTargets > 0)
-                fsmState = STATE_PERCEPTION_WAIT_ACTIVITYIF;
-
-            break;
-        }
-
-        case STATE_PERCEPTION_WAIT_ACTIVITYIF:
-        {
-            tellUserConnectActivityIF();
-            tellActivityGoHome();
-
-            if (toldActivityGoHome)
-            {
-                // proceed
-                fsmState = STATE_PERCEPTION_SET_MEMORY;
-            }
-
-            break;
-        }
-
-        case STATE_PERCEPTION_SET_MEMORY:
-        {
-            Bottle opcIDs;
-            if (checkOPCStatus(3,opcIDs))
-            {
-                yInfo("WSOPC was already initialized, it contains 3+ entries: %s. updating short-term memory.",
-                     opcIDs.toString().c_str());
-                printMemoryState();
-                // construct memory item from each ID
-                for (int o=0; o<opcIDs.size(); o++)
-                    constructMemoryFromOPCID(opcIDs.get(o).asInt());
-
-                // proceed
-                fsmState = STATE_PERCEPTION_POPULATE_DB;
-            }
-
-            // here we know that WSOPC does not have object entries yet ->
-            // we must acquire labels from object recognition then construct
-            // our internal short-term memory data structures
-            // (so that we can later add object entries to WSOPC)
-
-            // try acquiring unique labels
-            if (getTrackNames())
-            {
-                // add unique <ID,label> pairs to objs container
-                if (constructMemoryFromMap())
-                    yInfo("success, added candidate object IDs and names to short-term memory");
                 else
-                    yWarning("problem with constructMemoryFromMap"); // TODO: go back?
-
-                // proceed
-                fsmState = STATE_PERCEPTION_POPULATE_DB;
-            }
-            else
-            {
-                // failure -> stay in same state, clear candidates & try again
-
-                // acquire getNames list to print it below for debug
-                Bottle activityCmd;
-                Bottle activityReply;
-                activityCmd.clear();
-                activityReply.clear();
-                activityCmd.addString("getNames");
-                activityPort.write(activityCmd, activityReply);
-                bool validResponse = activityReply.size()>0 &&
-                                     activityReply.get(0).isList();
-                if (!validResponse)
-                    yError("STATE_PERCEPTION_SET_MEMORY: obtained invalid response from activityInterface");
-                bool somethingVisible = validResponse &&
-                                        activityReply.get(0).asList()->size()>0;
-                if (!somethingVisible)
-                    yWarning("STATE_PERCEPTION_SET_MEMORY: getNames is empty");
-
-                // acquire opcIDs to print it below for debug
-                Bottle opcIDs;
-                const int numHandEntries = 2;
-                if (!checkOPCStatus(numHandEntries,opcIDs))
-                    yWarning("STATE_PERCEPTION_SET_MEMORY: problem verifying that WSOPC has at least %d entries", numHandEntries);
-
-                yWarning() << "failure in initializing IDs and names:" <<
-                              "at least one of the candidate names was" <<
-                              "a duplicate or was skipped. trying again." <<
-                              "if this goes on forever, check the status of" <<
-                              "object recognition and WSOPC database. getNames() =" <<
-                              activityReply.get(0).asList()->toString().c_str() <<
-                              "; opcIDs =" << opcIDs.toString().c_str();
-
-                candidateTrackMap.clear();
+                    yWarning("received empty names list from activityInterface");
             }
 
             break;
         }
 
-        case STATE_PERCEPTION_POPULATE_DB:
+        case STATE_POPULATE_DB:
         {
             // read new data
             if(!refreshBlobs())
                 yWarning("problem with refreshBlobs");
-            if(!refreshTracker())
-                yWarning("problem with refreshTracker");
 
             // populate database: if success proceed, else stay in same state
             if ( doPopulateDB() )
             {
-                yInfo("initialization complete (tracker, short-term memory, WSOPC database)");
+                yInfo("initialization complete (short-term memory, WSOPC database)");
                 initFinished = true;
-                fsmState = STATE_PERCEPTION_WAIT_CMD;
+                state = STATE_WAIT_CMD;
             }
             else
                 yWarning("problem populating database");
@@ -2564,23 +2193,21 @@ void WorldStateMgrThread::fsmPerception()
             break;
         }
 
-        case STATE_PERCEPTION_WAIT_CMD:
+        case STATE_WAIT_CMD:
         {
             if (needUpdate)
-                fsmState = STATE_PERCEPTION_UPDATE_DB;
+                state = STATE_UPDATE_DB;
 
             break;
         }
 
-        case STATE_PERCEPTION_UPDATE_DB:
+        case STATE_UPDATE_DB:
         {
             if (needUpdate)
             {
                 // read new data
                 if(!refreshBlobs())
                     yWarning("problem with refreshBlobs");
-                if(!refreshTracker())
-                    yWarning("problem with refreshTracker");
 
                 // populate database
                 if ( !doPopulateDB() )
@@ -2590,7 +2217,7 @@ void WorldStateMgrThread::fsmPerception()
                 printMemoryState();
 
                 // go back one state
-                fsmState = STATE_PERCEPTION_WAIT_CMD;
+                state = STATE_WAIT_CMD;
             }
 
             break;
@@ -2600,7 +2227,7 @@ void WorldStateMgrThread::fsmPerception()
         {
             break;
         }
-    }
+    } // end switch
 }
 
 // IDL functions
@@ -2665,10 +2292,9 @@ bool WorldStateMgrThread::initWorldState()
     clearAll();
 
     yInfo("initializing world state from robot perception...");
-    needTrackerInit = true;
 
     // enter FSM
-    fsmState = STATE_PERCEPTION_WAIT_TRACKER;
+    state = STATE_WAIT_OPC; // TODO: check
 
     while (!initFinished)
         yarp::os::Time::delay(0.1);
@@ -2682,11 +2308,6 @@ bool WorldStateMgrThread::updateWorldState()
     if (activityPort.getOutputCount()<1)
     {
         yWarning("not connected to activityInterface, cannot update world state!");
-        return false;
-    }
-    if (!checkTrackerStatus())
-    {
-        yWarning("tracker not initialized, cannot update world state!");
         return false;
     }
 
@@ -2725,246 +2346,4 @@ bool WorldStateMgrThread::resetWorldState()
 bool WorldStateMgrThread::isInitialized()
 {
     return initFinished;
-}
-
-/**********************************************************/
-bool WorldStateMgrThread::pauseTrack(const string &objName)
-{
-    if (objName.empty())
-    {
-        yWarning() << __func__ << "was called with empty objName argument!";
-        return false;
-    }
-
-    if (trackerPort.getOutputCount()<1)
-    {
-        yWarning("not connected to /activeParticleTrack/rpc:i");
-        return false;
-    }
-
-    if (!checkTrackerStatus())
-    {
-        yWarning("tracker not initialized, cannot pause %s", objName.c_str());
-        return false;
-    }
-
-    int id;
-    id = label2id(objName, true); // calls ensureTrackerHasID
-    if (id==-1)
-    {
-        yWarning() << __func__ << "did not find tracker ID corresponding to" << objName.c_str() << " - not able to pause it";
-        return false;
-    }
-
-    Bottle trackerCmd, trackerReply;
-    trackerCmd.addString("pause");
-    trackerCmd.addInt(id);
-    trackerPort.write(trackerCmd, trackerReply);
-    //yDebug() << __func__ <<  "sending query to activeParticleTracker:" << trackerCmd.toString().c_str();
-
-    if (trackerReply.size()>0)
-    {
-        if (trackerReply.get(0).asVocab()==Vocab::encode("fail"))
-        {
-            yWarning() << __func__ << "received negative reply when asking to pause" << objName.c_str()
-                     << "with ID" << id;
-        }
-        else if (trackerReply.get(0).asVocab()==Vocab::encode("ok"))
-        {
-            yDebug() << __func__ << "successfully paused" << objName.c_str() << "with ID" << id;
-        }
-        else
-        {
-            yWarning() << __func__ << "received invalid response:" << trackerReply.toString().c_str();
-        }
-    }
-
-    return true;
-}
-
-/**********************************************************/
-bool WorldStateMgrThread::resumeTrack(const string &objName)
-{
-    if (objName.empty())
-    {
-        yWarning() << __func__ << "was called with empty objName argument!";
-        return false;
-    }
-
-    if (trackerPort.getOutputCount()<1)
-    {
-        yWarning("not connected to /activeParticleTrack/rpc:i");
-        return false;
-    }
-
-    if (!checkTrackerStatus())
-    {
-        yWarning("tracker not initialized, cannot resume %s", objName.c_str());
-        return false;
-    }
-
-    int id;
-    id = label2id(objName, true); // calls ensureTrackerHasID
-    if (id==-1)
-    {
-        yWarning() << __func__ << "did not find tracker ID corresponding to" << objName.c_str() << "- not able to resume it";
-        return false;
-    }
-
-    Bottle trackerCmd, trackerReply;
-    trackerCmd.addString("resume");
-    trackerCmd.addInt(id);
-    trackerPort.write(trackerCmd, trackerReply);
-    //yDebug() << __func__ <<  "sending query to activeParticleTracker:" << trackerCmd.toString().c_str();
-
-    if (trackerReply.size()>0)
-    {
-        if (trackerReply.get(0).asVocab()==Vocab::encode("fail"))
-        {
-            yWarning() << __func__ << "received negative reply when asking to resume" << objName.c_str()
-                     << "with ID" << id;
-        }
-        else if (trackerReply.get(0).asVocab()==Vocab::encode("ok"))
-        {
-            yDebug() << __func__ << "successfully resumed" << objName.c_str() << "with ID" << id;
-        }
-        else
-        {
-            yWarning() << __func__ << "received invalid response:" << trackerReply.toString().c_str();
-        }
-    }
-
-    return true;
-}
-
-/**********************************************************/
-bool WorldStateMgrThread::pauseTrackID(const int32_t &objID)
-{
-    if (objID<0)
-    {
-        yWarning() << __func__ << "was called with invalid objID argument!";
-        return false;
-    }
-
-    if (trackerPort.getOutputCount()<1)
-    {
-        yWarning("not connected to /activeParticleTrack/rpc:i");
-        return false;
-    }
-
-    if (!checkTrackerStatus())
-    {
-        yWarning("tracker not initialized, cannot pause %d", objID);
-        return false;
-    }
-
-    Bottle trackerCmd, trackerReply;
-    trackerCmd.addString("pause");
-    trackerCmd.addInt(objID);
-    trackerPort.write(trackerCmd, trackerReply);
-    //yDebug() << __func__ <<  "sending query to activeParticleTracker:" << trackerCmd.toString().c_str();
-
-    if (trackerReply.size()>0)
-    {
-        if (trackerReply.get(0).asVocab()==Vocab::encode("fail"))
-        {
-            yWarning() << __func__ << "received negative reply when asking to pause ID" << objID;
-        }
-        else if (trackerReply.get(0).asVocab()==Vocab::encode("ok"))
-        {
-            yDebug() << __func__ << "successfully paused ID" << objID;
-        }
-        else
-        {
-            yWarning() << __func__ << "received invalid response:" << trackerReply.toString().c_str();
-        }
-    }
-
-    return true;
-}
-
-/**********************************************************/
-bool WorldStateMgrThread::resumeTrackID(const int32_t &objID)
-{
-    if (objID<0)
-    {
-        yWarning() << __func__ << "was called with invalid objID argument!";
-        return false;
-    }
-
-    if (trackerPort.getOutputCount()<1)
-    {
-        yWarning("not connected to /activeParticleTrack/rpc:i");
-        return false;
-    }
-
-    if (!checkTrackerStatus())
-    {
-        yWarning("tracker not initialized, cannot resume %d", objID);
-        return false;
-    }
-
-    Bottle trackerCmd, trackerReply;
-    trackerCmd.addString("resume");
-    trackerCmd.addInt(objID);
-    trackerPort.write(trackerCmd, trackerReply);
-    //yDebug() << __func__ <<  "sending query to activeParticleTracker:" << trackerCmd.toString().c_str();
-
-    if (trackerReply.size()>0)
-    {
-        if (trackerReply.get(0).asVocab()==Vocab::encode("fail"))
-        {
-            yWarning() << __func__ << "received negative reply when asking to resume ID" << objID;
-        }
-        else if (trackerReply.get(0).asVocab()==Vocab::encode("ok"))
-        {
-            yDebug() << __func__ << "successfully resumed ID" << objID;
-        }
-        else
-        {
-            yWarning() << __func__ << "received invalid response:" << trackerReply.toString().c_str();
-        }
-    }
-
-    return true;
-}
-
-/**********************************************************/
-Bottle WorldStateMgrThread::getColorHistogram(const int32_t &u,
-                                              const int32_t &v)
-{
-    Bottle colors;
-
-    if (inAffPort.getInputCount()<1)
-    {
-        yWarning("not connected to BlobDescriptor!");
-        return colors;
-    }
-
-    // look for Affordance Bottle Index: between 1 and NumBlobs
-    int abi = 0;
-    if ( !getAffBottleIndexFromTrackROI(u, v, abi) )
-    {
-        yWarning("problem with getAffBottleIndexFromTrackROI");
-        return colors;
-    }
-
-    if (abi > 0)
-        yDebug() << __func__ << "found affordance blob index" << abi << "from coordinates" << u << v;
-    else
-    {
-        yDebug() << "getAffBottleIndexFromTrackROI did not find affordance blob index from coordinates" << u << v;
-        return colors;
-    }
-
-    int firstColorIdx = 7;
-    int lastColorIdx = 22;
-    if (inAff != NULL)
-    {
-        for (int col = firstColorIdx; col <= lastColorIdx; ++col)
-            colors.addDouble(inAff->get(abi).asList()->get(firstColorIdx+col).asDouble());
-    }
-    yDebug() << "found color histogram:" << colors.toString().c_str();
-
-    return colors;
 }

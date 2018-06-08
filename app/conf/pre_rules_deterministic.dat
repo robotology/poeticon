@@ -35,7 +35,7 @@ ACTION:
 CONTEXT:
   -_obj_ishand() _obj_inhand__hand() _hand_ishand()
 OUTCOMES:
-  0.85 -_obj_inhand__hand() _hand_clearhand()
+  0.85 -_obj_inhand__hand() _hand_clearhand() _obj_isreachable_with__hand()
   0.15 <noise>
 
 
@@ -43,10 +43,11 @@ OUTCOMES:
 ACTION:
   put__tool_on__obj_with__hand()
 CONTEXT:
-  -_tool_ishand() _obj_isreachable_with__hand() -_obj_ishand() _tool_inhand__hand()
+  -_tool_ishand() _obj_isreachable_with__hand() -_obj_ishand() _tool_inhand__hand() -_ALL_on__obj()
 OUTCOMES:
   0.85 _tool_on__obj() -_tool_inhand__hand() _hand_clearhand()
   #0.15 -_tool_inhand__hand() _hand_clearhand()
   0.15 <noise>
 
 
+# Do not delete the two empty lines above

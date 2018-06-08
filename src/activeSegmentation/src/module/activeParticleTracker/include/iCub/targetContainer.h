@@ -61,7 +61,7 @@ public:
 
     bool add(TargetObject *obj)
     {
-        YARP_ASSERT(obj);
+        yAssert(obj);
         TargetObjectRecord::iterator itr = findOwner(obj->owner);
         if(itr != targets.end())
             targets.erase(itr);

@@ -10,7 +10,6 @@
 #ifndef WSM_THREAD_H
 #define WSM_THREAD_H
 
-//#include <iomanip>
 #include <iostream> // __func__
 #include <map>
 #include <string>
@@ -35,17 +34,14 @@
 #include "MemoryItemObj.h"
 
 // perception mode states
-#define STATE_PERCEPTION_WAIT_OPC         0
-#define STATE_PERCEPTION_WAIT_BLOBS       1
-#define STATE_PERCEPTION_READ_BLOBS       2
-#define STATE_PERCEPTION_WAIT_TRACKER     3
-#define STATE_PERCEPTION_INIT_TRACKER     4
-#define STATE_PERCEPTION_READ_TRACKER     5
-#define STATE_PERCEPTION_WAIT_ACTIVITYIF  6
-#define STATE_PERCEPTION_SET_MEMORY       7
-#define STATE_PERCEPTION_POPULATE_DB      8
-#define STATE_PERCEPTION_WAIT_CMD         9
-#define STATE_PERCEPTION_UPDATE_DB       10
+#define STATE_WAIT_OPC         0
+#define STATE_WAIT_ACTIVITYIF  1
+#define STATE_WAIT_SHAPEDESC   2
+#define STATE_READ_SHAPEDESC   3
+#define STATE_SET_MEMORY       4
+#define STATE_POPULATE_DB      5
+#define STATE_WAIT_CMD         6
+#define STATE_UPDATE_DB        7
 
 // make sure __func__ is set correctly, http://stackoverflow.com/a/17528983
 #if __STDC_VERSION__ < 199901L
@@ -68,43 +64,35 @@ class WorldStateMgrThread : public RateThread
         ResourceFinder rf;
 
         string opcPortName;
-        string inTargetsPortName;
         string inAffPortName;
         string inToolAffPortName;
         string activityPortName;
-        string trackerPortName;
 
         RpcClient opcPort;
-        BufferedPort<Bottle> inTargetsPort;
         BufferedPort<Bottle> inAffPort;
         BufferedPort<Bottle> inToolAffPort;
         RpcClient activityPort;
-        RpcClient trackerPort;
 
         bool closing;
 
-        int fsmState;
+        int state;
         double t;
         bool toldUserOPCConnected;
         int countFrom;
         bool withFilter;
         int filterOrder;
-        bool needTrackerInit;
         bool initFinished;
         bool needUpdate;
         bool toldUserBlobsConnected;
-        bool toldUserTrackerConnected;
         bool toldActivityGoHome;
         bool toldUserActivityIFConnected;
         Bottle *inAff;
         Bottle *inToolAff;
-        Bottle *inTargets;
-        int sizeTargets, sizeAff;
+        int sizeAff;
         std::vector<MemoryItemHand> hands;
         std::vector<MemoryItemObj> objs;
-        Bottle trackIDs;
 
-        idLabelMap candidateTrackMap;
+        idLabelMap candidateMap;
         std::vector<iCub::ctrl::MedianFilter> posFilter;
 
     public:
@@ -122,27 +110,18 @@ class WorldStateMgrThread : public RateThread
         bool tellUserOPCConnected();
         bool tellUserConnectBlobs();
         bool tellUserBlobsConnected();
-        bool tellUserConnectTracker();
         bool tellUserConnectActivityIF();
 
+        bool ensureOpcNumEntries(const int &minEntries);
         bool opcContainsID(const int &id);
-        bool checkOPCStatus(const int &minEntries, Bottle &ids);
+        bool checkOPCStatus(const int &minEntries, Bottle &ids); // TODO: remove
         bool resetOPC();
         bool resetOPCHandFields(const int &handID);
-        bool increaseCountFrom();
+        bool updateCountFrom();
 
         bool refreshBlobs();
 
-        bool checkTrackerStatus();
-        bool configureTracker();
-        bool getTrackNames();
-        bool initTracker();
-        bool refreshTracker();
-        bool resetTracker();
-        bool ensureTrackerHasID(const int &id);
-
         bool getAffBottleIndexFromTrackROI(const int &u, const int &v, int &abi);
-        bool getTrackerBottleIndexFromID(const int &id, int &tbi);
 
         bool computeObjProperties(const int &id, const string &label,
                                   Bottle &pos2d,
@@ -164,7 +143,8 @@ class WorldStateMgrThread : public RateThread
 
         bool tellActivityGoHome();
         string id2label(const int &id);
-        int label2id(const string &label, bool useTrackerCheck=false);
+        int label2id(const string &label);
+        bool getLabelsFromActivityIF(Bottle &names);
         bool getLabel(const int &u, const int &v, string &label);
         bool getLabelMajorityVote(const int &u, const int &v, string &winnerLabel, const int &rounds=5);
         bool isOnTopOf(const string &objName, Bottle &objBelow);
@@ -176,10 +156,12 @@ class WorldStateMgrThread : public RateThread
         bool belongsToStack(const string &objName, bool &result);
         bool isInHand(const string &objName, bool &result);
 
+        bool constructMapFromNames(const Bottle &names);
+
         bool setFilterOrder(const int &n);
 
         bool doPopulateDB();
-        void fsmPerception();
+        void fsm();
 
         // IDL functions
         bool printMemoryState();
@@ -187,11 +169,6 @@ class WorldStateMgrThread : public RateThread
         bool updateWorldState();
         bool resetWorldState();
         bool isInitialized();
-        bool pauseTrack(const string &objName);
-        bool resumeTrack(const string &objName);
-        bool pauseTrackID(const int32_t &objID);
-        bool resumeTrackID(const int32_t &objID);
-        Bottle getColorHistogram(const int32_t &u, const int32_t &v);
 };
 
 #endif

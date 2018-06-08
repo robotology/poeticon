@@ -98,7 +98,7 @@ queryActionName = 'draw';
 
 %% YARP
 % Initialize YARP:
-LoadYarp;
+yarp.matlab.LoadYarp;
 import yarp.Port
 import yarp.Bottle
 done = 0;
@@ -284,8 +284,10 @@ while(~done)
                     hFig(i) = figure(i);
                 end
                 str = sprintf('%s action (Query #%d)',queryActionName, i); 
+                %str = sprintf('%s action',queryActionName);
                 if(query.size()==14)
                     str = sprintf('%s %s with %s on %s (Query #%d)',queryActionName, char(query.get(11).asString), char(query.get(12).asString),char(query.get(13).asString),i); 
+                    %str = sprintf('%s %s with %s in %s',queryActionName, char(query.get(11).asString), char(query.get(12).asString),char(query.get(13).asString));
                 end
                 title(str);
                 set(hFig(i), 'Position', [figLeft figBottom figWidth figHeight]) % maybe change the position of the window

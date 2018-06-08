@@ -21,7 +21,9 @@ if(prada_FOUND)
   file(GLOB pradaFiles ${CMAKE_CURRENT_SOURCE_DIR}/conf/config ${CMAKE_CURRENT_SOURCE_DIR}/conf/*.dat)
 endif()
 
-set(lua_fsm ${CMAKE_CURRENT_SOURCE_DIR}/lua/poeticon_root_fsm.lua)
+set(lua_fsm ${CMAKE_CURRENT_SOURCE_DIR}/lua/poeticon_funcs.lua
+            ${CMAKE_CURRENT_SOURCE_DIR}/lua/poeticon_interact_fsm.lua
+            ${CMAKE_CURRENT_SOURCE_DIR}/lua/poeticon_root_fsm.lua)
 set(lua_bin ${CMAKE_CURRENT_SOURCE_DIR}/lua/poeticon_main.lua)
 
 find_package(YARP)
@@ -29,6 +31,7 @@ find_package(ICUB)
 find_package(ICUBcontrib)
 list(APPEND CMAKE_MODULE_PATH ${YARP_MODULE_PATH} ${ICUB_MODULE_PATH} ${ICUBCONTRIB_MODULE_PATH})
 include(YarpInstallationHelpers)
+include(ICUBcontribOptions)
 include(ICUBcontribHelpers)
 icubcontrib_set_default_prefix()
 

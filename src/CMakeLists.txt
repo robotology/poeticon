@@ -3,6 +3,8 @@
 
 cmake_minimum_required(VERSION 2.6)
 
+option(BUILD_simulation "Build poeticon-simulation" OFF)
+
 set(PROJECTNAME poeticon)
 project(${PROJECTNAME})
 
@@ -18,7 +20,6 @@ include(ICUBcontribOptions)
 icubcontrib_set_default_prefix()
 
 # modules that do not need OpenCV
-add_subdirectory(dummyWorldStateManager)
 add_subdirectory(opc2prada)
 add_subdirectory(pradaPlanner-cpp)
 add_subdirectory(worldStateManager)
@@ -44,3 +45,11 @@ if(OpenCV_FOUND)
 else(OpenCV_FOUND)
     message(STATUS "OpenCV not found or selected, skipping vision modules")
 endif(OpenCV_FOUND)
+
+# simulated symbolic reasoner modules
+if (BUILD_simulation)
+    message(STATUS "Compiling simulated symbolic reasoner")
+    add_subdirectory(poeticon-simulation)
+else(BUILD_simulation)
+    message(STATUS "Skipping simulated symbolic reasoner")
+endif(BUILD_simulation)

@@ -107,27 +107,26 @@ bool WorldStateMgrModule::reset()
 
 bool WorldStateMgrModule::pause(const string &objName)
 {
-    return thread->pauseTrack(objName);
+    // deprecated
+    return false;
 }
 
 bool WorldStateMgrModule::resume(const string &objName)
 {
-    return thread->resumeTrack(objName);
+    // deprecated
+    return false;
 }
 
 bool WorldStateMgrModule::pauseID(const int32_t objID)
 {
-    return thread->pauseTrackID(objID);
+    // deprecated
+    return false;
 }
 
 bool WorldStateMgrModule::resumeID(const int32_t objID)
 {
-    return thread->resumeTrackID(objID);
-}
-
-Bottle WorldStateMgrModule::getColorHist(const int32_t u, const int32_t v)
-{
-    return thread->getColorHistogram(u,v);
+    // deprecated
+    return false;
 }
 
 bool WorldStateMgrModule::quit()

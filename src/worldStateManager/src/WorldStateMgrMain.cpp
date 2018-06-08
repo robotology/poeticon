@@ -26,7 +26,6 @@ int main(int argc, char *argv[])
     {
         yInfo("Available options:");
         yInfo("--name prefix (default wsm)");
-        yInfo("--countFrom trackerStartIndex (default 13)");
         yInfo("--filter <on/off> (default off)");
         yInfo("--filterOrder n (default 5)");
         yInfo("--playback filename (DEPRECATED option, use dummyWorldStateManager module for this functionality)");

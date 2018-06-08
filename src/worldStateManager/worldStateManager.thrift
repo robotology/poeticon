@@ -6,12 +6,6 @@
 #
 # worldStateManager.thrift
 
-struct Bottle { }
-(
-yarp.name = "yarp::os::Bottle"
-yarp.includefile="yarp/os/Bottle.h"
-)
-
 service WorldStateMgr_IDL
 {
   /**
@@ -56,6 +50,7 @@ service WorldStateMgr_IDL
   bool reset();
 
   /**
+   * DEPRECATED
    * Pauses a specific stacking thread. This will
    * pause the required tracking thread with the _name_
    * provided by the user.
@@ -66,6 +61,7 @@ service WorldStateMgr_IDL
   bool pause(1:string objName);
 
   /**
+   * DEPRECATED
    * Resumes a specific stacking thread. This will
    * resume the required tracking thread with the _name_
    * provided by the user.
@@ -76,6 +72,7 @@ service WorldStateMgr_IDL
   bool resume(1:string objName);
 
   /**
+   * DEPRECATED
    * Pauses a specific stacking thread. This will
    * pause the required tracking thread with the _ID_
    * provided by the user.
@@ -86,6 +83,7 @@ service WorldStateMgr_IDL
   bool pauseID(1:i32 objID);
 
   /**
+   * DEPRECATED
    * Resumes a specific stacking thread. This will
    * resume the required tracking thread with the _ID_
    * provided by the user.
@@ -94,14 +92,6 @@ service WorldStateMgr_IDL
    * @return true/false on success/failure
    */
   bool resumeID(1:i32 objID);
-
-  /**
-   * Get the color histogram of the object requested by the user.
-   * @param u specifies the u coordinate of the object
-   * @param v specifies the v coordinate of the object
-   * @return Bottle containing color histogram
-   **/
-  Bottle getColorHist(1:i32 u, 2:i32 v);
 
   /**
   * Quit the module.
