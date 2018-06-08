@@ -3,7 +3,7 @@ POETICON++
 
 This is the repository of the [POETICON++ EU project](http://www.poeticon.eu).
 
-Video by Istituto Italiano di Tecnologia:
+Video by Istituto Italiano di Tecnologia, IIT, iCub Facility (credits [Vadim Tikhanoff](https://github.com/vtikha)):
 
 [![POETICON D6.2 videoDemo](http://img.youtube.com/vi/FNeYixxmeTM/0.jpg)](http://www.youtube.com/watch?v=FNeYixxmeTM&t=1m06s "POETICON D6.2 videoDemo")
 
