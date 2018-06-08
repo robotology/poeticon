@@ -7,7 +7,7 @@ Below are the instructions on how to run the **simulated symbolic reasoner** (to
 
 * compile yarp with Python 3 support (see http://www.yarp.it/yarp_swig.html and https://github.com/robotology/yarp/issues/1149)
 
-* compile and `make install` the poeticon repository (https://github.com/robotology/poeticon) with the CMake option `BUILD_simulation` selected
+* configure the poeticon repository (https://github.com/robotology/poeticon) with the CMake option `BUILD_simulation` set to `ON`. Compile and `make install`
 
 ## Configuration
 
