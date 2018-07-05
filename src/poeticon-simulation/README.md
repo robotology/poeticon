@@ -79,10 +79,11 @@ put Bun-top Ham=SUCCESS
 [...]
 ```
 
-* the sequence of `ex()` metrics data structures is written to file and can be used to extract statistics - see example visualization below, contact me for more information
+* the sequence of `ex()` metrics data structures is written to file and can be used to extract statistics - see example visualization below
 
 ![](misc/complex6_onearm_speed_vs_success.png)
 
+* each colored line corresponds to a planner heuristic configuration: magenta = no heuristics, blue = creativity, red = adaptability, green = creativity and adaptability. Each line contains five markers corresponding to different levels of noise. Contact me for more information
 
 ## Copyright and contact information
 
