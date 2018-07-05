@@ -11,6 +11,12 @@ Below are the instructions on how to run the **simulated symbolic reasoner** (to
 
 ## Configuration
 
+
+
+simple3 scenario           |  complex6 scenario
+:-------------------------:|:-------------------------:
+![](misc/simple3.png)  |  ![](misc/complex6.png)
+
 * choose an initial visual scenario, e.g., simple3 or complex6, let's call it `$SCENARIO`
 
 * choose a planner heuristic configuration among:
@@ -73,7 +79,10 @@ put Bun-top Ham=SUCCESS
 [...]
 ```
 
-* the sequence of `ex()` metrics data structures is written to file and can be used to extract statistics in Python or MATLAB - contact me for more information
+* the sequence of `ex()` metrics data structures is written to file and can be used to extract statistics - see example visualization below, contact me for more information
+
+![](misc/complex6_onearm_speed_vs_success.png)
+
 
 ## Copyright and contact information
 
