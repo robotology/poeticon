@@ -42,19 +42,30 @@ Dependencies of the optional speech recognition component:
 
 ### Linux
 
-First install libPRADA, required by the probabilistic planner:
+First clone this repository:
+
+    git clone https://github.com/robotology/poeticon
+
+Then compile libPRADA, required by the probabilistic planner:
 
     cd poeticon
     tar xzvf 3rdparty/libPRADA.tgz && cd libPRADA
     patch src/MT/util.h < ../extern/libPRADA/prada_unistd.patch
     patch test/relational_plan/main.cpp < ../extern/libPRADA/prada_readgoalfromfile.patch
     make
+
+Note: if the `make` step above fails, use the GCC 5 compiler:
+
+    sudo apt install gcc-5 g++-5
+    make CC=gcc-5 CPP=g++-5 CXX=g++-5 LD=g++-5
+
+Copy the libPRADA binary like this:
+
     cp test/relational_plan/x.exe ../app/conf/planner.exe
 
-Then install the core POETICON++ build:
+Finally, install the core POETICON++ build:
 
-    git clone https://github.com/robotology/poeticon
-    cd poeticon && mkdir build && cd build && cmake .. && make
+    mkdir build && cd build && cmake .. && make
 
 Note: the modules belonging to the probabilistic planner part (planningCycle, affordanceCommunication, geometricGrounding, goalCompiler) must have access to the same "contexts/poeticon" directory. One way to accomplish this is to run them on the same machine.
 
