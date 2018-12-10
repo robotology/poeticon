@@ -465,7 +465,7 @@ Bottle ActivityInterface::askPraxicon(const string &request)
         yDebug("will check for the following objects %s", listOfObjects.get(i).asString().c_str());
         Bottle under = underOf(listOfObjects.get(i).asString().c_str());
 
-        yDebug("underOf size is %d", under.size());
+        yDebug("underOf size is %zu", under.size());
 
         if (under.size() > 0)
         {
@@ -553,9 +553,9 @@ bool ActivityInterface::processSpeech(const Bottle &speech)
 /**********************************************************/
 bool ActivityInterface::processPradaStatus(const Bottle &status)
 {
-    yError("");
+    yError(" ");
     yError("GOT SOMETHING FROM PRADA!!! %s", status.toString().c_str());
-    yError("");
+    yError(" ");
 
     Bottle objectsUsed;
     Bottle buns;
@@ -1368,7 +1368,7 @@ bool ActivityInterface::take(const string &objName, const string &handName)
 
                 bool performAction = true;
                 Bottle under = underOf(objName.c_str());
-                yDebug("underOf size is %d and handName %s", under.size(), whichHand.c_str());
+                yDebug("underOf size is %zu and handName %s", under.size(), whichHand.c_str());
 
                 double z = -0.118;//default
 
@@ -1397,7 +1397,7 @@ bool ActivityInterface::take(const string &objName, const string &handName)
                         cmdreply.addString("nack");
                 }
 
-                yDebug("The under size is %d, so z= %lf", under.size(), z);
+                yDebug("The under size is %zu, so z= %lf", under.size(), z);
 
                 //do the take actions
 
@@ -1524,9 +1524,9 @@ bool ActivityInterface::take(const string &objName, const string &handName)
     resumeAllTrackers();
     inAction = false;
 
-    yError("");
+    yError(" ");
     yError("FINISHED TAKING %s with %s", objName.c_str(), handName.c_str());
-    yError("");
+    yError(" ");
 
     previousAction = true;
 
@@ -1577,9 +1577,9 @@ bool ActivityInterface::drop(const string &objName)
 /**********************************************************/
 bool ActivityInterface::put(const string &objName, const string &targetName)
 {
-    yError("");
+    yError(" ");
     yError("ASKED TO PUT %s on %s", objName.c_str(), targetName.c_str());
-    yError("");
+    yError(" ");
 
 
     //do the take actions
@@ -1664,7 +1664,7 @@ bool ActivityInterface::put(const string &objName, const string &targetName)
                     //third layer  x = -2  y = +0.0  and z = -0.02
 
                     Bottle under = underOf(targetName.c_str());
-                    yDebug("underOf size is %d", under.size());
+                    yDebug("underOf size is %zu", under.size());
 
                     double x = 0.0;
                     double y = 0.0;
@@ -1720,7 +1720,7 @@ bool ActivityInterface::put(const string &objName, const string &targetName)
                         reply.addString("nack");
                     }
 
-                    yDebug("The under size is %d, so x= %lf y= %lf z= %lf", under.size(), x, y, z);
+                    yDebug("The under size is %zu, so x= %lf y= %lf z= %lf", under.size(), x, y, z);
 
 
                     if (performAction)
@@ -1781,9 +1781,9 @@ bool ActivityInterface::put(const string &objName, const string &targetName)
 
     previousAction = true;
 
-    yError("");
+    yError(" ");
     yError("FINISHED PUTTING %s on %s", objName.c_str(), targetName.c_str());
-    yError("");
+    yError(" ");
 
     goHome();
 
@@ -2283,7 +2283,7 @@ Bottle ActivityInterface::getAverageVisibleObject(const int32_t iterations)
     Bottle visibleObjects;
     Bottle objInMemory = getOPCNames();
 
-    yDebug("[getAverageVisibleObject] all the memory objects are %d:  %s", objInMemory.size(), objInMemory.toString().c_str());
+    yDebug("[getAverageVisibleObject] all the memory objects are %zu:  %s", objInMemory.size(), objInMemory.toString().c_str());
     std::vector<std::string> vec;
 
     for (int i=0; i<iterations; i++)
@@ -2498,7 +2498,7 @@ Bottle ActivityInterface::reachableWith(const string &objName)
 
             Bottle list = getNames();
 
-            yInfo("[reachableWith] getNames list is %s with size %d", list.toString().c_str(), list.size());
+            yInfo("[reachableWith] getNames list is %s with size %zu", list.toString().c_str(), list.size());
 
             for (int i = 0; i<list.size(); i++){
 
@@ -2564,7 +2564,7 @@ Bottle ActivityInterface::pullableWith(const string &objName)
     //-----------------------for tests @ IIT
 
     yInfo("[pullableWith] available tools size = %lu \n", availableTools.size());
-    yInfo("[pullableWith] list  size = %d \n", list.size());
+    yInfo("[pullableWith] list  size = %zu \n", list.size());
     if (availableTools.size()<1)
     {
         for (int i = 0; i<list.size(); i++)
