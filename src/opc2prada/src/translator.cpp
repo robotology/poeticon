@@ -204,7 +204,7 @@ Bottle TranslatorModule::query2d(const int32_t ObjectID_r){
                 }
             }
         }
-    
+
     }
     send.clear();
     return send;
@@ -263,8 +263,8 @@ bool TranslatorModule::attach(RpcServer &source)
 
 bool TranslatorModule::interruptModule() {
     cout << "Interrupting your module, for port cleanup" << endl;
-    readingThread->_runit=false; 
-    readingThread->askToStop();   
+    readingThread->_runit=false;
+    readingThread->askToStop();
 	if(!readingThread->_runit) {
         rpc_port.interrupt();
     	port_broad.interrupt();
@@ -341,7 +341,7 @@ bool   TranslatorModule::configure(yarp::os::ResourceFinder &rf) {
     string path = rf.findPath("contexts/"+rf.getContext());
     if (path==""){
         cout << "path to contexts/"+rf.getContext() << " not found" << endl;
-        return false;    
+        return false;
     }
     else {
         cout << "Context FOUND! Full path of state file:" << endl;
@@ -353,7 +353,7 @@ bool   TranslatorModule::configure(yarp::os::ResourceFinder &rf) {
     readingThread = new Thread_read(&port_broad,
                                 &rpc_port,
                                 threadPeriod);
-    
+
     /* Starts the thread */
     if (!readingThread->start()) {
         delete readingThread;
@@ -399,7 +399,7 @@ bool Thread_read::threadInit(){
         cmd.clear();
         cmd.addVocab(Vocab::encode("sync"));
         cmd.addVocab(Vocab::encode("start"));
-        cmd.add(0.1);
+        cmd.addFloat64(0.1);
         _rpc_port->write(cmd,response);
         // read database and ask ids
         rpc_cmd.clear();
@@ -440,7 +440,7 @@ void Thread_read::afterStart(bool s){
 void Thread_read::run(){
     Bottle *received,rpc_cmd,rpc_response,aux;
     if(_runit) {
-        
+
         rpc_cmd.addVocab(Vocab::encode("ask"));
         aux.addString("all");
         rpc_cmd.addList() = aux;
@@ -448,10 +448,10 @@ void Thread_read::run(){
         //cout << received << endl;
         if(received != NULL) {
             _rpc_port->write(rpc_cmd,rpc_response);
-            
+
             guard.lock();
             _data = *(received);
-            
+
             _ids = rpc_response;
             guard.unlock();
             cout << "DATABASE UPDATED" << endl;
