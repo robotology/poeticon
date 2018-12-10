@@ -176,7 +176,7 @@ void CtrlThread::run() {
         Bottle invLambdaBottle;
         ImageOf<PixelBgr> tempImg;
 
-        cv::Mat imgMat( (IplImage*)yarpImage->getIplImage() );
+        cv::Mat imgMat( cv::cvarrToMat((IplImage*)yarpImage->getIplImage()) );
         cv::Mat imgMat2;
 
         //lambda = cv::Mat::zeros( imgMat.rows, imgMat.cols, imgMat.type() );

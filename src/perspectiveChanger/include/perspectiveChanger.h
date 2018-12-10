@@ -22,26 +22,8 @@
 #include <iCub/ctrl/math.h>
 #include <yarp/dev/PolyDriver.h>
 
-#include <cv.h>
-#include <cvaux.h>
-#include <highgui.h>
-
-/*
-#include <opencv2/calib3d/calib3d.hpp>
+#include <opencv2/opencv.hpp>
 #include <opencv2/highgui/highgui.hpp>
-#include <opencv2/imgproc/imgproc.hpp>
-#include <opencv2/features2d/features2d.hpp>
-*/
-/*
-#include <opencv/cv.h>
-#include <opencv/cxcore.h>
-#include <opencv/highgui.h>
-#include <opencv2/imgproc/imgproc.hpp>
-*/
-/*
-#include <opencv2/core/core.hpp>
-#include <opencv2/highgui/highgui.hpp>
-*/
 
 using namespace std;
 using namespace yarp::os;
