@@ -11,7 +11,7 @@ project(${PROJECTNAME})
 find_package(YARP)
 set(YARP_REQUIRED_VERSION 3.1.0)
 find_package(ICUBcontrib)
-find_package(OpenCV 2.4)
+find_package(OpenCV)
 list(APPEND CMAKE_MODULE_PATH ${ICUBCONTRIB_MODULE_PATH})
 
 include(ICUBcontribHelpers)
