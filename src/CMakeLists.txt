@@ -33,7 +33,7 @@ endif(WIN32)
 # modules that need OpenCV
 if(OpenCV_FOUND)
     message(STATUS "OpenCV found, compiling vision modules")
-    add_subdirectory(activeSegmentation)
+    #add_subdirectory(activeSegmentation)
     add_subdirectory(activityInterface)
     add_subdirectory(affExploreManager)
     add_subdirectory(blobDescriptor)
