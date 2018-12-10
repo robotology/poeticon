@@ -1,16 +1,16 @@
 // -*- mode:C++; tab-width:4; c-basic-offset:4; indent-tabs-mode:nil -*-
 
-/* 
+/*
  * Copyright (C) 2012-2015 POETICON++, European Commission FP7 project ICT-288382
  * Copyright (C) 2009 RobotCub Consortium, European Commission FP6 Project IST-004370
  * Author: Giovanni Saponaro <gsaponaro@isr.ist.utl.pt>, Ivana Cingovska, Alexandre Bernardino
- * CopyPolicy: Released under the terms of the GNU GPL v2.0 
+ * CopyPolicy: Released under the terms of the GNU GPL v2.0
  *
  */
 
 #include <cstdio>
 #include <iostream>
- 
+
 #include <yarp/os/Network.h>
 
 #include <iCub/BlobDescriptorModule.h>
@@ -187,7 +187,7 @@ bool BlobDescriptorModule::close()
     // Network::fini();
     return true;
 }
- 
+
 /**
  * Message handler function. Echo all received messages, quit if required.
  */
@@ -200,13 +200,13 @@ bool BlobDescriptorModule::respond(const Bottle &command, Bottle &reply)
     else
         return true;
 }
-   
+
 /**
  * Main cycle, called iteratively every getPeriod() seconds.
  */
 bool BlobDescriptorModule::updateModule()
 {
-    Stamp rawstamp, labeledstamp, binstamp, writestamp; 
+    Stamp rawstamp, labeledstamp, binstamp, writestamp;
 
     // TODO: remove one of the inputs, change verification checks
     _yarpRawInputPtr = _rawImgInputPort.read(true);
@@ -302,19 +302,19 @@ bool BlobDescriptorModule::updateModule()
     /* contour extraction */
     for( int i=0; i < _numObjects; i++)
     {
-        cvFindContours(_objDescTable[i].mask_image, 
-                       _objDescTable[i].storage, 
+        cvFindContours(_objDescTable[i].mask_image,
+                       _objDescTable[i].storage,
                        &(_objDescTable[i].contours),
                        sizeof(CvContour),
-                       CV_RETR_CCOMP, 
-                       CV_CHAIN_APPROX_SIMPLE, 
+                       CV_RETR_CCOMP,
+                       CV_CHAIN_APPROX_SIMPLE,
                        cvPoint(0,0)
                        );
 
         if(_objDescTable[i].contours == NULL)
             yWarning("Something very wrong happened. Object without edges");
 
-        _objDescTable[i].moments = cv::moments(cv::Mat(_objDescTable[i].mask_image), false);
+        _objDescTable[i].moments = cv::moments(cv::Mat(cv::cvarrToMat(_objDescTable[i].mask_image)), false);
     }
 
     /* compute histogram of each object */
@@ -366,7 +366,7 @@ bool BlobDescriptorModule::updateModule()
     {
         if(_objDescTable[i].area > _maxAreaThreshold)
         {
-            _objDescTable[i].valid = false;  
+            _objDescTable[i].valid = false;
         }
     }
 
@@ -387,7 +387,7 @@ bool BlobDescriptorModule::updateModule()
             }
         }
     }
- 
+
     /* Count the number of valid objects */
     int valid_objs = 0;
     for(int i = 0; i < _numObjects; i++)
@@ -399,7 +399,7 @@ bool BlobDescriptorModule::updateModule()
     {
         if(_objDescTable[i].valid)
         {
-            _objDescTable[i].affcontours = cvApproxPoly( 
+            _objDescTable[i].affcontours = cvApproxPoly(
                                            _objDescTable[i].contours,
                                            sizeof(CvContour),
                                            _objDescTable[i].storage,
@@ -479,10 +479,10 @@ bool BlobDescriptorModule::updateModule()
             if (normalized_coords)
             {
                 // RobotCub
-                double norm_x = (x-_w/2)/(_w/2); //between -1 and 1 
-                double norm_y = (y-_h/2)/(_h/2); //between -1 and 1 
-                double norm_w = (w/_w);        //between 0 and 1 
-                double norm_h = (h/_h);           //between 0 and 1     
+                double norm_x = (x-_w/2)/(_w/2); //between -1 and 1
+                double norm_y = (y-_h/2)/(_h/2); //between -1 and 1
+                double norm_w = (w/_w);        //between 0 and 1
+                double norm_h = (h/_h);           //between 0 and 1
                 /*0*/objbot.addDouble(norm_x);
                 /*1*/objbot.addDouble(-norm_y);
                 /*2*/objbot.addDouble(norm_w);
@@ -508,22 +508,22 @@ bool BlobDescriptorModule::updateModule()
 
             // TODO: increase number of bins (this will break backwards compatibility)
 
-            /*7*/objbot.addDouble((double)cvQueryHistValue_1D(_objDescTable[i].objHist, 0));
-            /*8*/objbot.addDouble((double)cvQueryHistValue_1D(_objDescTable[i].objHist, 1));
-            /*9*/objbot.addDouble((double)cvQueryHistValue_1D(_objDescTable[i].objHist, 2));
-            /*10*/objbot.addDouble((double)cvQueryHistValue_1D(_objDescTable[i].objHist, 3));
-            /*11*/objbot.addDouble((double)cvQueryHistValue_1D(_objDescTable[i].objHist, 4));
-            /*12*/objbot.addDouble((double)cvQueryHistValue_1D(_objDescTable[i].objHist, 5));
-            /*13*/objbot.addDouble((double)cvQueryHistValue_1D(_objDescTable[i].objHist, 6));
-            /*14*/objbot.addDouble((double)cvQueryHistValue_1D(_objDescTable[i].objHist, 7));
-            /*15*/objbot.addDouble((double)cvQueryHistValue_1D(_objDescTable[i].objHist, 8));
-            /*16*/objbot.addDouble((double)cvQueryHistValue_1D(_objDescTable[i].objHist, 9));
-            /*17*/objbot.addDouble((double)cvQueryHistValue_1D(_objDescTable[i].objHist, 10));
-            /*18*/objbot.addDouble((double)cvQueryHistValue_1D(_objDescTable[i].objHist, 11));
-            /*19*/objbot.addDouble((double)cvQueryHistValue_1D(_objDescTable[i].objHist, 12));
-            /*20*/objbot.addDouble((double)cvQueryHistValue_1D(_objDescTable[i].objHist, 13));
-            /*21*/objbot.addDouble((double)cvQueryHistValue_1D(_objDescTable[i].objHist, 14));
-            /*22*/objbot.addDouble((double)cvQueryHistValue_1D(_objDescTable[i].objHist, 15));
+            /*7*/objbot.addDouble((double)cvGetReal1D(_objDescTable[i].objHist, 0));
+            /*8*/objbot.addDouble((double)cvGetReal1D(_objDescTable[i].objHist, 1));
+            /*9*/objbot.addDouble((double)cvGetReal1D(_objDescTable[i].objHist, 2));
+            /*10*/objbot.addDouble((double)cvGetReal1D(_objDescTable[i].objHist, 3));
+            /*11*/objbot.addDouble((double)cvGetReal1D(_objDescTable[i].objHist, 4));
+            /*12*/objbot.addDouble((double)cvGetReal1D(_objDescTable[i].objHist, 5));
+            /*13*/objbot.addDouble((double)cvGetReal1D(_objDescTable[i].objHist, 6));
+            /*14*/objbot.addDouble((double)cvGetReal1D(_objDescTable[i].objHist, 7));
+            /*15*/objbot.addDouble((double)cvGetReal1D(_objDescTable[i].objHist, 8));
+            /*16*/objbot.addDouble((double)cvGetReal1D(_objDescTable[i].objHist, 9));
+            /*17*/objbot.addDouble((double)cvGetReal1D(_objDescTable[i].objHist, 10));
+            /*18*/objbot.addDouble((double)cvGetReal1D(_objDescTable[i].objHist, 11));
+            /*19*/objbot.addDouble((double)cvGetReal1D(_objDescTable[i].objHist, 12));
+            /*20*/objbot.addDouble((double)cvGetReal1D(_objDescTable[i].objHist, 13));
+            /*21*/objbot.addDouble((double)cvGetReal1D(_objDescTable[i].objHist, 14));
+            /*22*/objbot.addDouble((double)cvGetReal1D(_objDescTable[i].objHist, 15));
 
             double contour_area_normalized_saturated = (double)_objDescTable[i].contour_area / _maxAreaThreshold;
             if (contour_area_normalized_saturated > 1.0)
@@ -995,12 +995,12 @@ bool BlobDescriptorModule::updateModule()
         } // end if(..valid)
     } // end for(..numObjects)
     toolAffDescriptorOutputPort.setEnvelope(writestamp);
-    toolAffDescriptorOutputPort.write(); 
+    toolAffDescriptorOutputPort.write();
 
     // drawing of overlay edges
     for( int i=0; i < _numObjects; i++)
     {
-        if( _objDescTable[i].valid ) 
+        if( _objDescTable[i].valid )
         //if( _objDescTable[i].valid && _objDescTable[i].elongatedness < elongatedness_thr )
         {
             cvDrawContours(
@@ -1067,7 +1067,7 @@ bool BlobDescriptorModule::updateModule()
     if (opencvViewImg != NULL)
     {
         // convert from OpenCV to yarp format
-        cvCopyImage( opencvViewImg, (IplImage *)_yarpViewImg.getIplImage() );
+        cvCopy( opencvViewImg, (IplImage *)_yarpViewImg.getIplImage() );
     }
     ImageOf<PixelBgr> &yarpViewOutputImg = _viewImgOutputPort.prepare();
     yarpViewOutputImg = _yarpViewImg;

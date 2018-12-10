@@ -13,7 +13,7 @@ ObjectDescriptor::ObjectDescriptor()
 /*  Segmentation masks */
     mask_image = NULL;
     mask_data = NULL;
-    
+
 
 /* Variables to define the histograms - both for the affordances and for the tracker*/
     h_bins = 16;
@@ -23,12 +23,12 @@ ObjectDescriptor::ObjectDescriptor()
     _hist_size[1] = s_bins;
     _h_ranges[0]  =   0;     //in 8 bit images hue varies from 0 to 180
     _h_ranges[1]  = 180;
-    _s_ranges[0]  =   0;     //saturation varies from 0 (black-gray-white) to 255 (pure spectrum color) 
+    _s_ranges[0]  =   0;     //saturation varies from 0 (black-gray-white) to 255 (pure spectrum color)
     _s_ranges[1]  = 255;
     _v_ranges[0]  =   0;
     _v_ranges[1]  = 255;
     objHist = NULL;
-    
+
 /* Variables to initialize the tracker */
     roi_x = 0;
     roi_y = 0;
@@ -43,7 +43,7 @@ ObjectDescriptor::ObjectDescriptor()
     storage = NULL;
     contours = NULL;
     affcontours = NULL;
-    convexhull = NULL; 
+    convexhull = NULL;
 
 /* variables to define the shape */
     contour_area = 0;
@@ -72,7 +72,7 @@ ObjectDescriptor::ObjectDescriptor()
 bool ObjectDescriptor::Create(int width, int height)
 {
     _w = width;
-    _h = height; 
+    _h = height;
     _sz = cvSize(width, height);
     mask_image = cvCreateImage(_sz, IPL_DEPTH_8U, 1);
     mask_data = (unsigned char *)mask_image->imageData;
@@ -81,7 +81,7 @@ bool ObjectDescriptor::Create(int width, int height)
     storage = cvCreateMemStorage(0);
     contours = 0;
     affcontours = 0;
-    convexhull = 0; 
+    convexhull = 0;
     return true;
 }
 
@@ -114,8 +114,8 @@ float Distance::bhattacharyya(CvHistogram *hist1, CvHistogram *hist2, int h_bins
     for (int i = 0; i < h_bins; i++)
         for (int j = 0; j < s_bins; j++)
             {
-                float val1 = cvQueryHistValue_2D( hist1, i, j );
-                float val2 = cvQueryHistValue_2D( hist2, i, j );
+                float val1 = cvGetReal2D( hist1, i, j );
+                float val2 = cvGetReal2D( hist2, i, j );
                 coef += sqrtf(val1 * val2);
             }
     dist = - log10(coef);
@@ -167,7 +167,7 @@ int selectObjects(IplImage *labeledImage, IplImage *out, int numLabels, int area
     int width, height, stride;
     width = labeledImage->width;
     height = labeledImage->height;
-    stride = labeledImage->widthStep/sizeof(int); 
+    stride = labeledImage->widthStep/sizeof(int);
 
     //calculating the area
     for (int i = 0; i < height; i++)
@@ -180,7 +180,7 @@ int selectObjects(IplImage *labeledImage, IplImage *out, int numLabels, int area
                 }
                 else
                 {
-                    printf("WARNING. PROBLEM IN SELECTOBJECTS: LABEL DIFFERENT THAN EXPECTED\n"); 
+                    printf("WARNING. PROBLEM IN SELECTOBJECTS: LABEL DIFFERENT THAN EXPECTED\n");
                 }
             }
 
@@ -188,7 +188,7 @@ int selectObjects(IplImage *labeledImage, IplImage *out, int numLabels, int area
     for (int i = 0; i < numLabels; i++)
         if (area[i] < areaThres)
             area[i] = 0;
-        else 
+        else
         {
             labels[i] = numObjects++;
         };
@@ -201,7 +201,7 @@ int selectObjects(IplImage *labeledImage, IplImage *out, int numLabels, int area
                 int k = labeledData[i * width + j];
                 labeledData[i * width + j] = labels[k];
             }
-            
+
     //convert from label image (integer) to output image (unsigned char)
     //int32ToInt8Image(labeledImage, out);
 
@@ -229,7 +229,7 @@ void whiteBalance(IplImage *maskImage, IplImage *originalImage, IplImage *whiteB
     r_plane = cvCreateImage(cvGetSize(originalImage),8,1);
     g_plane = cvCreateImage(cvGetSize(originalImage),8,1);
     b_plane = cvCreateImage(cvGetSize(originalImage),8,1);
-    cvCvtPixToPlane(originalImage, r_plane, g_plane, b_plane, 0);
+    cvSplit(originalImage, r_plane, g_plane, b_plane, 0);
 
     orgDataR = (unsigned char*)r_plane->imageData;
     orgDataG = (unsigned char*)g_plane->imageData;
@@ -313,12 +313,12 @@ void extractObj(IplImage *labeledImage, int numObjects, ObjectDescriptor *objDes
                 objDescTable[i].mask_data[k*stride+j]  = 0; //set all the pixels black
         objDescTable[i].center = cvPoint(0,0); //default center of the object
 
-        //optimize this - 
+        //optimize this -
         objDescTable[i].label = -1;
     }
     //calculating the area and the mask images for the histogram for each object
     for (int i = 0; i < height; i++)
-    {            
+    {
         for (int j = 0; j < width; j++)
         {
             int label = labeledData[i*stride+j];
@@ -425,7 +425,7 @@ void drawBox( CvArr* img, CvBox2D box, CvScalar color )
     };
 
     int countours_n[1]={
-        4,      
+        4,
     };
 
     cvFillPoly( img, countours, countours_n, 1, color );

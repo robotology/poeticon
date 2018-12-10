@@ -91,14 +91,14 @@ class BlobDescriptorModule : public RFModule
 
     ObjectDescriptor                 *_objDescTable;
     int                               _numObjects;
-    
+
     /* other parameters that can be user-specified */
     int _minAreaThreshold; /* min. number of pixels allowed for foreground objects */
     int _maxAreaThreshold; /* min. number of pixels allowed for foreground objects */
     int _maxObjects;       /* maximum number of object to process */
     int _invalidate_boundary_objects; /*  Flag to invalidate objects touching the image boundaries */
     int _draw_holes;       /* Flag to draw the holes of the valid objects in the display image */
-    
+
     // added for First-MM, Jan. 2011
     bool normalized_coords;
 

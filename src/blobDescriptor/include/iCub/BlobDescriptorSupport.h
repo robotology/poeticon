@@ -10,7 +10,6 @@
 #include <opencv2/opencv.hpp>
 #include <opencv2/core/core.hpp>
 #include <opencv2/highgui/highgui.hpp>
-#include <opencv2/legacy/compat.hpp> // cvQueryHistValue_2D, cvCvtPixToPlane
 
 #include <iCub/BlobDescriptorModule.h>
 
@@ -32,12 +31,12 @@ public: //everything public for a start
     //Color Histogram
     CvHistogram *objHist;
     //New fields added for color histogram computations - Alex 19/12/2009
-    int _w; 
+    int _w;
     int _h;
     CvSize _sz;
     int _hist_size[2];
     float _h_ranges[2], _s_ranges[2], _v_ranges[2];
-    int	h_bins; 
+    int	h_bins;
     int	s_bins;
     int v_bins;
 
@@ -59,8 +58,8 @@ public: //everything public for a start
     //New fields added for contour processing - Alex 13/12/2009
     CvMemStorage *storage; // = cvCreateMemStorage(0);
     CvSeq *contours; // raw blob contours
-    CvSeq *affcontours; // processed contours for the description of affordances 
-    CvSeq *convexhull; 
+    CvSeq *affcontours; // processed contours for the description of affordances
+    CvSeq *convexhull;
 
     // new fields added for moments and centre of mass - Giovanni 2014
     cv::Moments moments;
@@ -72,7 +71,7 @@ public: //everything public for a start
     double major_axis;
     double minor_axis;
     double rect_area;
-    CvBox2D enclosing_rect; 
+    CvBox2D enclosing_rect;
     CvRect bounding_rect;
 
     /* shape descriptors for the affordances */
