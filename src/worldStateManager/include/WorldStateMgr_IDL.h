@@ -1,4 +1,12 @@
-// This is an automatically-generated file.
+/*
+ * Copyright (C) 2006-2018 Istituto Italiano di Tecnologia (IIT)
+ * All rights reserved.
+ *
+ * This software may be modified and distributed under the terms of the
+ * BSD-3-Clause license. See the accompanying LICENSE file for details.
+ */
+
+// This is an automatically generated file.
 // It could get re-generated if the ALLOW_IDL_GENERATION flag is on.
 
 #ifndef YARP_THRIFT_GENERATOR_WorldStateMgr_IDL
@@ -78,7 +86,7 @@ public:
    * to be paused
    * @return true/false on success/failure
    */
-  virtual bool pauseID(const int32_t objID);
+  virtual bool pauseID(const std::int32_t objID);
   /**
    * DEPRECATED
    * Resumes a specific stacking thread. This will
@@ -88,13 +96,13 @@ public:
    * to be resumed
    * @return true/false on success/failure
    */
-  virtual bool resumeID(const int32_t objID);
+  virtual bool resumeID(const std::int32_t objID);
   /**
    * Quit the module.
    * @return true/false on success/failure
    */
   virtual bool quit();
-  virtual bool read(yarp::os::ConnectionReader& connection);
+  bool read(yarp::os::ConnectionReader& connection) override;
   virtual std::vector<std::string> help(const std::string& functionName="--all");
 };
 

@@ -1,4 +1,12 @@
-// This is an automatically-generated file.
+/*
+ * Copyright (C) 2006-2018 Istituto Italiano di Tecnologia (IIT)
+ * All rights reserved.
+ *
+ * This software may be modified and distributed under the terms of the
+ * BSD-3-Clause license. See the accompanying LICENSE file for details.
+ */
+
+// This is an automatically generated file.
 // It could get re-generated if the ALLOW_IDL_GENERATION flag is on.
 
 #include <WorldStateMgr_IDL.h>
@@ -10,40 +18,40 @@ class WorldStateMgr_IDL_init : public yarp::os::Portable {
 public:
   bool _return;
   void init();
-  virtual bool write(yarp::os::ConnectionWriter& connection);
-  virtual bool read(yarp::os::ConnectionReader& connection);
+  bool write(yarp::os::ConnectionWriter& connection) const override;
+  bool read(yarp::os::ConnectionReader& connection) override;
 };
 
 class WorldStateMgr_IDL_isInitialized : public yarp::os::Portable {
 public:
   bool _return;
   void init();
-  virtual bool write(yarp::os::ConnectionWriter& connection);
-  virtual bool read(yarp::os::ConnectionReader& connection);
+  bool write(yarp::os::ConnectionWriter& connection) const override;
+  bool read(yarp::os::ConnectionReader& connection) override;
 };
 
 class WorldStateMgr_IDL_dump : public yarp::os::Portable {
 public:
   bool _return;
   void init();
-  virtual bool write(yarp::os::ConnectionWriter& connection);
-  virtual bool read(yarp::os::ConnectionReader& connection);
+  bool write(yarp::os::ConnectionWriter& connection) const override;
+  bool read(yarp::os::ConnectionReader& connection) override;
 };
 
 class WorldStateMgr_IDL_update : public yarp::os::Portable {
 public:
   bool _return;
   void init();
-  virtual bool write(yarp::os::ConnectionWriter& connection);
-  virtual bool read(yarp::os::ConnectionReader& connection);
+  bool write(yarp::os::ConnectionWriter& connection) const override;
+  bool read(yarp::os::ConnectionReader& connection) override;
 };
 
 class WorldStateMgr_IDL_reset : public yarp::os::Portable {
 public:
   bool _return;
   void init();
-  virtual bool write(yarp::os::ConnectionWriter& connection);
-  virtual bool read(yarp::os::ConnectionReader& connection);
+  bool write(yarp::os::ConnectionWriter& connection) const override;
+  bool read(yarp::os::ConnectionReader& connection) override;
 };
 
 class WorldStateMgr_IDL_pause : public yarp::os::Portable {
@@ -51,8 +59,8 @@ public:
   std::string objName;
   bool _return;
   void init(const std::string& objName);
-  virtual bool write(yarp::os::ConnectionWriter& connection);
-  virtual bool read(yarp::os::ConnectionReader& connection);
+  bool write(yarp::os::ConnectionWriter& connection) const override;
+  bool read(yarp::os::ConnectionReader& connection) override;
 };
 
 class WorldStateMgr_IDL_resume : public yarp::os::Portable {
@@ -60,37 +68,37 @@ public:
   std::string objName;
   bool _return;
   void init(const std::string& objName);
-  virtual bool write(yarp::os::ConnectionWriter& connection);
-  virtual bool read(yarp::os::ConnectionReader& connection);
+  bool write(yarp::os::ConnectionWriter& connection) const override;
+  bool read(yarp::os::ConnectionReader& connection) override;
 };
 
 class WorldStateMgr_IDL_pauseID : public yarp::os::Portable {
 public:
-  int32_t objID;
+  std::int32_t objID;
   bool _return;
-  void init(const int32_t objID);
-  virtual bool write(yarp::os::ConnectionWriter& connection);
-  virtual bool read(yarp::os::ConnectionReader& connection);
+  void init(const std::int32_t objID);
+  bool write(yarp::os::ConnectionWriter& connection) const override;
+  bool read(yarp::os::ConnectionReader& connection) override;
 };
 
 class WorldStateMgr_IDL_resumeID : public yarp::os::Portable {
 public:
-  int32_t objID;
+  std::int32_t objID;
   bool _return;
-  void init(const int32_t objID);
-  virtual bool write(yarp::os::ConnectionWriter& connection);
-  virtual bool read(yarp::os::ConnectionReader& connection);
+  void init(const std::int32_t objID);
+  bool write(yarp::os::ConnectionWriter& connection) const override;
+  bool read(yarp::os::ConnectionReader& connection) override;
 };
 
 class WorldStateMgr_IDL_quit : public yarp::os::Portable {
 public:
   bool _return;
   void init();
-  virtual bool write(yarp::os::ConnectionWriter& connection);
-  virtual bool read(yarp::os::ConnectionReader& connection);
+  bool write(yarp::os::ConnectionWriter& connection) const override;
+  bool read(yarp::os::ConnectionReader& connection) override;
 };
 
-bool WorldStateMgr_IDL_init::write(yarp::os::ConnectionWriter& connection) {
+bool WorldStateMgr_IDL_init::write(yarp::os::ConnectionWriter& connection) const {
   yarp::os::idl::WireWriter writer(connection);
   if (!writer.writeListHeader(1)) return false;
   if (!writer.writeTag("init",1,1)) return false;
@@ -111,7 +119,7 @@ void WorldStateMgr_IDL_init::init() {
   _return = false;
 }
 
-bool WorldStateMgr_IDL_isInitialized::write(yarp::os::ConnectionWriter& connection) {
+bool WorldStateMgr_IDL_isInitialized::write(yarp::os::ConnectionWriter& connection) const {
   yarp::os::idl::WireWriter writer(connection);
   if (!writer.writeListHeader(1)) return false;
   if (!writer.writeTag("isInitialized",1,1)) return false;
@@ -132,7 +140,7 @@ void WorldStateMgr_IDL_isInitialized::init() {
   _return = false;
 }
 
-bool WorldStateMgr_IDL_dump::write(yarp::os::ConnectionWriter& connection) {
+bool WorldStateMgr_IDL_dump::write(yarp::os::ConnectionWriter& connection) const {
   yarp::os::idl::WireWriter writer(connection);
   if (!writer.writeListHeader(1)) return false;
   if (!writer.writeTag("dump",1,1)) return false;
@@ -153,7 +161,7 @@ void WorldStateMgr_IDL_dump::init() {
   _return = false;
 }
 
-bool WorldStateMgr_IDL_update::write(yarp::os::ConnectionWriter& connection) {
+bool WorldStateMgr_IDL_update::write(yarp::os::ConnectionWriter& connection) const {
   yarp::os::idl::WireWriter writer(connection);
   if (!writer.writeListHeader(1)) return false;
   if (!writer.writeTag("update",1,1)) return false;
@@ -174,7 +182,7 @@ void WorldStateMgr_IDL_update::init() {
   _return = false;
 }
 
-bool WorldStateMgr_IDL_reset::write(yarp::os::ConnectionWriter& connection) {
+bool WorldStateMgr_IDL_reset::write(yarp::os::ConnectionWriter& connection) const {
   yarp::os::idl::WireWriter writer(connection);
   if (!writer.writeListHeader(1)) return false;
   if (!writer.writeTag("reset",1,1)) return false;
@@ -195,7 +203,7 @@ void WorldStateMgr_IDL_reset::init() {
   _return = false;
 }
 
-bool WorldStateMgr_IDL_pause::write(yarp::os::ConnectionWriter& connection) {
+bool WorldStateMgr_IDL_pause::write(yarp::os::ConnectionWriter& connection) const {
   yarp::os::idl::WireWriter writer(connection);
   if (!writer.writeListHeader(2)) return false;
   if (!writer.writeTag("pause",1,1)) return false;
@@ -218,7 +226,7 @@ void WorldStateMgr_IDL_pause::init(const std::string& objName) {
   this->objName = objName;
 }
 
-bool WorldStateMgr_IDL_resume::write(yarp::os::ConnectionWriter& connection) {
+bool WorldStateMgr_IDL_resume::write(yarp::os::ConnectionWriter& connection) const {
   yarp::os::idl::WireWriter writer(connection);
   if (!writer.writeListHeader(2)) return false;
   if (!writer.writeTag("resume",1,1)) return false;
@@ -241,7 +249,7 @@ void WorldStateMgr_IDL_resume::init(const std::string& objName) {
   this->objName = objName;
 }
 
-bool WorldStateMgr_IDL_pauseID::write(yarp::os::ConnectionWriter& connection) {
+bool WorldStateMgr_IDL_pauseID::write(yarp::os::ConnectionWriter& connection) const {
   yarp::os::idl::WireWriter writer(connection);
   if (!writer.writeListHeader(2)) return false;
   if (!writer.writeTag("pauseID",1,1)) return false;
@@ -259,12 +267,12 @@ bool WorldStateMgr_IDL_pauseID::read(yarp::os::ConnectionReader& connection) {
   return true;
 }
 
-void WorldStateMgr_IDL_pauseID::init(const int32_t objID) {
+void WorldStateMgr_IDL_pauseID::init(const std::int32_t objID) {
   _return = false;
   this->objID = objID;
 }
 
-bool WorldStateMgr_IDL_resumeID::write(yarp::os::ConnectionWriter& connection) {
+bool WorldStateMgr_IDL_resumeID::write(yarp::os::ConnectionWriter& connection) const {
   yarp::os::idl::WireWriter writer(connection);
   if (!writer.writeListHeader(2)) return false;
   if (!writer.writeTag("resumeID",1,1)) return false;
@@ -282,12 +290,12 @@ bool WorldStateMgr_IDL_resumeID::read(yarp::os::ConnectionReader& connection) {
   return true;
 }
 
-void WorldStateMgr_IDL_resumeID::init(const int32_t objID) {
+void WorldStateMgr_IDL_resumeID::init(const std::int32_t objID) {
   _return = false;
   this->objID = objID;
 }
 
-bool WorldStateMgr_IDL_quit::write(yarp::os::ConnectionWriter& connection) {
+bool WorldStateMgr_IDL_quit::write(yarp::os::ConnectionWriter& connection) const {
   yarp::os::idl::WireWriter writer(connection);
   if (!writer.writeListHeader(1)) return false;
   if (!writer.writeTag("quit",1,1)) return false;
@@ -381,22 +389,22 @@ bool WorldStateMgr_IDL::resume(const std::string& objName) {
   bool ok = yarp().write(helper,helper);
   return ok?helper._return:_return;
 }
-bool WorldStateMgr_IDL::pauseID(const int32_t objID) {
+bool WorldStateMgr_IDL::pauseID(const std::int32_t objID) {
   bool _return = false;
   WorldStateMgr_IDL_pauseID helper;
   helper.init(objID);
   if (!yarp().canWrite()) {
-    yError("Missing server method '%s'?","bool WorldStateMgr_IDL::pauseID(const int32_t objID)");
+    yError("Missing server method '%s'?","bool WorldStateMgr_IDL::pauseID(const std::int32_t objID)");
   }
   bool ok = yarp().write(helper,helper);
   return ok?helper._return:_return;
 }
-bool WorldStateMgr_IDL::resumeID(const int32_t objID) {
+bool WorldStateMgr_IDL::resumeID(const std::int32_t objID) {
   bool _return = false;
   WorldStateMgr_IDL_resumeID helper;
   helper.init(objID);
   if (!yarp().canWrite()) {
-    yError("Missing server method '%s'?","bool WorldStateMgr_IDL::resumeID(const int32_t objID)");
+    yError("Missing server method '%s'?","bool WorldStateMgr_IDL::resumeID(const std::int32_t objID)");
   }
   bool ok = yarp().write(helper,helper);
   return ok?helper._return:_return;
@@ -416,7 +424,7 @@ bool WorldStateMgr_IDL::read(yarp::os::ConnectionReader& connection) {
   yarp::os::idl::WireReader reader(connection);
   reader.expectAccept();
   if (!reader.readListHeader()) { reader.fail(); return false; }
-  yarp::os::ConstString tag = reader.readTag();
+  std::string tag = reader.readTag();
   bool direct = (tag=="__direct__");
   if (direct) tag = reader.readTag();
   while (!reader.isError()) {
@@ -509,7 +517,7 @@ bool WorldStateMgr_IDL::read(yarp::os::ConnectionReader& connection) {
       return true;
     }
     if (tag == "pauseID") {
-      int32_t objID;
+      std::int32_t objID;
       if (!reader.readI32(objID)) {
         reader.fail();
         return false;
@@ -525,7 +533,7 @@ bool WorldStateMgr_IDL::read(yarp::os::ConnectionReader& connection) {
       return true;
     }
     if (tag == "resumeID") {
-      int32_t objID;
+      std::int32_t objID;
       if (!reader.readI32(objID)) {
         reader.fail();
         return false;
@@ -561,7 +569,7 @@ bool WorldStateMgr_IDL::read(yarp::os::ConnectionReader& connection) {
         if (!writer.isNull()) {
           if (!writer.writeListHeader(2)) return false;
           if (!writer.writeTag("many",1, 0)) return false;
-          if (!writer.writeListBegin(BOTTLE_TAG_INT, static_cast<uint32_t>(_return.size()))) return false;
+          if (!writer.writeListBegin(BOTTLE_TAG_INT32, static_cast<uint32_t>(_return.size()))) return false;
           std::vector<std::string> ::iterator _iterHelp;
           for (_iterHelp = _return.begin(); _iterHelp != _return.end(); ++_iterHelp)
           {
@@ -573,9 +581,9 @@ bool WorldStateMgr_IDL::read(yarp::os::ConnectionReader& connection) {
       return true;
     }
     if (reader.noMore()) { reader.fail(); return false; }
-    yarp::os::ConstString next_tag = reader.readTag();
+    std::string next_tag = reader.readTag();
     if (next_tag=="") break;
-    tag = tag + "_" + next_tag;
+    tag.append("_").append(next_tag);
   }
   return false;
 }
@@ -584,109 +592,109 @@ std::vector<std::string> WorldStateMgr_IDL::help(const std::string& functionName
   bool showAll=(functionName=="--all");
   std::vector<std::string> helpString;
   if(showAll) {
-    helpString.push_back("*** Available commands:");
-    helpString.push_back("init");
-    helpString.push_back("isInitialized");
-    helpString.push_back("dump");
-    helpString.push_back("update");
-    helpString.push_back("reset");
-    helpString.push_back("pause");
-    helpString.push_back("resume");
-    helpString.push_back("pauseID");
-    helpString.push_back("resumeID");
-    helpString.push_back("quit");
-    helpString.push_back("help");
+    helpString.emplace_back("*** Available commands:");
+    helpString.emplace_back("init");
+    helpString.emplace_back("isInitialized");
+    helpString.emplace_back("dump");
+    helpString.emplace_back("update");
+    helpString.emplace_back("reset");
+    helpString.emplace_back("pause");
+    helpString.emplace_back("resume");
+    helpString.emplace_back("pauseID");
+    helpString.emplace_back("resumeID");
+    helpString.emplace_back("quit");
+    helpString.emplace_back("help");
   }
   else {
     if (functionName=="init") {
-      helpString.push_back("bool init() ");
-      helpString.push_back("Initialize the world state database. ");
-      helpString.push_back("NOTE: before launching this command, make sure that segmentation and ");
-      helpString.push_back("      object recognition are stable. ");
-      helpString.push_back("@return true/false on success/failure ");
+      helpString.emplace_back("bool init() ");
+      helpString.emplace_back("Initialize the world state database. ");
+      helpString.emplace_back("NOTE: before launching this command, make sure that segmentation and ");
+      helpString.emplace_back("      object recognition are stable. ");
+      helpString.emplace_back("@return true/false on success/failure ");
     }
     if (functionName=="isInitialized") {
-      helpString.push_back("bool isInitialized() ");
-      helpString.push_back("Check if initialization phase has been completed. This is accomplished when ");
-      helpString.push_back("tracker, short-term memory model and WSOPC database possess all entries. ");
-      helpString.push_back("@return true/false on initialized/uninitialized ");
+      helpString.emplace_back("bool isInitialized() ");
+      helpString.emplace_back("Check if initialization phase has been completed. This is accomplished when ");
+      helpString.emplace_back("tracker, short-term memory model and WSOPC database possess all entries. ");
+      helpString.emplace_back("@return true/false on initialized/uninitialized ");
     }
     if (functionName=="dump") {
-      helpString.push_back("bool dump() ");
-      helpString.push_back("Print information the current world state on the screen. ");
-      helpString.push_back("@return true/false on success/failure ");
+      helpString.emplace_back("bool dump() ");
+      helpString.emplace_back("Print information the current world state on the screen. ");
+      helpString.emplace_back("@return true/false on success/failure ");
     }
     if (functionName=="update") {
-      helpString.push_back("bool update() ");
-      helpString.push_back("Update the world state database. ");
-      helpString.push_back("The new state will be created from robot perception. ");
-      helpString.push_back("@return true/false on success/failure ");
+      helpString.emplace_back("bool update() ");
+      helpString.emplace_back("Update the world state database. ");
+      helpString.emplace_back("The new state will be created from robot perception. ");
+      helpString.emplace_back("@return true/false on success/failure ");
     }
     if (functionName=="reset") {
-      helpString.push_back("bool reset() ");
-      helpString.push_back("Reset the world state database, initializing it from scratch. ");
-      helpString.push_back("In the WSOPC database, with respect to the previous experiment hand entries ");
-      helpString.push_back("will get their fields cleared (but their IDs preserved), whereas object ");
-      helpString.push_back("entries will be deleted and new ones will be created with new IDs, except ");
-      helpString.push_back("for special object entries that are protected from deletion (objects that ");
-      helpString.push_back("are currently hidden in a stack, and objects that are currently grasped). ");
-      helpString.push_back("NOTE: before launching this command, make sure that segmentation and ");
-      helpString.push_back("      object recognition are stable. ");
-      helpString.push_back("@return true/false on success/failure ");
+      helpString.emplace_back("bool reset() ");
+      helpString.emplace_back("Reset the world state database, initializing it from scratch. ");
+      helpString.emplace_back("In the WSOPC database, with respect to the previous experiment hand entries ");
+      helpString.emplace_back("will get their fields cleared (but their IDs preserved), whereas object ");
+      helpString.emplace_back("entries will be deleted and new ones will be created with new IDs, except ");
+      helpString.emplace_back("for special object entries that are protected from deletion (objects that ");
+      helpString.emplace_back("are currently hidden in a stack, and objects that are currently grasped). ");
+      helpString.emplace_back("NOTE: before launching this command, make sure that segmentation and ");
+      helpString.emplace_back("      object recognition are stable. ");
+      helpString.emplace_back("@return true/false on success/failure ");
     }
     if (functionName=="pause") {
-      helpString.push_back("bool pause(const std::string& objName) ");
-      helpString.push_back("DEPRECATED ");
-      helpString.push_back("Pauses a specific stacking thread. This will ");
-      helpString.push_back("pause the required tracking thread with the _name_ ");
-      helpString.push_back("provided by the user. ");
-      helpString.push_back("@param objName specifies the label of the tracking thread ");
-      helpString.push_back("to be paused ");
-      helpString.push_back("@return true/false on success/failure ");
+      helpString.emplace_back("bool pause(const std::string& objName) ");
+      helpString.emplace_back("DEPRECATED ");
+      helpString.emplace_back("Pauses a specific stacking thread. This will ");
+      helpString.emplace_back("pause the required tracking thread with the _name_ ");
+      helpString.emplace_back("provided by the user. ");
+      helpString.emplace_back("@param objName specifies the label of the tracking thread ");
+      helpString.emplace_back("to be paused ");
+      helpString.emplace_back("@return true/false on success/failure ");
     }
     if (functionName=="resume") {
-      helpString.push_back("bool resume(const std::string& objName) ");
-      helpString.push_back("DEPRECATED ");
-      helpString.push_back("Resumes a specific stacking thread. This will ");
-      helpString.push_back("resume the required tracking thread with the _name_ ");
-      helpString.push_back("provided by the user. ");
-      helpString.push_back("@param objName specifies the label of the tracking thread ");
-      helpString.push_back("to be resumed ");
-      helpString.push_back("@return true/false on success/failure ");
+      helpString.emplace_back("bool resume(const std::string& objName) ");
+      helpString.emplace_back("DEPRECATED ");
+      helpString.emplace_back("Resumes a specific stacking thread. This will ");
+      helpString.emplace_back("resume the required tracking thread with the _name_ ");
+      helpString.emplace_back("provided by the user. ");
+      helpString.emplace_back("@param objName specifies the label of the tracking thread ");
+      helpString.emplace_back("to be resumed ");
+      helpString.emplace_back("@return true/false on success/failure ");
     }
     if (functionName=="pauseID") {
-      helpString.push_back("bool pauseID(const int32_t objID) ");
-      helpString.push_back("DEPRECATED ");
-      helpString.push_back("Pauses a specific stacking thread. This will ");
-      helpString.push_back("pause the required tracking thread with the _ID_ ");
-      helpString.push_back("provided by the user. ");
-      helpString.push_back("@param objID specifies the numeric identifier of the tracking thread ");
-      helpString.push_back("to be paused ");
-      helpString.push_back("@return true/false on success/failure ");
+      helpString.emplace_back("bool pauseID(const std::int32_t objID) ");
+      helpString.emplace_back("DEPRECATED ");
+      helpString.emplace_back("Pauses a specific stacking thread. This will ");
+      helpString.emplace_back("pause the required tracking thread with the _ID_ ");
+      helpString.emplace_back("provided by the user. ");
+      helpString.emplace_back("@param objID specifies the numeric identifier of the tracking thread ");
+      helpString.emplace_back("to be paused ");
+      helpString.emplace_back("@return true/false on success/failure ");
     }
     if (functionName=="resumeID") {
-      helpString.push_back("bool resumeID(const int32_t objID) ");
-      helpString.push_back("DEPRECATED ");
-      helpString.push_back("Resumes a specific stacking thread. This will ");
-      helpString.push_back("resume the required tracking thread with the _ID_ ");
-      helpString.push_back("provided by the user. ");
-      helpString.push_back("@param objID specifies the numeric identifier of the tracking thread ");
-      helpString.push_back("to be resumed ");
-      helpString.push_back("@return true/false on success/failure ");
+      helpString.emplace_back("bool resumeID(const std::int32_t objID) ");
+      helpString.emplace_back("DEPRECATED ");
+      helpString.emplace_back("Resumes a specific stacking thread. This will ");
+      helpString.emplace_back("resume the required tracking thread with the _ID_ ");
+      helpString.emplace_back("provided by the user. ");
+      helpString.emplace_back("@param objID specifies the numeric identifier of the tracking thread ");
+      helpString.emplace_back("to be resumed ");
+      helpString.emplace_back("@return true/false on success/failure ");
     }
     if (functionName=="quit") {
-      helpString.push_back("bool quit() ");
-      helpString.push_back("Quit the module. ");
-      helpString.push_back("@return true/false on success/failure ");
+      helpString.emplace_back("bool quit() ");
+      helpString.emplace_back("Quit the module. ");
+      helpString.emplace_back("@return true/false on success/failure ");
     }
     if (functionName=="help") {
-      helpString.push_back("std::vector<std::string> help(const std::string& functionName=\"--all\")");
-      helpString.push_back("Return list of available commands, or help message for a specific function");
-      helpString.push_back("@param functionName name of command for which to get a detailed description. If none or '--all' is provided, print list of available commands");
-      helpString.push_back("@return list of strings (one string per line)");
+      helpString.emplace_back("std::vector<std::string> help(const std::string& functionName=\"--all\")");
+      helpString.emplace_back("Return list of available commands, or help message for a specific function");
+      helpString.emplace_back("@param functionName name of command for which to get a detailed description. If none or '--all' is provided, print list of available commands");
+      helpString.emplace_back("@return list of strings (one string per line)");
     }
   }
-  if ( helpString.empty()) helpString.push_back("Command not found");
+  if ( helpString.empty()) helpString.emplace_back("Command not found");
   return helpString;
 }
 

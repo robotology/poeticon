@@ -12,15 +12,13 @@ project(dummyPraxiconInterface)
 
 find_package(YARP)
 find_package(ICUBcontrib)
-list(APPEND CMAKE_MODULE_PATH ${YARP_MODULE_PATH})
 list(APPEND CMAKE_MODULE_PATH ${ICUBCONTRIB_MODULE_PATH})
 
 include(ICUBcontribHelpers)
 include(ICUBcontribOptions)
 icubcontrib_set_default_prefix()
 
-include_directories(${PROJECT_SOURCE_DIR}/include
-                    ${YARP_INCLUDE_DIRS})
+include_directories(${PROJECT_SOURCE_DIR}/include)
 
 add_executable(${PROJECT_NAME} include/DummyPraxiconInterfaceModule.h
                                src/DummyPraxiconInterfaceMain.cpp

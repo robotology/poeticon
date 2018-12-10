@@ -14,8 +14,7 @@ file(GLOB python_scripts ${CMAKE_CURRENT_SOURCE_DIR}/scripts/*.py)
 
 find_package(YARP)
 find_package(ICUBcontrib)
-list(APPEND CMAKE_MODULE_PATH ${YARP_MODULE_PATH} ${ICUBCONTRIB_MODULE_PATH})
-include(YarpInstallationHelpers)
+list(APPEND CMAKE_MODULE_PATH ${ICUBCONTRIB_MODULE_PATH})
 include(ICUBcontribHelpers)
 icubcontrib_set_default_prefix()
 

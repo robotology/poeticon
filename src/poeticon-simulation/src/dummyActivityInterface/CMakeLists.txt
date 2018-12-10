@@ -12,11 +12,8 @@ project(dummyActivityInterface)
 
 find_package(YARP)
 find_package(ICUBcontrib)
-list(APPEND CMAKE_MODULE_PATH ${YARP_MODULE_PATH})
 list(APPEND CMAKE_MODULE_PATH ${ICUBCONTRIB_MODULE_PATH})
 
-include(YarpIDL)
-include(YarpInstallationHelpers)
 include(ICUBcontribHelpers)
 include(ICUBcontribOptions)
 
@@ -24,8 +21,7 @@ icubcontrib_set_default_prefix()
 
 yarp_add_idl(IDL_GEN_FILES ${PROJECT_NAME}.thrift)
 
-include_directories(${PROJECT_SOURCE_DIR}/include
-                    ${YARP_INCLUDE_DIRS})
+include_directories(${PROJECT_SOURCE_DIR}/include)
 
 add_executable(${PROJECT_NAME} include/Defaults.h
                                include/DummyActivityInterfaceModule.h

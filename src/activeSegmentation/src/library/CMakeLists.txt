@@ -22,9 +22,7 @@ if(DEBUG_INFO)
 endif (DEBUG_INFO)
 
 include_directories(${PROJECT_SOURCE_DIR}/include
-                    ${YARP_INCLUDE_DIRS}
-                    ${OpenCV_INCLUDE_DIRS}      
-                   )
+                    ${OpenCV_INCLUDE_DIRS})
 
 IF (USE_MULTI_THREADED)
     add_library(${PROJECTNAME} ${folder_source} src/seg/textureGradient_multithreaded.cpp ${folder_header} ${folder_header})
@@ -37,7 +35,7 @@ TARGET_LINK_LIBRARIES(${PROJECTNAME} ${YARP_LIBRARIES} ${OpenCV_LIBRARIES})
 # export library
 icubcontrib_export_library( ${PROJECTNAME}
                             INTERNAL_INCLUDE_DIRS ${PROJECT_SOURCE_DIR}/include 
-                            EXTERNAL_INCLUDE_DIRS ${YARP_INCLUDE_DIRS} ${OpenCV_INCLUDE_DIRS}
+                            EXTERNAL_INCLUDE_DIRS ${OpenCV_INCLUDE_DIRS}
                             FILES ${folder_header}
                             DESTINATION include/iCub
                             )

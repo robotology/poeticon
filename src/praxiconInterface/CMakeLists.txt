@@ -14,9 +14,7 @@ find_package(ICUB)
 set(CMAKE_MODULE_PATH ${YARP_DIR}/conf ${CMAKE_MODULE_PATH})
 set(CMAKE_MODULE_PATH ${ICUB_DIR}/conf ${CMAKE_MODULE_PATH})
 
-include_directories(${YARP_INCLUDE_DIRS}
-                    ${CMAKE_SOURCE_DIR})
-include_directories(${ICUB_INCLUDE_DIRS})
+include_directories(${CMAKE_SOURCE_DIR} ${ICUB_INCLUDE_DIRS})
 
 file(GLOB folder_source src/*.cpp)
 file(GLOB folder_header include/iCub/*.h include/iCub/*.nsmap)

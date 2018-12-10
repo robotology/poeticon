@@ -11,20 +11,17 @@ find_package(YARP)
 find_package(ICUB)
 find_package(ICUBcontrib)
 
-list(APPEND CMAKE_MODULE_PATH ${YARP_MODULE_PATH})
 list(APPEND CMAKE_MODULE_PATH ${ICUB_MODULE_PATH})
 list(APPEND CMAKE_MODULE_PATH ${ICUBCONTRIB_MODULE_PATH})
 
 find_package(OpenCV)
 
-include(YarpInstallationHelpers)
 include(ICUBcontribHelpers)
 include(ICUBcontribOptions)
 icubcontrib_set_default_prefix()
 
 find_package(Threads REQUIRED)
 
-include(YarpIDL)
 yarp_idl_to_dir(${PROJECTNAME}.thrift ${CMAKE_CURRENT_SOURCE_DIR})
 
 file(GLOB source src/*.cpp)
@@ -36,7 +33,6 @@ source_group("Header Files" FILES ${header})
 source_group("IDL Files" FILES ${idl})
 
 include_directories(${PROJECT_SOURCE_DIR}/include
-                    ${YARP_INCLUDE_DIRS}
                     ${ICUB_INCLUDE_DIRS}
                     ${OpenCV_INCLUDE_DIRS}
                     ${activeSegmentation_INCLUDE_DIRS})

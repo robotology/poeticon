@@ -13,7 +13,6 @@ find_package(GSL REQUIRED)
 
 find_package(Threads REQUIRED)
 
-include(YarpIDL)
 yarp_idl_to_dir(${PROJECTNAME}.thrift ${CMAKE_CURRENT_SOURCE_DIR})
 
 file(GLOB folder_source src/*.cpp)
@@ -26,7 +25,6 @@ source_group("IDL Files" FILES ${idl})
 
 include_directories(
 		    ${PROJECT_SOURCE_DIR}/include
-		    ${YARP_INCLUDE_DIRS}
             ${GSL_INCLUDE_DIRS}
             ${activeSegmentation_INCLUDE_DIRS}
 )

@@ -14,11 +14,9 @@ find_package(ICUB)
 find_package(ICUBcontrib)
 find_package(OpenCV REQUIRED)
 
-list(APPEND CMAKE_MODULE_PATH ${YARP_MODULE_PATH})
 list(APPEND CMAKE_MODULE_PATH ${ICUB_MODULE_PATH})
 list(APPEND CMAKE_MODULE_PATH ${ICUBCONTRIB_MODULE_PATH})
 
-include(YarpInstallationHelpers)
 include(ICUBcontribHelpers)
 include(ICUBcontribOptions)
 icubcontrib_set_default_prefix()
@@ -30,9 +28,7 @@ source_group("Header Files" FILES ${folder_header})
 
 include_directories(${PROJECT_SOURCE_DIR}/include
                     ${OpenCV_INCLUDE_DIRS}
-                    ${YARP_INCLUDE_DIRS}
-                    ${ctrlLib_INCLUDE_DIRS}
-                   )
+                    ${ctrlLib_INCLUDE_DIRS})
 
 add_executable(${PROJECTNAME} ${folder_source} ${folder_header})
 

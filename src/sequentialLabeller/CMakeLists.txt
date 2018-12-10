@@ -14,10 +14,8 @@ list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR})
 find_package(YARP)
 find_package(ICUBcontrib)
 
-list(APPEND CMAKE_MODULE_PATH ${YARP_MODULE_PATH})
 list(APPEND CMAKE_MODULE_PATH ${ICUBCONTRIB_MODULE_PATH})
 
-include(YarpInstallationHelpers)
 include(ICUBcontribHelpers)
 include(ICUBcontribOptions)
 icubcontrib_set_default_prefix()
@@ -25,7 +23,7 @@ icubcontrib_set_default_prefix()
 find_package(OpenCV)
 
 # add include directories
-include_directories(${OpenCV_INCLUDE_DIRS} ${YARP_INCLUDE_DIRS})
+include_directories(${OpenCV_INCLUDE_DIRS})
 
 file(GLOB folder_source *.cpp)
 file(GLOB folder_header *.h)

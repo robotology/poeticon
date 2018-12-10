@@ -20,7 +20,6 @@ source_group("Header Files" FILES ${folder_header})
 
 include_directories(
 		    ${PROJECT_SOURCE_DIR}/include
-		    ${YARP_INCLUDE_DIRS}
             ${activeSegmentation_INCLUDE_DIRS}
 )
 

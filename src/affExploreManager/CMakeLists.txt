@@ -15,11 +15,9 @@ find_package(YARP)
 find_package(ICUB)
 find_package(ICUBcontrib)
 
-list(APPEND CMAKE_MODULE_PATH ${YARP_MODULE_PATH})
 list(APPEND CMAKE_MODULE_PATH ${ICUB_MODULE_PATH})
 list(APPEND CMAKE_MODULE_PATH ${ICUBCONTRIB_MODULE_PATH})
 
-include(YarpInstallationHelpers)
 include(ICUBcontribHelpers)
 include(ICUBcontribOptions)
 icubcontrib_set_default_prefix()
@@ -32,9 +30,7 @@ include_directories(${PROJECT_SOURCE_DIR}/include
                     ${ctrlLib_INCLUDE_DIRS}
                     ${OpenCV_INCLUDE_DIRS}
                     ${GSL_INCLUDE_DIRS}
-                    ${YARP_INCLUDE_DIRS}
-                    ${Boost_INCLUDE_DIR}
-                    )
+                    ${Boost_INCLUDE_DIR})
 
 link_directories(${Boost_LIBRARY_DIR})
 
