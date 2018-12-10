@@ -101,7 +101,7 @@ void WorldStateVisualizerThread::mainProcessing()
 
         // create OpenCV output images, for now identical to raw input image
         Mat outReachabilityMat;
-        outReachabilityMat = static_cast<IplImage*>( inRawImg->getIplImage() );
+        outReachabilityMat = cvarrToMat(static_cast<IplImage*>(inRawImg->getIplImage()));
 
         // read database
         Bottle *db = inOpcBroadcastPort.read(false);
@@ -196,8 +196,8 @@ void WorldStateVisualizerThread::mainProcessing()
             IplImage outReachabilityIpl = outReachabilityMat;
             outReachabilityYarp.resize(outReachabilityIpl.width,
                                        outReachabilityIpl.height);
-            cvCopyImage( &outReachabilityIpl,
-                         static_cast<IplImage*>(outReachabilityYarp.getIplImage()) );
+            cvCopy( &outReachabilityIpl,
+                    static_cast<IplImage*>(outReachabilityYarp.getIplImage()) );
             if (useTimestamp) outReachabilityImgPort.setEnvelope(ts);
             outReachabilityImgPort.write();
         }

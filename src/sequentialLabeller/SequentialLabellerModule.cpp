@@ -1,7 +1,7 @@
 /*
  * Copyright (C) 2013 POETICON++, European Commission FP7 project ICT-288382
  * Author: Giovanni Saponaro <gsaponaro@isr.ist.utl.pt>
- * CopyPolicy: Released under the terms of the GNU GPL v2.0 
+ * CopyPolicy: Released under the terms of the GNU GPL v2.0
  *
  */
 
@@ -35,7 +35,7 @@ bool SequentialLabellerModule::configure(ResourceFinder &rf)
                                                      "Labeled image output port (string)" ).asString()
                                            );
     //Network::init();
-    
+
     /* open ports */
     if(! binaryImgInputPort.open(binaryImgInputPortName.c_str()) )
     {
@@ -47,9 +47,9 @@ bool SequentialLabellerModule::configure(ResourceFinder &rf)
         yError("unable to open port %s", labeledImgOutputPortName.c_str());
         return false;
     }
-    
+
     yarpBinaryInputPtr = binaryImgInputPort.read(true);
-    
+
     if (yarpBinaryInputPtr!=NULL)
     {
         w   = yarpBinaryInputPtr->width();
@@ -75,7 +75,7 @@ bool SequentialLabellerModule::interruptModule()
     labeledImgOutputPort.interrupt();
     return true;
 }
-    
+
 /**
  * Close function. Called automatically when the module closes, after the last
  * updateModule call.
@@ -95,7 +95,7 @@ bool SequentialLabellerModule::close()
  */
 bool SequentialLabellerModule::updateModule()
 {
-    Stamp stamp; 
+    Stamp stamp;
 
     yarpBinaryInputPtr = binaryImgInputPort.read(true);
 
@@ -110,7 +110,7 @@ bool SequentialLabellerModule::updateModule()
     if(yarpBinaryInputPtr==NULL)
     {
         yError("no data on input port(s). Exiting...");
-        return false;    
+        return false;
     }
     yarpBinaryImg  = *yarpBinaryInputPtr;
 
@@ -118,7 +118,7 @@ bool SequentialLabellerModule::updateModule()
     // TODO: use OpenCV 2 APIs
 
     IplImage *opencvBinaryImg  = (IplImage *) yarpBinaryImg.getIplImage();
-    
+
     // call sequential labelling algorithm
     IplImage *opencvLabeledImg;
     IplImage *opencvTempImg;
@@ -127,14 +127,14 @@ bool SequentialLabellerModule::updateModule()
     cvZero(opencvTempImg);
     int seqLabReturn = 0;
     seqLabReturn = cvSeqLabel(opencvBinaryImg, opencvLabeledImg, opencvTempImg);
-    
+
     // convert from OpenCV to yarp format
     if (opencvLabeledImg != NULL)
     {
-        cvCopyImage( opencvLabeledImg, (IplImage *)yarpLabeledImg.getIplImage() );
+        cvCopy( opencvLabeledImg, (IplImage *)yarpLabeledImg.getIplImage() );
     }
 
-    /* output sequentially labelled image */    
+    /* output sequentially labelled image */
     ImageOf<PixelMono> &yarpLabeledOutputImage = labeledImgOutputPort.prepare();
     yarpLabeledOutputImage = yarpLabeledImg;
     if(useStamp)

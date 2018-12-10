@@ -58,7 +58,7 @@
  *
  * <b>Port Types</b>
  *
- * - <tt>BufferedPort<ImageOf<PixelMono> > binaryImgInputPort</tt>  
+ * - <tt>BufferedPort<ImageOf<PixelMono> > binaryImgInputPort</tt>
  * - <tt>BufferedPort<ImageOf<PixelMono> > labeledImgOutputPort</tt>
  *
  * \section in_data_sec Input Data Files
@@ -83,7 +83,7 @@
  * \author Giovanni Saponaro <gsaponaro@isr.ist.utl.pt>
  *
  * Copyright (C) 2012-2015 POETICON++, European Commission FP7 project ICT-288382
- * CopyPolicy: Released under the terms of the GNU GPL v2.0 
+ * CopyPolicy: Released under the terms of the GNU GPL v2.0
  *
  */
 
@@ -95,7 +95,6 @@
 #include <opencv2/opencv.hpp>
 #include <opencv2/core/core.hpp>
 #include <opencv2/highgui/highgui.hpp>
-#include <opencv2/legacy/compat.hpp> // cvCopyImage
 
 #include <yarp/os/BufferedPort.h>
 #include <yarp/os/Log.h>
@@ -120,13 +119,13 @@ class SequentialLabellerModule : public RFModule
     string                            labeledImgOutputPortName;
     /* yarp image pointers to access image ports */
     ImageOf<PixelMono>               *yarpBinaryInputPtr;
-    /* yarp internal image buffers */ 
+    /* yarp internal image buffers */
     ImageOf<PixelMono>                yarpBinaryImg;
     ImageOf<PixelMono>                yarpLabeledImg;
 
     int                               w, h;
     CvSize                            sz;
-    
+
     BufferedPort<ImageOf<PixelMono> > binaryImgInputPort;
     BufferedPort<ImageOf<PixelMono> > labeledImgOutputPort;
 
