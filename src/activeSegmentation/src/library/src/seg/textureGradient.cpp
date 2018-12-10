@@ -29,10 +29,10 @@ void findWorkDir(void){
 	strcpy(tmpchar,filterBin_dirLoc);
 	name1 		 = strtok(tmpchar,"/");
 	name2            = strtok(NULL,"/");
-	int  flag = 0;	
+	int  flag = 0;
 	while(name2 != NULL){
 		if (flag == 0){
-			flag = 1;			
+			flag = 1;
 			strcpy(filterBin_dirLoc,"/");
 			strcat(filterBin_dirLoc,name1);
 		}
@@ -41,11 +41,11 @@ void findWorkDir(void){
 			strcat(filterBin_dirLoc,name1);
 		}
 		name1 		 = name2;
-		name2            = strtok(NULL,"/");		
+		name2            = strtok(NULL,"/");
 	}
 	//printf("\n after token stuff.. %s \n", filterBin_dirLoc);
     */
-} 
+}
 
 typedef struct {
 	CvMat* filterBank[24];
@@ -80,20 +80,20 @@ void assignTextons(CvMat* tmap, CvMat* grayImg, Property &fileLoc){
 	CvMat* grayImg_pad19x19     = cvCreateMat(grayImg->rows+9,grayImg->cols+9,CV_32FC1);
 	CvMat* imgResponse_pad13x13 = cvCreateMat(grayImg->rows+6,grayImg->cols+6,CV_32FC1);
 	CvMat* imgResponse_pad19x19 = cvCreateMat(grayImg->rows+9,grayImg->cols+9,CV_32FC1);
-	CvMat* tmp_pad13x13         = cvCreateMatHeader(grayImg->rows+6,grayImg->cols+6,CV_32FC1); 
+	CvMat* tmp_pad13x13         = cvCreateMatHeader(grayImg->rows+6,grayImg->cols+6,CV_32FC1);
 	CvMat* tmp_pad19x19         = cvCreateMatHeader(grayImg->rows+9,grayImg->cols+9,CV_32FC1);
 	for(int i=0; i< 24; i++)
 		imgResponse[i] = cvCreateMat(grayImg->rows,grayImg->cols,CV_32FC1);
 
 	cvCopyMakeBorder(grayImg,grayImg_pad13x13,cvPoint(6,6),IPL_BORDER_REPLICATE);
 	cvCopyMakeBorder(grayImg,grayImg_pad19x19,cvPoint(9,9),IPL_BORDER_REPLICATE);
-	
-	float tmpVal;				
+
+	float tmpVal;
 	for(int i=0; i< 24; i++)
     {
 		if (i < 12)
         {
-			//fread(tmp1,sizeof(double),13*13,fp);			
+			//fread(tmp1,sizeof(double),13*13,fp);
 			for(int r=0; r < 13; r++)
             {
 				for(int c=0; c<13; c++)
@@ -103,7 +103,7 @@ void assignTextons(CvMat* tmap, CvMat* grayImg, Property &fileLoc){
 				}
 			}
 
-			// step 2: convolve and get the response..	
+			// step 2: convolve and get the response..
 			cvFilter2D(grayImg_pad13x13,imgResponse_pad13x13,filterBank13x13,cvPoint(6,6));
 			cvGetSubRect(imgResponse_pad13x13,tmp_pad13x13,cvRect(6,6,imgResponse[i]->cols,imgResponse[i]->rows));
 			cvCopy(tmp_pad13x13,imgResponse[i]);
@@ -123,7 +123,7 @@ void assignTextons(CvMat* tmap, CvMat* grayImg, Property &fileLoc){
 			cvFilter2D(grayImg_pad19x19,imgResponse_pad19x19, filterBank19x19, cvPoint(9,9));
 			cvGetSubRect(imgResponse_pad19x19,tmp_pad19x19,cvRect(9,9,imgResponse[i]->cols,imgResponse[i]->rows));
 			cvCopy(tmp_pad19x19,imgResponse[i]);
-		}	
+		}
 	}
 	fclose(fp_13);
 	fclose(fp_19);
@@ -150,7 +150,7 @@ void assignTextons(CvMat* tmap, CvMat* grayImg, Property &fileLoc){
 	CvMat*  textons = cvCreateMat(64,24,CV_32FC1);
 
 	for(int r=0; r < 64;r++){
-		for(int c=0; c < 24; c++){			
+		for(int c=0; c < 24; c++){
 			fscanf(fp,"%f",&tmpVal);
 			cvSetReal2D(textons,r,c,tmpVal);
 		}
@@ -166,7 +166,7 @@ void assignTextons(CvMat* tmap, CvMat* grayImg, Property &fileLoc){
 		for(int c=0; c<grayImg->cols; c++){
 			cvSetZero(totSum);
 			for(int i=0; i<24; i++){
-				//find the distance of the pixel response from all other 
+				//find the distance of the pixel response from all other
 				cvGetCol(textons,colFrmTextonMat, i);
 				cvSubS(colFrmTextonMat,cvGet2D(imgResponse[i],r,c),tmp);
 				cvPow(tmp,tmp,2.0);
@@ -195,7 +195,7 @@ void assignTextons(CvMat* tmap, CvMat* grayImg, Property &fileLoc){
 CvMat** detTG(IplImage* im, int norient, double* gtheta, Property &fileLoc){
 
 	double imDiag    = sqrt((double)((im->height)*(im->height)+(im->width)*(im->width)));
-	
+
 	// RGB -> gray conversion!
 	IplImage* imgGray = cvCreateImage(cvSize(im->width,im->height),im->depth,1);
 	cvCvtColor(im,imgGray,CV_BGR2GRAY);
@@ -213,11 +213,10 @@ CvMat** detTG(IplImage* im, int norient, double* gtheta, Property &fileLoc){
 	//int   norient =  8;
 	fprintf(stdout,"\n\ttexture:");
 	CvMat*   tsim = cvCreateMatHeader(im->height,im->width,CV_32FC1);
-	CvMat**  tg   = tgmo(*tmap, ntex, sigma, gtheta, norient, *tsim, 1); 
-
+	CvMat**  tg   = tgmo(*tmap, ntex, sigma, gtheta, norient, *tsim, 1);
 
 	cvReleaseMatHeader(&tsim);
-    cvReleaseMat(&tmap);
-    cvReleaseMatHeader(&imgGrayMat);
+	cvReleaseMat(&tmap);
+	cvReleaseMatHeader(&imgGrayMat);
 	return tg;
 }

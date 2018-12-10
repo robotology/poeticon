@@ -1,6 +1,6 @@
 /*
  * Copyright (C) 2009 RobotCub Consortium, European Commission FP6 Project IST-004370
- * Authors: Vadim Tikhanoff 
+ * Authors: Vadim Tikhanoff
  * email:   vadim.tikhanoff@iit.it
  * website: www.robotcub.org
  * Permission is granted to copy, distribute, and/or modify this program
@@ -140,7 +140,7 @@ ActiveSeg::Error  ActiveSeg::getTemplateFromSeg(const IplImage *img, IplImage* s
     int right = -1;
     int bottom = -1;
 
-    cv::Mat imgMat = seg;
+    cv::Mat imgMat = cv::cvarrToMat(seg);
 
     for (int j=0;j<imgMat.rows;j++){
         for (int i=0;i<imgMat.cols;i++){

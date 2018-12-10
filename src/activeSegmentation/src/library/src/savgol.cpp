@@ -1,8 +1,8 @@
-/* 
+/*
  * Copyright (C) 2009 RobotCub Consortium, European Commission FP6 Project IST-004370
  * Authors: Vadim Tikhanoff & Ajay Mishra
  * email:   vadim.tikhanoff@iit.it
- * website: www.robotcub.org 
+ * website: www.robotcub.org
  * Permission is granted to copy, distribute, and/or modify this program
  * under the terms of the GNU General Public License, version 2 or any
  * later version published by the Free Software Foundation.
@@ -37,7 +37,7 @@ double round(double x){
 	double y;
 	if(x+0.5 > ceil(x))
 		y = ceil(x);
-	else 
+	else
 		y = floor(x);
 	return y;
 }
@@ -159,7 +159,7 @@ CvMat *fitparab(CvMat &z, double ra, double rb, double theta)
 	//double wr = floor(max(ra,rb));
 	CvMat *filtered = savgolFilter(z,ra,rb,theta);
 
-	return filtered;	
+	return filtered;
 }
 
 //------------------------------------------------------------------------------
@@ -198,7 +198,7 @@ CvMat *tgso (CvMat &tmap, int ntex, double sigma, double theta, CvMat &tsim, int
 	cvReleaseMat(&comp);
 
 
-	double wr=floor(sigma); //sigma=radius (Leo) 
+	double wr=floor(sigma); //sigma=radius (Leo)
 
 	CvMat *x=cvCreateMat(1,wr-(-wr)+1, CV_64FC1);
 	CvMat *y=cvCreateMat(wr-(-wr)+1,1, CV_64FC1);
@@ -207,7 +207,7 @@ CvMat *tgso (CvMat &tmap, int ntex, double sigma, double theta, CvMat &tsim, int
 	CvMat *v=cvCreateMat(wr-(-wr)+1,wr-(-wr)+1, CV_64FC1);
 	CvMat *gamma=cvCreateMat(u->rows,v->rows, CV_64FC1);
 
-	// Set x,y directions 
+	// Set x,y directions
 	for (int j=-wr;j<=wr;j++)
     {
 		cvSetReal2D(x,0,(j+wr),j);
@@ -222,7 +222,7 @@ CvMat *tgso (CvMat &tmap, int ntex, double sigma, double theta, CvMat &tsim, int
 	}
 
 	// Compute the gamma matrix from the grid
-	for (int i=0;i<u->rows;i++) 
+	for (int i=0;i<u->rows;i++)
 		for (int j=0;j<u->cols;j++)
 			cvSetReal2D(gamma,i,j,atan2(cvGetReal2D(v,i,j),cvGetReal2D(u,i,j)));
 
@@ -302,13 +302,13 @@ CvMat *tgso (CvMat &tmap, int ntex, double sigma, double theta, CvMat &tsim, int
 
 	CvMat *tg=cvCreateMat(h,w,CV_32FC1);
 	cvZero(tg);
-	
+
 	if (useChi2 == 1)
     {
 		CvMat* temp_add1 = cvCreateMat(h,w,CV_32FC1);
 		for (int i=0;i<ntex;i++)
         {
-			cvCmpS(&tmap,i+1,temp,CV_CMP_EQ); 
+			cvCmpS(&tmap,i+1,temp,CV_CMP_EQ);
 			cvConvertScale(temp,im,1.0/255);
 
 			cvCopyMakeBorder(tgL,tgL_pad,cvPoint((rlmask->cols-1)/2,(rlmask->rows-1)/2),IPL_BORDER_CONSTANT);
@@ -409,7 +409,7 @@ CvMat *tgso (CvMat &tmap, int ntex, double sigma, double theta, CvMat &tsim, int
     //return tg;
 }
 //------------------------------------------------------------------------------
-// Multithreaded implementation 
+// Multithreaded implementation
 //------------------------------------------------------------------------------
 struct threadArg{
 	CvMat* tmap;
@@ -439,7 +439,7 @@ void* threadFn_tgso(void *arg)
 		exit(1);
 	}
 	tmpArg->tg = tmp;
-		
+
 	fprintf(stdout," ."); fflush(stdout);
 	pthread_exit(NULL);
 }
@@ -448,7 +448,7 @@ CvMat **tgmo (CvMat &tmap, int ntex, double sigma, double *&theta, int norient, 
 {
 	CvMat **tg=new CvMat*[norient];
 
-	sigma=max(1,sigma);
+	sigma=max(1.0,sigma);
 	norient = max(1,norient);
 
 	pthread_t* pth = (pthread_t *)malloc(norient*sizeof(pthread_t));
@@ -468,11 +468,11 @@ CvMat **tgmo (CvMat &tmap, int ntex, double sigma, double *&theta, int norient, 
 		tmpArg[i]->thread_num = i;
 		pthread_create(&pth[i],NULL,threadFn_tgso,(void*)tmpArg[i]);
 	}
-	
+
 	//Wait for the other threads to end
 	for(int i=0; i<norient; i++)
 		pthread_join(pth[i],NULL);
-	
+
 	for(int i=0; i<norient; i++)
     {
         tg[i] = cvCreateMat(tmap.height, tmap.width,CV_32FC1);
@@ -502,7 +502,7 @@ CvMat **cgmo (IplImage* im, int norient, double* theta)
     int   h  = im->height;
     int   w  = im->width;
     double imDiag = sqrt((double)(h*h+w*w));
-	
+
 	char    channelName[] = {'L', 'A', 'B'};
 
 	int     nbins[3]     = {32, 32, 32};
@@ -519,7 +519,7 @@ CvMat **cgmo (IplImage* im, int norient, double* theta)
 	if (im->nChannels == 3)
     {
         double gamma=2.5;
-		double abmin=-73; 
+		double abmin=-73;
 		double abmax=95;
 		IplImage *temp= cvCreateImage(cvGetSize(im),IPL_DEPTH_32F,3);
 		cvConvertScale(im,temp,1.0/255);
@@ -556,14 +556,14 @@ CvMat **cgmo (IplImage* im, int norient, double* theta)
 
 	norient = max(1,norient);
 
-	for (int i=0;i<nChannels;i++)	
+	for (int i=0;i<nChannels;i++)
 		nbins[i] = max(1,nbins[i]);
 
 	for (int i=0;i<nChannels;i++)
     {
 		double min, max;
 		cvMinMaxLoc(Lab[i],&min,&max);
-		if (min < 0 || max > 1) 
+		if (min < 0 || max > 1)
         {
             min = 0.1;
             max = 0.9;
@@ -589,7 +589,7 @@ CvMat **cgmo (IplImage* im, int norient, double* theta)
         {
 			for (int l=0; l< Lab[i]->cols; l++)
             {
-				cvSetReal2D(cmap,k,l,max(1,ceil(cvGetReal2D(cmap,k,l))));
+				cvSetReal2D(cmap,k,l,max(1.0,ceil(cvGetReal2D(cmap,k,l))));
 			}
 		}
 
@@ -628,14 +628,14 @@ CvMat** detCG(IplImage* im, int norient, double* gtheta){
 }
 
 //-----------------------------------------------------------------------------
-// Compute probability of boundary using brightness 
+// Compute probability of boundary using brightness
 //-----------------------------------------------------------------------------
 CvMat** detBG(IplImage* im, int norient, double* gtheta){
 	// RGB -> gray conversion!
 	IplImage* imgGray = cvCreateImage(cvSize(im->width,im->height),im->depth,1);
 	cvCvtColor(im,imgGray,CV_BGR2GRAY);
 	cvConvertScale(imgGray,imgGray,1.0/255); // gray scale values between [0 and 1]
-	
+
 
 	// set parameters!
 	double imDiag    = sqrt((double)((im->height)*(im->height)+(im->width)*(im->width)));
@@ -648,14 +648,14 @@ CvMat** detBG(IplImage* im, int norient, double* gtheta){
 	cvConvertScale(imgGray, bmap, nbins);
 	for (int k=0;k < bmap->rows; k++){
 		for (int l=0; l< bmap->cols; l++){
-			cvSetReal2D(bmap,k,l,max(1,ceil(cvGetReal2D(bmap,k,l))));
+			cvSetReal2D(bmap,k,l,max(1.0,ceil(cvGetReal2D(bmap,k,l))));
 		}
 	}
 
         CvMat   *bsim = colorsim (nbins, sigmaSim);
-	
-	fprintf(stdout,"\n\tBrightness: "); fflush(stdout);	
-	CvMat**  bg   = tgmo(*bmap, nbins, sigma, gtheta, norient, *bsim, 0); 
+
+	fprintf(stdout,"\n\tBrightness: "); fflush(stdout);
+	CvMat**  bg   = tgmo(*bmap, nbins, sigma, gtheta, norient, *bsim, 0);
 	cvReleaseMat(&bsim);
 	cvReleaseMat(&bmap);
 	cvReleaseImage(&imgGray);
@@ -676,7 +676,7 @@ CvMat *colorsim(int nbins, double sigma) {
 	CvMat *m=cvCreateMat(x->rows,x->rows, CV_32FC1);
 
 
-	// Set x,y directions 
+	// Set x,y directions
 	for (int j=0;j<nbins;j++) {
 		cvSetReal2D(xc,0,j,(j+1-0.5)/nbins);
 		cvSetReal2D(yr,j,0,(j+1-0.5)/nbins);
@@ -704,5 +704,3 @@ CvMat *colorsim(int nbins, double sigma) {
 
 	return m;
 }
-
-
