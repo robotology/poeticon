@@ -1,3 +1,8 @@
+# automatically generated IDL Thrift files
+*_IDLServer.h
+*_IDLServer.cpp
+*_thrift.cmake
+
 # Linux temp files
 *~
 
