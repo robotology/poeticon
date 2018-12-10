@@ -66,8 +66,8 @@ bool Manager::configure(ResourceFinder &rf)
 
     handNaturalPose=rf.check("handNaturalPose", Value(HAND_NATURAL_POSE_DEFAULT)).asInt();
 
-    const ConstString icubContribEnvPath = yarp::os::getenv("ICUBcontrib_DIR");
-    const ConstString localPath = "/share/ICUBcontrib/contexts/affExploreManager/";
+    const std::string icubContribEnvPath = yarp::os::getenv("ICUBcontrib_DIR");
+    const std::string localPath = "/share/ICUBcontrib/contexts/affExploreManager/";
     savePath = icubContribEnvPath + localPath;
 
     descdataFileName = rf.check("descdataFileName",Value("descData.txt")).asString();
