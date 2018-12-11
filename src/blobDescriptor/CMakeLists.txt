@@ -1,13 +1,12 @@
 # Copyright: (C) 2012-2015 POETICON++, European Commission FP7 project ICT-288382
 # Copyright: (C) 2014 VisLab, Institute for Systems and Robotics,
 #                Instituto Superior Técnico, Universidade de Lisboa, Lisbon, Portugal
-# Authors: Giovanni Saponaro <gsaponaro@isr.ist.utl.pt>
+# Authors: Giovanni Saponaro <gsaponaro@isr.tecnico.ulisboa.pt>
 # CopyPolicy: Released under the terms of the GNU GPL v2.0.
 
 cmake_minimum_required(VERSION 2.6)
 
-set(PROJECTNAME blobDescriptor)
-project(${PROJECTNAME})
+project(blobDescriptor)
 
 find_package(YARP REQUIRED)
 find_package(ICUBcontrib)
@@ -29,10 +28,10 @@ file(GLOB folder_header include/iCub/*.h)
 source_group("Source Files" FILES ${folder_source})
 source_group("Header Files" FILES ${folder_header})
 
-add_executable(${PROJECTNAME} ${folder_source} ${folder_header})
-target_link_libraries(${PROJECTNAME} ${OpenCV_LIBRARIES} ${YARP_LIBRARIES})
+add_executable(${PROJECT_NAME} ${folder_source} ${folder_header})
+target_link_libraries(${PROJECT_NAME} ${OpenCV_LIBRARIES} ${YARP_LIBRARIES})
 
-install(TARGETS ${PROJECTNAME} DESTINATION bin)
+install(TARGETS ${PROJECT_NAME} DESTINATION bin)
 
 #icubcontrib_finalize_export (${PROJECT_NAME})
 #icubcontrib_add_uninstall_target()

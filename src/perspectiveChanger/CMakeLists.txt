@@ -1,13 +1,12 @@
 # Copyright: (C) 2014 VisLab, Institute for Systems and Robotics,
 #                Instituto Superior Técnico, Universidade de Lisboa, Lisbon, Portugal
 # Copyright: (C) 2012-2015 POETICON++, European Commission FP7 project ICT-288382
-# Authors: Afonso Gonçalves <agoncalves@isr.ist.utl.pt>
+# Authors: Afonso Gonçalves <agoncalves@isr.tecnico.ulisboa.pt>
 # CopyPolicy: Released under the terms of the GNU GPL v2.0.
 
 cmake_minimum_required(VERSION 2.6)
 
-set(PROJECTNAME perspectiveChanger)
-project(${PROJECTNAME})
+project(perspectiveChanger)
 
 find_package(YARP)
 find_package(ICUB)
@@ -30,11 +29,11 @@ include_directories(${PROJECT_SOURCE_DIR}/include
                     ${OpenCV_INCLUDE_DIRS}
                     ${ctrlLib_INCLUDE_DIRS})
 
-add_executable(${PROJECTNAME} ${folder_source} ${folder_header})
+add_executable(${PROJECT_NAME} ${folder_source} ${folder_header})
 
-target_link_libraries(${PROJECTNAME}
+target_link_libraries(${PROJECT_NAME}
                       ${OpenCV_LIBRARIES}
                       ${YARP_LIBRARIES}
                       ctrlLib)
 
-install(TARGETS ${PROJECTNAME} DESTINATION bin)
+install(TARGETS ${PROJECT_NAME} DESTINATION bin)

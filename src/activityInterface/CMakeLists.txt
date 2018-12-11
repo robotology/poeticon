@@ -1,11 +1,10 @@
 # Copyright: 2012 iCub Facility, Istituto Italiano di Tecnologia
 # Author: Vadim Tikhanoff
 # CopyPolicy: Released under the terms of the GNU GPL v2.0.
-#
 
-CMAKE_MINIMUM_REQUIRED(VERSION 2.6)
-SET(PROJECTNAME activityInterface)
-PROJECT(${PROJECTNAME})
+cmake_minimum_required(VERSION 2.6)
+
+project(activityInterface)
 
 find_package(YARP)
 find_package(ICUB)
@@ -22,11 +21,11 @@ icubcontrib_set_default_prefix()
 
 find_package(Threads REQUIRED)
 
-yarp_idl_to_dir(${PROJECTNAME}.thrift ${CMAKE_CURRENT_SOURCE_DIR})
+yarp_idl_to_dir(${PROJECT_NAME}.thrift ${CMAKE_CURRENT_SOURCE_DIR})
 
 file(GLOB source src/*.cpp)
 file(GLOB header include/*.h)
-set(idl ${PROJECTNAME}.thrift)
+set(idl ${PROJECT_NAME}.thrift)
 
 source_group("Source Files" FILES ${source})
 source_group("Header Files" FILES ${header})
@@ -37,12 +36,12 @@ include_directories(${PROJECT_SOURCE_DIR}/include
                     ${ICUB_INCLUDE_DIRS}
                     ${OpenCV_INCLUDE_DIRS})
 
-add_executable(${PROJECTNAME} ${source} ${header} ${idl} )
+add_executable(${PROJECT_NAME} ${source} ${header} ${idl} )
 
 # removed activeSegmentation, we use IOL tracking. https://github.com/robotology/poeticon/issues/194
-target_link_libraries(${PROJECTNAME} ${YARP_LIBRARIES} ${OpenCV_LIBRARIES} iKin ${CMAKE_THREAD_LIBS_INIT})
+target_link_libraries(${PROJECT_NAME} ${YARP_LIBRARIES} ${OpenCV_LIBRARIES} iKin ${CMAKE_THREAD_LIBS_INIT})
 
-install(TARGETS ${PROJECTNAME} DESTINATION bin)
+install(TARGETS ${PROJECT_NAME} DESTINATION bin)
 
 #icubcontrib_finalize_export (${PROJECT_NAME})
 #icubcontrib_add_uninstall_target()

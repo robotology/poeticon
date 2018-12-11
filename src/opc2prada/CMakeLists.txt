@@ -1,13 +1,12 @@
 # Copyright: (C) 2012-2015 POETICON++, European Commission FP7 project ICT-288382
 # Copyright: (C) 2014 VisLab, Institute for Systems and Robotics,
 #                Instituto Superior Técnico, Universidade de Lisboa, Lisbon, Portugal
-# Authors: Pedro Vicente <pvicente@isr.ist.utl.pt>
+# Authors: Pedro Vicente <pvicente@isr.tecnico.ulisboa.pt>
 # CopyPolicy: Released under the terms of the GNU GPL v2.0.
 
 cmake_minimum_required(VERSION 2.6)
 
-set(PROJECTNAME opc2prada)
-project(${PROJECTNAME})
+project(opc2prada)
 
 find_package(YARP)
 find_package(ICUBcontrib)
@@ -15,7 +14,7 @@ find_package(ICUBcontrib)
 list(APPEND CMAKE_MODULE_PATH ${ICUBCONTRIB_MODULE_PATH})
 
 set(IDL_GENERATED_CODE_DIR "${CMAKE_CURRENT_SOURCE_DIR}")
-yarp_idl_to_dir(${PROJECTNAME}.thrift ${IDL_GENERATED_CODE_DIR})
+yarp_idl_to_dir(${PROJECT_NAME}.thrift ${IDL_GENERATED_CODE_DIR})
 
 include(ICUBcontribHelpers)
 include(ICUBcontribOptions)
@@ -30,11 +29,11 @@ source_group("Header Files" FILES ${header})
 include_directories(${PROJECT_SOURCE_DIR}/include
                     ${IDL_GENERATED_CODE_DIR}/include)
 
-add_executable(${PROJECTNAME} ${source} ${header})
+add_executable(${PROJECT_NAME} ${source} ${header})
 
-target_link_libraries(${PROJECTNAME} ${YARP_LIBRARIES})
+target_link_libraries(${PROJECT_NAME} ${YARP_LIBRARIES})
 
-install(TARGETS ${PROJECTNAME} DESTINATION bin)
+install(TARGETS ${PROJECT_NAME} DESTINATION bin)
 
 # required by Windows?
-#SET(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${ICUB_LINK_FLAGS}")              
+#SET(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${ICUB_LINK_FLAGS}")

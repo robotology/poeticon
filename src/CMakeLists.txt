@@ -5,8 +5,7 @@ cmake_minimum_required(VERSION 2.6)
 
 option(BUILD_simulation "Build poeticon-simulation" OFF)
 
-set(PROJECTNAME poeticon)
-project(${PROJECTNAME})
+project(poeticon)
 
 find_package(YARP)
 set(YARP_REQUIRED_VERSION 3.1.0)

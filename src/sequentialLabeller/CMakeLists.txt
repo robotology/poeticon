@@ -1,13 +1,12 @@
 # Copyright: (C) 2012-2015 POETICON++, European Commission FP7 project ICT-288382
 # Copyright: (C) 2014 VisLab, Institute for Systems and Robotics,
 #                Instituto Superior Técnico, Universidade de Lisboa, Lisbon, Portugal
-# Authors: Giovanni Saponaro <gsaponaro@isr.ist.utl.pt>
+# Authors: Giovanni Saponaro <gsaponaro@isr.tecnico.ulisboa.pt>
 # CopyPolicy: Released under the terms of the GNU GPL v2.0.
 
 cmake_minimum_required(VERSION 2.6)
 
-set(PROJECTNAME sequentialLabeller)
-project(${PROJECTNAME})
+project(sequentialLabeller)
 
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR})
 
@@ -30,8 +29,8 @@ file(GLOB folder_header *.h)
 source_group("Source Files" FILES ${folder_source})
 source_group("Header Files" FILES ${folder_header})
 
-add_executable(${PROJECTNAME} ${folder_source} ${folder_header})
+add_executable(${PROJECT_NAME} ${folder_source} ${folder_header})
 
 # we now add the YARP and iCub libraries to our project.
-target_link_libraries(${PROJECTNAME} ${OpenCV_LIBS} ${YARP_LIBRARIES})
-install(TARGETS ${PROJECTNAME} DESTINATION bin)
+target_link_libraries(${PROJECT_NAME} ${OpenCV_LIBS} ${YARP_LIBRARIES})
+install(TARGETS ${PROJECT_NAME} DESTINATION bin)

@@ -1,19 +1,17 @@
 # Copyright: 2012 iCub Facility, Istituto Italiano di Tecnologia
 # Author: Vadim Tikhanoff
 # CopyPolicy: Released under the terms of the GNU GPL v2.0.
-# 
 
-CMAKE_MINIMUM_REQUIRED(VERSION 2.6)
-SET(PROJECTNAME activeParticleTrack)
-PROJECT(${PROJECTNAME})
+cmake_minimum_required(VERSION 2.6)
+
+project(activeParticleTrack)
 
 find_package(GSL REQUIRED)
-#this is needed externally
+# removed activeSegmentation, we use IOL tracking. https://github.com/robotology/poeticon/issues/194
 #find_package(activeSegmentation)
-
 find_package(Threads REQUIRED)
 
-yarp_idl_to_dir(${PROJECTNAME}.thrift ${CMAKE_CURRENT_SOURCE_DIR})
+yarp_idl_to_dir(${PROJECT_NAME}.thrift ${CMAKE_CURRENT_SOURCE_DIR})
 
 file(GLOB folder_source src/*.cpp)
 file(GLOB folder_header include/*.h include/iCub/*.h)
@@ -29,8 +27,8 @@ include_directories(
             ${activeSegmentation_INCLUDE_DIRS}
 )
 
-add_executable( ${PROJECTNAME} ${folder_source} ${folder_header} ${idl} )
+add_executable( ${PROJECT_NAME} ${folder_source} ${folder_header} ${idl} )
 
-target_link_libraries(${PROJECTNAME} ${GSL_LIBRARIES} ${YARP_LIBRARIES} activeSegmentation ${OpenCV_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
+target_link_libraries(${PROJECT_NAME} ${GSL_LIBRARIES} ${YARP_LIBRARIES} activeSegmentation ${OpenCV_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
 
-install(TARGETS ${PROJECTNAME} DESTINATION bin)
+install(TARGETS ${PROJECT_NAME} DESTINATION bin)
