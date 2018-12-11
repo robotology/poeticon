@@ -8,7 +8,8 @@ cmake_minimum_required(VERSION 2.6)
 
 project(blobDescriptor)
 
-find_package(YARP REQUIRED)
+find_package(YARP REQUIRED
+                  COMPONENTS OS sig)
 find_package(ICUBcontrib)
 
 list(APPEND CMAKE_MODULE_PATH ${ICUBCONTRIB_MODULE_PATH})

@@ -8,7 +8,8 @@ cmake_minimum_required(VERSION 2.6)
 
 project(worldStateManager)
 
-find_package(YARP)
+find_package(YARP REQUIRED
+                  COMPONENTS OS idl_tools sig)
 find_package(ICUB) # ctrlLib
 find_package(ICUBcontrib)
 

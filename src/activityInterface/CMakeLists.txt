@@ -6,7 +6,8 @@ cmake_minimum_required(VERSION 2.6)
 
 project(activityInterface)
 
-find_package(YARP)
+find_package(YARP REQUIRED
+                  COMPONENTS OS dev idl_tools math sig)
 find_package(ICUB)
 find_package(ICUBcontrib)
 
