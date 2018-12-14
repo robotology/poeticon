@@ -25,6 +25,7 @@ struct MemoryItemObj : public MemoryItem
     Bottle onTopOf;
     Bottle reachW;
     Bottle pullW;
+    Bottle pushW;
 
     // constructors
     MemoryItemObj(const int _id, const string _name, const bool _isHand)
@@ -36,13 +37,13 @@ struct MemoryItemObj : public MemoryItem
                   Bottle _desc2d, Bottle _tooldesc2d,
                   string _inHand,
                   Bottle _onTopOf,
-                  Bottle _reachW, Bottle _pullW)
+                  Bottle _reachW, Bottle _pullW, Bottle _pushW)
     : MemoryItem(_id,_name,_isHand),
       pos2d(_pos2d),
       desc2d(_desc2d), tooldesc2d(_tooldesc2d),
       inHand(_inHand),
       onTopOf(_onTopOf),
-      reachW(_reachW), pullW(_pullW)
+      reachW(_reachW), pullW(_pullW), pushW(_pushW)
     {}
 
     // copy constructor
@@ -54,7 +55,8 @@ struct MemoryItemObj : public MemoryItem
       inHand(other.inHand),
       onTopOf(other.onTopOf),
       reachW(other.reachW),
-      pullW(other.pullW)
+      pullW(other.pullW),
+      pushW(other.pushW)
     {}
 
     // copy assignment operator
@@ -78,7 +80,8 @@ struct MemoryItemObj : public MemoryItem
             << "in_hand=" << inHand << " "
             << "on_top_of=" << onTopOf.toString().c_str() << " "
             << "reachable_with=" << reachW.toString().c_str() << " "
-            << "pullable_with=" << pullW.toString().c_str();
+            << "pullable_with=" << pullW.toString().c_str() << " "
+            << "pushable_with=" << pushW.toString().c_str();
     }
 };
 

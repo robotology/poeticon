@@ -38,7 +38,7 @@ public:
     Mutex guard_runit;
     bool _runit;
     virtual bool threadInit();
-    
+
     //called by start after threadInit, s is true iff the thread started
     //successfully
     virtual void afterStart(bool s);
@@ -53,7 +53,7 @@ private:
 
 class TranslatorModule: public RFModule, public OPC2PRADA_IDL {
     string moduleName;
-    enum switchCase {name,is_h, pos2d,desc,tooldesc2d,in_h,on_t,re_w,pu_w, free, notfound};
+    enum switchCase {name,is_h, pos2d,desc,tooldesc2d,in_h,on_t,re_w,pull_w,push_w, free, notfound};
     string translatorPortName, handlerPortName;
     BufferedPort<Bottle> translatorPort;
 
@@ -64,13 +64,13 @@ class TranslatorModule: public RFModule, public OPC2PRADA_IDL {
     double threadPeriod;
 
     Thread_read *readingThread;
-    
+
     ofstream stateFile;
 
 private:
     string stateFileName;
 public:
-    
+
     double getPeriod();
     bool configure(yarp::os::ResourceFinder &rf);
     bool updateModule();

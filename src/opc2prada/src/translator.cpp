@@ -28,7 +28,8 @@ TranslatorModule::switchCase TranslatorModule::hashtable(string command){
     if(command=="in_hand")  return in_h;
     if(command=="on_top_of")  return on_t;
     if(command=="reachable_with")  return re_w;
-    if(command=="pullable_with")  return pu_w;
+    if(command=="pullable_with")  return pull_w;
+    if(command=="pushable_with")  return push_w;
 
     if(command=="is_free")  return free;
     return notfound;
@@ -116,10 +117,17 @@ bool TranslatorModule::update(){
                         }
                         break;
                     }
-                    case pu_w: {
+                    case pull_w: {
                         Bottle *pullable = propriedade->get(1).asList();
                         for(int k=0; k < pullable->size(); k++){
                             stateFile << idsp->get((i-1)).asInt() <<"_ispullable_with_" <<pullable->get(k).asInt() <<"() ";
+                        }
+                        break;
+                    }
+                    case push_w: {
+                        Bottle *pushable = propriedade->get(1).asList();
+                        for(int k=0; k < pushable->size(); k++){
+                            stateFile << idsp->get((i-1)).asInt() <<"_ispushable_with_" <<pushable->get(k).asInt() <<"() ";
                         }
                         break;
                     }

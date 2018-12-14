@@ -611,7 +611,7 @@ bool WorldStateMgrThread::getTrackNames()
         int v = static_cast<int>( inTargets->get(i).asList()->get(2).asDouble() );
         string label;
         if (!getLabelMajorityVote(u, v, label))
-        {   
+        {
             // failed acquiring not-null label -> try again
             yWarning() << __func__ << "problem with getLabelMajorityVote";
             return false;
@@ -658,7 +658,7 @@ bool WorldStateMgrThread::getAffBottleIndexFromTrackROI(const int &u, const int 
     // the tracker ROI coordinates u v.
     //
     // Current implementation: from tracker ROI centre, detect the most likely
-    // blob index within blobDescriptor Bottle, using Euclidean distance. 
+    // blob index within blobDescriptor Bottle, using Euclidean distance.
     // It iterates over pairs
     //bPosValue.addDouble(inAff->get(*+1).asList()->get(0).asDouble());
     //bPosValue.addDouble(inAff->get(*+1).asList()->get(1).asDouble());
@@ -713,7 +713,7 @@ bool WorldStateMgrThread::computeObjProperties(const int &id, const string &labe
                                                Bottle &desc2d, Bottle &tooldesc2d,
                                                string &inHand,
                                                Bottle &onTopOf,
-                                               Bottle &reachW, Bottle &pullW)
+                                               Bottle &reachW, Bottle &pullW, Bottle &pushW)
 {
     yDebug("%s begin %d/%s", __func__, id, label.c_str());
 
@@ -875,6 +875,11 @@ bool WorldStateMgrThread::computeObjProperties(const int &id, const string &labe
                      bLabelsPulling.toString().c_str());
     }
 
+    // prepare pushable_with property
+    // we just copy reachable_with, because reachableWith(obj1,obj2) => pushableWith(obj1,obj2)
+    pushW = reachW;
+    Bottle bLabelsPushing(bLabelsReaching); // strings
+
     // end symbols that depend on activityInterface
 
     //yDebug("%s end %d/%s", __func__, id, label.c_str());
@@ -911,19 +916,20 @@ bool WorldStateMgrThread::constructMemoryFromMap()
         Bottle onTopOf;
         Bottle reachW;
         Bottle pullW;
+        Bottle pushW;
         computeObjProperties(iter->first,iter->second,
                              pos2d,
                              desc2d,tooldesc2d,
                              inHand,
                              onTopOf,
-                             reachW,pullW);
+                             reachW,pullW,pushW);
         objs.push_back(
             MemoryItemObj(iter->first,iter->second,false,
                           pos2d,
                           desc2d, tooldesc2d,
                           inHand,
                           onTopOf,
-                          reachW,pullW) );
+                          reachW,pullW,pushW) );
     }
 
     return true;
@@ -1011,10 +1017,11 @@ bool WorldStateMgrThread::constructMemoryFromOPCID(const int &opcID)
         Bottle onTopOf;
         Bottle reachW;
         Bottle pullW;
+        Bottle pushW;
         parseObjProperties(fields,
-                           pos2d,desc2d,tooldesc2d,inHand,onTopOf,reachW,pullW);
+                           pos2d,desc2d,tooldesc2d,inHand,onTopOf,reachW,pullW,pushW);
         objs.push_back(MemoryItemObj(opcID,name,false,
-                       pos2d,desc2d,tooldesc2d,inHand,onTopOf,reachW,pullW));
+                       pos2d,desc2d,tooldesc2d,inHand,onTopOf,reachW,pullW,pushW));
     }
 
     return true;
@@ -1130,7 +1137,7 @@ bool WorldStateMgrThread::parseObjProperties(const Bottle *fields,
                               Bottle &pos2d,
                               Bottle &desc2d, Bottle &tooldesc2d,
                               string &inHand, Bottle &onTopOf,
-                              Bottle &reachW, Bottle &pullW)
+                              Bottle &reachW, Bottle &pullW, Bottle &pushW)
 {
     if (fields==NULL)
         return false;
@@ -1186,6 +1193,12 @@ bool WorldStateMgrThread::parseObjProperties(const Bottle *fields,
         pullW = * fields->find("pullable_with").asList();
     else
         yWarning("problem parsing pullable_with");
+
+        if ( fields->check("pushable_with") &&
+             fields->find("pushable_with").isList() )
+            pushW = * fields->find("pushable_with").asList();
+        else
+            yWarning("problem parsing pushable_with");
 
     return true;
 }
@@ -1396,7 +1409,7 @@ bool WorldStateMgrThread::getLabel(const int &u, const int &v, string &label)
 
     // response format: "winning-label"
     bool validDeterministicResponse = activityReply.get(0).isString();
-    
+
     if (validDeterministicResponse)
     {
         if (activityReply.get(0).asString().size()==0)
@@ -1894,13 +1907,14 @@ bool WorldStateMgrThread::doPopulateDB()
         Bottle onTopOf;
         Bottle reachW;
         Bottle pullW;
+        Bottle pushW;
         // compute updated properties
         computeObjProperties(iter->id,iter->name,
                              pos2d,             // if not visible, keep current
                              desc2d,tooldesc2d, // if not visible, keep current
                              inHand,
                              onTopOf,
-                             reachW,pullW);
+                             reachW,pullW,pushW);
 
         // write to internal memory model
         iter->pos2d = pos2d;
@@ -1910,6 +1924,7 @@ bool WorldStateMgrThread::doPopulateDB()
         iter->onTopOf = onTopOf;
         iter->reachW = reachW;
         iter->pullW = pullW;
+        iter->pushW = pushW;
 
         // prepare content for WSOPC
         Bottle bName;
@@ -1948,6 +1963,9 @@ bool WorldStateMgrThread::doPopulateDB()
         Bottle bPullW;
         bPullW.addString("pullable_with");
         bPullW.addList() = pullW;
+        Bottle bPushW;
+        bPushW.addString("pushable_with");
+        bPushW.addList() = pushW;
 
         // write to WSOPC
         if (opcContainsID(iter->id))
@@ -1979,6 +1997,7 @@ bool WorldStateMgrThread::doPopulateDB()
             opcCmdContent.addList() = bOnTopOf;
             opcCmdContent.addList() = bReachW;
             opcCmdContent.addList() = bPullW;
+            opcCmdContent.addList() = bPushW;
             opcCmd.addList() = opcCmdContent;
 
             //yDebug() << __func__ << "sending command to WSOPC:" << opcCmd.toString().c_str();
@@ -2014,6 +2033,7 @@ bool WorldStateMgrThread::doPopulateDB()
             opcCmdContent.addList() = bOnTopOf;
             opcCmdContent.addList() = bReachW;
             opcCmdContent.addList() = bPullW;
+            opcCmdContent.addList() = bPushW;
             opcCmd.addList() = opcCmdContent;
 
             //yDebug() << __func__ << "sending command to WSOPC:" << opcCmd.toString().c_str();
@@ -2236,7 +2256,7 @@ void WorldStateMgrThread::fsm()
 bool WorldStateMgrThread::printMemoryState()
 {
     yInfo("short-term memory:");
-        
+
     for(std::vector<MemoryItemHand>::const_iterator iter = hands.begin();
         iter != hands.end();
         ++iter)

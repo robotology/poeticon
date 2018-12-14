@@ -128,7 +128,7 @@ class WorldStateMgrThread : public RateThread
                                   Bottle &desc2d, Bottle &tooldesc2d,
                                   string &inHand,
                                   Bottle &onTopOf,
-                                  Bottle &reachW, Bottle &pullW);
+                                  Bottle &reachW, Bottle &pullW, Bottle &pushW);
         bool constructMemoryFromMap();
         bool constructMemoryFromOPCID(const int &opcID);
         bool initMemoryFromOPC();
@@ -139,7 +139,7 @@ class WorldStateMgrThread : public RateThread
                                  Bottle &pos2d,
                                  Bottle &desc2d, Bottle &tooldesc2d,
                                  string &inHand, Bottle &onTopOf,
-                                 Bottle &reachW, Bottle &pullW);
+                                 Bottle &reachW, Bottle &pullW, Bottle &pushW);
 
         bool tellActivityGoHome();
         string id2label(const int &id);
@@ -150,6 +150,7 @@ class WorldStateMgrThread : public RateThread
         bool isOnTopOf(const string &objName, Bottle &objBelow);
         bool isReachableWith(const string &objName, Bottle &objReachable);
         bool isPullableWith(const string &objName, Bottle &objPullable);
+        // isPushableWith not necessary as we propagate the reachable list
         bool isHandFree(const string &handName);
         string inWhichHand(const string &objName);
         bool getVisibilityByActivityIF(const string &objName, bool &result, int extraTries=4);
