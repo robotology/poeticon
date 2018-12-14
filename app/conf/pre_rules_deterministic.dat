@@ -3,7 +3,7 @@
 ACTION:
   push__obj_with__tool_in__hand()
 CONTEXT:
-  -_obj_ishand() _tool_inhand__hand() _obj_isreachable_with__tool() _obj_ispushable_with__tool()
+  -_obj_ishand() _tool_inhand__hand() _hand_ishand() _obj_isreachable_with__tool() _obj_ispushable_with__tool()
 OUTCOMES:
   0.85 -_obj_isreachable_with__ALL()
   0.15 <noise>
@@ -13,7 +13,7 @@ OUTCOMES:
 ACTION:
   pull__obj_with__tool_in__hand()
 CONTEXT:
-  -_obj_ishand() _tool_inhand__hand() _obj_isreachable_with__tool() _obj_ispullable_with__tool()
+  -_obj_ishand() _tool_inhand__hand() _hand_ishand() _obj_isreachable_with__tool() _obj_ispullable_with__tool()
 OUTCOMES:
   0.85 _obj_isreachable_with__ALL()
   0.15 <noise>
