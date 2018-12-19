@@ -24,7 +24,7 @@ Dependencies of probabilistic planning:
 Dependencies of affordance perception:
 - [MATLAB](http://www.mathworks.com/products/matlab)
 - [YARP Java bindings](http://www.yarp.it/yarp_swig.html) (in the YARP build directory, call CMake and enable ```YARP_COMPILE_BINDINGS```, ```CREATE_JAVA```, ```PREPARE_CLASS_FILES```)
-- YARP for MATLAB (add the directory with the Java ```*.class``` files to the classpath, and the directory with ```libjyarp.so``` to ```librarypath.txt```)
+- YARP for MATLAB (add the full paths to ```yarp.jar``` and ```yarp_matlab_java.jar``` to the classpath, add the directory with ```libyarp_java.so``` to ```librarypath.txt```)
 - [pmtk3](https://github.com/probml/pmtk3) (installation: launch MATLAB as superuser, run ```initPmtk3.m```, click on setPath, select the pmtk3 directories then Save to permanently add them to MATLABPATH)
 
 ### External projects
