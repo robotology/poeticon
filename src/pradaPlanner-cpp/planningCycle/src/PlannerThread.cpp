@@ -186,7 +186,7 @@ bool PlannerThread::startPlanning()
             startPlan = true; //When and if worldStateManager is initialized, we can start the plan
             stopping = false; //The plan is not stopped unless ordered
         }
-        else 
+        else
         {
             yError("Failed to reset World State.");
             startPlan = false; //If the worldStateManager fails to reset, the plan should not continue
@@ -205,7 +205,7 @@ bool PlannerThread::startPlanning()
             startPlan = true; //When and if worldStateManager is initialized, we can start the plan
             stopping = false; //The plan is not stopped unless ordered
         }
-        else 
+        else
         {
             yError("Failed to initialize World State.");
             startPlan = false; //If the worldStateManager fails to initialize, the plan should not continue
@@ -375,7 +375,7 @@ bool PlannerThread::completePlannerState()
     return true;
 }
 
-       
+
 bool PlannerThread::groundRules()
 {
     string command, data;
@@ -436,7 +436,9 @@ bool PlannerThread::groundRules()
         }
         if (command == "ready"){ // success!
             t1 = yarp::os::Time::now();
-            yInfo("Grounding Complete! Elapsed time: %f", t1-t0);
+            double time_grounding = t1 - t0;
+            yInfo("Grounding Complete! Elapsed time: %f", time_grounding);
+            // TODO write time on port
             break;
         }
         if (geo_yarp.getOutputCount() == 0) // module crashed
@@ -573,7 +575,9 @@ bool PlannerThread::compileGoal()
             if (mess_receiv == "done") // success!
             {
                 t1 = yarp::os::Time::now();
-                yInfo("Goal Compiling is complete! Elapsed time: %f", t1-t0);
+                double time_goal_compiling = t1 - t0;
+                yInfo("Goal Compiling is complete! Elapsed time: %f", time_goal_compiling);
+                // TODO write time on port
                 break;
             }
             else if (mess_receiv == "failed_objects") // failed to obtain the objects from the planningCycle
@@ -891,7 +895,7 @@ bool PlannerThread::compareState()
     return false;
 }
 
-// preserves rules after grounding, in order to revert after adapting them 
+// preserves rules after grounding, in order to revert after adapting them
 bool PlannerThread::preserveRules()
 {
     old_rules = rules;
@@ -1062,7 +1066,9 @@ int PlannerThread::PRADA()
     double t0 = yarp::os::Time::now();
     int sys_flag = system(process_string.c_str());
     double t1 = yarp::os::Time::now();
-    yInfo("PRADA elapsed time: %f", t1-t0);
+    double time_prada = t1 - t0;
+    yInfo("PRADA elapsed time: %f", time_prada);
+    // TODO write time on port
     if (sys_flag == 34304) // code for executable failure
     {
         yError("Error with PRADA files, load failed");
@@ -1111,7 +1117,7 @@ bool PlannerThread::increaseHorizon()
         configData.push_back(line);
     }
     configFile.close();
-    for (int w = 0; w < configData.size(); ++w){ 
+    for (int w = 0; w < configData.size(); ++w){
         if (configData[w].find("[PRADA]") != std::string::npos){
             temp_vect = split(configData[w+2], ' ');
             horizon = atoi(temp_vect[1].c_str());
@@ -1176,7 +1182,7 @@ bool PlannerThread::increaseHorizon()
                         }
                     }
                     yDebug("Sending to Praxicon: %s", prax_bottle_out.toString().c_str());
-                    prax_yarp.write(); 
+                    prax_yarp.write();
                     restartPlan = true;
                     return false; // leaves function
                 }
@@ -1279,7 +1285,7 @@ bool PlannerThread::IDisPresent(string ID, bool &result)
                     {
                         result = true;
                         return true;
-                    } 
+                    }
                 }
                 if (state[i].find("inhand_") != std::string::npos) // if that symbol is "inhand"
                 {
@@ -1323,7 +1329,7 @@ bool PlannerThread::checkHoldingSymbols()
             yDebug("checking: %s", holding_symbols[t].c_str());
             if (find_element(state, holding_symbols[t])== 0){ // If one of the symbols present in an already-achieved subgoal is not present on the current state:
                 yInfo("Situation changed, receding in plan");
-                return false; 
+                return false;
             }
         }
     }
@@ -1498,7 +1504,7 @@ bool PlannerThread:: execAction()
         message.addString(obj);
     }
     else { // for pull, push, and put
-        message.addString(act); 
+        message.addString(act);
         message.addString(obj);
         message.addString(hand);
     }
@@ -1690,7 +1696,7 @@ bool PlannerThread::plan_init()
     if (!checkPause())
     {
         return false;
-    } 
+    }
     if (!loadRules()) // loads rules grounded by the geometricGrounding
     {
         return false;
@@ -1877,7 +1883,7 @@ bool PlannerThread::planning_cycle()
                 {
                     return false;
                 }
-                string tmp_str = showCurrentGoal(); 
+                string tmp_str = showCurrentGoal();
                 yInfo("Current subgoal: %s", tmp_str.c_str());
                 int flag_prada = PRADA(); // run PRADA planner (planner.exe)
                 if (!checkPause())
@@ -2002,7 +2008,7 @@ bool PlannerThread::planning_cycle()
             {
                 return false;
             }
-            string tmp_str = showCurrentGoal(); 
+            string tmp_str = showCurrentGoal();
             yInfo("Current subgoal: %s", tmp_str.c_str());
             int flag_prada = PRADA(); // run PRADA planner (planner.exe)
             if (!checkPause())
@@ -2088,7 +2094,7 @@ string PlannerThread::showCurrentState()
     {
         temp_str = temp_str + state[i] + " ";
     }
-    return temp_str; 
+    return temp_str;
 }
 
 // RPC function to show the current goal
@@ -2103,7 +2109,7 @@ string PlannerThread::showCurrentGoal()
     {
         temp_str = temp_str + goal[i] + " ";
     }
-    return temp_str; 
+    return temp_str;
 }
 
 // RPC Function that prints all instances of specified "symbol"
@@ -2229,8 +2235,8 @@ string PlannerThread::printSymbol(string symbol)
         }
         return reply_string;
     }
-    
-    else 
+
+    else
     {
         return "symbol not recognised, please insert one of the symbols on the list";
     }
