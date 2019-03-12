@@ -76,6 +76,7 @@ class PlannerThread : public RateThread
         BufferedPort<Bottle> geo_yarp;
         BufferedPort<Bottle> prax_yarp;
         BufferedPort<Bottle> aff_yarp;
+        BufferedPort<Bottle> time_yarp;
         RpcClient world_rpc;
         RpcClient actInt_rpc;
         RpcClient opc2prada_rpc;
@@ -87,12 +88,12 @@ class PlannerThread : public RateThread
         bool useAdaptability;
         bool useGoalConsistency;
         bool useCreativity;
-        
+
         int plan_level;
 
         int positx;
         int posity;
-        
+
         Bottle object_bottle;
         Bottle cmd;
         Bottle message;

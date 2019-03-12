@@ -50,6 +50,10 @@ bool PlannerThread::openPorts()
     portName = "/" + moduleName + "/affordances_cmd:io";
     aff_yarp.open(portName);
 
+    // Port to broadcast the computational time taken by functions
+    portName = "/" + moduleName + "/time:o";
+    time_yarp.open(portName);
+
     //Port to issue commands to worldStateManager module (update)
     portName = "/" + moduleName + "/wsm_rpc:o";
     world_rpc.open(portName);
@@ -78,6 +82,7 @@ void PlannerThread::close()
     geo_yarp.close();
     prax_yarp.close();
     aff_yarp.close();
+    time_yarp.close();
     world_rpc.close();
     actInt_rpc.close();
     opc2prada_rpc.close();
@@ -92,6 +97,7 @@ void PlannerThread::interrupt()
     geo_yarp.interrupt();
     prax_yarp.interrupt();
     aff_yarp.interrupt();
+    time_yarp.interrupt();
     world_rpc.interrupt();
     actInt_rpc.interrupt();
     opc2prada_rpc.interrupt();
@@ -438,7 +444,13 @@ bool PlannerThread::groundRules()
             t1 = yarp::os::Time::now();
             double time_grounding = t1 - t0;
             yInfo("Grounding Complete! Elapsed time: %f", time_grounding);
-            // TODO write time on port
+            // broadcast elapsed computational time on port
+            yarp::os::Bottle &bTime = time_yarp.prepare();
+            bTime.clear();
+            bTime.addString("grounding");
+            bTime.addDouble(time_grounding);
+            time_yarp.write();
+
             break;
         }
         if (geo_yarp.getOutputCount() == 0) // module crashed
@@ -577,7 +589,13 @@ bool PlannerThread::compileGoal()
                 t1 = yarp::os::Time::now();
                 double time_goal_compiling = t1 - t0;
                 yInfo("Goal Compiling is complete! Elapsed time: %f", time_goal_compiling);
-                // TODO write time on port
+                // broadcast elapsed computational time on port
+                yarp::os::Bottle &bTime = time_yarp.prepare();
+                bTime.clear();
+                bTime.addString("goal_compiling");
+                bTime.addDouble(time_goal_compiling);
+                time_yarp.write();
+
                 break;
             }
             else if (mess_receiv == "failed_objects") // failed to obtain the objects from the planningCycle
@@ -1068,7 +1086,13 @@ int PlannerThread::PRADA()
     double t1 = yarp::os::Time::now();
     double time_prada = t1 - t0;
     yInfo("PRADA elapsed time: %f", time_prada);
-    // TODO write time on port
+    // broadcast elapsed computational time on port
+    yarp::os::Bottle &bTime = time_yarp.prepare();
+    bTime.clear();
+    bTime.addString("prada");
+    bTime.addDouble(time_prada);
+    time_yarp.write();
+
     if (sys_flag == 34304) // code for executable failure
     {
         yError("Error with PRADA files, load failed");
