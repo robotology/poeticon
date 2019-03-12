@@ -11,7 +11,12 @@ import sys
 import time
 import xml.etree.ElementTree as ET
 
+# installation:
+# sudo apt install python3-colorama
+# or
+# pip3 install colorama
 from colorama import Fore
+
 from lxml import etree
 
 # installation: pip3 install stopit
@@ -222,8 +227,8 @@ def parse_cmdline_options():
 
     parser = argparse.ArgumentParser(description='Simulate the POETICON++ experiment')
     parser.add_argument('-c', '--clean', help='clean up or stop existing modules then quit (default false)', action='store_true')
-    parser.add_argument('-d', help='path where the YARP application XML file (yarpmanager format) is located', default='/home/gsaponaro/NOBACKUP/unstable-modules/poeticon-simulation/app/scripts')
-    parser.add_argument('-i', help='YARP application XML filename (yarpmanager format)', type=argparse.FileType('r'), default='sim_complex6_creativity+adaptability.xml')
+    parser.add_argument('-d', help='path where the YARP application XML file (yarpmanager format) is located', default='/home/gsaponaro/NOBACKUP/unstable-modules/poeticon-simulation/app/scripts')  # /usr/local/src/robot/poeticon/src/poeticon-simulation/app/scripts
+    parser.add_argument('-i', help='YARP application XML filename (yarpmanager format)', type=argparse.FileType('r'), default='sim_complex6_creativity+adaptability.xml')  # sim_simple3_noheur.xml
     parser.add_argument('-n', help='number of experiments to run (default 1)', type=int, default=1)
     parser.add_argument('-s', help='safe mode (asking user confirmation, default false)', action='store_true')
     parser.add_argument('-t', help='timeout in seconds for an experiment (default 600)', type=int, default=600)
@@ -537,7 +542,7 @@ if __name__ == '__main__':
         else:
             # main routine did NOT complete successfully
             print('timeout: {} seconds (user asked: {})'.format(time.time()-start_time, args.t))
-        
+
         # temporary fix for cleaning zombies
         cleaning_routine()
         my_delay(5)
