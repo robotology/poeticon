@@ -471,6 +471,12 @@ def mainroutine():
     # remove double quotes
     rep = rep.toString().strip('\"')
 
+    # quit gracefully if there was a problem with dummyActivityInterface
+    if not rep or rep.isspace():
+        print('Error: received empty string from dummyActivityInterface! Cleaning and quitting...')
+        cleaning_routine()
+        sys.exit()
+
     # compact score
     score = rep.split()[0]
 
