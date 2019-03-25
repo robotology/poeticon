@@ -508,22 +508,23 @@ bool BlobDescriptorModule::updateModule()
 
             // TODO: increase number of bins (this will break backwards compatibility)
 
-            /*7*/objbot.addDouble((double)cvGetReal1D(_objDescTable[i].objHist, 0));
-            /*8*/objbot.addDouble((double)cvGetReal1D(_objDescTable[i].objHist, 1));
-            /*9*/objbot.addDouble((double)cvGetReal1D(_objDescTable[i].objHist, 2));
-            /*10*/objbot.addDouble((double)cvGetReal1D(_objDescTable[i].objHist, 3));
-            /*11*/objbot.addDouble((double)cvGetReal1D(_objDescTable[i].objHist, 4));
-            /*12*/objbot.addDouble((double)cvGetReal1D(_objDescTable[i].objHist, 5));
-            /*13*/objbot.addDouble((double)cvGetReal1D(_objDescTable[i].objHist, 6));
-            /*14*/objbot.addDouble((double)cvGetReal1D(_objDescTable[i].objHist, 7));
-            /*15*/objbot.addDouble((double)cvGetReal1D(_objDescTable[i].objHist, 8));
-            /*16*/objbot.addDouble((double)cvGetReal1D(_objDescTable[i].objHist, 9));
-            /*17*/objbot.addDouble((double)cvGetReal1D(_objDescTable[i].objHist, 10));
-            /*18*/objbot.addDouble((double)cvGetReal1D(_objDescTable[i].objHist, 11));
-            /*19*/objbot.addDouble((double)cvGetReal1D(_objDescTable[i].objHist, 12));
-            /*20*/objbot.addDouble((double)cvGetReal1D(_objDescTable[i].objHist, 13));
-            /*21*/objbot.addDouble((double)cvGetReal1D(_objDescTable[i].objHist, 14));
-            /*22*/objbot.addDouble((double)cvGetReal1D(_objDescTable[i].objHist, 15));
+            CvArr* bins = _objDescTable[i].objHist->bins;
+            /*7*/objbot.addDouble((double)cvGetReal1D(bins, 0));
+            /*8*/objbot.addDouble((double)cvGetReal1D(bins, 1));
+            /*9*/objbot.addDouble((double)cvGetReal1D(bins, 2));
+            /*10*/objbot.addDouble((double)cvGetReal1D(bins, 3));
+            /*11*/objbot.addDouble((double)cvGetReal1D(bins, 4));
+            /*12*/objbot.addDouble((double)cvGetReal1D(bins, 5));
+            /*13*/objbot.addDouble((double)cvGetReal1D(bins, 6));
+            /*14*/objbot.addDouble((double)cvGetReal1D(bins, 7));
+            /*15*/objbot.addDouble((double)cvGetReal1D(bins, 8));
+            /*16*/objbot.addDouble((double)cvGetReal1D(bins, 9));
+            /*17*/objbot.addDouble((double)cvGetReal1D(bins, 10));
+            /*18*/objbot.addDouble((double)cvGetReal1D(bins, 11));
+            /*19*/objbot.addDouble((double)cvGetReal1D(bins, 12));
+            /*20*/objbot.addDouble((double)cvGetReal1D(bins, 13));
+            /*21*/objbot.addDouble((double)cvGetReal1D(bins, 14));
+            /*22*/objbot.addDouble((double)cvGetReal1D(bins, 15));
 
             double contour_area_normalized_saturated = (double)_objDescTable[i].contour_area / _maxAreaThreshold;
             if (contour_area_normalized_saturated > 1.0)
