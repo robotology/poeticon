@@ -225,15 +225,16 @@ def parse_cmdline_options():
     parser.parse_args() -- namespace of parameters, see argparse documentation
     """
 
-    parser = argparse.ArgumentParser(description='Simulate the POETICON++ experiment')
-    parser.add_argument('-c', '--clean', help='clean up or stop existing modules then quit (default false)', action='store_true')
+    parser = argparse.ArgumentParser(description='Simulate the POETICON++ experiment',
+                                     formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+    parser.add_argument('-c', '--clean', help='clean up or stop existing modules then quit', action='store_true')
     parser.add_argument('-d', help='path where the YARP application XML file (yarpmanager format) is located', default='/home/gsaponaro/NOBACKUP/poeticon/src/poeticon-simulation/app/scripts')  # /usr/local/src/robot/poeticon/src/poeticon-simulation/app/scripts
     parser.add_argument('-i', help='YARP application XML filename (yarpmanager format)', type=argparse.FileType('r'), default='sim_complex6_creativity+adaptability.xml')  # sim_simple3_noheur.xml
-    parser.add_argument('-n', help='number of experiments to run (default 1)', type=int, default=1)
-    parser.add_argument('-s', help='safe mode (asking user confirmation, default false)', action='store_true')
-    parser.add_argument('-t', help='timeout in seconds for an experiment (default 600)', type=int, default=600)
+    parser.add_argument('-n', help='number of experiments to run', type=int, default=1)
+    parser.add_argument('-s', help='safe mode (asking user confirmation)', action='store_true')
+    parser.add_argument('-t', help='timeout in seconds for an experiment', type=int, default=600)
     parser.add_argument('-o', help='output file', default='output.txt', type=argparse.FileType('a'))
-    parser.add_argument('-v', help='print verbose output (default false)', action='store_true')
+    parser.add_argument('-v', help='print verbose output', action='store_true')
 
     return parser.parse_args()
 
