@@ -90,6 +90,7 @@ class PlannerThread : public RateThread
         bool useCreativity;
 
         int plan_level;
+        double time_planning_current_level;
 
         int positx;
         int posity;
@@ -151,6 +152,7 @@ class PlannerThread : public RateThread
         bool checkFailure();
         bool compareState();
         bool IDisPresent(string ID, bool &result);
+        void brodcastPlanningTimeAndResetCounter();
 
         // IDL functions
         bool startPlanning();

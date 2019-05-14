@@ -110,6 +110,7 @@ bool PlannerThread::threadInit()
     stopping = false; //When the module is issued the stopPlanner command by rpc, this becomes true
     resumePlan = true; //Variable responsible for pausing/resuming the plan, changed by pausePlanner/resumePlanner on rpc.
     plan_level = 0; //Variable that stores the current steps made by the planner
+    time_planning_current_level = 0.0; // Variable that stores the elapsed time so far during an action (sum of multiple calls to PRADA)
 
     // initialize file names
     openFiles();
@@ -1085,13 +1086,8 @@ int PlannerThread::PRADA()
     int sys_flag = system(process_string.c_str());
     double t1 = yarp::os::Time::now();
     double time_prada = t1 - t0;
-    yInfo("PRADA elapsed time: %f", time_prada);
-    // broadcast elapsed computational time on port
-    yarp::os::Bottle &bTime = time_yarp.prepare();
-    bTime.clear();
-    bTime.addString("prada");
-    bTime.addDouble(time_prada);
-    time_yarp.write();
+    yInfo("PRADA elapsed time (%d): %f", plan_level, time_prada);
+    time_planning_current_level = time_planning_current_level + time_prada;
 
     if (sys_flag == 34304) // code for executable failure
     {
@@ -1331,6 +1327,19 @@ bool PlannerThread::IDisPresent(string ID, bool &result)
     yDebug("Object not present: %s", ID.c_str());
     result = false;
     return true;
+}
+
+void PlannerThread::brodcastPlanningTimeAndResetCounter()
+{
+    // broadcast elapsed computational time on port
+    yarp::os::Bottle &bPlanningTime = time_yarp.prepare();
+    bPlanningTime.clear();
+    bPlanningTime.addString("planning");
+    bPlanningTime.addDouble(time_planning_current_level);
+    time_yarp.write();
+
+    // reset counter
+    time_planning_current_level = 0.0;
 }
 
 // function that checks which symbols are present across subgoals
@@ -1930,6 +1939,12 @@ bool PlannerThread::planning_cycle()
                     }
                     return true; // resume plan
                 }
+
+                // PRADA found a valid action, let's broadcast the elapsed
+                // planning time for this action (sum of multiple calls to PRADA)
+                // and reset the counter
+                brodcastPlanningTimeAndResetCounter();
+
                 if (!loadUsedObjs()) // loads the objects used by the current action into memory
                 {
                     return false;
