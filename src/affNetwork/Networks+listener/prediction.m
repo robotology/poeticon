@@ -94,7 +94,7 @@ figBottom = figBottomDefault;
 %% MISC
 
 queryActionID = 1;
-queryActionName = 'draw';
+queryActionName = 'pull'; % was: 'draw'
 
 %% YARP
 % Initialize YARP:
@@ -273,7 +273,7 @@ while(~done)
             %figBottom
             
             if (action == 1.0)
-                queryActionName = 'draw';
+                queryActionName = 'pull'; % was: 'draw'
             elseif (action == 2.0)
                 queryActionName = 'push';
             end
@@ -286,12 +286,17 @@ while(~done)
                 str = sprintf('%s action (Query #%d)',queryActionName, i); 
                 %str = sprintf('%s action',queryActionName);
                 if(query.size()==14)
-                    str = sprintf('%s %s with %s on %s (Query #%d)',queryActionName, char(query.get(11).asString), char(query.get(12).asString),char(query.get(13).asString),i); 
+                    %str = sprintf('%s %s with %s on %s (Query #%d)',queryActionName, char(query.get(11).asString), char(query.get(12).asString),char(query.get(13).asString),i); 
+                    str = sprintf('   %s(%s,%s,%s)',queryActionName, char(query.get(11).asString), char(query.get(12).asString),char(query.get(13).asString)); 
                     %str = sprintf('%s %s with %s in %s',queryActionName, char(query.get(11).asString), char(query.get(12).asString),char(query.get(13).asString));
                 end
-                title(str);
+                MyTitleFontSize = 21;
+                title(str, 'FontSize',MyTitleFontSize);
                 set(hFig(i), 'Position', [figLeft figBottom figWidth figHeight]) % maybe change the position of the window
                 axis([0 5 0 5.5])
+                % get rid of axes numbers but leave the ticks
+                set(gca,'Yticklabel',[]) 
+                set(gca,'Xticklabel',[])
                 hold on;
                 scatter (x, 0.5*ones(1,5) , 5000, prob.T(1,:),'filled','s')
                 hold on;
