@@ -22,7 +22,7 @@ icubcontrib_set_default_prefix()
 
 find_package(Threads REQUIRED)
 
-yarp_idl_to_dir(${PROJECT_NAME}.thrift ${CMAKE_CURRENT_SOURCE_DIR})
+yarp_idl_to_dir(INPUT_FILES ${PROJECT_NAME}.thrift OUTPUT_DIR ${CMAKE_CURRENT_SOURCE_DIR})
 
 file(GLOB source src/*.cpp)
 file(GLOB header include/*.h)

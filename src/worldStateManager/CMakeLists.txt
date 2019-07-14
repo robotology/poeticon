@@ -16,7 +16,7 @@ find_package(ICUBcontrib)
 list(APPEND CMAKE_MODULE_PATH ${ICUBCONTRIB_MODULE_PATH})
 
 set(IDL_GENERATED_CODE_DIR "${CMAKE_CURRENT_SOURCE_DIR}")
-yarp_idl_to_dir(${PROJECT_NAME}.thrift ${IDL_GENERATED_CODE_DIR})
+yarp_idl_to_dir(INPUT_FILES ${PROJECT_NAME}.thrift OUTPUT_DIR ${IDL_GENERATED_CODE_DIR})
 
 include(ICUBcontribHelpers)
 include(ICUBcontribOptions)
