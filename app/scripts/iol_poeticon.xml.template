@@ -21,6 +21,7 @@
         </module>
         <module>
                 <name>caffeCoder</name>
+                <parameters>--from caffeCoder_caffenet.ini</parameters>
                 <node>gpuNode</node>
         </module>
         <module>
