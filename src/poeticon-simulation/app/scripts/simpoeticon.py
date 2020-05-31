@@ -9,6 +9,7 @@ import subprocess
 import os
 import sys
 import time
+# installation: pip3 install lxml
 import xml.etree.ElementTree as ET
 
 # installation:
