@@ -76,17 +76,17 @@
 <connection>
     <from>/icub/camcalib/left/out</from>
     <to>/lbpExtract/image:i</to>
-    <protocol>udp</protocol>
+    <protocol>unix_stream</protocol>
 </connection>
 <connection>
     <from>/lbpExtract/extractedlbp:o</from>
     <to>/sequentialLabeller/binImg:i</to>
-    <protocol>udp</protocol>
+    <protocol>unix_stream</protocol>
 </connection>
 <connection>
     <from>/lbpExtract/extractedlbp:o</from>
     <to>/blobDescriptor/binImg:i</to>
-    <protocol>udp</protocol>
+    <protocol>unix_stream</protocol>
 </connection>
 <connection>
     <from>/activityInterface/memory:rpc</from>
@@ -99,17 +99,17 @@
 <connection>
     <from>/icub/camcalib/left/out</from>
     <to>/blobDescriptor/rawImg:i</to>
-    <protocol>udp</protocol>
+    <protocol>unix_stream</protocol>
 </connection>
 <connection>
     <from>/sequentialLabeller/labeledImg:o</from>
     <to>/blobDescriptor/labeledImg:i</to>
-    <protocol>udp</protocol>
+    <protocol>unix_stream</protocol>
 </connection>
 <connection>
     <from>/blobDescriptor/viewImg:o</from>
     <to>/view/blobdesc</to>
-    <protocol>udp</protocol>
+    <protocol>unix_stream</protocol>
 </connection>
 <connection>
     <from>/wsm/activity:rpc</from>

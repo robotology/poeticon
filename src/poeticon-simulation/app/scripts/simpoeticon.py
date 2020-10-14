@@ -88,7 +88,7 @@ def connect(from_port, to_port, *protocol):
     Arguments:
     from_port -- name of the source port
     to_port -- name of the destination port
-    protocol -- (optional) YARP network protocol: tcp (default), udp, mcast, etc.
+    protocol -- (optional) YARP network protocol: tcp (default), udp, unix_stream, mcast, etc.
 
     Return values:
     success -- boolean indicating whether the ports are connected or not
