@@ -9,6 +9,9 @@
  *
  */
 
+#include <chrono>
+#include <thread>
+
 #include "translator.h"
 
 using namespace yarp::os;
@@ -293,7 +296,10 @@ bool   TranslatorModule::close() {
 
     return true;
 }
+
 bool   TranslatorModule::updateModule() {
+    std::this_thread::sleep_for(std::chrono::milliseconds(1));
+
     return true;
 }
 
