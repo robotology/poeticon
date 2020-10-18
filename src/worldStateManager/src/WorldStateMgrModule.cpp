@@ -7,6 +7,9 @@
  *
  */
 
+#include <chrono>
+#include <thread>
+
 #include "WorldStateMgrModule.h"
 
 bool WorldStateMgrModule::configure(ResourceFinder &rf)
@@ -66,6 +69,8 @@ bool WorldStateMgrModule::close()
 
 bool WorldStateMgrModule::updateModule()
 {
+    std::this_thread::sleep_for(std::chrono::milliseconds(1));
+
     return !closing;
 }
 

@@ -7,6 +7,9 @@
  *
  */
 
+#include <chrono>
+#include <thread>
+
 #include "PlannerModule.h"
 
 bool PlannerModule::configure(ResourceFinder &rf)
@@ -76,6 +79,8 @@ bool PlannerModule::close()
 
 bool PlannerModule::updateModule()
 {
+    std::this_thread::sleep_for(std::chrono::milliseconds(1));
+
     return !closing;
 }
 
@@ -117,7 +122,7 @@ bool PlannerModule::goForward()
 
 bool PlannerModule::updateState()
 {
-    return thread->updateState(); 
+    return thread->updateState();
 }
 
 bool PlannerModule::loadObjects()
@@ -196,7 +201,7 @@ string PlannerModule::checkGoalCompleted()
     {
         return "Goal achieved";
     }
-    else 
+    else
     {
         return "Goal not achieved";
     }
@@ -211,7 +216,7 @@ bool PlannerModule::run1Step()
 
 bool PlannerModule::startPlanner()
 {
-    
+
     return thread->resetPlanVars() && thread->startPlanning();
 }
 
