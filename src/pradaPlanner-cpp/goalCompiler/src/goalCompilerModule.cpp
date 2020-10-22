@@ -184,7 +184,7 @@ void goalCompiler::openPorts()
 
     portName = "/" + moduleName + "/planner_cmd:io";
     plannerPort.open(portName);
-    
+
     portName = "/" + moduleName + "/prax_inst:i";
     praxiconPort.open(portName);
 
@@ -285,7 +285,7 @@ bool goalCompiler::receiveInstructions()
                 //praxiconBottle->clear();
                 return true;
             }
-            else 
+            else
             {
                 Bottle &plannerBottleOut = plannerPort.prepare();
                 plannerBottleOut.clear();
@@ -427,6 +427,7 @@ bool goalCompiler::compile()
                                 temp_rule = split(temp_str,' ');
                                 temp_rule.erase(temp_rule.begin(), temp_rule.begin()+1);
                                 temp_rule.erase(temp_rule.begin(), temp_rule.begin()+1);
+                                temp_rule.erase(temp_rule.begin(), temp_rule.begin()+1);
                                 for (int k = 0; k< translat.size(); ++k){
                                     temp_str = aux_subgoal[u];
                                     while (!isStopping()) {
@@ -445,7 +446,7 @@ bool goalCompiler::compile()
                                             break;
                                         }
                                     }
-                                    
+
                                     if (temp_str.find(translat[k][1]) == std::string::npos){
                                         while (!isStopping()) {
                                             if (temp_str.find("_ALL") != std::string::npos){
@@ -459,6 +460,7 @@ bool goalCompiler::compile()
                                     }
                                 }
                                 string var_find;
+                                new_temp_rule.clear();
                                 for (int w = 0; w < temp_rule.size(); ++w){
                                     int not_add_flag = 0;
                                     if (temp_rule[w].find("-") != 0){
@@ -490,7 +492,9 @@ bool goalCompiler::compile()
                                 new_temp_rule.erase(new_temp_rule.begin()+h);
                             }
                         }
-                        new_temp_rule.erase(new_temp_rule.begin(),new_temp_rule.begin()+1);
+                        for (int m = 0; m < new_temp_rule.size(); ++m){
+                            yDebug("new_temp_rule[%d]: %s", m, new_temp_rule[m].c_str());
+                        }
                         aux_subgoal = new_temp_rule;
                         vector<string> temp_subgoal;
                         if (subgoals.size() > 0)
@@ -538,7 +542,7 @@ bool goalCompiler::compile()
                             }
                         }
                         aux_subgoal = split(temp_str,' ');
-                        aux_subgoal.erase(aux_subgoal.begin(),aux_subgoal.begin()+3);
+                        aux_subgoal.erase(aux_subgoal.begin(),aux_subgoal.begin()+3); // Remove two trailing spaces + probability
                         vector<string> temp_subgoal;
                         if (subgoals.size() > 0)
                         {
@@ -546,6 +550,10 @@ bool goalCompiler::compile()
                         }
                         for (int i = 0; i < aux_subgoal.size(); ++i){
                             temp_subgoal.push_back(aux_subgoal[i]);
+                        }
+                        yDebug("temp_subgoal:");
+                        for (int m = 0; m < temp_subgoal.size(); ++m){
+                            yDebug("%d: %s", m, temp_subgoal[m].c_str());
                         }
                         temp_action.clear();
                         temp_action.push_back(found_action);
@@ -587,7 +595,10 @@ bool goalCompiler::compile()
                         for (int m = 0; m < aux_subgoal.size(); ++m){
                             yInfo("%s", aux_subgoal[m].c_str());
                         }
-                        aux_subgoal.erase(aux_subgoal.begin(),aux_subgoal.begin()+3);
+                        aux_subgoal.erase(aux_subgoal.begin(),aux_subgoal.begin()+3); // Remove two trailing spaces + probability
+                        for (int m = 0; m < aux_subgoal.size(); ++m){
+                            yDebug("aux_subgoal[%d]: %s", m, aux_subgoal[m].c_str());
+                        }
                         for (int m = 0; m < subgoals.size(); ++m){
                             for (int n = 0; n < subgoals[m].size(); ++n){
                             }
@@ -610,9 +621,10 @@ bool goalCompiler::compile()
                         action_sequence.push_back(temp_action);
                         subgoals.push_back(temp_subgoal);
                     }
-                    yInfo("action translated");
+                    yInfo("action translated: %s", found_action.c_str());
                     vector<int> index_var;
                     int flag_detect;
+                    // Detect changed symbols, delete old ones
                     for (int g = 0; g < aux_subgoal.size(); ++g){
                         flag_detect = 0;
                         if (aux_subgoal[g].find("-") == 0){
@@ -646,13 +658,25 @@ bool goalCompiler::compile()
                             }
                         }
                     }
+                    for (int m = 0; m < index_var.size(); ++m){
+                        yDebug("index_var[%d]: %d", m, index_var[m]);
+                    }
+
                     vector<string> temp_goal;
+                    // Iterate over all symbols of last sub-goal
                     for (int y = 0; y<subgoals[subgoals.size()-1].size(); ++y){
-                        if (find(index_var.begin(), index_var.end(), y) == index_var.end()){
+                        if (find(index_var.begin(), index_var.end(), y) == index_var.end()) {
                             temp_goal.push_back(subgoals[subgoals.size()-1][y]);
+                            yDebug("symbol to add: %s", subgoals[subgoals.size()-1][y].c_str());
                         }
                     }
+                    for (int m = 0; m < subgoals[subgoals.size()-1].size(); ++m){
+                        yDebug("before, subgoal %d: %s", m, subgoals[subgoals.size()-1][m].c_str());
+                    }
                     subgoals[subgoals.size()-1] = temp_goal;
+                    for (int m = 0; m < subgoals[subgoals.size()-1].size(); ++m){
+                        yDebug("after, subgoal %d: %s", m, subgoals[subgoals.size()-1][m].c_str());
+                    }
                 }
             }
         }
@@ -722,7 +746,7 @@ bool goalCompiler::writeFiles()
             //debugging message
             //temp_str = temp_str + " " + subgoals[i][j];
             if ( j != subgoals[i].size()-1){
-                subgoalFile << " ";                
+                subgoalFile << " ";
             }
         }
         //yDebug("subgoal list: %s", temp_str.c_str());
@@ -754,7 +778,7 @@ bool goalCompiler::plannerReply(string reply)
     {
         yError("planner not connected");
         return false;
-    }    
+    }
     Bottle &plannerBottleOut = plannerPort.prepare();
     plannerBottleOut.clear();
     plannerBottleOut.addString(reply);
@@ -825,7 +849,7 @@ bool goalCompiler::checkConsistency()
                         else {
                             break;
                         }
-                    }                
+                    }
                 }
                 yDebug("requirements: %s", requirements.c_str());
                 required_state_vector = split(requirements, ' ');
@@ -857,7 +881,7 @@ bool goalCompiler::checkConsistency()
                             return false;
                         }
                     }
-                    else 
+                    else
                     {
                         negated_symbol = "-" + required_state_vector[k];
                         if (find_element(subgoals[i-1], negated_symbol) == 1)
