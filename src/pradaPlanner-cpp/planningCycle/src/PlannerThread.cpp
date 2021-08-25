@@ -1086,7 +1086,23 @@ int PlannerThread::PRADA()
     int sys_flag = system(process_string.c_str());
     double t1 = yarp::os::Time::now();
     double time_prada = t1 - t0;
-    yInfo("PRADA elapsed time (%d): %f", plan_level, time_prada);
+    yInfo("PRADA elapsed time (level %d): %f", plan_level, time_prada);
+
+    // broadcast elapsed computational time on port
+    // Note: commented because this is a partial count (one call to PRADA). The total count
+    // is broadcast via brodcastPlanningTimeAndResetCounter().
+    /*
+    yarp::os::Bottle &bTime = time_yarp.prepare();
+    bTime.clear();
+    bTime.addString("prada");
+    Bottle &planLevelBottle = bTime.addList();
+    planLevelBottle.clear();
+    planLevelBottle.addString("level");
+    planLevelBottle.addInt(plan_level);
+    bTime.addDouble(time_prada);
+    time_yarp.write();
+    */
+
     time_planning_current_level = time_planning_current_level + time_prada;
 
     if (sys_flag == 34304) // code for executable failure
@@ -2070,6 +2086,12 @@ bool PlannerThread::planning_cycle()
                 }
                 return true; // resume plan
             }
+
+            // PRADA found a valid action, let's broadcast the elapsed
+            // planning time for this action (sum of multiple calls to PRADA)
+            // and reset the counter
+            brodcastPlanningTimeAndResetCounter();
+
             if (!loadUsedObjs()) // loads the objects used by the current action into memory
             {
                 return false;
